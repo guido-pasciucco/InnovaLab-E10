@@ -1,67 +1,68 @@
-# InnovaLab E10 — Budget Calculator
+# 🧮 InnovaLab E10 — Budget Calculator
 
-MVP Phase 1 of a smart calculator for **costs, pricing, and break-even analysis** (`Costos / Precios / Punto de Equilibrio`).
+MVP de la Fase 1 de una calculadora inteligente para **costos, precios y análisis de punto de equilibrio** (`Costos / Precios / Punto de Equilibrio`).
 
-Phase 1 is **local-first**: all calculation runs locally in the browser with no account and no backend persistence (LocalStorage or IndexedDB — decision still open, see below). Supabase (auth + history) is **off** and arrives in Phase 2.
+La Fase 1 es **local-first**: todo el cálculo se ejecuta localmente en el navegador, sin cuenta y sin persistencia en backend (LocalStorage o IndexedDB — decisión aún abierta, ver abajo). Supabase (autenticación + historial) está **desactivado** y llega en la Fase 2.
 
-> Status: stock `create-next-app` scaffold on `main` (commit `6747320`). No domain code yet. This README is the contract the team builds against.
+> [!NOTE]
+> Fase 1 sin backend: los cálculos son locales. Supabase llega en la Fase 2 para autenticación e historial.
 
 ---
 
-## 1. Technologies Used
+## 1. 🛠️ Tecnologías utilizadas
 
-Current, verified stack (nothing else installed yet):
+Stack del proyecto:
 
-| Technology | Version | Purpose |
+| Tecnología | Versión | Propósito |
 | --- | --- | --- |
-| Next.js | 16.3.5 | Fullstack framework (App Router), single deploy on Vercel |
-| React | 19.2.8 | UI rendering |
-| Tailwind CSS | 4 (`@tailwindcss/postcss`) | Styling via the PostCSS plugin |
-| TypeScript | 5, `strict`, `target ES2017`, alias `@/*` | Type safety; `@/` maps to repo root |
-| ESLint | 9 + `eslint-config-next` | Linting (Next.js rules) |
-| `next.config.ts` | stub (empty) | Reserved for future Next.js config |
-| App Router | only `app/layout.tsx` + `app/page.tsx` | Current scaffold; wizard and API routes do not exist yet |
+| Next.js | 16.3.5 | Framework fullstack (App Router), despliegue único en Vercel |
+| React | 19.2.8 | Renderizado de UI |
+| Tailwind CSS | 4 (`@tailwindcss/postcss`) | Estilos mediante el plugin de PostCSS |
+| TypeScript | 5, `strict`, `target ES2017`, alias `@/*` | Seguridad de tipos; `@/` apunta a la raíz del repositorio |
+| ESLint | 9 + `eslint-config-next` | Linting (reglas de Next.js) |
+| `next.config.ts` | stub (vacío) | Reservado para futura configuración de Next.js |
+| App Router | solo `app/layout.tsx` + `app/page.tsx` | Estructura base; las rutas del asistente (wizard) y de API se definen en la sección de arquitectura |
 
-Available scripts:
+Scripts disponibles:
 
-| Script | Command |
+| Script | Comando |
 | --- | --- |
-| Dev server | `npm run dev` |
-| Production build | `npm run build` |
-| Production start | `npm run start` |
+| Servidor de desarrollo | `npm run dev` |
+| Build de producción | `npm run build` |
+| Inicio en producción | `npm run start` |
 | Lint | `npm run lint` |
 
-Planned, **not installed yet** (do not import until added): Zod (single schema source), React Hook Form, Vitest (unit), Playwright (e2e), Supabase (Phase 2 only), Zustand (still under discussion — see Open Questions).
+Dependencias planificadas (no importar hasta que se agreguen al proyecto): Zod (fuente única de esquemas), React Hook Form, Vitest (unitarias), Playwright (e2e), Supabase (solo Fase 2), Zustand (aún en discusión — ver Preguntas abiertas).
 
 ---
 
-## 2. Architecture to Follow
+## 2. 🏛️ Arquitectura a seguir
 
-Source of truth: the 10 architecture docs in `obsidian-vault/calculadora-presupuestos/infraestructura/arquitectura`. Summary below; the vault wins on conflict.
+Estas decisiones corresponden al acuerdo de equipo. Resumen a continuación.
 
-### Deployment
+### Despliegue
 
-- **Next.js fullstack monorepo, one deploy on Vercel.** There is no separate backend repo or backend deploy.
-- **App Router is not a backend.** Route Handlers (`app/api/*`) are thin HTTP edges (parse/validate/delegate), not a service layer.
+- **Monorepo fullstack con Next.js, un solo despliegue en Vercel.** No existe un repositorio de backend separado ni un despliegue de backend independiente.
+- **App Router no es un backend.** Los Route Handlers (`app/api/*`) son bordes HTTP delgados (parsear/validar/delegar), no una capa de servicios.
 
-### Software style
+### Estilo de software
 
-- **Pragmatic Clean / Hexagonal lite, no application layer in the MVP.**
-- Dependency direction (one way only):
+- **Clean pragmático / Hexagonal lite, sin capa de aplicación en el MVP.**
+- Dirección de dependencias (una sola dirección):
 
 ```text
 app -> components -> lib/calc
 ```
 
-- `lib/calc`, `lib/money`, `lib/schemas`: pure, universal domain. No server-only APIs, no browser-only APIs, no I/O.
-- Infrastructure (e.g. `lib/db.ts`) is **server-only** (`server-only` import) and never imported by client components.
+- `lib/calc`, `lib/money`, `lib/schemas`: dominio puro y universal. Sin APIs exclusivas del servidor, sin APIs exclusivas del navegador, sin I/O.
+- La infraestructura (p. ej. `lib/db.ts`) es **solo de servidor** (import `server-only`) y nunca se importa desde componentes de cliente.
 
-### Phase split
+### División por fases
 
-- **Phase 1 (current, MVP):** local-first. Persistence in LocalStorage or IndexedDB. Supabase is off.
-- **Phase 2:** Supabase auth + history. Form mutations move to Server Actions; reads stay direct (see contracts).
+- **Fase 1 (actual, MVP):** local-first. Persistencia en LocalStorage o IndexedDB. Supabase está desactivado.
+- **Fase 2:** autenticación + historial con Supabase. Las mutaciones de formularios pasan a Server Actions; las lecturas siguen siendo directas (ver contratos).
 
-### Target structure (build toward this, do not invent parallel trees)
+### Estructura objetivo (construir hacia esto, no inventar árboles paralelos)
 
 ```text
 app/
@@ -87,80 +88,75 @@ tests/
   e2e/           # Playwright (wizard flow)
 ```
 
-### Contracts (binding)
+### Contratos (vinculantes)
 
-1. **Single Zod source.** All validation schemas live in `lib/schemas`. React Hook Form (client) and Route Handlers (server) both consume them. **Parse at the edge**: every Route Handler parses/validates input at its boundary before delegating.
-2. **Fetch-vs-import rule:**
-   - Pure logic (`lib/calc`, `lib/money`, `lib/schemas`) → plain `import`. No HTTP involved.
-   - Client component → API (`app/api/*`) → **only via `fetch`**. Never import `route.ts`.
-   - Form mutations (Phase 2) → Server Actions.
-   - Server Components read persistence directly via `lib/db` — never via internal `fetch` to their own API.
-3. **Domain stays universal.** Nothing in `lib/calc`, `lib/money`, `lib/schemas` may touch Node/Next server APIs or `window`/`localStorage`.
-4. **Infra stays on the server.** `lib/db.ts` (and anything touching secrets or Supabase) imports `server-only`.
-5. **Charts are client-only.** Every chart component uses `'use client'` plus `dynamic(..., { ssr: false })`.
+1. **Fuente única con Zod.** Todos los esquemas de validación viven en `lib/schemas`. React Hook Form (cliente) y los Route Handlers (servidor) los consumen. **Parsear en el borde**: cada Route Handler parsea/valida la entrada en su frontera antes de delegar.
+2. **Regla fetch-vs-import:**
+   - Lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) → `import` directo. Sin HTTP involucrado.
+   - Componente de cliente → API (`app/api/*`) → **solo mediante `fetch`**. Nunca importar `route.ts`.
+   - Mutaciones de formularios (Fase 2) → Server Actions.
+   - Los Server Components leen la persistencia directamente mediante `lib/db`, nunca con `fetch` interno a su propia API.
+3. **El dominio se mantiene universal.** Nada en `lib/calc`, `lib/money`, `lib/schemas` puede usar APIs de servidor de Node/Next ni `window`/`localStorage`.
+4. **La infraestructura permanece en el servidor.** `lib/db.ts` (y todo lo que toque secretos o Supabase) importa `server-only`.
+5. **Los gráficos son solo de cliente.** Cada componente de gráficos usa `'use client'` más `dynamic(..., { ssr: false })`.
 
-### Where things go
+> [!IMPORTANT]
+> La validación en el cliente es UX, nunca seguridad: todo formulario validado en el cliente debe revalidarse con el mismo esquema Zod en el servidor.
 
-| Concern | Location |
+### Dónde va cada cosa
+
+| Responsabilidad | Ubicación |
 | --- | --- |
-| Wizard pages | `app/(wizard)/paso-1`, `paso-2`, `resultados` |
-| HTTP edge (validate + delegate) | `app/api/calcular`, `app/api/precios` |
-| Wizard UI, charts, primitives | `components/wizard`, `components/charts`, `components/ui` |
-| Pure math / money / schemas | `lib/calc`, `lib/money`, `lib/schemas` |
-| Local-first persistence (Phase 1) | `lib/store` |
-| Server persistence (Phase 2) | `lib/db.ts` (server-only) |
-| Unit / e2e tests | `tests/unit` (Vitest), `tests/e2e` (Playwright) |
+| Páginas del asistente (wizard) | `app/(wizard)/paso-1`, `paso-2`, `resultados` |
+| Borde HTTP (validar + delegar) | `app/api/calcular`, `app/api/precios` |
+| UI del asistente, gráficos, primitivas | `components/wizard`, `components/charts`, `components/ui` |
+| Matemática pura / dinero / esquemas | `lib/calc`, `lib/money`, `lib/schemas` |
+| Persistencia local-first (Fase 1) | `lib/store` |
+| Persistencia en servidor (Fase 2) | `lib/db.ts` (server-only) |
+| Pruebas unitarias / e2e | `tests/unit` (Vitest), `tests/e2e` (Playwright) |
 
-### Forbidden
+### Prohibido
 
-- **Secrets in client code.** No service keys, no Supabase service role, no private env vars in any client component or anything it imports.
-- **Client-only validation.** Every client-validated form must be re-validated with the same Zod schema in the Route Handler / Server Action. Client validation is UX, never security.
-- **Importing `route.ts`.** Route Handlers are reached via HTTP (`fetch`) from the client, never via `import`.
-- **Fetching your own API from a Server Component.** Read via `lib/db` directly.
-- **I/O or platform APIs in domain code.** `lib/calc`, `lib/money`, `lib/schemas` stay pure and universal.
-- **New top-level layers** (e.g. an `application/` or `services/` folder) without an architecture decision recorded in the vault.
+- **Secretos en código de cliente.** Sin claves de servicio, sin service role de Supabase, sin variables de entorno privadas en ningún componente de cliente ni en nada que estos importen.
+- **Validación solo en el cliente.** Todo formulario validado en el cliente debe revalidarse con el mismo esquema Zod en el Route Handler / Server Action. La validación del cliente es UX, nunca seguridad.
+- **Importar `route.ts`.** Los Route Handlers se alcanzan por HTTP (`fetch`) desde el cliente, nunca con `import`.
+- **Llamar a la propia API con `fetch` desde un Server Component.** Leer directamente mediante `lib/db`.
+- **I/O o APIs de plataforma en código de dominio.** `lib/calc`, `lib/money`, `lib/schemas` se mantienen puros y universales.
+- **Nuevas capas de nivel superior** (p. ej. una carpeta `application/` o `services/`) sin un acuerdo de equipo previo.
 
-### Open questions (undecided, do not assume)
+### Preguntas abiertas (sin decidir, no asumir)
 
-1. Zustand — yes or no for wizard state?
-2. Schema change process — how are `lib/schemas` changes proposed and migrated?
-3. LocalStorage vs IndexedDB for Phase 1 persistence.
-
----
-
-## 3. Current State
-
-On `main` at commit `6747320`:
-
-- Stock `create-next-app` scaffold only: `app/layout.tsx` + `app/page.tsx`, `next.config.ts` stub, default styling.
-- None of the target tree exists yet: no `(wizard)` routes, no `app/api/*`, no `components/{wizard,charts,ui}`, no `lib/{calc,money,schemas,store}`, no `lib/db.ts`, no `tests/`.
-- No Zod, RHF, Vitest, Playwright, Supabase, or Zustand installed.
-
-## 4. Roadmap / What's Missing
-
-1. **Domain foundation** — `lib/schemas` (Zod, single source), `lib/calc` (costs/pricing/break-even), `lib/money`, plus Vitest unit tests.
-2. **Wizard steps** — `app/(wizard)/paso-1` and `paso-2` with RHF bound to `lib/schemas`, `components/wizard` + `components/ui`.
-3. **Results view** — `app/(wizard)/resultados`, client-only charts (`components/charts`, `'use client'` + `dynamic ssr:false`).
-4. **API edge** — `app/api/calcular` and `app/api/precios` as thin validate-and-delegate handlers parsing with `lib/schemas` at the boundary.
-5. **Local-first persistence** — `lib/store` (resolve LocalStorage vs IndexedDB) wired to the wizard.
-6. **E2E coverage** — Playwright flow over the wizard in `tests/e2e`.
-7. **Polish + deploy** — lint/build clean, single Vercel deploy verified.
-8. **Phase 2 (out of MVP scope)** — Supabase auth + history, `lib/db.ts` server-only, form mutations via Server Actions.
+1. Zustand: ¿sí o no para el estado del asistente (wizard)?
+2. Proceso de cambios de esquemas: ¿cómo se proponen y migran los cambios en `lib/schemas`?
+3. LocalStorage vs IndexedDB para la persistencia de la Fase 1.
 
 ---
 
-## 5. Getting Started
+## 3. 🗺️ Próximos pasos
 
-Prerequisites: Node.js LTS and npm.
+1. **Base del dominio** — `lib/schemas` (Zod, fuente única), `lib/calc` (costos/precios/punto de equilibrio), `lib/money`, más pruebas unitarias con Vitest.
+2. **Pasos del asistente** — `app/(wizard)/paso-1` y `paso-2` con RHF vinculado a `lib/schemas`, `components/wizard` + `components/ui`.
+3. **Vista de resultados** — `app/(wizard)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
+4. **Borde de API** — `app/api/calcular` y `app/api/precios` como handlers delgados de validar-y-delegar que parsean con `lib/schemas` en la frontera.
+5. **Persistencia local-first** — `lib/store` (resolver LocalStorage vs IndexedDB) conectada al asistente.
+6. **Cobertura E2E** — flujo con Playwright sobre el asistente en `tests/e2e`.
+7. **Pulido + despliegue** — lint/build limpios, despliegue único en Vercel verificado.
+8. **Fase 2 (fuera del alcance del MVP)** — autenticación + historial con Supabase, `lib/db.ts` solo de servidor, mutaciones de formularios mediante Server Actions.
+
+---
+
+## 4. 🚀 Primeros pasos
+
+Prerrequisitos: Node.js LTS y npm.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Abrir [http://localhost:3000](http://localhost:3000).
 
-Other commands:
+Otros comandos:
 
 ```bash
 npm run build   # production build (must pass before merging)
@@ -168,7 +164,9 @@ npm start       # serve the production build
 npm run lint    # ESLint with eslint-config-next
 ```
 
-Notes:
+> [!NOTE]
+> No incluir secretos en los commits. La Fase 1 no necesita variables de entorno; la Fase 2 (Supabase) documentará sus propias variables solo de servidor.
 
-- Do not commit secrets. Phase 1 needs no env vars; Phase 2 (Supabase) will document its own server-only variables.
-- Until the open questions above are decided, keep wizard state local to the wizard and persistence behind the `lib/store` boundary so the choice stays swappable.
+Notas:
+
+- Hasta que se resuelvan las preguntas abiertas anteriores, mantener el estado del asistente (wizard) local al asistente y la persistencia detrás de la frontera de `lib/store` para que la elección siga siendo intercambiable.
