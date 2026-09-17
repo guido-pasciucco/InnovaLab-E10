@@ -27,10 +27,10 @@ Scripts disponibles:
 
 | Script | Comando |
 | --- | --- |
-| Servidor de desarrollo | `npm run dev` |
-| Build de producción | `npm run build` |
-| Inicio en producción | `npm run start` |
-| Lint | `npm run lint` |
+| Servidor de desarrollo | `bun run dev` |
+| Build de producción | `bun run build` |
+| Inicio en producción | `bun run start` |
+| Lint | `bun run lint` |
 
 Dependencias del dominio (ya instaladas). Por qué están, en dos minutos:
 
@@ -155,11 +155,11 @@ tests/
 
 ## 4. 🚀 Primeros pasos
 
-Prerrequisitos: Node.js LTS y npm.
+Prerrequisitos: [Bun](https://bun.sh) 1.4.2+ (gestor de paquetes) y Node.js LTS (runtime). La versión de Bun está fijada en `package.json` (`packageManager`).
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 Abrir [http://localhost:3000](http://localhost:3000).
@@ -167,10 +167,14 @@ Abrir [http://localhost:3000](http://localhost:3000).
 Otros comandos:
 
 ```bash
-npm run build   # production build (must pass before merging)
-npm start       # serve the production build
-npm run lint    # ESLint with eslint-config-next
+bun run build   # production build (must pass before merging)
+bun run start   # serve the production build
+bun run lint    # ESLint with eslint-config-next
+bunx tsc --noEmit  # type check
 ```
+
+> [!NOTE]
+> Este proyecto usa **Bun como gestor de paquetes** (`bun.lock` es la única fuente de verdad; no usar `npm install`). El bundler sigue siendo Turbopack (default de Next.js 16) y el runtime sigue siendo Node.js.
 
 > [!NOTE]
 > No incluir secretos en los commits. La Fase 1 no necesita variables de entorno; la Fase 2 (Supabase) documentará sus propias variables solo de servidor.
