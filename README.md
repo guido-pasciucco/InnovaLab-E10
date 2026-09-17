@@ -32,15 +32,10 @@ Scripts disponibles:
 | Inicio en producción | `bun run start` |
 | Lint | `bun run lint` |
 
-Dependencias del dominio (ya instaladas). Por qué están, en dos minutos:
+Dependencias clave:
 
-**`decimal.js` — porque los floats mienten con plata.**
-JavaScript guarda los números en binario con coma flotante: `0.1 + 0.2` da `0.30000000000000004`. Para un jueguito no pasa nada; para presupuestos es un bug de plata real que se acumula en cada suma de costos y rompe el punto de equilibrio. `decimal.js` guarda los números como decimales exactos: `new Decimal(0.1).plus(0.2)` da exactamente `0.3`. Por eso vive en `lib/money` y `lib/calc`: **toda fórmula nueva usa `Decimal`, nunca `number` pelado para plata.** Es matemática pura, testeable con Vitest, sin React ni fetch ni DB.
-
-**`server-only` — el candado contra filtrar secretos al cliente.**
-En App Router es muy fácil importar sin querer un módulo de servidor (con la key de Supabase, conexión a DB) desde un componente con `'use client'`: Next lo mete en el bundle del navegador y el secreto queda inspeccionable por cualquiera. Este paquete es un guardián de build: se pone `import "server-only"` arriba de `lib/db.ts` y, si algún componente de cliente lo importa —directa o indirectamente—, **el build explota con error** en vez de filtrar el secreto en silencio. No hace nada en runtime; es una alarma de compilación. Es el complemento técnico de la regla fetch-vs-import: el cliente llega al servidor por `fetch` HTTP, nunca por `import` de `route.ts` o `lib/db.ts`.
-
-Dependencias planificadas (no importar hasta que se agreguen al proyecto): Vitest (unitarias), Playwright (e2e), Supabase (solo Fase 2), Zustand (aún en discusión — ver Preguntas abiertas). Zod y React Hook Form ya están instaladas; su rol se detalla en los contratos.
+- **`decimal.js`:** aritmética decimal con precisión y redondeo configurables para los cálculos monetarios de `lib/money` y `lib/calc`.
+- **`server-only`:** marca módulos exclusivos del servidor; Next.js detecta como error su importación desde componentes de cliente.
 
 ---
 
