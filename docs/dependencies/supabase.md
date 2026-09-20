@@ -14,6 +14,41 @@ Un cliente Supabase plano no entiende los tres runtimes de Next.js (navegador, s
 | `@supabase/ssr`        | `createBrowserClient` (singleton en navegador, flujo PKCE) y `createServerClient` (`getAll`/`setAll`) | Adapta la sesión a cookies de Next.js en cada runtime       |
 | Patrón middleware      | Refresh con `getClaims` / `getUser`, sesión perezosa (lazy), cookies en base64url                    | Mantiene la sesión vigente en cada request sin recargarla de más |
 
+## Aclaración: cliente no significa navegador
+
+"Cliente" designa dos conceptos distintos que conviene no mezclar:
+
+| Sentido | Significado |
+| --- | --- |
+| Biblioteca cliente | El objeto creado con `createClient`. Es código JavaScript que puede ejecutarse en el navegador o en el servidor. "Cliente" significa aquí "quien habla con el servidor de Supabase". |
+| Cliente como front | El navegador del usuario. |
+
+Cuando esta documentación dice "cliente Supabase", se refiere a la biblioteca, salvo que indique expresamente el navegador.
+
+La biblioteca es además una abstracción (wrapper) sobre HTTP: `supabase.from("businesses").select("*")` no es SQL, sino que construye una petición REST que PostgREST traduce a SQL del otro lado:
+
+```ts
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  "https://your-project.supabase.co", // a dónde hablo
+  "sb_publishable_your_key_here",     // con qué permiso hablo
+);
+// GET https://your-project.supabase.co/rest/v1/businesses?select=*
+// Authorization: Bearer <JWT> · apikey: <publishable key>
+```
+
+En ese sentido funciona como un ORM liviano sobre la API: expone métodos tipados (`from`, `auth`, `storage`) y oculta los detalles HTTP. Drizzle es la abstracción complementaria sobre SQL directo (protocolo wire de Postgres). Ninguna de las dos es magia: una envuelve REST, la otra envuelve SQL.
+
+## Topología de este proyecto: backend mediado
+
+La arquitectura Clean lite exige borde delgado que valida y delega. Hay dos topologías posibles:
+
+- Directa: navegador → Supabase (RLS como única guardia). Rápida, pero el navegador habla con la base.
+- Mediada (la adoptada): navegador → `/api/*` propia → Supabase/Drizzle. El navegador jamás importa el cliente Supabase ni ve una query. Los Route Handlers validan con Zod, obtienen el usuario desde la cookie en el servidor y recién entonces hablan con Supabase o Drizzle.
+
+En la topología mediada, `createBrowserClient` no se utiliza: todo vive en el servidor (`createServerClient` + Drizzle). Las variables podrían incluso dejar de usar el prefijo `NEXT_PUBLIC_*`, ya que el navegador nunca las lee.
+
 ## Cómo se usará en este proyecto
 
 | Aspecto          | Decisión                                                                                                                |
@@ -61,3 +96,57 @@ export async function serverClient() {
 ## Paso siguiente
 
 Crear los helpers (`lib/supabase/server` y helper de cliente) más `middleware.ts` raíz, y configurar `.env.local` desde `.env.example`. Ver `.env.example` para las variables requeridas.
+
+## Conclusión: por qué Auth pasa por Supabase (pregunta cerrada)
+
+Supabase Auth abstrae la capa completa de identidad: guarda usuarios en `auth.users` (hash, confirmaciones), emite JWT firmados y gestiona su renovación. Los Route Handlers la consumen para login, pero los Server Components y el middleware —que no son endpoints— necesitan leer y refrescar esa sesión desde las cookies; para eso existe `@supabase/ssr`. Drizzle ejecuta SQL pero nunca identifica: el `userId` que filtra `owner_user_id` siempre proviene de la sesión validada. Por eso ambas dependencias se conservan aunque todos los datos pasen por Drizzle.
+
+## Ejemplo de implementación: cálculo protegido (topología mediada, ilustrativo)
+
+Flujo completo con login vía API propia, refresh en middleware y escritura con Drizzle. El navegador solo habla con `/api/*`; nunca importa el cliente Supabase. Estos fragmentos son ilustrativos, los helpers reales aún no existen.
+
+Paso 1 — Login mediado (`app/api/auth/login/route.ts`):
+
+```ts
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+export async function POST(req: Request) {
+  const input = loginSchema.parse(await req.json()); // validate at the edge
+  const cookieStore = await cookies();
+  const supabase = createServerClient(URL, KEY, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (list) => list.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
+    },
+  });
+  const { error } = await supabase.auth.signInWithPassword(input);
+  if (error) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  return NextResponse.json({ ok: true }); // session persisted via setAll cookies
+}
+```
+
+Paso 2 — El middleware refresca la sesión en cada request con `getClaims` (ver sección de uso previsto). Sin este paso, el token vence y el servidor ve al usuario como anónimo.
+
+Paso 3 — Ruta protegida con Drizzle (`app/api/calculations/route.ts`):
+
+```ts
+// 1. Identify: validate session, obtain userId (never trust client-sent ids)
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+// 2. Validate: public Zod input carries only productId
+const input = createCalculationInputSchema.parse(await req.json());
+// 3. Execute: server fills userId/businessId, Drizzle writes
+await db.insert(calculations).values({ userId: user.id, businessId, productId: input.productId });
+```
+
+Paso 4 — RLS como red de seguridad: aunque el handler ya filtra por `userId`, la política `auth.uid() = owner_user_id` rechaza en la base cualquier fila ajena si el código se equivoca.
+
+Orden del flujo: navegador → `/api/auth/login` (cookie) → middleware (refresh) → `/api/calculations` (sesión + Zod + Drizzle) → Postgres con RLS.
