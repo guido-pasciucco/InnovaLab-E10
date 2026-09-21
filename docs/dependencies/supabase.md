@@ -150,3 +150,19 @@ await db.insert(calculations).values({ userId: user.id, businessId, productId: i
 Paso 4 — RLS como red de seguridad: aunque el handler ya filtra por `userId`, la política `auth.uid() = owner_user_id` rechaza en la base cualquier fila ajena si el código se equivoca.
 
 Orden del flujo: navegador → `/api/auth/login` (cookie) → middleware (refresh) → `/api/calculations` (sesión + Zod + Drizzle) → Postgres con RLS.
+
+## Qué abstrae esta librería (guía de estudio)
+
+Comparación contra la alternativa manual (Drizzle + JWT + bcrypt). Cada punto es un sistema que con Supabase viene resuelto y a mano habría que construir y mantener:
+
+1. Hash de contraseñas (bcrypt con salt y cost factor, con upgrades de algoritmo). Manual: elegir rounds, evitar comparaciones vulnerables a timing attacks.
+2. Emisión y firma de JWT (claves, rotación sin tumbar sesiones, expiración). Manual: gestión propia de secretos.
+3. Refresh tokens con rotación y detección de robo (un refresh usado dos veces dispara alerta). Manual: tabla de sesiones e invalidación propias.
+4. Flujos de email (confirmación de cuenta, recupero de contraseña, magic links, OTP). Manual: tokens propios más proveedor SMTP, expiración y plantillas.
+5. OAuth (Google, GitHub y más de 20 proveedores). Manual: el dance completo de cada proveedor, PKCE y linkeo de cuentas.
+6. Sesión en cookies multi-runtime (`@supabase/ssr`). Manual: serializar y cifrar la sesión en cookie httpOnly y refrescarla en middleware.
+7. Puente Auth → Postgres (`auth.uid()`, rol `authenticated`, claims del JWT que lee RLS). Manual: inyectar el usuario en cada query (por ejemplo `SET LOCAL`) y cablearlo a mano.
+8. Rate limiting y protección anti-fuerza-bruta en login. Manual: otro sistema más por construir.
+9. Mantenimiento de seguridad de por vida (CVEs de Auth, upgrades de bcrypt). Manual: carga permanente del equipo.
+
+Lo que se gana haciéndolo manual: cero lock-in (el auth anda en cualquier Postgres), control total y una abstracción menos. Decisión vigente: Auth de Supabase para identidad + Drizzle para datos (lo mejor de ambos, sin casarse con PostgREST).
