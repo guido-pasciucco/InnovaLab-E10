@@ -12,15 +12,19 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 | `store/` | Estado del wizard en el cliente | Esqueleto |
 | `db.ts` | Placeholder `server-only` | Temporal |
 | `db/` | Persistencia en servidor (Drizzle) | Spike en evaluación (ver #15) |
+| `services/` | Lógica de negocio del servidor compartida por Server Actions y Route Handlers (transport-agnostic: recibe valores, devuelve datos planos) | Nueva (acuerdo vigente) |
+| `supabase/` | Clientes Supabase por runtime (`middleware`, `server`, `rsc`) — solo servidor | Activa |
+| `types/` | Tipos compartidos (p. ej. `FormState` del estado de forms) | Activa |
 
 ## Reglas (no negociables)
 
 1. **Dominio puro.** `calc/` y `money/` no importan React, Next ni `db/`. Se testean sin renderizar nada.
-2. **Zod en el borde.** Toda entrada se valida al entrar (formulario o API). Adentro del cálculo no se valida, se calcula.
+2. **Zod en el borde.** Toda entrada se valida al entrar (formulario o API). La validación del servidor vive una sola vez en el servicio (`lib/services`), que cubre Server Actions y Route Handlers; las puertas le pasan la entrada cruda. Adentro del cálculo no se valida, se calcula.
 3. **Plata con `decimal.js`.** Nunca `float` para dinero o cantidades (ver `0.1 + 0.2`).
 4. **Servidor queda en el servidor.** Lo marcado `server-only` (incluido `db/`) solo se importa desde Server Components, Server Actions o Route Handlers. Nunca desde un componente cliente.
 5. **Fuente única.** Cada fórmula vive en un solo lugar (`lib/calc`); los tipos se infieren (`z.infer`, `$inferSelect`), no se duplican a mano.
 6. **El servidor completa lo suyo.** `id`, dueño y timestamps los pone el servidor, nunca el cliente.
+7. **Servicios agnósticos al transporte.** `services/` no recibe `Request` ni devuelve `Response`/status codes: recibe valores y devuelve datos planos. Cada puerta traduce a su contrato (ruta → status HTTP, action → estado del form).
 
 ## Checklist para verificar un cambio en `lib/`
 
