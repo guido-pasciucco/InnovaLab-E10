@@ -2,7 +2,29 @@ import "server-only";
 
 import { type SupabaseClient } from "@supabase/supabase-js";
 import { loginSchema } from "@/lib/schemas/auth/auth";
-import { type LoginResult } from "@/lib/types/auth";
+import {
+  failResult,
+  type ErrorCode,
+} from "@/lib/api/error-catalog";
+import { type LoginReason, type LoginResult } from "@/lib/types/auth";
+
+// Maps new catalog codes back to legacy reasons until all
+// consumers read code/message directly.
+const reasonByCode: Record<ErrorCode, LoginReason> = {
+  VALIDATION: "validation",
+  CREDENTIALS: "credentials",
+  UNAUTHORIZED: "unavailable",
+  UNAVAILABLE: "unavailable",
+  INTERNAL: "unavailable",
+};
+
+function loginFail(
+  code: ErrorCode,
+  details?: unknown,
+): Extract<LoginResult, { ok: false }> {
+  const base = failResult(code, details);
+  return { ...base, reason: reasonByCode[code], error: base.message };
+}
 
 export async function loginService(
   client: SupabaseClient,
@@ -13,7 +35,7 @@ export async function loginService(
   const parsed = loginSchema.safeParse(input);
 
   if (!parsed.success) {
-    return { ok: false, reason: "validation", error: "Invalid email or password" };
+    return loginFail("VALIDATION", parsed.error.flatten());
   }
 
   try {
@@ -21,13 +43,13 @@ export async function loginService(
 
     if (error) {
       // Mensaje genérico a propósito: no se filtran detalles de auth.
-      return { ok: false, reason: "credentials", error: "Invalid credentials" };
+      return loginFail("CREDENTIALS");
     }
 
-    return { ok: true };
+    return { ok: true, data: {} };
   } catch {
     // Fallo inesperado (p. ej. Supabase caído): se modela como retorno
     // para que ambas puertas lo traduzcan (ruta → 500, action → estado).
-    return { ok: false, reason: "unavailable", error: "Authentication unavailable" };
+    return loginFail("UNAVAILABLE");
   }
 }
