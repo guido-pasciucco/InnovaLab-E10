@@ -13,9 +13,8 @@ import type { Path } from "react-hook-form";
 
 const initialState: PasswordResetState = undefined;
 
-// Types come from the shared schema (single source). The action also
-// needs the client origin for the email redirect target; it is attached
-// at dispatch time because actions have no Request.url.
+// Types come from the shared schema (single source). The redirect origin
+// for the email link is resolved on the server, never sent from here.
 type ResetFormValues = z.infer<typeof passwordResetRequestSchema>;
 
 // Fields the server may flag; module-level so the reference stays stable.
@@ -37,12 +36,7 @@ export default function ResetPasswordForm() {
   return (
     // RHF validates in the client with the same schema; only then it
     // dispatches to the action (wrapped in a transition by the helper).
-    <form
-      onSubmit={handleSubmit((values) =>
-        dispatchInTransition(submitAction)({ ...values, origin: window.location.origin }),
-      )}
-      className="flex flex-col gap-4"
-    >
+    <form onSubmit={handleSubmit(dispatchInTransition(submitAction))} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm font-medium text-gray-700">
           Email
