@@ -10,6 +10,7 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 | `money/` | Aritmética decimal exacta con `decimal.js` | Esqueleto |
 | `schemas/` | Contratos Zod compartidos entre cliente y servidor | Esqueleto |
 | `store/` | Estado del wizard en el cliente | Esqueleto |
+| `errors/` | Manejo centralizado de errores: catálogo, `AppError` y adaptadores `handleRouteErrors`/`handleActionErrors` (ver `errors/README.md`) | Activa |
 | `db.ts` | Placeholder `server-only` | Temporal |
 | `db/` | Persistencia en servidor (Drizzle) | Spike en evaluación (ver #15) |
 | `services/` | Lógica de negocio del servidor compartida por Server Actions y Route Handlers (transport-agnostic: recibe valores, devuelve datos planos) | Nueva (acuerdo vigente) |
@@ -24,7 +25,7 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 4. **Servidor queda en el servidor.** Lo marcado `server-only` (incluido `db/`) solo se importa desde Server Components, Server Actions o Route Handlers. Nunca desde un componente cliente.
 5. **Fuente única.** Cada fórmula vive en un solo lugar (`lib/calc`); los tipos se infieren (`z.infer`, `$inferSelect`), no se duplican a mano.
 6. **El servidor completa lo suyo.** `id`, dueño y timestamps los pone el servidor, nunca el cliente.
-7. **Servicios agnósticos al transporte.** `services/` no recibe `Request` ni devuelve `Response`/status codes: recibe valores y devuelve datos planos. Cada puerta traduce a su contrato (ruta → status HTTP, action → estado del form).
+7. **Servicios agnósticos al transporte.** `services/` no recibe `Request` ni devuelve `Response`/status codes: recibe valores y devuelve datos planos. Ante un fallo lanzan `AppError`, sin `try/catch`; cada puerta traduce con `handleRouteErrors` (status HTTP) o `handleActionErrors` (estado del form). Ver `errors/README.md`.
 
 ## Checklist para verificar un cambio en `lib/`
 
