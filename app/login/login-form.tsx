@@ -10,6 +10,8 @@ import { loginSchema } from "@/lib/schemas/auth/auth";
 import { login } from "./actions";
 import { type LoginState } from "@/lib/types/auth";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
+import type { Path } from "react-hook-form";
 
 const initialState: LoginState = undefined;
 
@@ -17,16 +19,22 @@ const initialState: LoginState = undefined;
 // el schema, el form se entera solo.
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+// Fields the server may flag; module-level so the reference stays stable.
+const SERVER_FIELDS: readonly Path<LoginFormValues>[] = ["email", "password"];
+
 export default function LoginForm() {
   const router = useRouter();
   const [state, submitAction, pending] = useActionState(login, initialState);
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
+
+  const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
 
   useEffect(() => {
     if (state?.ok) {
@@ -77,9 +85,9 @@ export default function LoginForm() {
         )}
       </div>
 
-      {state && !state.ok && (
+      {state && !state.ok && !hasServerFieldErrors && (
         <p role="alert" className="text-sm text-red-600">
-          {state.error}
+          {state.message}
         </p>
       )}
 

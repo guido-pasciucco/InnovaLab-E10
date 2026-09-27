@@ -1,71 +1,81 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect } from "react";
+import { useActionState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { passwordUpdateSchema } from "@/lib/schemas/auth/auth";
+import { updatePassword } from "./actions";
+import { type PasswordUpdateState } from "@/lib/types/auth";
+import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
+import type { Path } from "react-hook-form";
 
-type Status = "idle" | "loading" | "success" | "error";
+const initialState: PasswordUpdateState = undefined;
+
+// Client-side extension of the shared schema: the confirm-match check
+// lives only in the form (the service validates the password itself).
+const updatePasswordFormSchema = passwordUpdateSchema
+  .extend({ confirm: z.string().min(8) })
+  .refine((values) => values.password === values.confirm, {
+    message: "Passwords do not match.",
+    path: ["confirm"],
+  });
+
+type UpdatePasswordFormValues = z.infer<typeof updatePasswordFormSchema>;
+
+// Fields the server may flag; module-level so the reference stays stable.
+const SERVER_FIELDS: readonly Path<UpdatePasswordFormValues>[] = ["password"];
 
 export default function UpdatePasswordForm() {
   const router = useRouter();
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [state, submitAction, pending] = useActionState(updatePassword, initialState);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<UpdatePasswordFormValues>({
+    resolver: zodResolver(updatePasswordFormSchema),
+  });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
 
-    if (password !== confirm) {
-      setStatus("error");
-      setErrorMessage("Passwords do not match.");
-      return;
-    }
-
-    setStatus("loading");
-    setErrorMessage("");
-
-    try {
-      const response = await fetch("/api/auth/update-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null;
-        setStatus("error");
-        setErrorMessage(data?.error ?? "Could not update password.");
-        return;
-      }
-
-      setStatus("success");
+  useEffect(() => {
+    if (state?.ok) {
       router.push("/login");
       router.refresh();
-    } catch {
-      setStatus("error");
-      setErrorMessage("Could not connect to the server. Please try again.");
     }
-  }
-
-  const isLoading = status === "loading";
+  }, [state, router]);
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    // RHF validates in the client (schema + confirm match); only then it
+    // dispatches the password alone to the action (transition-wrapped).
+    <form
+      onSubmit={handleSubmit((values) =>
+        dispatchInTransition(submitAction)({ password: values.password }),
+      )}
+      className="flex flex-col gap-4"
+    >
       <div className="flex flex-col gap-1">
         <label htmlFor="password" className="text-sm font-medium text-gray-700">
           New password
         </label>
         <input
+          {...register("password")}
           id="password"
           type="password"
-          required
-          minLength={8}
           autoComplete="new-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          disabled={isLoading}
+          disabled={pending}
           className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
         />
+        {errors.password && (
+          <p role="alert" className="text-sm text-red-600">
+            {errors.password.message}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1">
@@ -73,36 +83,38 @@ export default function UpdatePasswordForm() {
           Confirm password
         </label>
         <input
+          {...register("confirm")}
           id="confirm"
           type="password"
-          required
-          minLength={8}
           autoComplete="new-password"
-          value={confirm}
-          onChange={(event) => setConfirm(event.target.value)}
-          disabled={isLoading}
+          disabled={pending}
           className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
         />
+        {errors.confirm && (
+          <p role="alert" className="text-sm text-red-600">
+            {errors.confirm.message}
+          </p>
+        )}
       </div>
 
-      {status === "error" && (
+      {state && !state.ok && !hasServerFieldErrors && (
         <p role="alert" className="text-sm text-red-600">
-          {errorMessage}
+          {state.message}
         </p>
       )}
 
-      {status === "success" && (
+      {state?.ok && (
         <p role="status" className="text-sm text-green-600">
-          Password updated. Redirecting to sign in...
+          Password updated. Redirecting to sign in…
         </p>
       )}
 
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={pending}
         className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-blue-300"
       >
-        {isLoading ? "Updating..." : "Update password"}
+        {pending ? "Updating..." : "Update password"}
       </button>
     </form>
   );
