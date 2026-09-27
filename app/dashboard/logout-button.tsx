@@ -13,9 +13,18 @@ export default function LogoutButton() {
     setLoading(true);
     setErrorMessage("");
 
-    // The action returns the result (never throws to the client),
-    // so failures can be shown inline instead of navigating blindly.
-    const result = await logout();
+    // The action returns the result (never throws to the client), so
+    // sign-out failures can be shown inline instead of navigating blindly.
+    // The call itself can still reject (offline, deploy in progress):
+    // that must re-enable the button instead of leaving it stuck.
+    let result: Awaited<ReturnType<typeof logout>>;
+    try {
+      result = await logout();
+    } catch {
+      setLoading(false);
+      setErrorMessage("Could not sign out. Check your connection and try again.");
+      return;
+    }
 
     if (!result.ok) {
       setLoading(false);
