@@ -1,6 +1,6 @@
 # drizzle-scripts — Del esquema a SQL versionado y revisable
 
-Los scripts `db:*` (`drizzle-kit ^0.31.10` sobre `drizzle-orm ^0.45.2`) convierten `lib/db/schema.ts` en SQL versionado dentro de `./drizzle/`. Generar es local y seguro; aplicar a la base requiere `DATABASE_URL` y criterio sobre qué comando usar.
+Los scripts `db:*` (`drizzle-kit ^0.31.10` sobre `drizzle-orm ^0.45.2`) convierten `lib/db/schema.ts` en SQL versionado dentro de `./drizzle/`. Generar es local y seguro; aplicar a la base requiere `DIRECT_URL` (conexión directa o session pooler, puerto 5432) y criterio sobre qué comando usar.
 
 > **Estado: spike de evaluación.** Los scripts solo generan y aplican SQL. No crean helpers, no configuran RLS y no están cableados a ninguna base real.
 
@@ -22,7 +22,7 @@ Los scripts `db:*` (`drizzle-kit ^0.31.10` sobre `drizzle-orm ^0.45.2`) conviert
 
 ## Flujo paso a paso
 
-1. Completar `.env.local` desde `.env.example` (`cp .env.example .env.local`) con `DATABASE_URL` real.
+1. Completar `.env.local` desde `.env.example` (`cp .env.example .env.local`) con `DIRECT_URL` real (las migraciones no usan el pooler de `DATABASE_URL`).
 2. Ejecutar `bun run db:generate` tras cada cambio en `lib/db/schema.ts`.
 3. Revisar el SQL generado en `./drizzle/` como cualquier otro código (nombres, tipos, `numeric` para dinero).
 4. En spike: `bun run db:push` contra una base descartable. En trabajo serio: `bun run db:migrate`.
