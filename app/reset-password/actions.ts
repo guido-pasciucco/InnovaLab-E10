@@ -14,7 +14,9 @@ import { type PasswordResetState } from "@/lib/types/auth";
 // would let a direct caller point the reset link at another domain.
 export const requestPasswordReset = handleActionErrors(
   async (_prevState: PasswordResetState, data: unknown) => {
-    const redirectTo = `${getSiteOrigin(await headers())}/update-password`;
+    // The link lands on /auth/confirm, which exchanges the PKCE code for a
+    // session and then continues to /update-password.
+    const redirectTo = `${getSiteOrigin(await headers())}/auth/confirm?next=/update-password`;
     return requestPasswordResetService(await createRscSupabaseClient(), data, redirectTo);
   },
   "AUTH_UNAVAILABLE",

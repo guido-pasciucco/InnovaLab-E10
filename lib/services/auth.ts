@@ -1,6 +1,6 @@
 import "server-only";
 
-import { type SupabaseClient } from "@supabase/supabase-js";
+import { type EmailOtpType, type SupabaseClient } from "@supabase/supabase-js";
 import {
   loginSchema,
   passwordResetRequestSchema,
@@ -153,6 +153,40 @@ export async function updatePasswordService(
       throw new AppError("AUTH_SESSION_MISSING", undefined, { cause: error });
     }
     throw toAuthAppError(error, "AUTH_PASSWORD_UPDATE_FAILED");
+  }
+
+  return {};
+}
+
+// Email link types GoTrue can put in a token-hash link.
+const EMAIL_OTP_TYPES = new Set<string>(["signup", "invite", "magiclink", "recovery", "email_change", "email"]);
+
+export type AuthLinkParams = {
+  code?: string | null;
+  tokenHash?: string | null;
+  type?: string | null;
+};
+
+// Turns the params of an auth email link into a session (cookies are
+// written through the client's cookie adapter). Supports both link
+// formats: the PKCE `code` the default templates produce with
+// @supabase/ssr, and `token_hash` + `type` from custom templates.
+export async function confirmAuthLinkService(
+  client: SupabaseClient,
+  { code, tokenHash, type }: AuthLinkParams,
+): Promise<Record<string, never>> {
+  let result: { error: SupabaseAuthFailure | null };
+
+  if (code) {
+    result = await client.auth.exchangeCodeForSession(code);
+  } else if (tokenHash && type && EMAIL_OTP_TYPES.has(type)) {
+    result = await client.auth.verifyOtp({ token_hash: tokenHash, type: type as EmailOtpType });
+  } else {
+    throw new AppError("AUTH_LINK_INVALID");
+  }
+
+  if (result.error) {
+    throw toAuthAppError(result.error, "AUTH_LINK_INVALID");
   }
 
   return {};

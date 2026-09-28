@@ -56,6 +56,12 @@ export const ERROR_CATALOG = {
     message: "Authentication unavailable",
     logLevel: "error",
   },
+  AUTH_LINK_INVALID: {
+    // Email link (PKCE code or token hash) missing, expired or already used.
+    status: 400,
+    message: "This link is invalid or has expired. Please request a new one",
+    logLevel: "warn",
+  },
   AUTH_SESSION_MISSING: {
     status: 401,
     message: "Your session has expired. Please request a new link",

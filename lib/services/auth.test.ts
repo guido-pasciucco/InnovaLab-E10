@@ -3,6 +3,7 @@ import { type SupabaseClient } from "@supabase/supabase-js";
 import { AppError } from "@/lib/errors/app-error";
 import { NEW_FAKE_PASSWORD, FAKE_PASSWORD } from "@/test/fixtures/auth";
 import {
+  confirmAuthLinkService,
   getSessionUserService,
   loginService,
   logoutService,
@@ -230,6 +231,61 @@ describe("signupService with an empty display name", () => {
       email: "a@b.com",
       password: FAKE_PASSWORD,
       options: { data: { display_name: undefined } },
+    });
+  });
+});
+
+describe("confirmAuthLinkService", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function linkClient(result: { error: unknown } = { error: null }) {
+    return authClient({ exchangeCodeForSession: async () => result, verifyOtp: async () => result });
+  }
+
+  it("exchanges a PKCE code for a session", async () => {
+    const client = linkClient();
+    await expect(confirmAuthLinkService(client, { code: "pkce-code" })).resolves.toEqual({});
+    expect(client.auth.exchangeCodeForSession).toHaveBeenCalledWith("pkce-code");
+    expect(client.auth.verifyOtp).not.toHaveBeenCalled();
+  });
+
+  it("verifies a token hash of a known email type", async () => {
+    const client = linkClient();
+    await expect(confirmAuthLinkService(client, { tokenHash: "hash", type: "recovery" })).resolves.toEqual({});
+    expect(client.auth.verifyOtp).toHaveBeenCalledWith({ token_hash: "hash", type: "recovery" });
+  });
+
+  it.each([
+    ["no params", {}],
+    ["a token hash without type", { tokenHash: "hash" }],
+    ["an unknown type", { tokenHash: "hash", type: "sms" }],
+    ["an empty code", { code: "" }],
+  ])("throws AUTH_LINK_INVALID for %s without calling Supabase", async (_label, params) => {
+    const client = linkClient();
+    await expect(confirmAuthLinkService(client, params)).rejects.toMatchObject({ code: "AUTH_LINK_INVALID" });
+    expect(client.auth.exchangeCodeForSession).not.toHaveBeenCalled();
+    expect(client.auth.verifyOtp).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an expired code", { message: "flow state expired", code: "flow_state_expired", status: 403 }],
+    ["a missing code verifier", { message: "code verifier", code: "bad_code_verifier", status: 400 }],
+    ["an expired OTP", { message: "Token has expired", code: "otp_expired", status: 403 }],
+  ])("throws AUTH_LINK_INVALID when Supabase rejects %s", async (_label, error) => {
+    await expect(confirmAuthLinkService(linkClient({ error }), { code: "c" })).rejects.toMatchObject({
+      code: "AUTH_LINK_INVALID",
+    });
+    await expect(
+      confirmAuthLinkService(linkClient({ error }), { tokenHash: "h", type: "recovery" }),
+    ).rejects.toMatchObject({ code: "AUTH_LINK_INVALID" });
+  });
+
+  it("throws AUTH_UNAVAILABLE when Supabase is down", async () => {
+    const error = { message: "Bad gateway", status: 502 };
+    await expect(confirmAuthLinkService(linkClient({ error }), { code: "c" })).rejects.toMatchObject({
+      code: "AUTH_UNAVAILABLE",
     });
   });
 });
