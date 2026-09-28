@@ -7,13 +7,21 @@
 // - Domain codes use a DOMAIN_ prefix (AUTH_, COUPON_, ...). Create one
 //   whenever the user needs a different message; never build the text in a service.
 // - Field-level detail travels in `details`, not in the message.
+//
+// logLevel is read by toAppError when a door translates the error:
+// "silent" for routine user mistakes, "warn" for expected failures worth
+// tracking, "error" for infrastructure failures.
+
+export type LogLevel = "silent" | "warn" | "error";
+
+type CatalogEntry = { status: number; message: string; logLevel: LogLevel };
 
 export const ERROR_CATALOG = {
   // Generic
   VALIDATION: {
     status: 400,
     message: "Invalid input",
-    logLevel: "warn",
+    logLevel: "silent",
   },
   UNAUTHORIZED: {
     status: 401,
@@ -53,7 +61,7 @@ export const ERROR_CATALOG = {
     message: "Could not update password",
     logLevel: "warn",
   },
-} as const;
+} as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;
 
