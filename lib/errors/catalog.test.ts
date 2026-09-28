@@ -20,9 +20,12 @@ describe("ERROR_CATALOG naming convention", () => {
 
   it("exposes the auth-specific codes", () => {
     expect(ERROR_CATALOG.AUTH_INVALID_CREDENTIALS).toMatchObject({ status: 401 });
-    expect(ERROR_CATALOG.AUTH_UNAVAILABLE).toMatchObject({ status: 500 });
+    expect(ERROR_CATALOG.AUTH_UNAVAILABLE).toMatchObject({ status: 503 });
+    expect(ERROR_CATALOG.AUTH_RATE_LIMITED).toMatchObject({ status: 429 });
+    expect(ERROR_CATALOG.AUTH_EMAIL_NOT_CONFIRMED).toMatchObject({ status: 403 });
+    expect(ERROR_CATALOG.AUTH_SESSION_MISSING).toMatchObject({ status: 401 });
     expect(ERROR_CATALOG.AUTH_SIGNUP_FAILED).toMatchObject({ status: 400 });
     expect(ERROR_CATALOG.AUTH_SIGNOUT_FAILED).toMatchObject({ status: 500 });
-    expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 401 });
+    expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 422 });
   });
 });

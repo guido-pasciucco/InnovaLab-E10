@@ -40,10 +40,26 @@ export const ERROR_CATALOG = {
     message: "Invalid email or password",
     logLevel: "warn",
   },
+  AUTH_EMAIL_NOT_CONFIRMED: {
+    status: 403,
+    message: "Please confirm your email before signing in",
+    logLevel: "warn",
+  },
+  AUTH_RATE_LIMITED: {
+    status: 429,
+    message: "Too many attempts. Please try again later",
+    logLevel: "warn",
+  },
   AUTH_UNAVAILABLE: {
-    status: 500,
+    // Supabase is down, answered 5xx, or could not be reached.
+    status: 503,
     message: "Authentication unavailable",
     logLevel: "error",
+  },
+  AUTH_SESSION_MISSING: {
+    status: 401,
+    message: "Your session has expired. Please request a new link",
+    logLevel: "warn",
   },
   AUTH_SIGNUP_FAILED: {
     // Generic on purpose: never reveal whether the email already exists.
@@ -57,7 +73,8 @@ export const ERROR_CATALOG = {
     logLevel: "error",
   },
   AUTH_PASSWORD_UPDATE_FAILED: {
-    status: 401,
+    // Supabase rejected the new password (weak, same as the old one...).
+    status: 422,
     message: "Could not update password",
     logLevel: "warn",
   },
