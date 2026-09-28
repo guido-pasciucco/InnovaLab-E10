@@ -3,11 +3,11 @@ import "server-only";
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient, parseCookieHeader } from "@supabase/ssr";
 
-// Creates a Supabase client suitable for Next.js middleware.
+// Creates a Supabase client suitable for the Next.js proxy (formerly middleware).
 // Refreshes the session on every request via getClaims (lightweight JWT check)
 // and propagates refreshed cookies to both request and response so that
 // getAll sees setAll changes within the same request lifecycle.
-export function createMiddlewareSupabaseClient(
+export function createProxySupabaseClient(
   request: NextRequest,
   response: NextResponse,
 ) {

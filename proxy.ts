@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createMiddlewareSupabaseClient } from "@/lib/supabase/middleware";
+import { createProxySupabaseClient } from "@/lib/supabase/proxy";
 
-// Middleware runs on every matched request to refresh the Supabase session.
-// getClaims is preferred over getUser in middleware because it validates
+// Proxy runs on every matched request to refresh the Supabase session.
+// getClaims is preferred over getUser in the proxy because it validates
 // the JWT locally without a network round-trip; if the token is expired,
 // Supabase will rotate it and set refreshed cookies via setAll.
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Clone response that will carry refreshed cookies back to the browser.
   const response = NextResponse.next({
     request: {
@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
   });
 
   try {
-    const supabase = createMiddlewareSupabaseClient(request, response);
+    const supabase = createProxySupabaseClient(request, response);
     // Refresh session — lightweight JWT verification, triggers setAll if rotation needed.
     await supabase.auth.getClaims();
   } catch {

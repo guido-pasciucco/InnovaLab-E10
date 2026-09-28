@@ -14,7 +14,7 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 | `db.ts` | Placeholder `server-only` | Temporal |
 | `db/` | Persistencia en servidor (Drizzle) | Spike en evaluación (ver #15) |
 | `services/` | Lógica de negocio del servidor compartida por Server Actions y Route Handlers (transport-agnostic: recibe valores, devuelve datos planos) | Nueva (acuerdo vigente) |
-| `supabase/` | Clientes Supabase por runtime (`middleware`, `server`, `rsc`) — solo servidor | Activa |
+| `supabase/` | Clientes Supabase por runtime (`proxy`, `rsc`) — solo servidor | Activa |
 | `types/` | Tipos compartidos (p. ej. `FormState` del estado de forms) | Activa |
 
 ## Reglas (no negociables)
