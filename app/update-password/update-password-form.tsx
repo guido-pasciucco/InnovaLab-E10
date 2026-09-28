@@ -18,7 +18,7 @@ const initialState: PasswordUpdateState = undefined;
 // Client-side extension of the shared schema: the confirm-match check
 // lives only in the form (the service validates the password itself).
 const updatePasswordFormSchema = passwordUpdateSchema
-  .extend({ confirm: z.string().min(8) })
+  .extend({ confirm: z.string().min(8, { error: "Password must be at least 8 characters" }) })
   .refine((values) => values.password === values.confirm, {
     message: "Passwords do not match.",
     path: ["confirm"],
