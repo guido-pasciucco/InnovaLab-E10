@@ -45,7 +45,7 @@ En ese sentido funciona como un ORM liviano sobre la API: expone métodos tipado
 La arquitectura Clean lite exige borde delgado que valida y delega. Hay dos topologías posibles:
 
 - Directa: navegador → Supabase (RLS como única guardia). Rápida, pero el navegador habla con la base.
-- Mediada (la adoptada): navegador → `/api/*` propia → Supabase/Drizzle. El navegador jamás importa el cliente Supabase ni ve una query. Los Route Handlers validan con Zod, obtienen el usuario desde la cookie en el servidor y recién entonces hablan con Supabase o Drizzle.
+- Mediada (la adoptada): navegador → servidor propio (Server Actions) → Supabase/Drizzle. El navegador jamás importa el cliente Supabase ni ve una query. Las actions delegan en `lib/services`, que valida con Zod, obtiene el usuario desde la cookie en el servidor y recién entonces habla con Supabase o Drizzle.
 
 En la topología mediada, `createBrowserClient` no se utiliza: todo vive en el servidor (`createServerClient` + Drizzle). Las variables podrían incluso dejar de usar el prefijo `NEXT_PUBLIC_*`, ya que el navegador nunca las lee.
 
@@ -103,7 +103,7 @@ Supabase Auth abstrae la capa completa de identidad: guarda usuarios en `auth.us
 
 ## Ejemplo de implementación: cálculo protegido (topología mediada, ilustrativo)
 
-Flujo completo con login vía API propia, refresh en middleware y escritura con Drizzle. El navegador solo habla con `/api/*`; nunca importa el cliente Supabase. Estos fragmentos son ilustrativos, los helpers reales aún no existen.
+Flujo completo con login vía API propia, refresh en middleware y escritura con Drizzle. Estos fragmentos son ilustrativos: el proyecto terminó usando Server Actions en lugar de `/api/*` (ver [API HTTP de auth](../examples/http-auth-api.md) para cuándo y cómo exponer rutas HTTP).
 
 Paso 1 — Login mediado (`app/api/auth/login/route.ts`):
 

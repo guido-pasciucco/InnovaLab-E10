@@ -18,7 +18,7 @@ export default function Home() {
             Supabase Auth demo
           </h1>
           <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Mediated topology: the browser only talks to <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">/api/*</code>;
+            Mediated topology: the browser only talks to our own server (Server Actions);
             Supabase stays on the server.
           </p>
         </header>
