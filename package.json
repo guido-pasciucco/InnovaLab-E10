@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "bun@1.4.2",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +14,15 @@
     "db:generate": "bunx drizzle-kit generate",
     "db:migrate": "bunx drizzle-kit migrate",
     "db:push": "bunx drizzle-kit push",
-    "test": "vitest run"
+    "db:migrate:local": "DIRECT_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bunx drizzle-kit migrate",
+    "db:reset:local": "supabase db reset && bun run db:migrate:local",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "e2e:setup": "playwright install chromium",
+    "e2e:up": "bun run supabase:start && bun run db:migrate:local",
+    "e2e:down": "bun run supabase:stop",
+    "supabase:start": "supabase start -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
+    "supabase:stop": "supabase stop"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -29,13 +40,16 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.6.0",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
+    "supabase": "^2.118.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.11"
