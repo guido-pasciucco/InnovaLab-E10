@@ -6,7 +6,7 @@ import {
   passwordUpdateSchema,
   signupSchema,
 } from "./auth";
-import { TEST_PASSWORD } from "@/test/fixtures/auth";
+import { FAKE_PASSWORD } from "@/test/fixtures/auth";
 
 // Messages are defined once in the schema and shown on both sides:
 // by RHF in the client and by the service's ZodError on the server.
@@ -34,7 +34,7 @@ describe("auth schemas", () => {
   });
 
   it("accepts an empty display name (the field is optional in the form)", () => {
-    expect(signupSchema.safeParse({ email: "a@b.com", password: TEST_PASSWORD, displayName: "" }).success).toBe(true);
+    expect(signupSchema.safeParse({ email: "a@b.com", password: FAKE_PASSWORD, displayName: "" }).success).toBe(true);
   });
 
   it("uses readable messages for password reset and update", () => {
