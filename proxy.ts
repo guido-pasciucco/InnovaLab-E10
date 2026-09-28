@@ -1,29 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { createProxySupabaseClient } from "@/lib/supabase/proxy";
+import { type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/proxy";
 
-// Proxy runs on every matched request to refresh the Supabase session.
-// getClaims is preferred over getUser in the proxy because it validates
-// the JWT locally without a network round-trip; if the token is expired,
-// Supabase will rotate it and set refreshed cookies via setAll.
+// Proxy (Next 16's name for middleware) runs on every matched request to
+// refresh the Supabase session. See lib/supabase/proxy for the cookie flow.
 export async function proxy(request: NextRequest) {
-  // Clone response that will carry refreshed cookies back to the browser.
-  const response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
-
-  try {
-    const supabase = createProxySupabaseClient(request, response);
-    // Refresh session — lightweight JWT verification, triggers setAll if rotation needed.
-    await supabase.auth.getClaims();
-  } catch {
-    // Missing env or transient auth error: do not block the request.
-    // Route handlers will return controlled 500 when env is missing.
-    // For auth errors we still return the response without refreshed cookies.
-  }
-
-  return response;
+  return updateSession(request);
 }
 
 export const config = {
