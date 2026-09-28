@@ -1,27 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createRscSupabaseClient } from "@/lib/supabase/rsc";
+import { requireUser } from "@/lib/auth/require-user";
 import LogoutButton from "./logout-button";
 
 // Protected demo page: reads session server-side via RSC helper.
 // Browser never imports Supabase; all auth is mediated via cookies.
 export default async function DashboardPage() {
-  let user: { id: string; email?: string } | null = null;
-
-  try {
-    const supabase = await createRscSupabaseClient();
-    const { data, error } = await supabase.auth.getUser();
-    if (!error && data.user) {
-      user = { id: data.user.id, email: data.user.email ?? undefined };
-    }
-  } catch {
-    // Missing env -> treat as unauthenticated; route will show guidance.
-    user = null;
-  }
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireUser();
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">

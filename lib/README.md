@@ -6,6 +6,7 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 
 | Módulo | Rol | Estado |
 | --- | --- | --- |
+| `auth/` | Guards de sesión para Server Components (`requireUser`) — solo servidor | Activa |
 | `calc/` | Motor de cálculo: funciones puras (entra config + costos, salen resultados) | Esqueleto (ver #14) |
 | `money/` | Aritmética decimal exacta con `decimal.js` | Esqueleto |
 | `schemas/` | Contratos Zod compartidos entre cliente y servidor | Esqueleto |
