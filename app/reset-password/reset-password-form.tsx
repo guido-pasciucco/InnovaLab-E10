@@ -1,67 +1,68 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useActionState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { passwordResetRequestSchema } from "@/lib/schemas/auth/auth";
+import { requestPasswordReset } from "./actions";
+import { type PasswordResetState } from "@/lib/types/auth";
+import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
+import type { Path } from "react-hook-form";
 
-type Status = "idle" | "loading" | "success" | "error";
+const initialState: PasswordResetState = undefined;
+
+// Types come from the shared schema (single source). The redirect origin
+// for the email link is resolved on the server, never sent from here.
+type ResetFormValues = z.infer<typeof passwordResetRequestSchema>;
+
+// Fields the server may flag; module-level so the reference stays stable.
+const SERVER_FIELDS: readonly Path<ResetFormValues>[] = ["email"];
 
 export default function ResetPasswordForm() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [state, submitAction, pending] = useActionState(requestPasswordReset, initialState);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<ResetFormValues>({
+    resolver: zodResolver(passwordResetRequestSchema),
+  });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setStatus("loading");
-    setErrorMessage("");
-
-    try {
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null;
-        setStatus("error");
-        setErrorMessage(data?.error ?? "Could not send reset email.");
-        return;
-      }
-
-      setStatus("success");
-    } catch {
-      setStatus("error");
-      setErrorMessage("Could not connect to the server. Please try again.");
-    }
-  }
-
-  const isLoading = status === "loading";
+  const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    // RHF validates in the client with the same schema; only then it
+    // dispatches to the action (wrapped in a transition by the helper).
+    <form onSubmit={handleSubmit(dispatchInTransition(submitAction))} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm font-medium text-gray-700">
           Email
         </label>
         <input
+          {...register("email")}
           id="email"
           type="email"
-          required
           autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          disabled={isLoading}
+          disabled={pending}
           className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
         />
+        {errors.email && (
+          <p role="alert" className="text-sm text-red-600">
+            {errors.email.message}
+          </p>
+        )}
       </div>
 
-      {status === "error" && (
+      {state && !state.ok && !hasServerFieldErrors && (
         <p role="alert" className="text-sm text-red-600">
-          {errorMessage}
+          {state.message}
         </p>
       )}
 
-      {status === "success" && (
+      {state?.ok && (
         <p role="status" className="text-sm text-green-600">
           If an account exists for that email, a reset link has been sent.
         </p>
@@ -69,10 +70,10 @@ export default function ResetPasswordForm() {
 
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={pending}
         className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-blue-300"
       >
-        {isLoading ? "Sending..." : "Send reset link"}
+        {pending ? "Sending..." : "Send reset link"}
       </button>
     </form>
   );
