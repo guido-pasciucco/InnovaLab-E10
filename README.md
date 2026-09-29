@@ -158,7 +158,7 @@ tests/
 
 ## 4. 🚀 Primeros pasos
 
-Prerrequisitos: [Bun](https://bun.sh) 1.4.2+ (gestor de paquetes) y Node.js LTS (runtime). La versión de Bun está fijada en `package.json` (`packageManager`).
+Prerrequisitos: [Bun](https://bun.sh) 1.4.2+ (gestor de paquetes) y Node.js 24 LTS (runtime). La versión de Bun está fijada en `package.json` (`packageManager`) y la de Node en `.nvmrc` (con [nvm](https://github.com/nvm-sh/nvm): `nvm install && nvm use`).
 
 ```bash
 bun install
@@ -181,6 +181,87 @@ bunx tsc --noEmit  # type check
 
 > [!NOTE]
 > No incluir secretos en los commits. La Fase 1 no necesita variables de entorno; la Fase 2 (Supabase) documentará sus propias variables solo de servidor.
+
+### Tests end-to-end (Playwright + Supabase local)
+
+Los tests E2E corren contra un Supabase local en Docker (con Mailpit para capturar los mails de auth), nunca contra el proyecto de Supabase en la nube.
+
+> [!NOTE]
+> No hay CI configurado por ahora: lint, typecheck, tests unitarios y E2E se corren localmente antes de abrir o mergear un PR. Las referencias a `CI` en `playwright.config.ts` quedan inactivas hasta que exista un pipeline.
+
+Prerrequisitos, una vez por máquina:
+
+1. Docker instalado y corriendo. En Linux, tu usuario tiene que estar en el grupo `docker` (`sudo usermod -aG docker $USER` y volver a iniciar sesión).
+2. El navegador de Playwright. `bun install` instala el paquete, pero no el navegador:
+
+   ```bash
+   bun run e2e:setup
+   ```
+
+3. Copiar `.env.test.example` a `.env.test` y completar las keys `Publishable` y `Secret` que muestra `bunx supabase status`. La `Secret` solo la usa el proceso de tests (factories y fixtures); nunca llega a la app.
+
+Cada vez que quieras correrlos:
+
+```bash
+bun run e2e:up      # starts local Supabase and applies drizzle migrations
+bun run test:e2e    # builds the app and runs the specs on port 3100
+bun run e2e:down    # stops the local stack (keeps the db data)
+```
+
+Si la base queda con datos basura: `bun run db:reset:local` (la vacía y vuelve a migrar).
+
+> [!TIP]
+> Si Chromium no arranca por librerías del sistema faltantes (típico en WSL o Linux mínimo, error del estilo `error while loading shared libraries`), instalalas con `bunx playwright install --with-deps chromium` (pide `sudo`). En macOS y Windows nunca hace falta. Cuando se actualiza `@playwright/test`, volver a correr `bun run e2e:setup`.
+
+#### Imágenes y contenedores de Supabase local
+
+No hay `docker-compose.yml` en el repo: el CLI de Supabase (`supabase`, devDependency) es el que descarga las imágenes y crea los contenedores, según `supabase/config.toml`. No hace falta correr `docker pull` ni `docker run` a mano.
+
+`bun run e2e:up` hace dos cosas: `supabase:start` (levantar el stack) y `db:migrate:local` (aplicar las migraciones de `drizzle/`). Migrar es idempotente: si no hay migraciones nuevas, no hace nada, así que se puede correr siempre.
+
+- **Primera vez:** descarga las imágenes (~1–1.5 GB, tarda unos minutos), crea los contenedores y un volumen para los datos de Postgres, y aplica todas las migraciones.
+- **Las veces siguientes:** las imágenes ya están, arranca en segundos y la base conserva los datos; solo se aplican las migraciones nuevas, si las hay.
+
+El script levanta solo lo que usan los tests y excluye el resto con `-x` (studio, realtime, storage, edge-runtime, etc.). Quedan 5 contenedores, llamados `supabase_<servicio>_innovalab-e10`:
+
+| Contenedor | Servicio | Puerto local |
+| --- | --- | --- |
+| `supabase_db_innovalab-e10` | Postgres (tablas de la app y schema `auth`) | `54322` |
+| `supabase_kong_innovalab-e10` | API gateway: la URL única de Supabase | `54321` |
+| `supabase_auth_innovalab-e10` | GoTrue: signup, login, reset, mails | detrás de kong (`/auth/v1`) |
+| `supabase_rest_innovalab-e10` | PostgREST: las tablas como API REST | detrás de kong (`/rest/v1`) |
+| `supabase_inbucket_innovalab-e10` | Mailpit: atrapa los mails de auth | `54324` (UI web) |
+
+Comandos útiles:
+
+```bash
+bunx supabase status                  # URLs, ports and keys of the running stack
+docker ps --filter name=innovalab-e10  # the project's containers
+bun run supabase:stop                 # stops the containers, KEEPS the db data
+bunx supabase stop --no-backup        # stops them and DELETES the db volume
+bun run db:reset:local                # empties the db and re-applies drizzle migrations
+```
+
+> [!NOTE]
+> Conectarse a la base con un cliente (DBeaver, TablePlus, etc.): host `127.0.0.1`, puerto **`54322`**, usuario `postgres`, password `postgres`, base `postgres`, sin SSL. Son credenciales por defecto del stack local, no secretos.
+
+> [!WARNING]
+> Los servicios escuchan en `0.0.0.0`: cualquiera en tu misma red puede conectarse con esas credenciales. Bajá el stack con `bun run supabase:stop` cuando no lo uses.
+
+Estructura de `tests/e2e/` (principio: preparar por la puerta de atrás, actuar por la de adelante; cada flujo se recorre por la UI solo en su propio spec):
+
+```text
+tests/e2e/
+  fixtures/index.ts   # `test` y `expect`; todos los specs importan de acá
+  factories/          # crean y borran datos vía Admin API (p. ej. user.ts)
+  pages/              # Page Objects: los selectores viven solo acá
+  helpers/            # env, Mailpit y clientes de Supabase
+  <feature>/          # specs agrupados por feature (p. ej. auth/)
+  global-setup.ts
+```
+
+- Los specs piden precondiciones como fixtures: `user` (usuario confirmado que se borra al terminar el test) y `authedPage` (la `page` ya logueada como `user`). Si un spec crea datos por la UI, los registra en `cleanup` para que se borren igual.
+- Para agregar una entidad nueva: sumar una factory en `factories/` (crear y borrar) y un fixture en `fixtures/index.ts` que la cree antes del test y la borre en el teardown.
 
 Notas:
 

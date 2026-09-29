@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { type SupabaseClient } from "@supabase/supabase-js";
 import { AppError } from "@/lib/errors/app-error";
-import { NEW_TEST_PASSWORD, TEST_PASSWORD } from "@/test/fixtures/auth";
+import { NEW_FAKE_PASSWORD, FAKE_PASSWORD } from "@/test/fixtures/auth";
 import {
   getSessionUserService,
   loginService,
@@ -15,7 +15,7 @@ function clientWith(signIn: () => Promise<unknown>) {
   return { auth: { signInWithPassword: vi.fn(signIn) } } as unknown as SupabaseClient;
 }
 
-const valid = { email: "a@b.com", password: TEST_PASSWORD };
+const valid = { email: "a@b.com", password: FAKE_PASSWORD };
 
 describe("loginService", () => {
   it("resolves on successful sign in", async () => {
@@ -49,14 +49,14 @@ function authClient(auth: Record<string, () => Promise<unknown>>) {
 }
 
 describe("signupService", () => {
-  const input = { email: "a@b.com", password: TEST_PASSWORD, displayName: " Ana " };
+  const input = { email: "a@b.com", password: FAKE_PASSWORD, displayName: " Ana " };
 
   it("signs up with a trimmed display name", async () => {
     const client = authClient({ signUp: async () => ({ error: null }) });
     await expect(signupService(client, input)).resolves.toEqual({});
     expect(client.auth.signUp).toHaveBeenCalledWith({
       email: "a@b.com",
-      password: TEST_PASSWORD,
+      password: FAKE_PASSWORD,
       options: { data: { display_name: "Ana" } },
     });
   });
@@ -130,8 +130,8 @@ describe("requestPasswordResetService", () => {
 describe("updatePasswordService", () => {
   it("updates the password of the session user", async () => {
     const client = authClient({ updateUser: async () => ({ error: null }) });
-    await expect(updatePasswordService(client, { password: NEW_TEST_PASSWORD })).resolves.toEqual({});
-    expect(client.auth.updateUser).toHaveBeenCalledWith({ password: NEW_TEST_PASSWORD });
+    await expect(updatePasswordService(client, { password: NEW_FAKE_PASSWORD })).resolves.toEqual({});
+    expect(client.auth.updateUser).toHaveBeenCalledWith({ password: NEW_FAKE_PASSWORD });
   });
 
   it("throws a ZodError for a short password", async () => {
@@ -141,7 +141,7 @@ describe("updatePasswordService", () => {
 
   it("throws AUTH_PASSWORD_UPDATE_FAILED when Supabase rejects it", async () => {
     const client = authClient({ updateUser: async () => ({ error: { message: "no session" } }) });
-    await expect(updatePasswordService(client, { password: NEW_TEST_PASSWORD })).rejects.toEqual(
+    await expect(updatePasswordService(client, { password: NEW_FAKE_PASSWORD })).rejects.toEqual(
       new AppError("AUTH_PASSWORD_UPDATE_FAILED"),
     );
   });
@@ -150,10 +150,10 @@ describe("updatePasswordService", () => {
 describe("signupService with an empty display name", () => {
   it("sends no display name instead of an empty string", async () => {
     const client = authClient({ signUp: async () => ({ error: null }) });
-    await signupService(client, { email: "a@b.com", password: TEST_PASSWORD, displayName: "  " });
+    await signupService(client, { email: "a@b.com", password: FAKE_PASSWORD, displayName: "  " });
     expect(client.auth.signUp).toHaveBeenCalledWith({
       email: "a@b.com",
-      password: TEST_PASSWORD,
+      password: FAKE_PASSWORD,
       options: { data: { display_name: undefined } },
     });
   });
