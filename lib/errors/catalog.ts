@@ -7,13 +7,21 @@
 // - Domain codes use a DOMAIN_ prefix (AUTH_, COUPON_, ...). Create one
 //   whenever the user needs a different message; never build the text in a service.
 // - Field-level detail travels in `details`, not in the message.
+//
+// logLevel is read by toAppError when a door translates the error:
+// "silent" for routine user mistakes, "warn" for expected failures worth
+// tracking, "error" for infrastructure failures.
+
+export type LogLevel = "silent" | "warn" | "error";
+
+type CatalogEntry = { status: number; message: string; logLevel: LogLevel };
 
 export const ERROR_CATALOG = {
   // Generic
   VALIDATION: {
     status: 400,
     message: "Invalid input",
-    logLevel: "warn",
+    logLevel: "silent",
   },
   UNAUTHORIZED: {
     status: 401,
@@ -32,10 +40,32 @@ export const ERROR_CATALOG = {
     message: "Invalid email or password",
     logLevel: "warn",
   },
+  AUTH_EMAIL_NOT_CONFIRMED: {
+    status: 403,
+    message: "Please confirm your email before signing in",
+    logLevel: "warn",
+  },
+  AUTH_RATE_LIMITED: {
+    status: 429,
+    message: "Too many attempts. Please try again later",
+    logLevel: "warn",
+  },
   AUTH_UNAVAILABLE: {
-    status: 500,
+    // Supabase is down, answered 5xx, or could not be reached.
+    status: 503,
     message: "Authentication unavailable",
     logLevel: "error",
+  },
+  AUTH_LINK_INVALID: {
+    // Email link (PKCE code or token hash) missing, expired or already used.
+    status: 400,
+    message: "This link is invalid or has expired. Please request a new one",
+    logLevel: "warn",
+  },
+  AUTH_SESSION_MISSING: {
+    status: 401,
+    message: "Your session has expired. Please request a new link",
+    logLevel: "warn",
   },
   AUTH_SIGNUP_FAILED: {
     // Generic on purpose: never reveal whether the email already exists.
@@ -49,11 +79,12 @@ export const ERROR_CATALOG = {
     logLevel: "error",
   },
   AUTH_PASSWORD_UPDATE_FAILED: {
-    status: 401,
+    // Supabase rejected the new password (weak, same as the old one...).
+    status: 422,
     message: "Could not update password",
     logLevel: "warn",
   },
-} as const;
+} as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;
 

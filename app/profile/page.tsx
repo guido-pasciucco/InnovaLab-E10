@@ -1,27 +1,12 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createRscSupabaseClient } from "@/lib/supabase/rsc";
+import { requireUser } from "@/lib/auth/require-user";
 
 // Profile demo: shows how to link auth.users to application data.
 // The user.id comes from the validated server session — the only trusted
 // source. A Drizzle query would filter by owner_user_id = user.id, with
 // RLS policy auth.uid() = owner_user_id as defense-in-depth.
 export default async function ProfilePage() {
-  let user: { id: string; email?: string } | null = null;
-
-  try {
-    const supabase = await createRscSupabaseClient();
-    const { data, error } = await supabase.auth.getUser();
-    if (!error && data.user) {
-      user = { id: data.user.id, email: data.user.email ?? undefined };
-    }
-  } catch {
-    user = null;
-  }
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireUser();
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">

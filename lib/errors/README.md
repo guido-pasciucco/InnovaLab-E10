@@ -36,7 +36,7 @@ servicio ──throw──▶ handleRouteErrors / handleActionErrors ──▶ t
 1. **El servicio no traduce.** No devuelve status ni `Response`, y no arma mensajes. Lanza un código.
 2. **La action nunca le lanza al cliente.** Next oculta los mensajes de error en producción; `handleActionErrors` siempre devuelve estado.
 3. **`unstable_rethrow` va primero en todo `catch`.** `redirect()`, `notFound()` y `unauthorized()` funcionan lanzando. Si un `catch` se los traga, el redirect deja de funcionar sin avisar. Los dos adaptadores ya lo hacen; cualquier `catch` nuevo tiene que hacerlo también.
-4. **Los errores desconocidos nunca llegan al cliente.** `toAppError` los loguea y expone solo el `fallbackCode` genérico.
+4. **Los errores desconocidos nunca llegan al cliente.** `toAppError` los loguea como `error` y expone solo el `fallbackCode` genérico. Los conocidos se loguean según el `logLevel` del catálogo.
 5. **Los mensajes viven en el catálogo.** El detalle específico (por ejemplo, errores por campo) va en `details`, nunca en un texto armado dentro del servicio.
 6. **Los servicios solo importan el núcleo.** Desde `lib/services/` se importa `app-error.ts` (y `catalog.ts` si hace falta el tipo `ErrorCode`), nunca `handle-*-errors.ts`. Los adaptadores dependen de Next (`next/server`, `next/navigation`) y solo los importan las puertas en `app/`.
 
@@ -73,7 +73,7 @@ servicio ──throw──▶ handleRouteErrors / handleActionErrors ──▶ t
 
 1. ¿Alcanza con un genérico? Si el mensaje neutro sirve (por ejemplo, input inválido con `details` por campo), usá el genérico.
 2. Si el usuario necesita un mensaje propio, agregá `DOMINIO_CASO` en `catalog.ts`, bajo el comentario de su dominio.
-3. Elegí el `status` HTTP y el `logLevel`: `warn` para fallos esperados del usuario y `error` para fallos de infraestructura.
+3. Elegí el `status` HTTP y el `logLevel`: `silent` para errores rutinarios del usuario, `warn` para fallos esperados que conviene seguir y `error` para fallos de infraestructura. `toAppError` loguea cada error según ese nivel; la causa técnica (`new AppError(code, details, { cause })`) solo va al log.
 4. Lanzalo desde el servicio con `throw new AppError("DOMINIO_CASO")`.
 
 `catalog.test.ts` hace cumplir el formato: todo código que no esté en la lista de genéricos debe tener prefijo de dominio.

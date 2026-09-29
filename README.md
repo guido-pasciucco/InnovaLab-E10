@@ -75,7 +75,7 @@ app/
     resultados/
   login/
     actions.ts     # Server Action del login (colocada por feature; ídem signup, reset-password, ...)
-middleware.ts      # refresh de sesión Supabase en cada request (no bloquea; ver lib/supabase/middleware)
+proxy.ts           # refresh de sesión Supabase en cada request (no bloquea; ver lib/supabase/proxy)
 components/
   wizard/
   charts/        # client-only, see below
@@ -85,7 +85,7 @@ lib/
   money/         # pure money formatting / rounding
   schemas/       # THE single Zod source of truth
   services/      # lógica de negocio del servidor (transport-agnostic), usada por las Server Actions
-  supabase/      # clientes Supabase por runtime (middleware, rsc) — server-only
+  supabase/      # clientes Supabase por runtime (proxy, rsc) — server-only
   types/         # tipos compartidos (p. ej. FormState)
   store/         # Phase 1 local-first persistence (LocalStorage vs IndexedDB TBD)
   db.ts          # server-only, Phase 2 (never imported from client)

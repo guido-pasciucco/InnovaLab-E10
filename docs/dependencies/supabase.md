@@ -55,7 +55,7 @@ En la topología mediada, `createBrowserClient` no se utiliza: todo vive en el s
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Helper servidor  | Uso previsto: `lib/supabase/server` con `import "server-only"` y `createServerClient` con `getAll`/`setAll` (aún no creado) |
 | Helper cliente   | Uso previsto: helper separado solo para componentes de cliente con `createBrowserClient` singleton (aún no creado)         |
-| Middleware       | Uso previsto: `middleware.ts` en la raíz con `matcher` que excluye estáticos, refrescando sesión con `getClaims`/`getUser` (aún no creado) |
+| Proxy            | `proxy.ts` en la raíz (antes `middleware.ts`, renombrado en Next 16) con `matcher` que excluye estáticos; refresca la sesión con `getClaims` vía `lib/supabase/proxy` |
 | Lectura de datos | Los Server Components leerán directo con el helper de servidor. Nunca con `fetch` interno a la propia API               |
 | Dominio          | `lib/calc` y `lib/money` permanecen puros; la conversión fila ↔ dominio ocurre en la frontera, nunca dentro del dominio  |
 
@@ -95,7 +95,7 @@ export async function serverClient() {
 
 ## Paso siguiente
 
-Crear los helpers (`lib/supabase/server` y helper de cliente) más `middleware.ts` raíz, y configurar `.env.local` desde `.env.example`. Ver `.env.example` para las variables requeridas.
+Crear los helpers (`lib/supabase/server` y helper de cliente) más `proxy.ts` raíz, y configurar `.env.local` desde `.env.example`. Ver `.env.example` para las variables requeridas.
 
 ## Conclusión: por qué Auth pasa por Supabase (pregunta cerrada)
 

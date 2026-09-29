@@ -1,16 +1,23 @@
 import "server-only";
 
+type SiteOriginEnv = { SITE_URL?: string; NODE_ENV?: string };
+
 // Resolves the public origin of this site on the server, never from
 // client-sent data. Used to build links that leave the app (e.g. the
 // password reset email), where a spoofed origin would send users to an
 // attacker's domain.
-// SITE_URL wins when configured; otherwise the request's own host is
-// used, the same trust level as `request.nextUrl.origin`.
+// SITE_URL is required in production: Host and X-Forwarded-Host are
+// request headers any client can set, so they are only trusted as a
+// local-development convenience when SITE_URL is unset.
 export function getSiteOrigin(
   requestHeaders: Headers,
-  siteUrl: string | undefined = process.env.SITE_URL,
+  env: SiteOriginEnv = { SITE_URL: process.env.SITE_URL, NODE_ENV: process.env.NODE_ENV },
 ): string {
-  if (siteUrl) return new URL(siteUrl).origin;
+  if (env.SITE_URL) return new URL(env.SITE_URL).origin;
+
+  if (env.NODE_ENV === "production") {
+    throw new Error("Cannot resolve site origin: SITE_URL must be set in production");
+  }
 
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
   if (!host) {

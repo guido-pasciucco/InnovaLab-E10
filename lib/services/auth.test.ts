@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { type SupabaseClient } from "@supabase/supabase-js";
 import { AppError } from "@/lib/errors/app-error";
 import { NEW_FAKE_PASSWORD, FAKE_PASSWORD } from "@/test/fixtures/auth";
 import {
+  confirmAuthLinkService,
   getSessionUserService,
   loginService,
   logoutService,
@@ -30,8 +31,33 @@ describe("loginService", () => {
   });
 
   it("throws AUTH_INVALID_CREDENTIALS when Supabase rejects the credentials", async () => {
-    const client = clientWith(async () => ({ error: { message: "Invalid login" } }));
+    const client = clientWith(async () => ({
+      error: { message: "Invalid login credentials", code: "invalid_credentials", status: 400 },
+    }));
     await expect(loginService(client, valid)).rejects.toEqual(new AppError("AUTH_INVALID_CREDENTIALS"));
+  });
+
+  it("throws AUTH_EMAIL_NOT_CONFIRMED when the account is not confirmed yet", async () => {
+    const client = clientWith(async () => ({
+      error: { message: "Email not confirmed", code: "email_not_confirmed", status: 400 },
+    }));
+    await expect(loginService(client, valid)).rejects.toMatchObject({ code: "AUTH_EMAIL_NOT_CONFIRMED" });
+  });
+
+  it.each([
+    ["HTTP 429", { message: "Too many", status: 429 }],
+    ["over_request_rate_limit", { message: "Too many", code: "over_request_rate_limit", status: 400 }],
+  ])("throws AUTH_RATE_LIMITED on a rate limit (%s)", async (_label, error) => {
+    const client = clientWith(async () => ({ error }));
+    await expect(loginService(client, valid)).rejects.toMatchObject({ code: "AUTH_RATE_LIMITED" });
+  });
+
+  it.each([
+    ["an upstream 5xx", { message: "Bad gateway", status: 502 }],
+    ["a network failure (status 0)", { message: "fetch failed", name: "AuthRetryableFetchError", status: 0 }],
+  ])("throws AUTH_UNAVAILABLE on %s", async (_label, error) => {
+    const client = clientWith(async () => ({ error }));
+    await expect(loginService(client, valid)).rejects.toMatchObject({ code: "AUTH_UNAVAILABLE" });
   });
 
   it("lets infrastructure errors bubble up untouched", async () => {
@@ -67,8 +93,22 @@ describe("signupService", () => {
   });
 
   it("throws AUTH_SIGNUP_FAILED without revealing why", async () => {
-    const client = authClient({ signUp: async () => ({ error: { message: "User already registered" } }) });
+    const client = authClient({
+      signUp: async () => ({ error: { message: "User already registered", code: "user_already_exists", status: 422 } }),
+    });
     await expect(signupService(client, input)).rejects.toEqual(new AppError("AUTH_SIGNUP_FAILED"));
+  });
+
+  it("throws AUTH_RATE_LIMITED when too many confirmation emails were sent", async () => {
+    const client = authClient({
+      signUp: async () => ({ error: { message: "Rate limit", code: "over_email_send_rate_limit", status: 429 } }),
+    });
+    await expect(signupService(client, input)).rejects.toMatchObject({ code: "AUTH_RATE_LIMITED" });
+  });
+
+  it("throws AUTH_UNAVAILABLE when Supabase is down", async () => {
+    const client = authClient({ signUp: async () => ({ error: { message: "Service unavailable", status: 503 } }) });
+    await expect(signupService(client, input)).rejects.toMatchObject({ code: "AUTH_UNAVAILABLE" });
   });
 });
 
@@ -104,6 +144,10 @@ describe("getSessionUserService", () => {
 });
 
 describe("requestPasswordResetService", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("sends the reset email with the given redirect", async () => {
     const client = authClient({ resetPasswordForEmail: async () => ({ error: null }) });
     await expect(
@@ -115,8 +159,21 @@ describe("requestPasswordResetService", () => {
   });
 
   it("resolves even when Supabase fails, to prevent account enumeration", async () => {
-    const client = authClient({ resetPasswordForEmail: async () => ({ error: { message: "not found" } }) });
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const client = authClient({ resetPasswordForEmail: async () => ({ error: { message: "not found", status: 400 } }) });
     await expect(requestPasswordResetService(client, { email: "a@b.com" }, "/x")).resolves.toEqual({});
+  });
+
+  it("logs the swallowed Supabase error on the server without the email", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const supabaseError = { message: "Service unavailable", status: 503 };
+    const client = authClient({ resetPasswordForEmail: async () => ({ error: supabaseError }) });
+    await requestPasswordResetService(client, { email: "a@b.com" }, "/x");
+    const calls = [...error.mock.calls, ...warn.mock.calls];
+    expect(calls).toContainEqual([expect.stringContaining("AUTH_UNAVAILABLE"), supabaseError]);
+    expect(JSON.stringify(calls)).not.toContain("a@b.com");
   });
 
   it("throws a ZodError for an invalid email", async () => {
@@ -139,11 +196,30 @@ describe("updatePasswordService", () => {
     await expect(updatePasswordService(client, { password: "123" })).rejects.toMatchObject({ name: "ZodError" });
   });
 
-  it("throws AUTH_PASSWORD_UPDATE_FAILED when Supabase rejects it", async () => {
-    const client = authClient({ updateUser: async () => ({ error: { message: "no session" } }) });
-    await expect(updatePasswordService(client, { password: NEW_FAKE_PASSWORD })).rejects.toEqual(
-      new AppError("AUTH_PASSWORD_UPDATE_FAILED"),
-    );
+  it.each([
+    ["weak_password", "Password is too weak"],
+    ["same_password", "New password should be different"],
+  ])("throws AUTH_PASSWORD_UPDATE_FAILED when Supabase rejects the password (%s)", async (code, message) => {
+    const client = authClient({ updateUser: async () => ({ error: { message, code, status: 422 } }) });
+    await expect(updatePasswordService(client, { password: NEW_FAKE_PASSWORD })).rejects.toMatchObject({
+      code: "AUTH_PASSWORD_UPDATE_FAILED",
+    });
+  });
+
+  it("throws AUTH_SESSION_MISSING when there is no session to update", async () => {
+    const client = authClient({
+      updateUser: async () => ({ error: { message: "Auth session missing!", name: "AuthSessionMissingError", status: 400 } }),
+    });
+    await expect(updatePasswordService(client, { password: NEW_FAKE_PASSWORD })).rejects.toMatchObject({
+      code: "AUTH_SESSION_MISSING",
+    });
+  });
+
+  it("throws AUTH_UNAVAILABLE when Supabase is down", async () => {
+    const client = authClient({ updateUser: async () => ({ error: { message: "Bad gateway", status: 502 } }) });
+    await expect(updatePasswordService(client, { password: NEW_FAKE_PASSWORD })).rejects.toMatchObject({
+      code: "AUTH_UNAVAILABLE",
+    });
   });
 });
 
@@ -155,6 +231,61 @@ describe("signupService with an empty display name", () => {
       email: "a@b.com",
       password: FAKE_PASSWORD,
       options: { data: { display_name: undefined } },
+    });
+  });
+});
+
+describe("confirmAuthLinkService", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function linkClient(result: { error: unknown } = { error: null }) {
+    return authClient({ exchangeCodeForSession: async () => result, verifyOtp: async () => result });
+  }
+
+  it("exchanges a PKCE code for a session", async () => {
+    const client = linkClient();
+    await expect(confirmAuthLinkService(client, { code: "pkce-code" })).resolves.toEqual({});
+    expect(client.auth.exchangeCodeForSession).toHaveBeenCalledWith("pkce-code");
+    expect(client.auth.verifyOtp).not.toHaveBeenCalled();
+  });
+
+  it("verifies a token hash of a known email type", async () => {
+    const client = linkClient();
+    await expect(confirmAuthLinkService(client, { tokenHash: "hash", type: "recovery" })).resolves.toEqual({});
+    expect(client.auth.verifyOtp).toHaveBeenCalledWith({ token_hash: "hash", type: "recovery" });
+  });
+
+  it.each([
+    ["no params", {}],
+    ["a token hash without type", { tokenHash: "hash" }],
+    ["an unknown type", { tokenHash: "hash", type: "sms" }],
+    ["an empty code", { code: "" }],
+  ])("throws AUTH_LINK_INVALID for %s without calling Supabase", async (_label, params) => {
+    const client = linkClient();
+    await expect(confirmAuthLinkService(client, params)).rejects.toMatchObject({ code: "AUTH_LINK_INVALID" });
+    expect(client.auth.exchangeCodeForSession).not.toHaveBeenCalled();
+    expect(client.auth.verifyOtp).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an expired code", { message: "flow state expired", code: "flow_state_expired", status: 403 }],
+    ["a missing code verifier", { message: "code verifier", code: "bad_code_verifier", status: 400 }],
+    ["an expired OTP", { message: "Token has expired", code: "otp_expired", status: 403 }],
+  ])("throws AUTH_LINK_INVALID when Supabase rejects %s", async (_label, error) => {
+    await expect(confirmAuthLinkService(linkClient({ error }), { code: "c" })).rejects.toMatchObject({
+      code: "AUTH_LINK_INVALID",
+    });
+    await expect(
+      confirmAuthLinkService(linkClient({ error }), { tokenHash: "h", type: "recovery" }),
+    ).rejects.toMatchObject({ code: "AUTH_LINK_INVALID" });
+  });
+
+  it("throws AUTH_UNAVAILABLE when Supabase is down", async () => {
+    const error = { message: "Bad gateway", status: 502 };
+    await expect(confirmAuthLinkService(linkClient({ error }), { code: "c" })).rejects.toMatchObject({
+      code: "AUTH_UNAVAILABLE",
     });
   });
 });

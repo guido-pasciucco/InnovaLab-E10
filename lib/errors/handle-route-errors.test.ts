@@ -27,7 +27,7 @@ describe("handleRouteErrors", () => {
       throw new Error("boom");
     }, "AUTH_UNAVAILABLE");
     const res = await handler();
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(503);
     await expect(res.json()).resolves.toMatchObject({ error: { code: "AUTH_UNAVAILABLE" } });
   });
 });
