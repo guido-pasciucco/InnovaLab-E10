@@ -24,7 +24,8 @@ import {
 // ---------------------------------------------------------------------------
 
 export const profiles = pgTable("profiles", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  // PK mirrors auth.users(id); FK added via migration with onDelete: cascade.
+  id: uuid("id").primaryKey(),
   displayName: text("display_name"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
