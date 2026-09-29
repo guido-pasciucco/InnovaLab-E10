@@ -46,7 +46,7 @@ Estas decisiones corresponden al acuerdo de equipo. Resumen a continuación.
 ### Despliegue
 
 - **Monorepo fullstack con Next.js, un solo despliegue en Vercel.** No existe un repositorio de backend separado ni un despliegue de backend independiente.
-- **App Router no es un backend.** Los Route Handlers (`app/api/*`) son bordes HTTP delgados (parsear/validar/delegar), no una capa de servicios.
+- **App Router no es un backend.** Hoy no hay Route Handlers: el navegador habla con el servidor solo mediante Server Actions. Si se agregan (`app/api/*`), son bordes HTTP delgados (parsear/validar/delegar), no una capa de servicios.
 
 ### Estilo de software
 
@@ -73,10 +73,6 @@ app/
     paso-1/
     paso-2/
     resultados/
-  api/
-    auth/          # login, signup, logout, session, reset/update-password (borde HTTP delgado)
-    calcular/
-    precios/
   login/
     actions.ts     # Server Action del login (colocada por feature; ídem signup, reset-password, ...)
 middleware.ts      # refresh de sesión Supabase en cada request (no bloquea; ver lib/supabase/middleware)
@@ -88,8 +84,8 @@ lib/
   calc/          # pure domain math (costs, pricing, break-even)
   money/         # pure money formatting / rounding
   schemas/       # THE single Zod source of truth
-  services/      # lógica de negocio del servidor (transport-agnostic), compartida por actions y routes
-  supabase/      # clientes Supabase por runtime (middleware, server, rsc) — server-only
+  services/      # lógica de negocio del servidor (transport-agnostic), usada por las Server Actions
+  supabase/      # clientes Supabase por runtime (middleware, rsc) — server-only
   types/         # tipos compartidos (p. ej. FormState)
   store/         # Phase 1 local-first persistence (LocalStorage vs IndexedDB TBD)
   db.ts          # server-only, Phase 2 (never imported from client)
@@ -103,10 +99,10 @@ tests/
 1. **Fuente única con Zod.** Todos los esquemas de validación viven en `lib/schemas`. React Hook Form (cliente), los Route Handlers y las Server Actions (servidor) los consumen. **Parsear en el borde**: la validación del servidor vive una sola vez en el servicio de `lib/services` (cubre ambas puertas); cada puerta le pasa la entrada cruda.
 2. **Regla fetch-vs-import:**
    - Lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) y servicios (`lib/services`) → `import` directo. Sin HTTP involucrado.
-   - Componente de cliente → API (`app/api/*`) → **solo mediante `fetch`**. Nunca importar `route.ts`.
+   - Componente de cliente → API (`app/api/*`, si existiera) → **solo mediante `fetch`**. Nunca importar `route.ts`.
    - Mutaciones de formularios propios → Server Actions (se importan, no se hace `fetch`). Las actions **no** hacen `fetch` a las propias rutas: llaman al servicio de `lib/` directo.
    - Los Server Components leen la persistencia directamente mediante `lib/db`, nunca con `fetch` interno a su propia API.
-   - Consumidores externos (mobile, webhooks, terceros) → Route Handlers (contrato HTTP estable).
+   - Consumidores externos (app nativa, webhooks, terceros) → Route Handlers (contrato HTTP estable). Hoy no hay ninguno; ver [API HTTP de auth](docs/examples/http-auth-api.md) para cómo agregarlos. Una PWA no los necesita.
 3. **El dominio se mantiene universal.** Nada en `lib/calc`, `lib/money`, `lib/schemas` puede usar APIs de servidor de Node/Next ni `window`/`localStorage`.
 4. **La infraestructura permanece en el servidor.** `lib/db.ts` (y todo lo que toque secretos o Supabase) importa `server-only`.
 5. **Los gráficos son solo de cliente.** Cada componente de gráficos usa `'use client'` más `dynamic(..., { ssr: false })`.
@@ -119,7 +115,7 @@ tests/
 | Responsabilidad | Ubicación |
 | --- | --- |
 | Páginas del asistente (wizard) | `app/(wizard)/paso-1`, `paso-2`, `resultados` |
-| Borde HTTP (adaptar + delegar, sin lógica) | `app/api/*` (auth, calcular, precios) |
+| Borde HTTP (adaptar + delegar, sin lógica) | `app/api/*` — hoy no existe; solo para consumidores externos (ver [API HTTP de auth](docs/examples/http-auth-api.md)) |
 | Server Actions de formularios propios | `app/<feature>/actions.ts` (colocadas por feature) |
 | Lógica de negocio del servidor | `lib/services` (server-only; recibe valores, devuelve datos planos) |
 | Clientes Supabase por runtime | `lib/supabase` (server-only) |
@@ -152,7 +148,7 @@ tests/
 1. **Base del dominio** — `lib/schemas` (Zod, fuente única), `lib/calc` (costos/precios/punto de equilibrio), `lib/money`, más pruebas unitarias con Vitest.
 2. **Pasos del asistente** — `app/(wizard)/paso-1` y `paso-2` con RHF vinculado a `lib/schemas`, `components/wizard` + `components/ui`.
 3. **Vista de resultados** — `app/(wizard)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
-4. **Borde de API** — `app/api/calcular` y `app/api/precios` como handlers delgados de validar-y-delegar que parsean con `lib/schemas` en la frontera.
+4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
 5. **Persistencia local-first** — `lib/store` (resolver LocalStorage vs IndexedDB) conectada al asistente.
 6. **Cobertura E2E** — flujo con Playwright sobre el asistente en `tests/e2e`.
 7. **Pulido + despliegue** — lint/build limpios, despliegue único en Vercel verificado.

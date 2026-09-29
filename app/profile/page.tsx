@@ -29,7 +29,7 @@ export default async function ProfilePage() {
         <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
         <p className="mt-2 text-sm text-gray-600">
           Data for this page is fetched server-side. The browser never imports the Supabase
-          client — it only talks to <code className="rounded bg-gray-100 px-1">/api/*</code>.
+          client — it only talks to our own server.
         </p>
 
         <div className="mt-6 rounded-md border border-gray-200 p-4">
