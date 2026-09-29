@@ -1,0 +1,15 @@
+ddl_fk
+ALTER TABLE workspace.innovalab.business_cost_lines ADD CONSTRAINT business_cost_lines_business_id_businesses_id_fk FOREIGN KEY (business_id) REFERENCES workspace.innovalab.businesses(id);
+ALTER TABLE workspace.innovalab.businesses ADD CONSTRAINT businesses_owner_user_id_profiles_id_fk FOREIGN KEY (owner_user_id) REFERENCES workspace.innovalab.profiles(id);
+ALTER TABLE workspace.innovalab.calc_cost_lines ADD CONSTRAINT calc_cost_lines_calculation_id_calculations_id_fk FOREIGN KEY (calculation_id) REFERENCES workspace.innovalab.calculations(id);
+ALTER TABLE workspace.innovalab.calc_cost_lines ADD CONSTRAINT calc_cost_lines_scenario_id_scenarios_id_fk FOREIGN KEY (scenario_id) REFERENCES workspace.innovalab.scenarios(id);
+ALTER TABLE workspace.innovalab.calc_cost_lines ADD CONSTRAINT calc_cost_lines_source_business_cost_id_business_cost_lines_id_ FOREIGN KEY (source_business_cost_id) REFERENCES workspace.innovalab.business_cost_lines(id);
+ALTER TABLE workspace.innovalab.calculations ADD CONSTRAINT calculations_user_id_profiles_id_fk FOREIGN KEY (user_id) REFERENCES workspace.innovalab.profiles(id);
+ALTER TABLE workspace.innovalab.calculations ADD CONSTRAINT calculations_business_id_businesses_id_fk FOREIGN KEY (business_id) REFERENCES workspace.innovalab.businesses(id);
+ALTER TABLE workspace.innovalab.calculations ADD CONSTRAINT calculations_product_id_products_id_fk FOREIGN KEY (product_id) REFERENCES workspace.innovalab.products(id);
+ALTER TABLE workspace.innovalab.computed_results ADD CONSTRAINT computed_results_calculation_id_calculations_id_fk FOREIGN KEY (calculation_id) REFERENCES workspace.innovalab.calculations(id);
+ALTER TABLE workspace.innovalab.computed_results ADD CONSTRAINT computed_results_scenario_id_scenarios_id_fk FOREIGN KEY (scenario_id) REFERENCES workspace.innovalab.scenarios(id);
+ALTER TABLE workspace.innovalab.costing_setup ADD CONSTRAINT costing_setup_calculation_id_calculations_id_fk FOREIGN KEY (calculation_id) REFERENCES workspace.innovalab.calculations(id);
+ALTER TABLE workspace.innovalab.pricing_inputs ADD CONSTRAINT pricing_inputs_calculation_id_calculations_id_fk FOREIGN KEY (calculation_id) REFERENCES workspace.innovalab.calculations(id);
+ALTER TABLE workspace.innovalab.products ADD CONSTRAINT products_business_id_businesses_id_fk FOREIGN KEY (business_id) REFERENCES workspace.innovalab.businesses(id);
+ALTER TABLE workspace.innovalab.scenarios ADD CONSTRAINT scenarios_calculation_id_calculations_id_fk FOREIGN KEY (calculation_id) REFERENCES workspace.innovalab.calculations(id);

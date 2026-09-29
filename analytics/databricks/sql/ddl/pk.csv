@@ -1,0 +1,11 @@
+ddl_pk
+ALTER TABLE workspace.innovalab.business_cost_lines ADD CONSTRAINT business_cost_lines_pkey PRIMARY KEY (id);
+ALTER TABLE workspace.innovalab.businesses ADD CONSTRAINT businesses_pkey PRIMARY KEY (id);
+ALTER TABLE workspace.innovalab.calc_cost_lines ADD CONSTRAINT calc_cost_lines_pkey PRIMARY KEY (id);
+ALTER TABLE workspace.innovalab.calculations ADD CONSTRAINT calculations_pkey PRIMARY KEY (id);
+ALTER TABLE workspace.innovalab.computed_results ADD CONSTRAINT computed_results_pkey PRIMARY KEY (id);
+ALTER TABLE workspace.innovalab.costing_setup ADD CONSTRAINT costing_setup_pkey PRIMARY KEY (calculation_id);
+ALTER TABLE workspace.innovalab.pricing_inputs ADD CONSTRAINT pricing_inputs_pkey PRIMARY KEY (calculation_id);
+ALTER TABLE workspace.innovalab.products ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+ALTER TABLE workspace.innovalab.profiles ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
+ALTER TABLE workspace.innovalab.scenarios ADD CONSTRAINT scenarios_pkey PRIMARY KEY (id);
