@@ -1,0 +1,126 @@
+erDiagram
+    profiles {
+        uuid id PK
+        text display_name
+        timestamp created_at
+    }
+
+    businesses {
+        uuid id PK
+        uuid owner_user_id FK
+        text name
+        text business_type
+        timestamp created_at
+    }
+
+    products {
+        uuid id PK
+        uuid business_id FK
+        text name
+        text sku_or_slug
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    business_cost_lines {
+        uuid id PK
+        uuid business_id FK
+        text concept
+        text behavior
+        text traceability
+        numeric amount_period
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    calculations {
+        uuid id PK
+        uuid user_id FK
+        uuid business_id FK
+        uuid product_id FK
+        text status
+        int schema_version
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    costing_setup {
+        uuid calculation_id PK_FK
+        text currency
+        text costing_period
+        text costing_unit
+        numeric estimated_volume
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    pricing_inputs {
+        uuid calculation_id PK_FK
+        text margin_convention
+        numeric expected_margin_pct
+        numeric manual_price
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    scenarios {
+        uuid id PK
+        uuid calculation_id FK
+        text name
+        boolean is_base
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    calc_cost_lines {
+        uuid id PK
+        uuid calculation_id FK
+        uuid scenario_id FK "nullable"
+        uuid source_business_cost_id FK
+        text concept
+        text behavior
+        text traceability
+        numeric amount
+        numeric hours
+        numeric hourly_rate
+        numeric allocation_pct
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    computed_results {
+        uuid id PK
+        uuid calculation_id FK
+        uuid scenario_id FK "nullable"
+        numeric total_fixed
+        numeric variable_unit
+        numeric total_cost
+        numeric unit_cost
+        numeric contribution_margin_unit
+        numeric break_even_units
+        numeric break_even_sales
+        timestamp computed_at
+        jsonb results_payload
+    }
+
+    %% Relaciones
+    profiles ||--o{ businesses : "1:N owner_user_id -> profiles.id"
+    businesses ||--o{ products : "1:N business_id -> businesses.id"
+    businesses ||--o{ business_cost_lines : "1:N business_id -> businesses.id"
+    
+    profiles ||--o{ calculations : "1:N user_id -> profiles.id"
+    businesses ||--o{ calculations : "1:N business_id -> businesses.id"
+    products ||--o{ calculations : "1:N product_id -> products.id"
+
+    calculations ||--|| costing_setup : "1:1 calculation_id"
+    calculations ||--|| pricing_inputs : "1:1 calculation_id"
+
+    calculations ||--o{ scenarios : "1:N calculation_id"
+    calculations ||--o{ calc_cost_lines : "1:N calculation_id"
+    calculations ||--o{ computed_results : "1:N calculation_id"
+
+    business_cost_lines ||--o{ calc_cost_lines : "1:N source_business_cost_id"
+    scenarios ||--o{ calc_cost_lines : "1:N scenario_id (nullable)"
+    scenarios ||--o{ computed_results : "1:N scenario_id (nullable)"
