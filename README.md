@@ -74,8 +74,12 @@ app/
     paso-2/
     resultados/
   api/
+    auth/          # login, signup, logout, session, reset/update-password (borde HTTP delgado)
     calcular/
     precios/
+  login/
+    actions.ts     # Server Action del login (colocada por feature; ídem signup, reset-password, ...)
+middleware.ts      # refresh de sesión Supabase en cada request (no bloquea; ver lib/supabase/middleware)
 components/
   wizard/
   charts/        # client-only, see below
@@ -84,6 +88,9 @@ lib/
   calc/          # pure domain math (costs, pricing, break-even)
   money/         # pure money formatting / rounding
   schemas/       # THE single Zod source of truth
+  services/      # lógica de negocio del servidor (transport-agnostic), compartida por actions y routes
+  supabase/      # clientes Supabase por runtime (middleware, server, rsc) — server-only
+  types/         # tipos compartidos (p. ej. FormState)
   store/         # Phase 1 local-first persistence (LocalStorage vs IndexedDB TBD)
   db.ts          # server-only, Phase 2 (never imported from client)
 tests/
@@ -93,12 +100,13 @@ tests/
 
 ### Contratos (vinculantes)
 
-1. **Fuente única con Zod.** Todos los esquemas de validación viven en `lib/schemas`. React Hook Form (cliente) y los Route Handlers (servidor) los consumen. **Parsear en el borde**: cada Route Handler parsea/valida la entrada en su frontera antes de delegar.
+1. **Fuente única con Zod.** Todos los esquemas de validación viven en `lib/schemas`. React Hook Form (cliente), los Route Handlers y las Server Actions (servidor) los consumen. **Parsear en el borde**: la validación del servidor vive una sola vez en el servicio de `lib/services` (cubre ambas puertas); cada puerta le pasa la entrada cruda.
 2. **Regla fetch-vs-import:**
-   - Lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) → `import` directo. Sin HTTP involucrado.
+   - Lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) y servicios (`lib/services`) → `import` directo. Sin HTTP involucrado.
    - Componente de cliente → API (`app/api/*`) → **solo mediante `fetch`**. Nunca importar `route.ts`.
-   - Mutaciones de formularios (Fase 2) → Server Actions.
+   - Mutaciones de formularios propios → Server Actions (se importan, no se hace `fetch`). Las actions **no** hacen `fetch` a las propias rutas: llaman al servicio de `lib/` directo.
    - Los Server Components leen la persistencia directamente mediante `lib/db`, nunca con `fetch` interno a su propia API.
+   - Consumidores externos (mobile, webhooks, terceros) → Route Handlers (contrato HTTP estable).
 3. **El dominio se mantiene universal.** Nada en `lib/calc`, `lib/money`, `lib/schemas` puede usar APIs de servidor de Node/Next ni `window`/`localStorage`.
 4. **La infraestructura permanece en el servidor.** `lib/db.ts` (y todo lo que toque secretos o Supabase) importa `server-only`.
 5. **Los gráficos son solo de cliente.** Cada componente de gráficos usa `'use client'` más `dynamic(..., { ssr: false })`.
@@ -111,7 +119,11 @@ tests/
 | Responsabilidad | Ubicación |
 | --- | --- |
 | Páginas del asistente (wizard) | `app/(wizard)/paso-1`, `paso-2`, `resultados` |
-| Borde HTTP (validar + delegar) | `app/api/calcular`, `app/api/precios` |
+| Borde HTTP (adaptar + delegar, sin lógica) | `app/api/*` (auth, calcular, precios) |
+| Server Actions de formularios propios | `app/<feature>/actions.ts` (colocadas por feature) |
+| Lógica de negocio del servidor | `lib/services` (server-only; recibe valores, devuelve datos planos) |
+| Clientes Supabase por runtime | `lib/supabase` (server-only) |
+| Tipos compartidos | `lib/types` (p. ej. `FormState`) |
 | UI del asistente, gráficos, primitivas | `components/wizard`, `components/charts`, `components/ui` |
 | Matemática pura / dinero / esquemas | `lib/calc`, `lib/money`, `lib/schemas` |
 | Persistencia local-first (Fase 1) | `lib/store` |
@@ -123,9 +135,9 @@ tests/
 - **Secretos en código de cliente.** Sin claves de servicio, sin service role de Supabase, sin variables de entorno privadas en ningún componente de cliente ni en nada que estos importen.
 - **Validación solo en el cliente.** Todo formulario validado en el cliente debe revalidarse con el mismo esquema Zod en el Route Handler / Server Action. La validación del cliente es UX, nunca seguridad.
 - **Importar `route.ts`.** Los Route Handlers se alcanzan por HTTP (`fetch`) desde el cliente, nunca con `import`.
-- **Llamar a la propia API con `fetch` desde un Server Component.** Leer directamente mediante `lib/db`.
+- **Llamar a la propia API con `fetch` desde el servidor.** Server Components y Server Actions llaman a `lib/` directo, nunca a sus propias rutas (vuelta HTTP de más).
 - **I/O o APIs de plataforma en código de dominio.** `lib/calc`, `lib/money`, `lib/schemas` se mantienen puros y universales.
-- **Nuevas capas de nivel superior** (p. ej. una carpeta `application/` o `services/`) sin un acuerdo de equipo previo.
+- **Lógica de negocio dentro de Route Handlers o actions.** Va en `lib/services` (acuerdo de equipo vigente: capa `services/` aprobada para lógica compartida entre actions y routes).
 
 ### Preguntas abiertas (sin decidir, no asumir)
 
