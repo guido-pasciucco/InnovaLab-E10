@@ -7,6 +7,16 @@ La Fase 1 es **local-first**: todo el cálculo se ejecuta localmente en el naveg
 > [!NOTE]
 > Fase 1 sin backend: los cálculos son locales. Supabase llega en la Fase 2 para autenticación e historial.
 
+## 📂 Guías por directorio
+
+Cada sección del código tiene su propia guía en un `AGENTS.md`, para que tanto las personas como los agentes de IA la encuentren al explorar el directorio. Cada guía indica qué rol (Frontend / Backend) toca ese directorio y qué reglas aplican.
+
+| Guía | Contenido | Dueño |
+| --- | --- | --- |
+| [`lib/AGENTS.md`](lib/AGENTS.md) | Mapa de los módulos de dominio, frontera Frontend/Backend, reglas y checklist de cambios en `lib/` | Backend (Frontend consume) |
+| [`lib/errors/AGENTS.md`](lib/errors/AGENTS.md) | Manejo centralizado de errores: catálogo, `AppError`, adaptadores de rutas y actions, convención de códigos | Backend (Frontend consume) |
+| [`lib/db/AGENTS.md`](lib/db/AGENTS.md) | Spike de persistencia con Drizzle: reglas de esquema y flujo de escritura en servidor | Backend |
+
 ---
 
 ## 1. 🛠️ Tecnologías utilizadas

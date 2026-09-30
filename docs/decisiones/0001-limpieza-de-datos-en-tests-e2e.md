@@ -46,5 +46,5 @@ _Pendiente._ A resolver cuando se escriba la primera factory de dominio.
 
 ## Consecuencias a evaluar
 
-- Si se elige A o C: corregir `profiles.id` (FK a `auth.users` con `onDelete: "cascade"`, sin `defaultRandom()`) y revisar el `onDelete` de cada FK del dominio. Ojo con `calc_cost_lines.source_business_cost_id`: una cascada ahí reescribiría cálculos históricos (ver `lib/db/README-spike.md`).
+- Si se elige A o C: corregir `profiles.id` (FK a `auth.users` con `onDelete: "cascade"`, sin `defaultRandom()`) y revisar el `onDelete` de cada FK del dominio. Ojo con `calc_cost_lines.source_business_cost_id`: una cascada ahí reescribiría cálculos históricos (ver `lib/db/AGENTS.md`).
 - Con cualquier opción: mantener un script de reset de la base local (`supabase db reset` + `db:migrate:local`) para limpiar lo que quede de corridas interrumpidas.

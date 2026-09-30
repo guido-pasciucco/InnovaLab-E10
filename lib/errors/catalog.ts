@@ -1,7 +1,7 @@
 // Single source of truth for API error codes.
 // Services reference codes only — messages, statuses and log levels live here.
 //
-// Naming convention (see lib/errors/README.md):
+// Naming convention (see lib/errors/AGENTS.md):
 // - Generic codes (no prefix) are shared by every domain; their messages
 //   must never mention a specific feature.
 // - Domain codes use a DOMAIN_ prefix (AUTH_, COUPON_, ...). Create one

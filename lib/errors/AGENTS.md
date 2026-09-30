@@ -2,6 +2,13 @@
 
 Los servicios **lanzan** errores; las puertas (Route Handlers y Server Actions) los **traducen**. El `try/catch` existe en un solo lugar del proyecto: los adaptadores `handleRouteErrors` y `handleActionErrors`. Ningún servicio nuevo necesita escribirlo.
 
+## Quién toca este directorio
+
+| Rol | Qué hace en `lib/errors/` |
+| --- | --- |
+| **Backend** | Dueño. Agrega códigos al catálogo, lanza `AppError` desde `lib/services/` y envuelve las puertas (`route.ts`, `actions.ts`) con los adaptadores. |
+| **Frontend** | Consume, no modifica: usa `getFieldErrors` (vía `useServerFieldErrors`) y el tipo `ErrorEnvelope` en los forms. Si necesita un mensaje o código nuevo, lo pide a Backend. |
+
 ## Camino rápido: crear un servicio nuevo
 
 1. Agregá el código de error en `catalog.ts` si todavía no existe.

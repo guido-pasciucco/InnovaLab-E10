@@ -35,7 +35,7 @@ supabase/.branches
 *.pem
 
 # local AI instructions
-/CLAUDE.md
+CLAUDE.md
 /AGENTS.md
 
 # debug
