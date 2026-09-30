@@ -2,6 +2,13 @@
 
 Estado: sin conexión a base de datos. El dominio (`lib/calc`, `lib/money`) no importa este módulo.
 
+## Quién toca este directorio
+
+| Rol | Qué hace en `lib/db/` |
+| --- | --- |
+| **Backend** | Dueño exclusivo. Define tablas, relaciones, esquemas derivados y migraciones. |
+| **Frontend** | No lo toca ni lo importa (`server-only`). Recibe los datos ya mapeados a través de Server Components o Server Actions. |
+
 ## Reglas
 
 1. Fuente única: las tablas se declaran una vez en `schema.ts`. Los tipos se infieren (`$inferSelect` / `$inferInsert`). No crear interfaces manuales.

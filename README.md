@@ -2,10 +2,25 @@
 
 MVP de la Fase 1 de una calculadora inteligente para **costos, precios y análisis de punto de equilibrio** (`Costos / Precios / Punto de Equilibrio`).
 
-La Fase 1 es **local-first**: todo el cálculo se ejecuta localmente en el navegador, sin cuenta y sin persistencia en backend (LocalStorage o IndexedDB — decisión aún abierta, ver abajo). Supabase (autenticación + historial) está **desactivado** y llega en la Fase 2.
+El **cálculo** de la Fase 1 es **local-first**: corre en el navegador, con el estado en `lib/store` (LocalStorage o IndexedDB — decisión aún abierta, ver abajo) y sin persistencia del cálculo en servidor.
 
-> [!NOTE]
-> Fase 1 sin backend: los cálculos son locales. Supabase llega en la Fase 2 para autenticación e historial.
+Lo que **ya está en marcha** y no es parte de la Fase 1 pendiente:
+
+- **Autenticación con Supabase funcionando**: login, signup, recuperación y actualización de contraseña, confirmación de email y dashboard. Es el andamiaje de la plataforma, no la parte de historial que se había planeado para la Fase 2.
+- **Base de datos con Drizzle**: `drizzle.config.ts`, 4 migraciones aplicadas (RLS con políticas de propietario, FK de `profiles`, trigger de creación de perfil) y stack local de Supabase para los tests.
+
+> [!IMPORTANT]
+> Este README describía la Fase 1 como "sin backend" y a Supabase como "desactivado". Ya no es cierto: la autenticación con Supabase está implementada y la base tiene migraciones aplicadas. Lo que sigue siendo local-first es **el cálculo**, que es lo que la Fase 1 tiene que entregar.
+
+## 📂 Guías por directorio
+
+Cada sección del código tiene su propia guía en un `AGENTS.md`, para que tanto las personas como los agentes de IA la encuentren al explorar el directorio. Cada guía indica qué rol (Frontend / Backend) toca ese directorio y qué reglas aplican.
+
+| Guía | Contenido | Dueño |
+| --- | --- | --- |
+| [`lib/AGENTS.md`](lib/AGENTS.md) | Mapa de los módulos de dominio, frontera Frontend/Backend, reglas y checklist de cambios en `lib/` | Backend (Frontend consume) |
+| [`lib/errors/AGENTS.md`](lib/errors/AGENTS.md) | Manejo centralizado de errores: catálogo, `AppError`, adaptadores de rutas y actions, convención de códigos | Backend (Frontend consume) |
+| [`lib/db/AGENTS.md`](lib/db/AGENTS.md) | Spike de persistencia con Drizzle: reglas de esquema y flujo de escritura en servidor | Backend |
 
 ---
 
@@ -21,7 +36,7 @@ Stack del proyecto:
 | TypeScript | 5, `strict`, `target ES2017`, alias `@/*` | Seguridad de tipos; `@/` apunta a la raíz del repositorio |
 | ESLint | 9 + `eslint-config-next` | Linting (reglas de Next.js) |
 | `next.config.ts` | stub (vacío) | Reservado para futura configuración de Next.js |
-| App Router | solo `app/layout.tsx` + `app/page.tsx` | Estructura base; las rutas del asistente (wizard) y de API se definen en la sección de arquitectura |
+| App Router | rutas de auth (`login`, `signup`, `reset-password`, `update-password`, `dashboard`, `profile`) + asistente (wizard) | Auth completo con Server Actions; el asistente (`paso-1`, `paso-2`, `resultados`) está en stub |
 
 Scripts disponibles:
 
@@ -31,11 +46,20 @@ Scripts disponibles:
 | Build de producción | `bun run build` |
 | Inicio en producción | `bun run start` |
 | Lint | `bun run lint` |
+| Tests unitarios | `bun run test` |
+| Typecheck | `bunx tsc --noEmit` |
+| E2E (Supabase local) | `bun run e2e:up` · `bun run test:e2e` · `bun run e2e:down` |
 
 Dependencias clave:
 
 - **`decimal.js`:** aritmética decimal con precisión y redondeo configurables para los cálculos monetarios de `lib/money` y `lib/calc`.
 - **`server-only`:** marca módulos exclusivos del servidor; Next.js detecta como error su importación desde componentes de cliente.
+- **`zod` + `react-hook-form`:** validación como fuente única; RHF para los formularios.
+- **`@supabase/ssr` + Supabase Auth:** sesión, login, signup y recuperación de contraseña. Ver `lib/supabase/`.
+- **`drizzle-orm`:** acceso a la base con tipos. El esquema vive en `lib/db/schema.ts` (ver `lib/db/AGENTS.md`).
+
+> [!NOTE]
+> La suite de tests corre con `environment: "node"` en `vitest.config.mts`. **No hay `jsdom` ni `@testing-library/*` instalados**, así que los componentes de React no se unit-testean: las reglas se testean en `lib/schemas` y `lib/store`, y la integración se verifica a mano en dev. Agregar esas librerías es un cambio de tooling del repo, no de un ticket de feature.
 
 ---
 
@@ -46,7 +70,7 @@ Estas decisiones corresponden al acuerdo de equipo. Resumen a continuación.
 ### Despliegue
 
 - **Monorepo fullstack con Next.js, un solo despliegue en Vercel.** No existe un repositorio de backend separado ni un despliegue de backend independiente.
-- **App Router no es un backend.** Hoy no hay Route Handlers: el navegador habla con el servidor solo mediante Server Actions. Si se agregan (`app/api/*`), son bordes HTTP delgados (parsear/validar/delegar), no una capa de servicios.
+- **App Router no es un backend.** Hoy no hay Route Handlers (`app/api/*` no existe): el navegador habla con el servidor mediante Server Actions (`app/<feature>/actions.ts`, una por feature). Si se agregan, son bordes HTTP delgados (parsear/validar/delegar), no una capa de servicios.
 
 ### Estilo de software
 
@@ -62,37 +86,54 @@ app -> components -> lib/calc
 
 ### División por fases
 
-- **Fase 1 (actual, MVP):** local-first. Persistencia en LocalStorage o IndexedDB. Supabase está desactivado.
-- **Fase 2:** autenticación + historial con Supabase. Las mutaciones de formularios pasan a Server Actions; las lecturas siguen siendo directas (ver contratos).
+- **Fase 1 (actual, MVP):** el **cálculo** es local-first. El estado del asistente vive en `lib/store` (LocalStorage o IndexedDB, sin resolver) detrás de una frontera que permite cambiar de decisión. Sin persistencia del cálculo en servidor.
+- **Ya implementado (andamiaje, no Fase 1 pendiente):** autenticación con Supabase (login, signup, reset, update, confirm, dashboard, profile) con Server Actions, y base de datos con Drizzle, 4 migraciones aplicadas y RLS por propietario. Ese andamiaje sostiene la plataforma y la auth; lo que la Fase 1 tiene que agregar es el cálculo.
+- **Fase 2:** persistencia del cálculo e historial con cuenta de usuario. La definición conceptual del proyecto ya dio esto por decidido ("persistencia mediante cuenta de usuario"), lo que contradice el "local-first" del README original. **Esa contradicción sigue sin resolverse** y hay que cerrarla antes de decidir si el borrador del cálculo se persiste en la base.
+
+### Estado real del asistente
+
+El recorrido guiado está en stub. Lo que existe:
+
+```text
+app/(wizard)/paso-1/page.tsx      4 líneas: "Step 1 — TODO"
+app/(wizard)/paso-2/page.tsx      stub
+app/(wizard)/resultados/page.tsx  stub
+lib/calc/  lib/money/  lib/store/  solo .gitkeep
+lib/schemas/                        solo auth/
+```
+
+**`app/(wizard)/layout.tsx` no existe todavía** y hay que crearlo: App Router no remonta un layout compartido entre rutas hermanas, así que sin él el estado del asistente se pierde al navegar entre pasos.
 
 ### Estructura objetivo (construir hacia esto, no inventar árboles paralelos)
 
 ```text
 app/
-  (wizard)/
-    paso-1/
-    paso-2/
-    resultados/
-  login/
-    actions.ts     # Server Action del login (colocada por feature; ídem signup, reset-password, ...)
-proxy.ts           # refresh de sesión Supabase en cada request (no bloquea; ver lib/supabase/proxy)
+  (wizard)/          # stub: paso-1, paso-2, resultados. Falta layout.tsx
+  auth/              # confirmar email
+  dashboard/         # destino tras login
+  profile/
+  login/  signup/  reset-password/  update-password/
+    actions.ts       # Server Action por feature (5 en total)
+proxy.ts             # refresh de sesión Supabase en cada request (no bloquea; ver lib/supabase/proxy)
 components/
-  wizard/
-  charts/        # client-only, see below
-  ui/
+  charts/  forms/  ui/  wizard/
 lib/
-  calc/          # pure domain math (costs, pricing, break-even)
-  money/         # pure money formatting / rounding
-  schemas/       # THE single Zod source of truth
+  calc/          # pure domain math (costs, pricing, break-even) — vacío, solo .gitkeep
+  money/         # pure money formatting / rounding — vacío, solo .gitkeep
+  schemas/       # THE single Zod source of truth (hoy solo auth/)
   services/      # lógica de negocio del servidor (transport-agnostic), usada por las Server Actions
   supabase/      # clientes Supabase por runtime (proxy, rsc) — server-only
   types/         # tipos compartidos (p. ej. FormState)
-  store/         # Phase 1 local-first persistence (LocalStorage vs IndexedDB TBD)
-  db.ts          # server-only, Phase 2 (never imported from client)
+  store/         # estado del asistente (LocalStorage vs IndexedDB TBD) — vacío, dueño sin asignar
+  errors/        # catálogo central de errores + adaptadores de route y action
+  auth/          # guard de sesión para Server Components (requireUser)
+  db/            # esquema Drizzle y reglas de escritura en servidor
+  db.ts          # server-only, placeholder
 tests/
-  unit/          # Vitest (domain: calc, money, schemas)
-  e2e/           # Playwright (wizard flow)
+  e2e/           # Playwright + Supabase local (auth, RLS)
 ```
+
+**Los tests unitarios no viven en `tests/unit/`.** Esa carpeta está vacía salvo un `.gitkeep`: los 11 tests reales del repo están **co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`). La policy de review es 400 líneas por PR.
 
 ### Contratos (vinculantes)
 
@@ -123,8 +164,10 @@ tests/
 | UI del asistente, gráficos, primitivas | `components/wizard`, `components/charts`, `components/ui` |
 | Matemática pura / dinero / esquemas | `lib/calc`, `lib/money`, `lib/schemas` |
 | Persistencia local-first (Fase 1) | `lib/store` |
-| Persistencia en servidor (Fase 2) | `lib/db.ts` (server-only) |
-| Pruebas unitarias / e2e | `tests/unit` (Vitest), `tests/e2e` (Playwright) |
+| Persistencia en servidor | `lib/db.ts` + `lib/db/` (server-only, Drizzle) |
+| Pruebas unitarias | co-locadas con el módulo (`<modulo>.test.ts`), se corren con `bun run test` |
+| Pruebas e2e | `tests/e2e` (Playwright contra Supabase local) |
+| Quién es dueño de qué en `lib/` | [`lib/AGENTS.md`](lib/AGENTS.md) — "Frontera de responsabilidad" |
 
 ### Prohibido
 
@@ -137,22 +180,23 @@ tests/
 
 ### Preguntas abiertas (sin decidir, no asumir)
 
-1. Zustand: ¿sí o no para el estado del asistente (wizard)?
-2. Proceso de cambios de esquemas: ¿cómo se proponen y migran los cambios en `lib/schemas`?
+1. **Estado del asistente: librería o Context.** ¿Se adopta una librería que abstraiga el estado y la persistencia (`zustand` es la candidata), o se resuelve con React Context + `useState`? La Semana 1 usa Context porque `zustand` no está instalada y su middleware `persist` arrastra el mismo problema de hidratación. **Es una decisión de Frontend y sigue abierta** — ver `lib/AGENTS.md` nota 4. Hasta cerrarla, `lib/store/` no tiene dueño asignado.
+2. **Persistencia del cálculo: ¿local o en la base?** El README original decía "local-first sin cuentas"; la definición conceptual del proyecto dio "persistencia mediante cuenta de usuario" por decidido. No se reconcilian. De esto depende si las tareas de backend de persistencia (`#33`, `#34`) se ejecutan o se cierran, y si hace falta el ADR que pide `#63`.
 3. LocalStorage vs IndexedDB para la persistencia de la Fase 1.
+4. Proceso de cambios de esquemas: ¿cómo se proponen y migran los cambios en `lib/schemas`?
 
 ---
 
 ## 3. 🗺️ Próximos pasos
 
-1. **Base del dominio** — `lib/schemas` (Zod, fuente única), `lib/calc` (costos/precios/punto de equilibrio), `lib/money`, más pruebas unitarias con Vitest.
-2. **Pasos del asistente** — `app/(wizard)/paso-1` y `paso-2` con RHF vinculado a `lib/schemas`, `components/wizard` + `components/ui`.
+1. **Base del dominio** — `lib/schemas` (Zod, fuente única), `lib/calc` (costos/precios/punto de equilibrio), `lib/money`, con sus tests co-locados. Todo vacío hoy.
+2. **Pasos del asistente** — `app/(wizard)/layout.tsx` (el Provider, que no existe y hace falta para que el estado sobreviva a la navegación) + `paso-1` y `paso-2` con RHF vinculado a `lib/schemas`, `components/wizard` + `components/ui`.
 3. **Vista de resultados** — `app/(wizard)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
 4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
-5. **Persistencia local-first** — `lib/store` (resolver LocalStorage vs IndexedDB) conectada al asistente.
-6. **Cobertura E2E** — flujo con Playwright sobre el asistente en `tests/e2e`.
+5. **Persistencia local-first** — `lib/store` (resolver LocalStorage vs IndexedDB, y cerrar la pregunta de librería) conectada al asistente.
+6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth y RLS).
 7. **Pulido + despliegue** — lint/build limpios, despliegue único en Vercel verificado.
-8. **Fase 2 (fuera del alcance del MVP)** — autenticación + historial con Supabase, `lib/db.ts` solo de servidor, mutaciones de formularios mediante Server Actions.
+8. **Fuera del alcance del MVP** — persistencia del cálculo e historial con cuenta de usuario (Fase 2), sujeto a cerrar la pregunta abierta nº 2.
 
 ---
 
@@ -180,7 +224,7 @@ bunx tsc --noEmit  # type check
 > Este proyecto usa **Bun como gestor de paquetes** (`bun.lock` es la única fuente de verdad; no usar `npm install`). El bundler sigue siendo Turbopack (default de Next.js 16) y el runtime sigue siendo Node.js.
 
 > [!NOTE]
-> No incluir secretos en los commits. La Fase 1 no necesita variables de entorno; la Fase 2 (Supabase) documentará sus propias variables solo de servidor.
+> No incluir secretos en los commits. Las variables de entorno de Supabase son **solo de servidor**; nunca en componentes de cliente ni en nada que estos importen. Ver `.env.example` y la sección de contratos.
 
 ### Tests end-to-end (Playwright + Supabase local)
 

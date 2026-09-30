@@ -17,7 +17,7 @@ import {
 //
 // Numeric columns map to `string` in TypeScript (never float), so no rounding
 // leaks into the domain. Conversion to the pure domain happens at the
-// application boundary (see README-spike.md).
+// application boundary (see AGENTS.md).
 //
 // Money-like columns use numeric(12,2); quantities, rates and percentages use
 // numeric(14,4) for extra fractional precision.
