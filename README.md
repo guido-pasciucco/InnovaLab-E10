@@ -36,7 +36,7 @@ Stack del proyecto:
 | TypeScript | 5, `strict`, `target ES2017`, alias `@/*` | Seguridad de tipos; `@/` apunta a la raíz del repositorio |
 | ESLint | 9 + `eslint-config-next` | Linting (reglas de Next.js) |
 | `next.config.ts` | stub (vacío) | Reservado para futura configuración de Next.js |
-| App Router | rutas de auth (`login`, `signup`, `reset-password`, `update-password`, `dashboard`, `profile`) + asistente (wizard) | Auth completo con Server Actions; el asistente (`paso-1`, `paso-2`, `resultados`) está en stub |
+| App Router | rutas de auth (`login`, `signup`, `reset-password`, `update-password`, `dashboard`, `profile`) + assistant (calculator) | Auth completo con Server Actions; el asistente (`paso-1`, `paso-2`, `resultados`) está en stub |
 
 Scripts disponibles:
 
@@ -95,20 +95,20 @@ app -> components -> lib/calc
 El recorrido guiado está en stub. Lo que existe:
 
 ```text
-app/(wizard)/paso-1/page.tsx      4 líneas: "Step 1 — TODO"
-app/(wizard)/paso-2/page.tsx      stub
-app/(wizard)/resultados/page.tsx  stub
+app/(calculator)/paso-1/page.tsx      4 líneas: "Step 1 — TODO"
+app/(calculator)/paso-2/page.tsx      stub
+app/(calculator)/resultados/page.tsx  stub
 lib/calc/  lib/money/  lib/store/  solo .gitkeep
 lib/schemas/                        solo auth/
 ```
 
-**`app/(wizard)/layout.tsx` no existe todavía** y hay que crearlo: App Router no remonta un layout compartido entre rutas hermanas, así que sin él el estado del asistente se pierde al navegar entre pasos.
+**`app/(calculator)/layout.tsx` no existe todavía** y hay que crearlo: App Router no remonta un layout compartido entre rutas hermanas, así que sin él el estado del asistente se pierde al navegar entre pasos.
 
 ### Estructura objetivo (construir hacia esto, no inventar árboles paralelos)
 
 ```text
 app/
-  (wizard)/          # stub: paso-1, paso-2, resultados. Falta layout.tsx
+  (calculator)/          # stub: paso-1, paso-2, resultados. Falta layout.tsx
   auth/              # confirmar email
   dashboard/         # destino tras login
   profile/
@@ -116,7 +116,7 @@ app/
     actions.ts       # Server Action por feature (5 en total)
 proxy.ts             # refresh de sesión Supabase en cada request (no bloquea; ver lib/supabase/proxy)
 components/
-  charts/  forms/  ui/  wizard/
+  charts/  forms/  ui/  calculator/
 lib/
   calc/          # pure domain math (costs, pricing, break-even) — vacío, solo .gitkeep
   money/         # pure money formatting / rounding — vacío, solo .gitkeep
@@ -155,13 +155,13 @@ tests/
 
 | Responsabilidad | Ubicación |
 | --- | --- |
-| Páginas del asistente (wizard) | `app/(wizard)/paso-1`, `paso-2`, `resultados` |
+| Páginas del assistant (calculator) | `app/(calculator)/paso-1`, `paso-2`, `resultados` |
 | Borde HTTP (adaptar + delegar, sin lógica) | `app/api/*` — hoy no existe; solo para consumidores externos (ver [API HTTP de auth](docs/examples/http-auth-api.md)) |
 | Server Actions de formularios propios | `app/<feature>/actions.ts` (colocadas por feature) |
 | Lógica de negocio del servidor | `lib/services` (server-only; recibe valores, devuelve datos planos) |
 | Clientes Supabase por runtime | `lib/supabase` (server-only) |
 | Tipos compartidos | `lib/types` (p. ej. `FormState`) |
-| UI del asistente, gráficos, primitivas | `components/wizard`, `components/charts`, `components/ui` |
+| UI del asistente, gráficos, primitivas | `components/calculator`, `components/charts`, `components/ui` |
 | Matemática pura / dinero / esquemas | `lib/calc`, `lib/money`, `lib/schemas` |
 | Persistencia local-first (Fase 1) | `lib/store` |
 | Persistencia en servidor | `lib/db.ts` + `lib/db/` (server-only, Drizzle) |
@@ -190,8 +190,8 @@ tests/
 ## 3. 🗺️ Próximos pasos
 
 1. **Base del dominio** — `lib/schemas` (Zod, fuente única), `lib/calc` (costos/precios/punto de equilibrio), `lib/money`, con sus tests co-locados. Todo vacío hoy.
-2. **Pasos del asistente** — `app/(wizard)/layout.tsx` (el Provider, que no existe y hace falta para que el estado sobreviva a la navegación) + `paso-1` y `paso-2` con RHF vinculado a `lib/schemas`, `components/wizard` + `components/ui`.
-3. **Vista de resultados** — `app/(wizard)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
+2. **Pasos del asistente** — `app/(calculator)/layout.tsx` (el Provider, que no existe y hace falta para que el estado sobreviva a la navegación) + `paso-1` y `paso-2` con RHF vinculado a `lib/schemas`, `components/calculator` + `components/ui`.
+3. **Vista de resultados** — `app/(calculator)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
 4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
 5. **Persistencia local-first** — `lib/store` (resolver LocalStorage vs IndexedDB, y cerrar la pregunta de librería) conectada al asistente.
 6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth y RLS).
@@ -309,4 +309,4 @@ tests/e2e/
 
 Notas:
 
-- Hasta que se resuelvan las preguntas abiertas anteriores, mantener el estado del asistente (wizard) local al asistente y la persistencia detrás de la frontera de `lib/store` para que la elección siga siendo intercambiable.
+- Hasta que se resuelvan las preguntas abiertas anteriores, mantener el estado del assistant (calculator) local al asistente y la persistencia detrás de la frontera de `lib/store` para que la elección siga siendo intercambiable.
