@@ -27,7 +27,7 @@ import "server-only";
 ```
 
 ```tsx
-// app/(wizard)/resultados/page.tsx (Server Component)
+// app/(calculator)/resultados/page.tsx (Server Component)
 import { getCalculation } from "@/lib/db"; // directo, sin fetch
 ```
 

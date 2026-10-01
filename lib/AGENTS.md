@@ -21,7 +21,7 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 | `calc/` | Motor de cálculo: funciones puras (entra config + costos, salen resultados) | Esqueleto (ver #14) | **Backend** |
 | `money/` | Aritmética decimal exacta con `decimal.js` | Esqueleto | **Backend** |
 | `schemas/` | Contratos Zod compartidos entre cliente y servidor | Esqueleto | **Backend** (define las reglas) |
-| `store/` | Estado del wizard en el cliente | Esqueleto | **En investigación** (nota 4) |
+| `store/` | Estado del calculator en el cliente | Esqueleto | **En investigación** (nota 4) |
 | `errors/` | Manejo centralizado de errores: catálogo, `AppError` y adaptadores `handleRouteErrors`/`handleActionErrors` (ver `errors/AGENTS.md`) | Activa | **Backend** (adaptadores de transporte) |
 | `db.ts` | Placeholder `server-only` | Temporal | Backend |
 | `db/` | Persistencia en servidor (Drizzle) | Spike en evaluación (ver #15) | Backend |
