@@ -2,15 +2,19 @@ import { z } from "zod";
 
 export const costCategorySchema = z.enum(["fixed", "variable", "own_labor", "indirect"]);
 
+const MSG_EMPTY = "El importe es obligatorio.";
+const MSG_NOT_NUMERIC = "El importe debe ser un número.";
+const MSG_NEGATIVE = "El importe no puede ser negativo.";
+
 const numericAmount = /^[+-]?\d+(?:\.\d+)?$/;
 
 const amountRawSchema = z
   .string()
   .trim()
-  .pipe(z.string().min(1, { error: "El importe es obligatorio." }))
-  .pipe(z.string().regex(numericAmount, { error: "El importe debe ser un número." }))
+  .pipe(z.string().min(1, { error: MSG_EMPTY }))
+  .pipe(z.string().regex(numericAmount, { error: MSG_NOT_NUMERIC }))
   .transform(Number)
-  .pipe(z.number().min(0, { error: "El importe no puede ser negativo." }));
+  .pipe(z.number().min(0, { error: MSG_NEGATIVE }));
 
 export const costConceptSchema = z
   .object({
@@ -23,3 +27,7 @@ export const costConceptSchema = z
     amount: amountRaw,
     category,
   }));
+
+export type CostCategory = z.infer<typeof costCategorySchema>;
+export type CostLineInput = z.input<typeof costConceptSchema>;
+export type CostLine = z.output<typeof costConceptSchema>;
