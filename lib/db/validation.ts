@@ -13,6 +13,13 @@ import {
   profiles,
   scenarios,
 } from "./schema";
+import {
+  currencyField,
+  periodField,
+  productNameField,
+  unitField,
+  volumeField,
+} from "@/lib/schemas/calculator-setup/fields";
 
 // ---------------------------------------------------------------------------
 // Evaluation spike only: Zod schemas derived from the Drizzle tables.
@@ -57,9 +64,7 @@ export const businessCostLineRowSchema = createSelectSchema(businessCostLines, {
 
 export const calculationRowSchema = createSelectSchema(calculations);
 
-export const costingSetupRowSchema = createSelectSchema(costingSetup, {
-  estimatedVolume: quantityString,
-});
+export const costingSetupRowSchema = createSelectSchema(costingSetup);
 
 export const pricingInputsRowSchema = createSelectSchema(pricingInputs, {
   expectedMarginPct: quantityString,
@@ -98,7 +103,7 @@ export const createBusinessInputSchema = createInsertSchema(businesses, {
 });
 
 export const createProductInputSchema = createInsertSchema(products, {
-  name: nameString(120),
+  name: productNameField,
   skuOrSlug: z.string().trim().min(1).max(120).nullish(),
 }).omit({
   id: true,
@@ -137,11 +142,12 @@ export const createCalculationInputSchema = createInsertSchema(calculations, {
   updatedAt: true,
 });
 
+// Business rules come from the shared field atoms in lib/schemas/calculator-setup/fields.ts.
 export const upsertCostingSetupInputSchema = createInsertSchema(costingSetup, {
-  currency: codeString(8),
-  costingPeriod: codeString(40),
-  costingUnit: codeString(40),
-  estimatedVolume: quantityString,
+  currency: currencyField,
+  costingPeriod: periodField,
+  costingUnit: unitField,
+  estimatedVolume: volumeField,
 }).omit({
   calculationId: true,
   createdAt: true,

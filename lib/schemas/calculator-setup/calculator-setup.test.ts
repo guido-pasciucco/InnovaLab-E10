@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { calculatorSetupSchema } from "./calculator";
+import { calculatorSetupSchema } from "./calculator-setup";
 
 // Messages are defined once in the schema and shown on both sides:
 // by RHF in the client and by the service's ZodError on the server.

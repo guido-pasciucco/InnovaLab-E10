@@ -110,10 +110,7 @@ export const costingSetup = pgTable("costing_setup", {
   currency: text("currency").notNull(),
   costingPeriod: text("costing_period").notNull(),
   costingUnit: text("costing_unit").notNull(),
-  estimatedVolume: numeric("estimated_volume", {
-    precision: 14,
-    scale: 4,
-  }).notNull(),
+  estimatedVolume: integer("estimated_volume").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

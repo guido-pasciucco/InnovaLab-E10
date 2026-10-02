@@ -1,0 +1,1 @@
+ALTER TABLE "costing_setup" ALTER COLUMN "estimated_volume" SET DATA TYPE integer;
