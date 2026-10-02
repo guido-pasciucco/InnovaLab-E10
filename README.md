@@ -99,7 +99,7 @@ app/(calculator)/paso-1/page.tsx      4 líneas: "Step 1 — TODO"
 app/(calculator)/paso-2/page.tsx      stub
 app/(calculator)/resultados/page.tsx  stub
 lib/calc/  lib/money/  lib/store/  solo .gitkeep
-lib/schemas/                        solo auth/
+lib/schemas/                        auth/, calculator-setup/
 ```
 
 **`app/(calculator)/layout.tsx` no existe todavía** y hay que crearlo: App Router no remonta un layout compartido entre rutas hermanas, así que sin él el estado del asistente se pierde al navegar entre pasos.
@@ -120,7 +120,7 @@ components/
 lib/
   calc/          # pure domain math (costs, pricing, break-even) — vacío, solo .gitkeep
   money/         # pure money formatting / rounding — vacío, solo .gitkeep
-  schemas/       # THE single Zod source of truth (hoy solo auth/)
+  schemas/       # THE single Zod source of truth (auth/, calculator-setup/; field rules in <contract>/fields.ts)
   services/      # lógica de negocio del servidor (transport-agnostic), usada por las Server Actions
   supabase/      # clientes Supabase por runtime (proxy, rsc) — server-only
   types/         # tipos compartidos (p. ej. FormState)

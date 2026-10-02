@@ -9,7 +9,7 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 | **Backend** | Dueño. Escribe y modifica todos los módulos salvo `store/` (ver "Frontera de responsabilidad"). |
 | **Frontend** | Consume: importa `schemas/`, `calc/`, `money/` y `types/` desde `components/` y `app/`. Solo modifica `schemas/` para agregar un campo puramente cosmético del formulario. `store/` está en investigación y no tiene dueño asignado (nota 4). |
 
-Guías de submódulos: [`errors/AGENTS.md`](errors/AGENTS.md) y [`db/AGENTS.md`](db/AGENTS.md).
+Guías de submódulos: [`schemas/AGENTS.md`](schemas/AGENTS.md), [`errors/AGENTS.md`](errors/AGENTS.md) y [`db/AGENTS.md`](db/AGENTS.md).
 
 ## Mapa rápido
 
@@ -20,7 +20,7 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 | `auth/` | Guards de sesión para Server Components (`requireUser`) — solo servidor | Activa | Backend |
 | `calc/` | Motor de cálculo: funciones puras (entra config + costos, salen resultados) | Esqueleto (ver #14) | **Backend** |
 | `money/` | Aritmética decimal exacta con `decimal.js` | Esqueleto | **Backend** |
-| `schemas/` | Contratos Zod compartidos entre cliente y servidor | Esqueleto | **Backend** (define las reglas) |
+| `schemas/` | Contratos Zod compartidos entre cliente y servidor; reglas de campo en `<contrato>/fields.ts` (ver `schemas/AGENTS.md`) | Activa (`auth/`, `calculator-setup/`) | **Backend** (define las reglas) |
 | `store/` | Estado del calculator en el cliente | Esqueleto | **En investigación** (nota 4) |
 | `errors/` | Manejo centralizado de errores: catálogo, `AppError` y adaptadores `handleRouteErrors`/`handleActionErrors` (ver `errors/AGENTS.md`) | Activa | **Backend** (adaptadores de transporte) |
 | `db.ts` | Placeholder `server-only` | Temporal | Backend |

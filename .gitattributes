@@ -1,0 +1,2 @@
+# Drizzle snapshots are full schema dumps written by drizzle-kit generate.
+drizzle/meta/*_snapshot.json linguist-generated=true
