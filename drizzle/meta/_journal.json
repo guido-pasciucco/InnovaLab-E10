@@ -29,6 +29,13 @@
       "when": 1790606932472,
       "tag": "20260928101614_add_profiles_fk",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790933180878,
+      "tag": "20261002092620_sync_profiles_id_default",
+      "breakpoints": true
     }
   ]
 }
