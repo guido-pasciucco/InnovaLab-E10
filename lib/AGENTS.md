@@ -9,7 +9,7 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 | **Backend** | Dueño. Escribe y modifica todos los módulos salvo `store/` (ver "Frontera de responsabilidad"). |
 | **Frontend** | Consume: importa `schemas/`, `calc/`, `money/` y `types/` desde `components/` y `app/`. Solo modifica `schemas/` para agregar un campo puramente cosmético del formulario. `store/` está en investigación y no tiene dueño asignado (nota 4). |
 
-Guías de submódulos: [`errors/AGENTS.md`](errors/AGENTS.md) y [`db/AGENTS.md`](db/AGENTS.md).
+Guías de submódulos: [`schemas/AGENTS.md`](schemas/AGENTS.md), [`errors/AGENTS.md`](errors/AGENTS.md) y [`db/AGENTS.md`](db/AGENTS.md).
 
 ## Mapa rápido
 
