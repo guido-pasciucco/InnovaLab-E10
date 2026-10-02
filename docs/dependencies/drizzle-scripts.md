@@ -1,6 +1,6 @@
 # drizzle-scripts — Del esquema a SQL versionado y revisable
 
-Los scripts `db:*` (`drizzle-kit ^0.31.10` sobre `drizzle-orm ^0.45.2`) convierten `lib/db/schema.ts` en SQL versionado dentro de `./drizzle/`. Generar es local y seguro; aplicar a la base requiere `DIRECT_URL` (conexión directa o session pooler, puerto 5432) y criterio sobre qué comando usar.
+Los scripts `db:*` (`drizzle-kit ^0.31.10` sobre `drizzle-orm ^0.45.2`) convierten las tablas de `lib/db/<dominio>/table.ts` en SQL versionado dentro de `./drizzle/`. Generar es local y seguro; aplicar a la base requiere `DIRECT_URL` (conexión directa o session pooler, puerto 5432) y criterio sobre qué comando usar.
 
 > **Estado: spike de evaluación.** Los scripts solo generan y aplican SQL. No crean helpers, no configuran RLS y no están cableados a ninguna base real.
 
@@ -23,7 +23,7 @@ Los scripts `db:*` (`drizzle-kit ^0.31.10` sobre `drizzle-orm ^0.45.2`) conviert
 ## Flujo paso a paso
 
 1. Completar `.env.local` desde `.env.example` (`cp .env.example .env.local`) con `DIRECT_URL` real (las migraciones no usan el pooler de `DATABASE_URL`).
-2. Ejecutar `bun run db:generate` tras cada cambio en `lib/db/schema.ts`.
+2. Ejecutar `bun run db:generate` tras cada cambio en `lib/db/<dominio>/table.ts`.
 3. Revisar el SQL generado en `./drizzle/` como cualquier otro código (nombres, tipos, `numeric` para dinero).
 4. En spike: `bun run db:push` contra una base descartable. En trabajo serio: `bun run db:migrate`.
 5. Verificar con `bunx tsc --noEmit` y `bun run lint` antes de pedir revisión.
@@ -31,14 +31,14 @@ Los scripts `db:*` (`drizzle-kit ^0.31.10` sobre `drizzle-orm ^0.45.2`) conviert
 ## Ejemplo mínimo
 
 ```bash
-# Tras editar lib/db/schema.ts: genera la migración revisable
+# Tras editar lib/db/<dominio>/table.ts: genera la migración revisable
 bun run db:generate
 
 # Revisar ./drizzle/0000_supabase_*.sql y luego, solo en spike:
 bun run db:push
 ```
 
-La configuración vive en `drizzle.config.ts` (raíz): `schema` apunta a `./lib/db/schema.ts`, `out` a `./drizzle/` y `migrations.prefix` a `supabase`.
+La configuración vive en `drizzle.config.ts` (raíz): `schema` apunta al glob `./lib/db/*/table.ts` (solo las tablas, no los validadores ni los tests), `out` a `./drizzle/` y `migrations.prefix` a `supabase`.
 
 ## Qué falta
 

@@ -2,8 +2,8 @@ import { z } from "zod";
 
 // Field rules: the single origin of every validation rule and user-facing
 // message. Contracts compose these atoms instead of redefining them:
-// ./calculator-setup.ts builds the form contract and lib/db/validation.ts reuses
-// them as drizzle-zod refinements. Pure and client-safe: no db, no window.
+// ./calculator-setup.ts builds the form contract and lib/db/<domain>/validation.ts
+// reuses them as drizzle-zod refinements. Pure and client-safe: no db, no window.
 
 export const productNameField = z
   .string()

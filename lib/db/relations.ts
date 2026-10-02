@@ -1,17 +1,15 @@
 import { relations } from "drizzle-orm";
 
+import { businesses, products } from "./business/table";
 import {
-  businessCostLines,
-  businesses,
-  calcCostLines,
   calculations,
   computedResults,
   costingSetup,
   pricingInputs,
-  products,
-  profiles,
   scenarios,
-} from "./schema";
+} from "./calculation/table";
+import { businessCostLines, calcCostLines } from "./costs/table";
+import { profiles } from "./profile/table";
 
 // ---------------------------------------------------------------------------
 // Evaluation spike only: query relations for the ERD tables, using the stable

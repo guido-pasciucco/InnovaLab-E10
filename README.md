@@ -56,7 +56,7 @@ Dependencias clave:
 - **`server-only`:** marca módulos exclusivos del servidor; Next.js detecta como error su importación desde componentes de cliente.
 - **`zod` + `react-hook-form`:** validación como fuente única; RHF para los formularios.
 - **`@supabase/ssr` + Supabase Auth:** sesión, login, signup y recuperación de contraseña. Ver `lib/supabase/`.
-- **`drizzle-orm`:** acceso a la base con tipos. El esquema vive en `lib/db/schema.ts` (ver `lib/db/AGENTS.md`).
+- **`drizzle-orm`:** acceso a la base con tipos. El esquema vive en `lib/db/<dominio>/table.ts` (ver `lib/db/AGENTS.md`).
 
 > [!NOTE]
 > La suite de tests corre con `environment: "node"` en `vitest.config.mts`. **No hay `jsdom` ni `@testing-library/*` instalados**, así que los componentes de React no se unit-testean: las reglas se testean en `lib/schemas` y `lib/store`, y la integración se verifica a mano en dev. Agregar esas librerías es un cambio de tooling del repo, no de un ticket de feature.

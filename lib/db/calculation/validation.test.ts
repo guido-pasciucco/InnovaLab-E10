@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createProductInputSchema, upsertCostingSetupInputSchema } from "./validation";
+import { upsertCostingSetupInputSchema } from "./validation";
 
-// The DB input schemas reuse the field rules from lib/schemas/calculator-setup/fields.ts,
+// The calculation input schemas reuse the field rules from lib/schemas/calculator-setup/fields.ts,
 // so they enforce the same constraints and messages as the form contract.
 function fieldErrors(schema: z.ZodType, input: unknown) {
   const result = schema.safeParse(input);
@@ -52,14 +52,6 @@ describe("upsertCostingSetupInputSchema", () => {
   it("rejects a zero volume with the shared message", () => {
     expect(fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, volume: 0 })).toEqual({
       volume: ["El volumen tiene que ser mayor que 0."],
-    });
-  });
-});
-
-describe("createProductInputSchema", () => {
-  it("rejects a whitespace-only name with the shared message", () => {
-    expect(fieldErrors(createProductInputSchema, { name: "   " })).toEqual({
-      name: ["Escribí el nombre de tu producto."],
     });
   });
 });
