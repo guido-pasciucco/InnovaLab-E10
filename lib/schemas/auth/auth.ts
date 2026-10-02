@@ -1,19 +1,20 @@
 import { z } from "zod";
 
+import { emailField, passwordField } from "./fields";
+
 // Input validation at the edge: strict contract before touching auth.
-// Field messages live here, once: RHF shows them in the client and the
-// service's ZodError carries them to the server response (details.fieldErrors).
+// Field rules and messages come from ./fields, once: RHF shows them in the
+// client and the service's ZodError carries them to the server response
+// (details.fieldErrors).
 
-const email = z.email({ error: "Enter a valid email address" });
-const password = z.string().min(8, { error: "Password must be at least 8 characters" });
-
-export const loginSchema = z.object({ email, password });
+export const loginSchema = z.object({ email: emailField, password: passwordField });
 
 export const signupSchema = z.object({
-  email,
-  password,
+  email: emailField,
+  password: passwordField,
   // Optional in the form: an empty input arrives as "" and is valid.
-  // The service turns it into "no display name".
+  // The service turns it into "no display name". Kept inline: signup is its
+  // only consumer (see docs/decisiones/0004).
   displayName: z
     .string()
     .trim()
@@ -21,6 +22,6 @@ export const signupSchema = z.object({
     .optional(),
 });
 
-export const passwordResetRequestSchema = z.object({ email });
+export const passwordResetRequestSchema = z.object({ email: emailField });
 
-export const passwordUpdateSchema = z.object({ password });
+export const passwordUpdateSchema = z.object({ password: passwordField });
