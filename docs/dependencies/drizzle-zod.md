@@ -12,9 +12,9 @@ Sin esta pieza, cada tabla se refleja a mano en interfaces TypeScript duplicadas
 
 | Aspecto         | Decisión                                                                                                                                                         |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tablas          | `lib/db/schema.ts` con `pgTable`; nombres de tabla `snake_case` en Postgres, campos `camelCase` en TypeScript                                                    |
+| Tablas          | `lib/db/<dominio>/table.ts` con `pgTable`; nombres de tabla `snake_case` en Postgres, campos `camelCase` en TypeScript                                                    |
 | Tipos de fila   | Inferidos: `type Business = typeof businesses.$inferSelect`, `NewBusiness = typeof businesses.$inferInsert`. Sin interfaces manuales                             |
-| Validación      | `lib/db/validation.ts` con `createSelectSchema` (filas) y `createInsertSchema` (inputs) de `drizzle-zod`                                                         |
+| Validación      | `lib/db/<dominio>/validation.ts` con `createSelectSchema` (filas) y `createInsertSchema` (inputs) de `drizzle-zod`                                                         |
 | Inputs públicos | Insert schema + `.omit()` de todo lo controlado por el servidor: `id`, FKs (`ownerUserId`, `businessId`, `calculationId`), `status`, `schemaVersion`, timestamps |
 | Relaciones      | `lib/db/relations.ts` con la API clásica `fields` / `references` (`many` en padres, `one` en hijos)                                                              |
 
@@ -24,7 +24,7 @@ Flujo de escritura: `input público → validación Zod → el servidor inyecta 
 
 ```ts
 import { createInsertSchema } from "drizzle-zod";
-import { businesses } from "./schema";
+import { businesses } from "./table"; // lib/db/business/validation.ts
 
 export const createBusinessInputSchema = createInsertSchema(businesses, {
   name: nameString(120),

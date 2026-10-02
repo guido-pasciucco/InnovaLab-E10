@@ -1,6 +1,6 @@
 # schemas/ — Contratos Zod y reglas de campo
 
-Cada regla de validación y su mensaje se escriben **una sola vez**, en el `fields.ts` del contrato. El formulario (cliente) y los schemas de la base (`lib/db/validation.ts`) se arman a partir de esas mismas reglas, y usan las **mismas claves**, así que guardar no requiere renombrar campos.
+Cada regla de validación y su mensaje se escriben **una sola vez**, en el `fields.ts` del contrato. El formulario (cliente) y los schemas de la base (`lib/db/<dominio>/validation.ts`) se arman a partir de esas mismas reglas, y usan las **mismas claves**, así que guardar no requiere renombrar campos.
 
 ## Quién toca este directorio
 
@@ -34,7 +34,7 @@ lib/schemas/
    ```ts
    export const calculatorSetupSchema = z.object({ unit: unitField /* ... */ });
    ```
-3. **Usala en `lib/db/validation.ts`** como refinamiento de drizzle-zod:
+3. **Usala en el `lib/db/<dominio>/validation.ts`** de la tabla como refinamiento de drizzle-zod:
    ```ts
    createInsertSchema(costingSetup, { unit: unitField /* ... */ });
    ```
