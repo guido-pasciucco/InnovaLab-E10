@@ -7,7 +7,7 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 | Rol | Qué hace en `lib/` |
 | --- | --- |
 | **Backend** | Dueño. Escribe y modifica todos los módulos salvo `store/` (ver "Frontera de responsabilidad"). |
-| **Frontend** | Consume: importa `schemas/`, `calc/`, `money/` y `types/` desde `components/` y `app/`. Solo modifica `schemas/` para agregar un campo puramente cosmético del formulario. `store/` está en investigación y no tiene dueño asignado (nota 4). |
+| **Frontend** | Dueño de `store/`. Fuera de ahí consume: importa `schemas/`, `calc/`, `money/` y `types/` desde `components/`, `app/` y `store/`. Solo modifica `schemas/` para agregar un campo puramente cosmético del formulario. |
 
 Guías de submódulos: [`schemas/AGENTS.md`](schemas/AGENTS.md), [`errors/AGENTS.md`](errors/AGENTS.md) y [`db/AGENTS.md`](db/AGENTS.md).
 
@@ -21,7 +21,7 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 | `calc/` | Motor de cálculo: funciones puras (entra config + costos, salen resultados) | Esqueleto (ver #14) | **Backend** |
 | `money/` | Aritmética decimal exacta con `decimal.js` | Esqueleto | **Backend** |
 | `schemas/` | Contratos Zod compartidos entre cliente y servidor; reglas de campo en `<contrato>/fields.ts` (ver `schemas/AGENTS.md`) | Activa (`auth/`, `calculator-setup/`) | **Backend** (define las reglas) |
-| `store/` | Estado del calculator en el cliente | Esqueleto | **En investigación** (nota 4) |
+| `store/` | Estado del calculator en el cliente | Esqueleto | **Frontend** (nota 4) |
 | `errors/` | Manejo centralizado de errores: catálogo, `AppError` y adaptadores `handleRouteErrors`/`handleActionErrors` (ver `errors/AGENTS.md`) | Activa | **Backend** (adaptadores de transporte) |
 | `db.ts` | Placeholder `server-only` | Temporal | Backend |
 | `db/` | Persistencia en servidor (Drizzle) | Spike en evaluación (ver #15) | Backend |
@@ -31,12 +31,12 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 
 ## Frontera de responsabilidad
 
-> **Regla de una línea: en `lib/` va todo lo que es cálculo, validación o regla de negocio, y su dueño es Backend. `lib/store/` es la única excepción, y está en investigación (nota 4). Fuera de `lib/`, `app/` y `components/` son de Frontend.**
+> **Regla de una línea: en `lib/` va todo lo que es cálculo, validación o regla de negocio, y su dueño es Backend. `lib/store/` es la única excepción: es de Frontend (nota 4). Fuera de `lib/`, `app/` y `components/` son de Frontend.**
 
 | Zona | Dueño |
 | --- | --- |
 | `lib/calc/`, `lib/money/`, `lib/schemas/`, `lib/services/`, `lib/db/`, `lib/errors/`, `lib/types/`, `lib/auth/`, `lib/supabase/` | **Backend** |
-| `lib/store/` | **En investigación** — ver la nota 4 |
+| `lib/store/` | **Frontend** — ver la nota 4 |
 | `app/`, `components/` | **Frontend** |
 
 Tres aclaraciones que evitan las confusiones más comunes:
@@ -45,7 +45,7 @@ Tres aclaraciones que evitan las confusiones más comunes:
 2. **Una regla, dos consumidores.** `schemas/` pertenece a Backend porque ahí vive la REGLA (qué es válido, qué mensaje ve el usuario). El formulario de `components/` es Frontend y consume ese schema. Si el formulario y el schema discrepan, **la regla gana**: se arregla el schema, nunca el mensaje en el JSX.
 3. **Esto difiere del plan de sprints.** El plan listaba las funciones puras del motor bajo el rol Frontend. Esa asignación se corrige acá: las fórmulas y las validaciones son dominio, no interfaz. El plan se ajusta a esta frontera.
 
-4. **`lib/store/` está en investigación y por eso no tiene dueño asignado.** La pregunta abierta es una sola, y es **de Frontend**: **¿se adopta una librería que abstraiga el estado y la persistencia, o se resuelve con React Context + `useState`?** La candidata sobre la mesa es `zustand`, que aparece en los tickets viejos del proyecto. **No está adoptada.**
+4. **`lib/store/` es de Frontend.** Es estado de la interfaz en el cliente, no regla de negocio: consume los schemas de `lib/schemas/`, pero nunca define reglas ni mensajes de validación. Lo que sigue abierto es **cómo** se implementa, y lo decide Frontend: **¿se adopta una librería que abstraiga el estado y la persistencia, o se resuelve con React Context + `useState`?** La candidata sobre la mesa es `zustand`, que aparece en los tickets viejos del proyecto. **No está adoptada.**
 
    Lo que ya se verificó con evidencia, y que **no** hay que volver a investigar:
 
@@ -55,9 +55,9 @@ Tres aclaraciones que evitan las confusiones más comunes:
 
    Para la **Semana 1** se resuelve con Context + `useState`, que es lo más chico que resuelve el problema. Eso cierra *esta* semana, no la pregunta de fondo. Por eso la capa de storage se construye con el `Storage` **inyectado por parámetro**: si más adelante se decide adoptar la librería, se reescribe sin cambiar la forma de los tests.
 
-   **Pendiente: cerrar esta investigación con una decisión explícita antes de la Semana 2.** Hasta entonces, no clasificar tickets por `store/` dando por hecho que el dueño está resuelto.
+   **Pendiente: Frontend cierra la elección de librería con una decisión explícita antes de la Semana 2.** El dueño ya está resuelto: un ticket que toca `lib/store/` se clasifica `FRONTEND`.
 
-**Consecuencia práctica:** una issue etiquetada `BACKEND` puede tocar `lib/store/` si el storage necesita consumir un schema, y una etiquetada `FRONTEND` puede tocar `lib/schemas/` solo si agrega un campo puramente cosmético al formulario. Lo que **nunca** se reparte es la fórmula: `lib/calc/` y `lib/money/` tienen un solo dueño.
+**Consecuencia práctica:** una issue etiquetada `FRONTEND` puede tocar `lib/store/` y consumir cualquier schema, pero solo modifica `lib/schemas/` si agrega un campo puramente cosmético al formulario. Si el storage necesita una regla nueva, la agrega Backend en `lib/schemas/`. Lo que **nunca** se reparte es la fórmula: `lib/calc/` y `lib/money/` tienen un solo dueño.
 
 ## Reglas (no negociables)
 

@@ -8,7 +8,7 @@ import { defineConfig } from "drizzle-kit";
 // and session state that a multi-step migration relies on.
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./lib/db/schema.ts",
+  schema: "./lib/db/*/table.ts",
   out: "./drizzle",
   migrations: {
     prefix: "supabase",
