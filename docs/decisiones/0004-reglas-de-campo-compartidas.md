@@ -4,11 +4,11 @@
 | --- | --- |
 | **Estado** | ✅ Aceptada (PR #84) |
 | **Fecha** | 2026-10-02 |
-| **Relacionado** | `lib/schemas/AGENTS.md` · `lib/db/AGENTS.md` · `lib/schemas/calculator-setup/` · `lib/db/validation.ts` |
+| **Relacionado** | `lib/schemas/AGENTS.md` · `lib/db/AGENTS.md` · `lib/schemas/calculator-setup/` · `lib/db/<dominio>/validation.ts` |
 
 ## Contexto
 
-Cada campo tenía dos validaciones escritas por separado: una en el contrato del formulario (`lib/schemas/`) y otra en el schema de la base (`lib/db/validation.ts`, con drizzle-zod). Las dos divergían sin que nadie lo notara:
+Cada campo tenía dos validaciones escritas por separado: una en el contrato del formulario (`lib/schemas/`) y otra en el schema de la base (`lib/db/validation.ts`, con drizzle-zod; hoy `lib/db/<dominio>/validation.ts`). Las dos divergían sin que nadie lo notara:
 
 - La base aceptaba `currency: "USD"` y el formulario no.
 - El formulario guardaba el volumen como entero y la base como decimal de 4 posiciones.
@@ -49,10 +49,10 @@ Opción A. La guía operativa (estructura, pasos, checklist) está en `lib/schem
 
 ## Costos
 
-1. **La base queda atada al contrato del formulario.** Si un seed, un script o un panel de administración necesita una regla distinta (por ejemplo, importes negativos para un ajuste), hay que declarar una excepción explícita en `validation.ts`. Es a propósito, pero suma rigidez.
+1. **La base queda atada al contrato del formulario.** Si un seed, un script o un panel de administración necesita una regla distinta (por ejemplo, importes negativos para un ajuste), hay que declarar una excepción explícita en el `lib/db/<dominio>/validation.ts` de esa tabla. Es a propósito, pero suma rigidez.
 2. **Renombrar columnas deja de ser barato cuando hay datos.** Alinear nombres es gratis antes de producción. Después, cada renombre es una migración con riesgo: drizzle-kit 0.31 omite los cambios de tipo de una columna renombrada en la misma generación ([drizzle-orm#3826](https://github.com/drizzle-team/drizzle-orm/issues/3826)).
 3. **Más archivos para contratos chicos.** Un contrato de uno o dos campos con su propio `fields.ts` es estructura sin beneficio.
-4. **Los mensajes de UI viajan a la base.** Los errores de `validation.ts` quedan en español y orientados al usuario, también cuando quien escribe es un script.
+4. **Los mensajes de UI viajan a la base.** Los errores de `lib/db/<dominio>/validation.ts` quedan en español y orientados al usuario, también cuando quien escribe es un script.
 
 ## Cuándo no aplicar la convención
 
@@ -61,7 +61,7 @@ Opción A. La guía operativa (estructura, pasos, checklist) está en `lib/schem
 | La regla tiene **un solo consumidor** y no hay una columna que la refleje (por ejemplo, `confirm` en el cambio de contraseña, o reglas de auth que valida Supabase) | Dejar la regla dentro del contrato. Extraerla a `fields.ts` recién cuando aparezca el segundo consumidor. |
 | Schemas de **lectura** (`*RowSchema`) | Validan el formato de lo que devuelve la base (`moneyString`, `quantityString`), no reglas de negocio. No usan `*Field`. |
 | Entradas **internas del servidor** (seeds, jobs, `computed_results`) | No pasan por el formulario. Pueden usar reglas de formato propias. |
-| Una tabla necesita una **regla más permisiva** que el formulario | Escribir la excepción en `validation.ts` con un comentario que diga por qué. No relajar el `*Field` compartido. |
+| Una tabla necesita una **regla más permisiva** que el formulario | Escribir la excepción en el `lib/db/<dominio>/validation.ts` de la tabla, con un comentario que diga por qué. No relajar el `*Field` compartido. |
 | La columna **ya tiene datos en producción** y el nombre no coincide | Evaluar el costo de la migración antes de renombrar. Si no vale la pena, mapear esa clave en el servicio y dejarlo documentado. |
 | Un campo del formulario **no se guarda** (checkbox de términos, campos de confirmación) | Va solo en el contrato. No hay columna con la que alinear el nombre. |
 
