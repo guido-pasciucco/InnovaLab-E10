@@ -124,7 +124,7 @@ lib/
   services/      # lógica de negocio del servidor (transport-agnostic), usada por las Server Actions
   supabase/      # clientes Supabase por runtime (proxy, rsc) — server-only
   types/         # tipos compartidos (p. ej. FormState)
-  store/         # estado del asistente (LocalStorage vs IndexedDB TBD) — vacío, dueño sin asignar
+  store/         # estado del asistente (LocalStorage vs IndexedDB TBD) — vacío, dueño: Frontend
   errors/        # catálogo central de errores + adaptadores de route y action
   auth/          # guard de sesión para Server Components (requireUser)
   db/            # esquema Drizzle y reglas de escritura en servidor
@@ -180,7 +180,7 @@ tests/
 
 ### Preguntas abiertas (sin decidir, no asumir)
 
-1. **Estado del asistente: librería o Context.** ¿Se adopta una librería que abstraiga el estado y la persistencia (`zustand` es la candidata), o se resuelve con React Context + `useState`? La Semana 1 usa Context porque `zustand` no está instalada y su middleware `persist` arrastra el mismo problema de hidratación. **Es una decisión de Frontend y sigue abierta** — ver `lib/AGENTS.md` nota 4. Hasta cerrarla, `lib/store/` no tiene dueño asignado.
+1. **Estado del asistente: librería o Context.** ¿Se adopta una librería que abstraiga el estado y la persistencia (`zustand` es la candidata), o se resuelve con React Context + `useState`? La Semana 1 usa Context porque `zustand` no está instalada y su middleware `persist` arrastra el mismo problema de hidratación. **Es una decisión de Frontend y sigue abierta** — ver `lib/AGENTS.md` nota 4. `lib/store/` ya es de Frontend; lo abierto es solo la librería.
 2. **Persistencia del cálculo: ¿local o en la base?** El README original decía "local-first sin cuentas"; la definición conceptual del proyecto dio "persistencia mediante cuenta de usuario" por decidido. No se reconcilian. De esto depende si las tareas de backend de persistencia (`#33`, `#34`) se ejecutan o se cierran, y si hace falta el ADR que pide `#63`.
 3. LocalStorage vs IndexedDB para la persistencia de la Fase 1.
 4. Proceso de cambios de esquemas: ¿cómo se proponen y migran los cambios en `lib/schemas`?
