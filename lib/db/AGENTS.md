@@ -36,6 +36,11 @@ Drizzle no genera migraciones solo: después de cambiar `schema.ts`, se generan 
 1. Cambiá `schema.ts`.
 2. Corré `bun run db:generate` **en una terminal interactiva**. Si renombraste una columna, drizzle-kit pregunta si es nueva o renombrada: elegí *rename*, porque *create* borra la columna vieja y sus datos.
 3. Revisá el `.sql` generado y que no traiga cambios ajenos. Si aparece un desfasaje previo, va en un commit aparte.
+   - **Renombre más cambio de tipo en la misma columna:** drizzle-kit 0.45 genera el `RENAME COLUMN` pero omite el `SET DATA TYPE`, aunque el snapshot sí registra el tipo nuevo. Agregá la sentencia al final del `.sql`, sobre el nombre nuevo (ejemplo: `drizzle/20261002095328_costing_setup_columns.sql`). El paso 4 no lo detecta, porque el snapshot ya está al día.
 4. Volvé a correr `bun run db:generate`: tiene que responder "No schema changes".
 
-No escribas migraciones a mano salvo para lo que drizzle-kit no modela (RLS, triggers, FKs a `auth.users`). En ese caso, también hay que actualizar el snapshot y el journal en `drizzle/meta/`, o la próxima generación arrastra el desfasaje. `drizzle-kit push` solo sirve para prototipar en una base local: no deja historial.
+Para lo que drizzle-kit no modela (RLS, triggers, FKs a `auth.users`, carga de datos), generá una migración vacía con `bun run db:generate -- --custom --name <nombre>` y escribí el SQL ahí. Así queda registrada en el journal. Nunca crees archivos en `drizzle/` ni edites `drizzle/meta/` a mano. Los renombres de columnas sí los modela: usá el paso 2, no `--custom`.
+
+Todo `drizzle/`, incluido `meta/`, se versiona: `generate` compara `schema.ts` contra el último snapshot. Cada snapshot es una foto completa del schema (cientos de líneas), y `.gitattributes` los marca como generados para que GitHub los colapse en la revisión. drizzle-kit no tiene comando para unir migraciones. Si dos migraciones de un PR todavía no se aplicaron en ninguna base, se borran (SQL, snapshot y entrada del journal) y se regeneran juntas.
+
+`drizzle-kit push` solo sirve para prototipar en una base local: no deja historial.

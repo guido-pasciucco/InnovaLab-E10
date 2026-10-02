@@ -1,5 +1,5 @@
 {
-  "id": "dd5f5e95-1013-4a2b-bfa9-3873f0b8d75f",
+  "id": "0fc902c4-c53c-40e2-8c9a-005b19234d18",
   "prevId": "95333743-db7d-4d31-a37e-0bbb67ff2138",
   "version": "7",
   "dialect": "postgresql",
@@ -516,20 +516,20 @@
           "primaryKey": false,
           "notNull": true
         },
-        "costing_period": {
-          "name": "costing_period",
+        "period": {
+          "name": "period",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "costing_unit": {
-          "name": "costing_unit",
+        "unit": {
+          "name": "unit",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "estimated_volume": {
-          "name": "estimated_volume",
+        "volume": {
+          "name": "volume",
           "type": "integer",
           "primaryKey": false,
           "notNull": true

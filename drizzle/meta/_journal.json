@@ -40,15 +40,8 @@
     {
       "idx": 5,
       "version": "7",
-      "when": 1790933188252,
-      "tag": "20261002092628_costing_setup_volume_integer",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1790933630962,
-      "tag": "20261002093500_rename_costing_setup_columns",
+      "when": 1790934808318,
+      "tag": "20261002095328_costing_setup_columns",
       "breakpoints": true
     }
   ]
