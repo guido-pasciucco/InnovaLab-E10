@@ -108,9 +108,9 @@ export const costingSetup = pgTable("costing_setup", {
     .primaryKey()
     .references(() => calculations.id, { onDelete: "cascade" }),
   currency: text("currency").notNull(),
-  costingPeriod: text("costing_period").notNull(),
-  costingUnit: text("costing_unit").notNull(),
-  estimatedVolume: integer("estimated_volume").notNull(),
+  period: text("period").notNull(),
+  unit: text("unit").notNull(),
+  volume: integer("volume").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

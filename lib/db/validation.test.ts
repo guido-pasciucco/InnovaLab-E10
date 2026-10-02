@@ -11,9 +11,9 @@ function fieldErrors(schema: z.ZodType, input: unknown) {
 
 const validCostingSetup = {
   currency: "ARS",
-  costingPeriod: "Mensual",
-  costingUnit: "caja",
-  estimatedVolume: 6,
+  period: "Mensual",
+  unit: "caja",
+  volume: 6,
 };
 
 describe("upsertCostingSetupInputSchema", () => {
@@ -29,29 +29,29 @@ describe("upsertCostingSetupInputSchema", () => {
 
   it("rejects a non-monthly period with the shared message", () => {
     expect(
-      fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, costingPeriod: "Anual" }),
+      fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, period: "Anual" }),
     ).toEqual({
-      costingPeriod: ["El período es mensual y no se puede cambiar."],
+      period: ["El período es mensual y no se puede cambiar."],
     });
   });
 
   it("rejects a whitespace-only unit with the shared message", () => {
-    expect(fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, costingUnit: "  " })).toEqual({
-      costingUnit: ["Escribí en qué unidad lo vendés (ej: caja, paquete, kilo)."],
+    expect(fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, unit: "  " })).toEqual({
+      unit: ["Escribí en qué unidad lo vendés (ej: caja, paquete, kilo)."],
     });
   });
 
   it("rejects a fractional volume with the shared message", () => {
     expect(
-      fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, estimatedVolume: 1.5 }),
+      fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, volume: 1.5 }),
     ).toEqual({
-      estimatedVolume: ["Completá el volumen con un número entero."],
+      volume: ["Completá el volumen con un número entero."],
     });
   });
 
   it("rejects a zero volume with the shared message", () => {
-    expect(fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, estimatedVolume: 0 })).toEqual({
-      estimatedVolume: ["El volumen tiene que ser mayor que 0."],
+    expect(fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, volume: 0 })).toEqual({
+      volume: ["El volumen tiene que ser mayor que 0."],
     });
   });
 });

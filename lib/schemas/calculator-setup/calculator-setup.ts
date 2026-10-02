@@ -7,7 +7,7 @@ import { currencyField, periodField, productNameField, unitField, volumeField } 
 // client and the service's ZodError carries them to the server response
 // (details.fieldErrors).
 export const calculatorSetupSchema = z.object({
-  productName: productNameField,
+  name: productNameField,
   unit: unitField,
   volume: volumeField,
   currency: currencyField,

@@ -145,9 +145,9 @@ export const createCalculationInputSchema = createInsertSchema(calculations, {
 // Business rules come from the shared field atoms in lib/schemas/calculator-setup/fields.ts.
 export const upsertCostingSetupInputSchema = createInsertSchema(costingSetup, {
   currency: currencyField,
-  costingPeriod: periodField,
-  costingUnit: unitField,
-  estimatedVolume: volumeField,
+  period: periodField,
+  unit: unitField,
+  volume: volumeField,
 }).omit({
   calculationId: true,
   createdAt: true,

@@ -10,7 +10,7 @@ function fieldErrors(schema: z.ZodType, input: unknown) {
 }
 
 const validSetup = {
-  productName: "Alfajores de maicena",
+  name: "Alfajores de maicena",
   unit: "caja",
   volume: 6,
   currency: "ARS",
@@ -22,15 +22,15 @@ describe("calculator setup schema", () => {
     expect(calculatorSetupSchema.safeParse(validSetup).success).toBe(true);
   });
 
-  it("rejects an empty productName", () => {
-    expect(fieldErrors(calculatorSetupSchema, { ...validSetup, productName: "" })).toEqual({
-      productName: ["Escribí el nombre de tu producto."],
+  it("rejects an empty name", () => {
+    expect(fieldErrors(calculatorSetupSchema, { ...validSetup, name: "" })).toEqual({
+      name: ["Escribí el nombre de tu producto."],
     });
   });
 
-  it("rejects a whitespace-only productName", () => {
-    expect(fieldErrors(calculatorSetupSchema, { ...validSetup, productName: "   " })).toEqual({
-      productName: ["Escribí el nombre de tu producto."],
+  it("rejects a whitespace-only name", () => {
+    expect(fieldErrors(calculatorSetupSchema, { ...validSetup, name: "   " })).toEqual({
+      name: ["Escribí el nombre de tu producto."],
     });
   });
 
