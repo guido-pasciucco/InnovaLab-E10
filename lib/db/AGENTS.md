@@ -1,6 +1,6 @@
 # DB — Spike Drizzle (solo evaluación)
 
-Estado: sin conexión a base de datos. El dominio (`lib/calc`, `lib/money`) no importa este módulo.
+Estado: cliente de ejecución disponible en `client.ts` (`getDb()`), todavía sin consumidores. El dominio (`lib/calc`, `lib/money`) no importa este módulo.
 
 ## Quién toca este directorio
 
@@ -21,9 +21,12 @@ lib/db/
 ├── costs/          # business_cost_lines, calc_cost_lines
 │   ├── table.ts        # en cada dominio: tablas (pgTable) y tipos inferidos
 │   └── validation.ts   # en cada dominio: esquemas drizzle-zod (*RowSchema, *InputSchema) y tipos
+├── client.ts       # cliente Drizzle de ejecución: getDb() sobre DATABASE_URL (server-only)
 ├── formats.ts      # formatos compartidos (uuid, dinero, cantidades, nombres, códigos)
 └── relations.ts    # relaciones de consulta entre todas las tablas
 ```
+
+`getDb()` se conecta por `DATABASE_URL`, el pooler de transacciones de Supabase (puerto 6543). Ese pooler no admite sentencias preparadas, por eso el cliente usa `prepare: false`. Las migraciones siguen usando `DIRECT_URL` (ver `drizzle.config.ts`). El cliente se guarda en `globalThis` para que la recarga en caliente de `next dev` no abra un pool nuevo en cada cambio. Si falta `DATABASE_URL`, `getDb()` lanza un error al primer uso, no al importar el módulo.
 
 Las claves foráneas entre dominios se importan de `table.ts` a `table.ts`, en el orden `profile ← business ← calculation ← costs`, sin ciclos. Una tabla nueva va en la carpeta del dominio que le corresponde y, cuando se pueda, con el mismo nombre que el contrato de `lib/schemas` que la alimenta.
 
