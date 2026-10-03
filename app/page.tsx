@@ -1,43 +1,96 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
-const authViews = [
-  { href: "/login", label: "Log in", description: "Sign in with email and password." },
-  { href: "/signup", label: "Sign up", description: "Create a new account." },
-  { href: "/dashboard", label: "Dashboard", description: "Protected page; reads the session server-side." },
-  { href: "/profile", label: "Profile", description: "auth.users id linked to app data." },
-  { href: "/reset-password", label: "Reset password", description: "Request a recovery email." },
-  { href: "/update-password", label: "Update password", description: "Set a new password from a recovery link." },
+export const metadata: Metadata = {
+  title: "Inicio",
+};
+
+type Feature = {
+  title: string;
+  description: string;
+};
+
+const features: readonly Feature[] = [
+  {
+    title: "Costos",
+    description: "Cargá tus costos fijos y variables para conocer cuánto te cuesta producir.",
+  },
+  {
+    title: "Precios",
+    description: "Definí precios de venta a partir de tus costos y del margen que buscás.",
+  },
+  {
+    title: "Punto de equilibrio",
+    description: "Calculá cuántas unidades necesitás vender para no perder dinero.",
+  },
 ];
 
-export default function Home() {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex w-full max-w-3xl flex-col gap-10 px-8 py-16">
-        <header className="flex flex-col gap-2 text-center sm:text-left">
-          <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
-            Supabase Auth demo
-          </h1>
-          <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Mediated topology: the browser only talks to our own server (Server Actions);
-            Supabase stays on the server.
-          </p>
-        </header>
+const CALCULATOR_START_HREF = "/paso-1";
 
-        <nav aria-label="Auth views" className="grid gap-4 sm:grid-cols-2">
-          {authViews.map((view) => (
-            <Link
-              key={view.href}
-              href={view.href}
-              className="flex flex-col gap-1 rounded-xl border border-black/[.08] bg-white p-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:bg-black dark:hover:bg-[#1a1a1a]"
-            >
-              <span className="font-medium text-black dark:text-zinc-50">{view.label}</span>
-              <span className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                {view.description}
-              </span>
-            </Link>
-          ))}
-        </nav>
-      </main>
-    </div>
+// Server Component: static content, no client JS needed.
+export default function HomePage() {
+  return (
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-16 px-6 py-16">
+      <Hero />
+      <FeatureList features={features} />
+      <AccountLinks />
+    </main>
+  );
+}
+
+function Hero() {
+  return (
+    <section aria-labelledby="hero-title" className="flex flex-col gap-6 text-center sm:text-left">
+      <h1 id="hero-title" className="text-4xl font-semibold tracking-tight">
+        Calculadora de costos y precios
+      </h1>
+      <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+        Calculá tus costos, definí tus precios y encontrá tu punto de equilibrio en pocos pasos.
+      </p>
+      <div>
+        <Link
+          href={CALCULATOR_START_HREF}
+          className="inline-block rounded-md bg-zinc-900 px-5 py-3 font-medium text-white hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        >
+          Empezar cálculo
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function FeatureList({ features }: { features: readonly Feature[] }) {
+  return (
+    <section aria-labelledby="features-title" className="flex flex-col gap-6">
+      <h2 id="features-title" className="text-2xl font-semibold">
+        ¿Qué podés hacer?
+      </h2>
+      <ul className="grid gap-4 sm:grid-cols-3">
+        {features.map((feature) => (
+          <li
+            key={feature.title}
+            className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-5 dark:border-zinc-800"
+          >
+            <h3 className="font-medium">{feature.title}</h3>
+            <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+              {feature.description}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function AccountLinks() {
+  return (
+    <nav aria-label="Cuenta" className="flex flex-wrap gap-4 text-sm">
+      <Link href="/login" className="font-medium underline underline-offset-4">
+        Iniciar sesión
+      </Link>
+      <Link href="/signup" className="font-medium underline underline-offset-4">
+        Crear cuenta
+      </Link>
+    </nav>
   );
 }
