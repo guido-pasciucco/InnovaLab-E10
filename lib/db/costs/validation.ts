@@ -6,7 +6,7 @@ import { amountField, conceptField } from "../../schemas/costs/fields";
 import { businessCostLines, calcCostLines } from "./table";
 
 // ---------------------------------------------------------------------------
-// Evaluation spike only: Zod schemas derived from the Drizzle tables.
+// Zod schemas derived from the Drizzle tables (server-side persistence, ADR 0005).
 // Rule: the client sends a public input (no ids, no server-owned FKs, no
 // timestamps). The server injects server-controlled fields (ownerUserId from
 // the session, businessId/calculationId from the route, ids/timestamps from

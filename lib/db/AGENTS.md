@@ -1,6 +1,6 @@
-# DB — Spike Drizzle (solo evaluación)
+# DB — Persistencia en servidor con Drizzle
 
-Estado: sin conexión a base de datos. El dominio (`lib/calc`, `lib/money`) no importa este módulo.
+Estado: persistencia del cálculo en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)). Sus consumidores son los servicios de `lib/services`, que obtienen la base con `getDb()` (`client.ts`) como parámetro `db` con valor por defecto. Ni el dominio (`lib/calc`, `lib/money`) ni Frontend (`app/`, `components/`) importan este módulo.
 
 ## Quién toca este directorio
 
@@ -21,9 +21,14 @@ lib/db/
 ├── costs/          # business_cost_lines, calc_cost_lines
 │   ├── table.ts        # en cada dominio: tablas (pgTable) y tipos inferidos
 │   └── validation.ts   # en cada dominio: esquemas drizzle-zod (*RowSchema, *InputSchema) y tipos
+├── client.ts       # cliente Drizzle de ejecución: getDb() sobre DATABASE_URL (server-only)
 ├── formats.ts      # formatos compartidos (uuid, dinero, cantidades, nombres, códigos)
 └── relations.ts    # relaciones de consulta entre todas las tablas
 ```
+
+`getDb()` se conecta por `DATABASE_URL`, el pooler de transacciones de Supabase (puerto 6543). Ese pooler no admite sentencias preparadas, por eso el cliente usa `prepare: false`. Las migraciones siguen usando `DIRECT_URL` (ver `drizzle.config.ts`). El cliente se guarda en `globalThis` para que la recarga en caliente de `next dev` no abra un pool nuevo en cada cambio. Si falta `DATABASE_URL`, `getDb()` lanza un error al primer uso, no al importar el módulo.
+
+El rol de `DATABASE_URL` es `postgres`: dueño de las tablas y con `BYPASSRLS` (verificado en local; en producción, el usuario del pooler `postgres.<project-ref>` es ese mismo rol según la documentación de Supabase). **RLS no filtra las consultas de Drizzle.** Cada consulta de servicio filtra por el `userId` de la sesión; RLS queda como segunda red para el cliente de Supabase (ver ADR 0005).
 
 Las claves foráneas entre dominios se importan de `table.ts` a `table.ts`, en el orden `profile ← business ← calculation ← costs`, sin ciclos. Una tabla nueva va en la carpeta del dominio que le corresponde y, cuando se pueda, con el mismo nombre que el contrato de `lib/schemas` que la alimenta.
 
@@ -37,7 +42,7 @@ Las claves foráneas entre dominios se importan de `table.ts` a `table.ts`, en e
 6. Timestamps con `defaultNow()` y `updatedAt` con `$onUpdate`. `computed_at` sin valor por defecto (fila pendiente hasta finalizar el cálculo).
 7. Reglas de negocio desde `lib/schemas`: los refinamientos de drizzle-zod reutilizan los `*Field` del `fields.ts` de cada contrato (ver `lib/schemas/AGENTS.md`). No se definen reglas ni mensajes nuevos en `<dominio>/validation.ts`.
 8. Nombres de columna iguales a las claves del contrato del formulario y sin prefijos que repitan el nombre de la tabla (`costing_setup.unit`, no `costing_unit`). Así guardar no requiere renombrar campos.
-9. Pendientes de decisión: `cascade` en `source_business_cost_id` (borra snapshots si se elimina plantilla) y en `scenario_id` (elimina en lugar de desvincular). RLS pendiente en Supabase.
+9. Pendientes de decisión: `cascade` en `source_business_cost_id` (borra snapshots si se elimina plantilla) y en `scenario_id` (elimina en lugar de desvincular). Se decide en la migración H0.2 (#91), junto con volver anulable `source_business_cost_id`. RLS ya está habilitado con políticas de propietario (`drizzle/20260928101613_enable_rls.sql`), pero no reemplaza el filtro por dueño en los servicios.
 
 ## Flujo
 

@@ -4,10 +4,11 @@ import { businesses } from "../business/table";
 import { calculations, scenarios } from "../calculation/table";
 
 // ---------------------------------------------------------------------------
-// Evaluation spike only: real tables modeled from erd-calculadora-inteligente.mmd.
-// Not wired to any database and not imported by domain code (lib/calc,
-// lib/money) or any route. Table names are snake_case in Postgres while
-// fields stay camelCase in TypeScript, per the official Drizzle docs.
+// Server-side persistence (ADR 0005): real tables modeled from
+// erd-calculadora-inteligente.mmd. Consumed only by lib/services through
+// getDb(); never imported by domain code (lib/calc, lib/money) or client code.
+// Table names are snake_case in Postgres while fields stay camelCase in
+// TypeScript, per the official Drizzle docs.
 //
 // Numeric columns map to `string` in TypeScript (never float), so no rounding
 // leaks into the domain. Conversion to the pure domain happens at the

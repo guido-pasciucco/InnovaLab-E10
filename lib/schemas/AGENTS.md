@@ -16,7 +16,8 @@ Una carpeta por contrato. El archivo principal tiene el mismo nombre que la carp
 ```
 lib/schemas/
 ├── auth/
-│   ├── auth.ts
+│   ├── fields.ts                  # emailField, passwordField
+│   ├── auth.ts                    # login, signup, reset y update de contraseña
 │   └── auth.test.ts
 └── calculator-setup/
     ├── fields.ts                  # origen de cada regla y su mensaje

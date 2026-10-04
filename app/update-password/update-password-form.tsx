@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { passwordUpdateSchema } from "@/lib/schemas/auth/auth";
+import { passwordField } from "@/lib/schemas/auth/fields";
 import { updatePassword } from "./actions";
 import { type PasswordUpdateState } from "@/lib/types/auth";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
@@ -17,10 +18,11 @@ const initialState: PasswordUpdateState = undefined;
 
 // Client-side extension of the shared schema: the confirm-match check
 // lives only in the form (the service validates the password itself).
+// confirm reuses passwordField so both inputs always share the same rule.
 const updatePasswordFormSchema = passwordUpdateSchema
-  .extend({ confirm: z.string().min(8, { error: "Password must be at least 8 characters" }) })
+  .extend({ confirm: passwordField })
   .refine((values) => values.password === values.confirm, {
-    message: "Passwords do not match.",
+    error: "Passwords do not match.",
     path: ["confirm"],
   });
 

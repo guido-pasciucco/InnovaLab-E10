@@ -12,10 +12,9 @@ import { businessCostLines, calcCostLines } from "./costs/table";
 import { profiles } from "./profile/table";
 
 // ---------------------------------------------------------------------------
-// Evaluation spike only: query relations for the ERD tables, using the stable
-// classic `fields` / `references` API. Parents expose `many()`, children
-// expose `one()`. Nothing here is imported by domain code (lib/calc,
-// lib/money) or any route.
+// Query relations for the ERD tables, using the stable classic `fields` /
+// `references` API. Parents expose `many()`, children expose `one()`. Nothing
+// here is imported by domain code (lib/calc, lib/money) or client code.
 // ---------------------------------------------------------------------------
 
 export const profilesRelations = relations(profiles, ({ many }) => ({

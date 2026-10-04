@@ -2,7 +2,7 @@
 
 MVP de la Fase 1 de una calculadora inteligente para **costos, precios y análisis de punto de equilibrio** (`Costos / Precios / Punto de Equilibrio`).
 
-El **cálculo** de la Fase 1 es **local-first**: corre en el navegador, con el estado en `lib/store` (LocalStorage o IndexedDB — decisión aún abierta, ver abajo) y sin persistencia del cálculo en servidor.
+El **borrador del cálculo** de la Fase 1 se persiste **solo en el servidor**, con sesión obligatoria: vive en las tablas de `lib/db` y se guarda al confirmar cada paso. Ver [ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md).
 
 Lo que **ya está en marcha** y no es parte de la Fase 1 pendiente:
 
@@ -10,7 +10,7 @@ Lo que **ya está en marcha** y no es parte de la Fase 1 pendiente:
 - **Base de datos con Drizzle**: `drizzle.config.ts`, 4 migraciones aplicadas (RLS con políticas de propietario, FK de `profiles`, trigger de creación de perfil) y stack local de Supabase para los tests.
 
 > [!IMPORTANT]
-> Este README describía la Fase 1 como "sin backend" y a Supabase como "desactivado". Ya no es cierto: la autenticación con Supabase está implementada y la base tiene migraciones aplicadas. Lo que sigue siendo local-first es **el cálculo**, que es lo que la Fase 1 tiene que entregar.
+> Este README describía la Fase 1 como "sin backend" y el cálculo como "local-first". Ya no es cierto: la autenticación con Supabase está implementada, la base tiene migraciones aplicadas y el borrador del cálculo se guarda en servidor ([ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)). Lo que la Fase 1 tiene que entregar es **el cálculo** sobre esa base.
 
 ## 📂 Guías por directorio
 
@@ -20,7 +20,7 @@ Cada sección del código tiene su propia guía en un `AGENTS.md`, para que tant
 | --- | --- | --- |
 | [`lib/AGENTS.md`](lib/AGENTS.md) | Mapa de los módulos de dominio, frontera Frontend/Backend, reglas y checklist de cambios en `lib/` | Backend (Frontend consume) |
 | [`lib/errors/AGENTS.md`](lib/errors/AGENTS.md) | Manejo centralizado de errores: catálogo, `AppError`, adaptadores de rutas y actions, convención de códigos | Backend (Frontend consume) |
-| [`lib/db/AGENTS.md`](lib/db/AGENTS.md) | Spike de persistencia con Drizzle: reglas de esquema y flujo de escritura en servidor | Backend |
+| [`lib/db/AGENTS.md`](lib/db/AGENTS.md) | Persistencia en servidor con Drizzle: reglas de esquema, migraciones y flujo de escritura | Backend |
 
 ---
 
@@ -59,7 +59,7 @@ Dependencias clave:
 - **`drizzle-orm`:** acceso a la base con tipos. El esquema vive en `lib/db/<dominio>/table.ts` (ver `lib/db/AGENTS.md`).
 
 > [!NOTE]
-> La suite de tests corre con `environment: "node"` en `vitest.config.mts`. **No hay `jsdom` ni `@testing-library/*` instalados**, así que los componentes de React no se unit-testean: las reglas se testean en `lib/schemas` y `lib/store`, y la integración se verifica a mano en dev. Agregar esas librerías es un cambio de tooling del repo, no de un ticket de feature.
+> La suite de tests corre con `environment: "node"` en `vitest.config.mts`. **No hay `jsdom` ni `@testing-library/*` instalados**, así que los componentes de React no se unit-testean: las reglas se testean en `lib/schemas` y `lib/services`, y la integración se verifica a mano en dev. Agregar esas librerías es un cambio de tooling del repo, no de un ticket de feature.
 
 ---
 
@@ -86,9 +86,9 @@ app -> components -> lib/calc
 
 ### División por fases
 
-- **Fase 1 (actual, MVP):** el **cálculo** es local-first. El estado del asistente vive en `lib/store` (LocalStorage o IndexedDB, sin resolver) detrás de una frontera que permite cambiar de decisión. Sin persistencia del cálculo en servidor.
+- **Fase 1 (actual, MVP):** el **borrador del cálculo** se persiste solo en servidor, con sesión obligatoria (`requireUser()`). Un borrador por usuario (`calculations.status = 'draft'`), guardado al "Confirmar" de cada paso mediante Server Actions que llaman a servicios de `lib/services`. Sin `localStorage`, sin IndexedDB, sin híbrido. Ver [ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md).
 - **Ya implementado (andamiaje, no Fase 1 pendiente):** autenticación con Supabase (login, signup, reset, update, confirm, dashboard, profile) con Server Actions, y base de datos con Drizzle, 4 migraciones aplicadas y RLS por propietario. Ese andamiaje sostiene la plataforma y la auth; lo que la Fase 1 tiene que agregar es el cálculo.
-- **Fase 2:** persistencia del cálculo e historial con cuenta de usuario. La definición conceptual del proyecto ya dio esto por decidido ("persistencia mediante cuenta de usuario"), lo que contradice el "local-first" del README original. **Esa contradicción sigue sin resolverse** y hay que cerrarla antes de decidir si el borrador del cálculo se persiste en la base.
+- **Más adelante:** historial de cálculos y varios borradores por usuario. La persistencia con cuenta de usuario ya no es Fase 2: la contradicción con el "local-first" del README original quedó resuelta en el [ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md).
 
 ### Estado real del asistente
 
@@ -102,7 +102,7 @@ lib/calc/  lib/money/  lib/store/  solo .gitkeep
 lib/schemas/                        auth/, calculator-setup/
 ```
 
-**`app/(calculator)/layout.tsx` no existe todavía** y hay que crearlo: App Router no remonta un layout compartido entre rutas hermanas, así que sin él el estado del asistente se pierde al navegar entre pasos.
+**`app/(calculator)/layout.tsx` no existe todavía.** Con la persistencia en servidor no hace falta para conservar el borrador entre pasos: cada página lo lee por servicio después de `requireUser()`.
 
 ### Estructura objetivo (construir hacia esto, no inventar árboles paralelos)
 
@@ -124,10 +124,10 @@ lib/
   services/      # lógica de negocio del servidor (transport-agnostic), usada por las Server Actions
   supabase/      # clientes Supabase por runtime (proxy, rsc) — server-only
   types/         # tipos compartidos (p. ej. FormState)
-  store/         # estado del asistente (LocalStorage vs IndexedDB TBD) — vacío, dueño: Frontend
+  store/         # estado de interfaz en el cliente (no persiste el cálculo, ver ADR 0005) — vacío, dueño: Frontend
   errors/        # catálogo central de errores + adaptadores de route y action
   auth/          # guard de sesión para Server Components (requireUser)
-  db/            # esquema Drizzle y reglas de escritura en servidor
+  db/            # esquema Drizzle, cliente getDb() y reglas de escritura en servidor
   db.ts          # server-only, placeholder
 tests/
   e2e/           # Playwright + Supabase local (auth, RLS)
@@ -142,7 +142,7 @@ tests/
    - Lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) y servicios (`lib/services`) → `import` directo. Sin HTTP involucrado.
    - Componente de cliente → API (`app/api/*`, si existiera) → **solo mediante `fetch`**. Nunca importar `route.ts`.
    - Mutaciones de formularios propios → Server Actions (se importan, no se hace `fetch`). Las actions **no** hacen `fetch` a las propias rutas: llaman al servicio de `lib/` directo.
-   - Los Server Components leen la persistencia directamente mediante `lib/db`, nunca con `fetch` interno a su propia API.
+   - Los Server Components leen la persistencia mediante los servicios de `lib/services` (que usan `lib/db` por dentro), nunca importando `lib/db` ni con `fetch` interno a su propia API.
    - Consumidores externos (app nativa, webhooks, terceros) → Route Handlers (contrato HTTP estable). Hoy no hay ninguno; ver [API HTTP de auth](docs/examples/http-auth-api.md) para cómo agregarlos. Una PWA no los necesita.
 3. **El dominio se mantiene universal.** Nada en `lib/calc`, `lib/money`, `lib/schemas` puede usar APIs de servidor de Node/Next ni `window`/`localStorage`.
 4. **La infraestructura permanece en el servidor.** `lib/db.ts` (y todo lo que toque secretos o Supabase) importa `server-only`.
@@ -163,8 +163,8 @@ tests/
 | Tipos compartidos | `lib/types` (p. ej. `FormState`) |
 | UI del asistente, gráficos, primitivas | `components/calculator`, `components/charts`, `components/ui` |
 | Matemática pura / dinero / esquemas | `lib/calc`, `lib/money`, `lib/schemas` |
-| Persistencia local-first (Fase 1) | `lib/store` |
-| Persistencia en servidor | `lib/db.ts` + `lib/db/` (server-only, Drizzle) |
+| Persistencia del cálculo (borrador) | `lib/db/` (server-only, Drizzle), accedida solo desde `lib/services` — ver [ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md) |
+| Estado de interfaz en el cliente (no persiste el cálculo) | `lib/store` |
 | Pruebas unitarias | co-locadas con el módulo (`<modulo>.test.ts`), se corren con `bun run test` |
 | Pruebas e2e | `tests/e2e` (Playwright contra Supabase local) |
 | Quién es dueño de qué en `lib/` | [`lib/AGENTS.md`](lib/AGENTS.md) — "Frontera de responsabilidad" |
@@ -180,9 +180,9 @@ tests/
 
 ### Preguntas abiertas (sin decidir, no asumir)
 
-1. **Estado del asistente: librería o Context.** ¿Se adopta una librería que abstraiga el estado y la persistencia (`zustand` es la candidata), o se resuelve con React Context + `useState`? La Semana 1 usa Context porque `zustand` no está instalada y su middleware `persist` arrastra el mismo problema de hidratación. **Es una decisión de Frontend y sigue abierta** — ver `lib/AGENTS.md` nota 4. `lib/store/` ya es de Frontend; lo abierto es solo la librería.
-2. **Persistencia del cálculo: ¿local o en la base?** El README original decía "local-first sin cuentas"; la definición conceptual del proyecto dio "persistencia mediante cuenta de usuario" por decidido. No se reconcilian. De esto depende si las tareas de backend de persistencia (`#33`, `#34`) se ejecutan o se cierran, y si hace falta el ADR que pide `#63`.
-3. LocalStorage vs IndexedDB para la persistencia de la Fase 1.
+1. ~~**Estado del asistente: librería o Context.**~~ **Sin objeto para H1/H2**: el borrador vive en servidor ([ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)), así que no hace falta estado global de cliente. Se reabre si vuelve a hacer falta — ver `lib/AGENTS.md` nota 4.
+2. ~~**Persistencia del cálculo: ¿local o en la base?**~~ **Resuelta: solo servidor, ver [ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md).** El ADR también registra qué pasa con `#33`, `#34` y `#63`.
+3. ~~LocalStorage vs IndexedDB para la persistencia de la Fase 1.~~ **Sin objeto**: el cálculo no se persiste en el cliente ([ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)).
 4. Proceso de cambios de esquemas: ¿cómo se proponen y migran los cambios en `lib/schemas`?
 
 ---
@@ -190,13 +190,13 @@ tests/
 ## 3. 🗺️ Próximos pasos
 
 1. **Base del dominio** — `lib/schemas` (Zod, fuente única), `lib/calc` (costos/precios/punto de equilibrio), `lib/money`, con sus tests co-locados. Todo vacío hoy.
-2. **Pasos del asistente** — `app/(calculator)/layout.tsx` (el Provider, que no existe y hace falta para que el estado sobreviva a la navegación) + `paso-1` y `paso-2` con RHF vinculado a `lib/schemas`, `components/calculator` + `components/ui`.
+2. **Pasos del asistente** — `paso-1` y `paso-2` como páginas protegidas con `requireUser()` que leen el borrador por servicio, con formularios vinculados a `lib/schemas` que guardan por Server Action (`components/calculator` + `components/ui`).
 3. **Vista de resultados** — `app/(calculator)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
 4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
-5. **Persistencia local-first** — `lib/store` (resolver LocalStorage vs IndexedDB, y cerrar la pregunta de librería) conectada al asistente.
+5. **Persistencia del borrador en servidor** — servicios de `lib/services` sobre `lib/db` (setup y costos) y la migración H0.2 (#91). Ver [ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md).
 6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth y RLS).
 7. **Pulido + despliegue** — lint/build limpios, despliegue único en Vercel verificado.
-8. **Fuera del alcance del MVP** — persistencia del cálculo e historial con cuenta de usuario (Fase 2), sujeto a cerrar la pregunta abierta nº 2.
+8. **Fuera del alcance del MVP** — historial de cálculos y varios borradores por usuario.
 
 ---
 
@@ -309,4 +309,4 @@ tests/e2e/
 
 Notas:
 
-- Hasta que se resuelvan las preguntas abiertas anteriores, mantener el estado del assistant (calculator) local al asistente y la persistencia detrás de la frontera de `lib/store` para que la elección siga siendo intercambiable.
+- El borrador del cálculo se persiste solo en servidor ([ADR 0005](docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)): no guardar el cálculo en `lib/store`, `localStorage` ni IndexedDB.

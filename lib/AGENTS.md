@@ -21,10 +21,10 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 | `calc/` | Motor de cálculo: funciones puras (entra config + costos, salen resultados) | Esqueleto (ver #14) | **Backend** |
 | `money/` | Aritmética decimal exacta con `decimal.js` | Esqueleto | **Backend** |
 | `schemas/` | Contratos Zod compartidos entre cliente y servidor; reglas de campo en `<contrato>/fields.ts` (ver `schemas/AGENTS.md`) | Activa (`auth/`, `calculator-setup/`) | **Backend** (define las reglas) |
-| `store/` | Estado del calculator en el cliente | Esqueleto | **Frontend** (nota 4) |
+| `store/` | Estado de interfaz en el cliente. **No** persiste el cálculo: el borrador vive en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)) | Esqueleto | **Frontend** (nota 4) |
 | `errors/` | Manejo centralizado de errores: catálogo, `AppError` y adaptadores `handleRouteErrors`/`handleActionErrors` (ver `errors/AGENTS.md`) | Activa | **Backend** (adaptadores de transporte) |
 | `db.ts` | Placeholder `server-only` | Temporal | Backend |
-| `db/` | Persistencia en servidor (Drizzle) | Spike en evaluación (ver #15) | Backend |
+| `db/` | Persistencia en servidor (Drizzle): tablas, migraciones y cliente `getDb()`; la consumen los servicios de `services/` ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)) | Activa | Backend |
 | `services/` | Lógica de negocio del servidor compartida por Server Actions y Route Handlers (transport-agnostic: recibe valores, devuelve datos planos) | Nueva (acuerdo vigente) | Backend |
 | `supabase/` | Clientes Supabase por runtime (`proxy`, `rsc`) — solo servidor | Activa | Backend |
 | `types/` | Tipos compartidos (p. ej. `FormState` del estado de forms) | Activa | **Backend** (si son del dominio) |
@@ -41,21 +41,21 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 
 Tres aclaraciones que evitan las confusiones más comunes:
 
-1. **Dominio no es servidor.** `calc/` y `money/` son código puro: se testean sin renderizar nada y pueden ejecutarse en el navegador, en un Server Action o en un script. Que Backend sea su dueño **no** implica que corran en un servidor. La arquitectura es local-first y eso no cambia: lo que cambia es quién escribe la fórmula.
+1. **Dominio no es servidor.** `calc/` y `money/` son código puro: se testean sin renderizar nada y pueden ejecutarse en el navegador, en un Server Action o en un script. Que Backend sea su dueño **no** implica que corran en un servidor: lo que define es quién escribe la fórmula. Dónde se guarda el borrador es otra decisión, y ya está tomada: solo en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)).
 2. **Una regla, dos consumidores.** `schemas/` pertenece a Backend porque ahí vive la REGLA (qué es válido, qué mensaje ve el usuario). El formulario de `components/` es Frontend y consume ese schema. Si el formulario y el schema discrepan, **la regla gana**: se arregla el schema, nunca el mensaje en el JSX.
 3. **Esto difiere del plan de sprints.** El plan listaba las funciones puras del motor bajo el rol Frontend. Esa asignación se corrige acá: las fórmulas y las validaciones son dominio, no interfaz. El plan se ajusta a esta frontera.
 
-4. **`lib/store/` es de Frontend.** Es estado de la interfaz en el cliente, no regla de negocio: consume los schemas de `lib/schemas/`, pero nunca define reglas ni mensajes de validación. Lo que sigue abierto es **cómo** se implementa, y lo decide Frontend: **¿se adopta una librería que abstraiga el estado y la persistencia, o se resuelve con React Context + `useState`?** La candidata sobre la mesa es `zustand`, que aparece en los tickets viejos del proyecto. **No está adoptada.**
+4. **`lib/store/` es de Frontend.** Es estado de la interfaz en el cliente, no regla de negocio: consume los schemas de `lib/schemas/`, pero nunca define reglas ni mensajes de validación. **No persiste el cálculo**: el borrador se guarda solo en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)).
 
-   Lo que ya se verificó con evidencia, y que **no** hay que volver a investigar:
+   La pregunta "¿librería que abstraiga estado y persistencia (`zustand`) o React Context + `useState`?" **queda sin objeto para H1 y H2**, porque el borrador no vive en el cliente. Se reabre solo si aparece una necesidad real de estado global de cliente. `zustand` **no está adoptada**.
+
+   Lo que ya se verificó con evidencia, por si la pregunta se reabre:
 
    - `zustand` **no está en `package.json`** y tiene cero apariciones en el repo: adoptarla es una dependencia nueva, no un default del proyecto.
-   - Su middleware `persist` tiene **el mismo problema de hidratación** que esta capa resuelve con `hasHydrated`; usarlo exigiría `skipHydration: true` + `rehydrate()` en un efecto, o sea terminarías reimplementando lo mismo a mano, pero con dependencia permanente.
+   - Su middleware `persist` tiene **el mismo problema de hidratación** que cualquier estado persistido en el cliente; usarlo exigiría `skipHydration: true` + `rehydrate()` en un efecto, o sea reimplementar a mano un `hasHydrated`, pero con dependencia permanente.
    - El repo tiene **cero** `createContext`, `useContext`, `Provider` y `localStorage`: no hay precedente que empuje en ninguna dirección.
 
-   Para la **Semana 1** se resuelve con Context + `useState`, que es lo más chico que resuelve el problema. Eso cierra *esta* semana, no la pregunta de fondo. Por eso la capa de storage se construye con el `Storage` **inyectado por parámetro**: si más adelante se decide adoptar la librería, se reescribe sin cambiar la forma de los tests.
-
-   **Pendiente: Frontend cierra la elección de librería con una decisión explícita antes de la Semana 2.** El dueño ya está resuelto: un ticket que toca `lib/store/` se clasifica `FRONTEND`.
+   El dueño ya está resuelto: un ticket que toca `lib/store/` se clasifica `FRONTEND`.
 
 **Consecuencia práctica:** una issue etiquetada `FRONTEND` puede tocar `lib/store/` y consumir cualquier schema, pero solo modifica `lib/schemas/` si agrega un campo puramente cosmético al formulario. Si el storage necesita una regla nueva, la agrega Backend en `lib/schemas/`. Lo que **nunca** se reparte es la fórmula: `lib/calc/` y `lib/money/` tienen un solo dueño.
 
@@ -78,4 +78,4 @@ Tres aclaraciones que evitan las confusiones más comunes:
 
 ## Siguiente paso
 
-Ver issues #12 (tipos), #13 (librerías), #14 (motor) y #15 (persistencia).
+Ver issues #12 (tipos), #13 (librerías) y #14 (motor). La persistencia del cálculo está decidida en el [ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md) (cierra lo que abría #15).
