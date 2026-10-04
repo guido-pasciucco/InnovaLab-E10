@@ -1,4 +1,4 @@
-# 0001 — Limpieza de datos de dominio en los tests E2E
+# 01 — Limpieza de datos de dominio en los tests E2E
 
 | Campo | Valor |
 | --- | --- |

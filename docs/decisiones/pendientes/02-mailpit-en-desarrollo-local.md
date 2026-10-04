@@ -1,4 +1,4 @@
-# 0002 — Captura de mails con Mailpit en desarrollo local
+# 02 — Captura de mails con Mailpit en desarrollo local
 
 | Campo | Valor |
 | --- | --- |

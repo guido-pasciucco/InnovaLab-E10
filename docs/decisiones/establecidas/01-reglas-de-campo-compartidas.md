@@ -1,4 +1,4 @@
-# 0004 — Reglas de campo compartidas entre formulario y base
+# 01 — Reglas de campo compartidas entre formulario y base
 
 | Campo | Valor |
 | --- | --- |

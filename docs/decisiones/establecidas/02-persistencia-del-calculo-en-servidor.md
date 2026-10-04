@@ -1,4 +1,4 @@
-# 0005 — La persistencia del cálculo es solo servidor
+# 02 — La persistencia del cálculo es solo servidor
 
 | Campo | Valor |
 | --- | --- |
@@ -97,7 +97,7 @@ Las reglas puras (schemas, cálculo) siguen con tests unitarios sin base.
 | Ticket | Qué pedía | Qué pasa |
 | --- | --- | --- |
 | #33 | Si se usa API, crear el modelo de cálculo/borrador y endpoints para crear, consultar y actualizar | **Superado.** La condición se cumple (hay persistencia en servidor), pero sin endpoints: el navegador habla con Server Actions, y no hay Route Handlers mientras no exista un consumidor externo. El modelo ya existe en `lib/db/`; los servicios son #70 (setup), #77 (alta y listado de costos) y #80 (edición y baja), y la migración pendiente es #91. Puede cerrarse como superado por esos tickets. |
-| #34 | Validaciones de esquema equivalentes a las del frontend | **Superado.** La equivalencia ya es una convención: reglas compartidas en `lib/schemas/<contrato>/fields.ts` ([ADR 0004](0004-reglas-de-campo-compartidas.md)) y validación con Zod una sola vez en cada servicio (#70, #77, #80, con el schema de #76). Puede cerrarse como superado por esos tickets. |
+| #34 | Validaciones de esquema equivalentes a las del frontend | **Superado.** La equivalencia ya es una convención: reglas compartidas en `lib/schemas/<contrato>/fields.ts` ([ADR 01](01-reglas-de-campo-compartidas.md)) y validación con Zod una sola vez en cada servicio (#70, #77, #80, con el schema de #76). Puede cerrarse como superado por esos tickets. |
 | #63 | Tipos y contrato base del borrador, `validateDraftBase` sin auth, y un ADR "el cálculo vive en el cliente en esta fase" | **Superado y contradicho.** El ADR que pedía queda reemplazado por este, con la decisión opuesta. El resto choca con los puntos 1, 2 y 9: el borrador requiere sesión y la validación vive en el servicio, no en una función suelta sin auth. Los contratos ya existen o están en curso (`lib/schemas/calculator-setup/`, #76). Puede cerrarse como superado. |
 
 ## Consecuencias
