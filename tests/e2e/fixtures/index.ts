@@ -1,6 +1,6 @@
 import { test as base, expect, type Page } from "@playwright/test";
-import { createUser, deleteUser, findUserIdByEmail, type CreatedUser } from "../factories/user";
-import { signInSessionCookies } from "../helpers/supabase";
+import { createUser, deleteUser, findUserIdByEmail, type CreatedUser } from "../../support/factories/user";
+import { signInSessionCookies } from "../helpers/session";
 import { DashboardPage } from "../pages/dashboard.page";
 import { LoginPage } from "../pages/login.page";
 import { ResetPasswordPage } from "../pages/reset-password.page";

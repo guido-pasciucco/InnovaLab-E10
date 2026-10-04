@@ -1,5 +1,5 @@
 import { fakerES as faker } from "@faker-js/faker";
-import type { CreatedUser } from "../factories/user";
+import type { CreatedUser } from "../../support/factories/user";
 import { expect, test } from "../fixtures";
 import { waitForAuthLink } from "../helpers/mailpit";
 import type { ResetPasswordPage } from "../pages/reset-password.page";

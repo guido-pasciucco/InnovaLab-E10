@@ -30,7 +30,9 @@ function clientWith(signIn: () => Promise<unknown>) {
 
 **Integración contra la base real.** El test le pasa al servicio un cliente de Drizzle conectado al Postgres local:
 
-- El cliente se crea una vez en `beforeAll` y se cierra en `afterAll`.
+- El archivo se llama `<modulo>.int.test.ts` y corre con `bun run test:int`, nunca con `bun run test`.
+- El cliente se crea una vez en `beforeAll` y se cierra en `afterAll` con `db.$client.end()` (el pool de `postgres`).
+- La factory de usuarios y el entorno (`loadTestEnv`) se importan desde `tests/support/`, nunca desde `tests/e2e/`.
 - Cada test crea su usuario con una factory y lo registra para borrarlo en `afterEach`.
 - Las consultas de verificación filtran por el `id` de ese usuario.
 - El aislamiento por dueño se prueba con **dos usuarios**: B no lee ni pisa lo de A (`it("user B cannot read or overwrite user A's draft")`).
@@ -48,7 +50,7 @@ function clientWith(signIn: () => Promise<unknown>) {
 
 ## Soporte de tests
 
-- Para importar módulos `server-only` en Vitest, usá el stub con alias en `vitest.config.mts`; no lo esquives en el módulo.
+- Para importar módulos `server-only` en Vitest, el alias de `vitest.config.mts` lo resuelve al `empty.js` que trae el propio paquete; no lo esquives en el módulo.
 - Las contraseñas de prueba se arman en runtime desde un fixture, para que los scanners de secretos no las marquen. Nunca un literal en el test.
 
 ## Checklist

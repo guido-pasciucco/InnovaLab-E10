@@ -17,7 +17,7 @@ const validSetup = {
   period: "Mensual",
 };
 
-describe("calculator setup schema", () => {
+describe("calculatorSetupSchema", () => {
   it("accepts a complete valid setup", () => {
     expect(calculatorSetupSchema.safeParse(validSetup).success).toBe(true);
   });

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ZodError } from "zod";
 import { and, eq } from "drizzle-orm";
 
@@ -6,8 +6,8 @@ import { businesses, products } from "@/lib/db/business/table";
 import { calculations, costingSetup } from "@/lib/db/calculation/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 
-import { createUser, deleteUser, type CreatedUser } from "../../tests/e2e/factories/user";
-import { loadTestEnv } from "../../tests/e2e/helpers/test-env";
+import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
+import { loadTestEnv } from "../../tests/support/test-env";
 import {
   getCalculatorSetupService,
   getDraftCalculationId,
@@ -15,9 +15,10 @@ import {
 } from "./calculator";
 
 // Integration tests against the local Supabase stack (.env.test URLs are
-// local-only; loadTestEnv throws otherwise). The db client is rebuilt from
-// DATABASE_URL for each test; users are removed (profile + auth user) after
-// each test, cascading their business/product/calculation/costing_setup rows.
+// local-only; loadTestEnv throws otherwise). One db client (one postgres-js
+// pool) per file, closed in afterAll; users are removed (profile + auth user)
+// after each test, cascading their business/product/calculation/costing_setup
+// rows.
 
 const validInput = {
   name: "Velas de cera",
@@ -28,19 +29,32 @@ const validInput = {
 } as const;
 
 let db: Db;
-let users: CreatedUser[] = [];
+const users: CreatedUser[] = [];
 
-beforeEach(() => {
+beforeAll(() => {
   process.env.DATABASE_URL = loadTestEnv().DATABASE_URL;
+  // Drop any singleton built from another DATABASE_URL so this file's
+  // client points at the local stack.
   globalThis.__drizzleClient = undefined;
   db = getDrizzleClient();
 });
 
+afterAll(async () => {
+  await db.$client.end();
+  globalThis.__drizzleClient = undefined;
+});
+
+// Attempts every deletion even if one fails, then reports all failures.
 afterEach(async () => {
-  for (const user of users) {
-    await deleteUser(user.id);
+  const results = await Promise.allSettled(users.map((user) => deleteUser(user.id)));
+  users.length = 0;
+  const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+  if (failures.length > 0) {
+    throw new AggregateError(
+      failures.map((f) => f.reason),
+      `cleanup failed for ${failures.length} user(s)`,
+    );
   }
-  users = [];
 });
 
 async function makeUser(): Promise<CreatedUser> {
@@ -164,23 +178,7 @@ describe("saveCalculatorSetupService", () => {
 
     expect(await getDraftCalculationId(user.id, db)).toBeNull();
   });
-});
 
-describe("getCalculatorSetupService", () => {
-  it("returns exactly what was saved", async () => {
-    const user = await makeUser();
-    await saveCalculatorSetupService(user.id, validInput, db);
-
-    expect(await getCalculatorSetupService(user.id, db)).toEqual(validInput);
-  });
-
-  it("returns null for a user with no draft", async () => {
-    const user = await makeUser();
-    expect(await getCalculatorSetupService(user.id, db)).toBeNull();
-  });
-});
-
-describe("owner isolation", () => {
   it("user B cannot read or overwrite user A's draft", async () => {
     const userA = await makeUser();
     const userB = await makeUser();
@@ -205,5 +203,19 @@ describe("owner isolation", () => {
       .from(businesses)
       .where(eq(businesses.ownerUserId, userA.id));
     expect(aBusinesses).toHaveLength(1);
+  });
+});
+
+describe("getCalculatorSetupService", () => {
+  it("returns exactly what was saved", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+
+    expect(await getCalculatorSetupService(user.id, db)).toEqual(validInput);
+  });
+
+  it("returns null for a user with no draft", async () => {
+    const user = await makeUser();
+    expect(await getCalculatorSetupService(user.id, db)).toBeNull();
   });
 });
