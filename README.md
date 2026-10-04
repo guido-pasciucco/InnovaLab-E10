@@ -127,7 +127,7 @@ lib/
   store/         # estado de interfaz en el cliente (no persiste el cálculo, ver ADR 02) — vacío, dueño: Frontend
   errors/        # catálogo central de errores + adaptadores de route y action
   auth/          # guard de sesión para Server Components (requireUser)
-  db/            # esquema Drizzle, cliente getDb() y reglas de escritura en servidor
+  db/            # esquema Drizzle, cliente getDrizzleClient() y reglas de escritura en servidor
   db.ts          # server-only, placeholder
 tests/
   e2e/           # Playwright + Supabase local (auth, RLS)

@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { businesses, products } from "@/lib/db/business/table";
 import { calculations, costingSetup } from "@/lib/db/calculation/table";
-import { getDb, type Db } from "@/lib/db/client";
+import { getDrizzleClient, type Db } from "@/lib/db/client";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/e2e/factories/user";
 import { loadTestEnv } from "../../tests/e2e/helpers/test-env";
@@ -33,7 +33,7 @@ let users: CreatedUser[] = [];
 beforeEach(() => {
   process.env.DATABASE_URL = loadTestEnv().DATABASE_URL;
   globalThis.__drizzleClient = undefined;
-  db = getDb();
+  db = getDrizzleClient();
 });
 
 afterEach(async () => {

@@ -24,7 +24,7 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 | `store/` | Estado de interfaz en el cliente. **No** persiste el cálculo: el borrador vive en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)) | Esqueleto | **Frontend** (nota 4) |
 | `errors/` | Manejo centralizado de errores: catálogo, `AppError` y adaptadores `handleRouteErrors`/`handleActionErrors` (ver `errors/AGENTS.md`) | Activa | **Backend** (adaptadores de transporte) |
 | `db.ts` | Placeholder `server-only` | Temporal | Backend |
-| `db/` | Persistencia en servidor (Drizzle): tablas, migraciones y cliente `getDb()`; la consumen los servicios de `services/` ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)) | Activa | Backend |
+| `db/` | Persistencia en servidor (Drizzle): tablas, migraciones y cliente `getDrizzleClient()`; la consumen los servicios de `services/` ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)) | Activa | Backend |
 | `services/` | Lógica de negocio del servidor compartida por Server Actions y Route Handlers (transport-agnostic: recibe valores, devuelve datos planos) | Nueva (acuerdo vigente) | Backend |
 | `supabase/` | Clientes Supabase por runtime (`proxy`, `rsc`) — solo servidor | Activa | Backend |
 | `types/` | Tipos compartidos (p. ej. `FormState` del estado de forms) | Activa | **Backend** (si son del dominio) |

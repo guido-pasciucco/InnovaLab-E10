@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { businesses, products } from "@/lib/db/business/table";
 import { calculations, costingSetup } from "@/lib/db/calculation/table";
-import { getDb, type Db } from "@/lib/db/client";
+import { getDrizzleClient, type Db } from "@/lib/db/client";
 import {
   calculatorSetupSchema,
   type CalculatorSetup,
@@ -49,7 +49,7 @@ export async function getDraftCalculationId(
 export async function saveCalculatorSetupService(
   userId: string,
   input: unknown,
-  db: Db = getDb(),
+  db: Db = getDrizzleClient(),
 ): Promise<CalculatorSetup> {
   const setup = calculatorSetupSchema.parse(input);
 
@@ -108,7 +108,7 @@ export async function saveCalculatorSetupService(
 
 export async function getCalculatorSetupService(
   userId: string,
-  db: Db = getDb(),
+  db: Db = getDrizzleClient(),
 ): Promise<CalculatorSetup | null> {
   const [row] = await db
     .select({
