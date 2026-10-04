@@ -39,7 +39,7 @@ lib/schemas/
    ```ts
    createInsertSchema(costingSetup, { unit: unitField /* ... */ });
    ```
-4. **Testeá los dos contratos** con el helper `fieldErrors`: el mismo input inválido tiene que devolver el mismo mensaje en el formulario y en la base.
+4. **Testeá los dos contratos** con el helper `fieldErrors`: el mismo input inválido tiene que devolver el mismo mensaje en el formulario y en la base. Ver [`TEST.md`](TEST.md) y la guía compartida [`../../TEST.md`](../../TEST.md).
 
 ## Reglas
 
@@ -66,5 +66,5 @@ Derivar el formulario con `createInsertSchema(products).shape.name` obligaría a
 - [ ] La regla nueva está en `fields.ts` y no está duplicada en otro lugar.
 - [ ] La clave del formulario coincide con el nombre de la columna.
 - [ ] `lib/schemas` no importa nada de `lib/db`.
-- [ ] Hay un test que confirma el mismo mensaje en el formulario y en la base.
+- [ ] Hay un test que confirma el mismo mensaje en el formulario y en la base (ver [`TEST.md`](TEST.md) y [`../../TEST.md`](../../TEST.md)).
 - [ ] Si cambió una columna, la migración se generó con `bun run db:generate` (ver `lib/db/AGENTS.md`).

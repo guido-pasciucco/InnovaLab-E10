@@ -16,7 +16,7 @@ Los servicios **lanzan** errores; las puertas (Route Handlers y Server Actions) 
 3. Envolvé la puerta:
    - Ruta: `export const POST = handleRouteErrors(async (req) => { ... })`
    - Action: `export const miAction = handleActionErrors(async (prev, data) => miServicio(...))`
-4. Testeá el servicio verificando que lanza el código correcto (ver `lib/services/auth.test.ts`).
+4. Testeá el servicio verificando que lanza el código correcto (ver `lib/services/auth.test.ts`, [`TEST.md`](TEST.md) y la guía compartida [`../../TEST.md`](../../TEST.md)).
 
 ## Cómo viaja un error
 
@@ -176,7 +176,7 @@ Hay tres riesgos concretos:
    /** @throws AppError COUPON_INVALID si el cupón no existe o expiró */
    export async function applyCouponService(...) { ... }
    ```
-5. **Testeá el camino del error**: un test para el código que se maneja y otro que verifique que un error distinto **sigue subiendo**.
+5. **Testeá el camino del error**: un test para el código que se maneja y otro que verifique que un error distinto **sigue subiendo**. Cómo escribirlos: [`TEST.md`](TEST.md) y [`../../TEST.md`](../../TEST.md).
 6. **Si el patrón se repite, extraé un helper** (por ejemplo `catchCode(promise, "COUPON_INVALID", fallback)`) para que el re-throw no dependa de acordarse.
 
 ### Checklist para revisar un `catch` dentro de `lib/services/`
@@ -186,5 +186,5 @@ Hay tres riesgos concretos:
 - [ ] Filtra por `err instanceof AppError && err.code === "..."`.
 - [ ] Todo lo demás se relanza con `throw err`.
 - [ ] El servicio atrapado documenta el código con `@throws`.
-- [ ] Hay un test para el código manejado y otro para uno que no se maneja.
+- [ ] Hay un test para el código manejado y otro para uno que no se maneja (ver [`TEST.md`](TEST.md)).
 

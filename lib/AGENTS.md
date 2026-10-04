@@ -11,6 +11,8 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 
 Guías de submódulos: [`schemas/AGENTS.md`](schemas/AGENTS.md), [`errors/AGENTS.md`](errors/AGENTS.md) y [`db/AGENTS.md`](db/AGENTS.md).
 
+Guías de testing: [`TEST.md`](TEST.md) (casos de `lib/`) y la compartida del repo, [`../TEST.md`](../TEST.md).
+
 ## Mapa rápido
 
 La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver "Frontera de responsabilidad" más abajo).
@@ -72,7 +74,7 @@ Tres aclaraciones que evitan las confusiones más comunes:
 ## Checklist para verificar un cambio en `lib/`
 
 - [ ] `calc/` y `money/` no importan nada de `app/`, `components/` ni `db/`.
-- [ ] Hay al menos un test que cubre el cambio, co-localizado junto al módulo (`<modulo>.test.ts`). No va en `tests/unit/`: esa carpeta está vacía y la práctica real del repo es la co-ubicación.
+- [ ] Hay al menos un test que cubre el cambio, co-localizado junto al módulo (`<modulo>.test.ts`). No va en `tests/unit/`: esa carpeta está vacía y la práctica real del repo es la co-ubicación. El test sigue [`TEST.md`](TEST.md) y [`../TEST.md`](../TEST.md).
 - [ ] Los montos usan `decimal.js`, no `number` con decimales.
 - [ ] Si el cambio toca persistencia, respeta `db/AGENTS.md`.
 
