@@ -149,7 +149,45 @@ Si los costos y las condiciones colgaran directamente del producto, todo funcion
 3. **Ciclo de vida.** El `status` (`draft` → terminado) es del cálculo. El alfajor no está "en borrador"; la hoja de marzo sí.
 4. **Ancla.** Condiciones, costos, precio, escenarios y resultados se atan a *un* cálculo concreto, así que siempre se sabe con qué datos salió cada número.
 
-> **Estado en la Fase 1 (H1/H2):** hay **un solo borrador por usuario** y el historial está fuera de alcance (Semana 6). Hoy estas ventajas no se aprovechan todavía, pero estar en el modelo desde el principio evita una migración de datos cuando lleguen.
+### ¿Qué pasaría si los costos colgaran directo del producto?
+
+Supongamos el modelo sin `calculations`: `products ──< cost_lines`. Funciona mientras haya un solo costeo para siempre; con el primer "volvamos a calcular" aparecen tres problemas.
+
+**1. Se pierde el antes y el después.** Todos los renglones del producto quedan en una sola bolsa:
+
+```
+Alfajores
+  alquiler ........ 150000   (febrero)
+  harina ........... 30000   (febrero)
+  packaging ........ 15000   (agregado en marzo)
+```
+
+¿Cuánto costaba el alfajor en febrero? No se puede saber: el packaging ya está mezclado. Filtrar por fecha de creación no alcanza, porque se rompe en cuanto alguien edita o borra un renglón viejo.
+
+**2. Editar pisa el pasado.** Si la harina sube de 30000 a 36000 y se edita el renglón, el valor de febrero desaparece. No hay forma de conservar las dos versiones.
+
+**3. Las condiciones no cierran con los costos.** El volumen (200 o 300 cajas) es del costeo, no del producto. Si pasa a 300 cajas, ya no se sabe con qué volumen se calcularon los costos anteriores, y ningún resultado viejo se puede reconstruir.
+
+**Con `calculations` en el medio**, cada hoja es una foto completa y coherente:
+
+```
+Alfajores
+  ├─ cálculo febrero (200 cajas): alquiler 150000 · harina 30000
+  └─ cálculo marzo   (300 cajas): alquiler 150000 · harina 36000 · packaging 15000
+```
+
+Cambiar marzo no toca febrero.
+
+### ¿Y agregar un costo nuevo más adelante?
+
+Agregar renglones siempre es posible, con o sin `calculations`: la relación con los renglones es **uno a muchos** y admite tantos como haga falta. Lo que aporta `calculations` es decidir **dónde cae** el renglón nuevo:
+
+| Situación | Qué pasa con el renglón nuevo |
+|---|---|
+| El cálculo está en **borrador** (`draft`) | Se agrega a ese mismo cálculo: se sigue armando la misma hoja. |
+| El cálculo ya está **terminado** | No se toca: se crea un **cálculo nuevo** con el renglón agregado y el anterior queda como estaba. |
+
+> **Estado en la Fase 1 (H1/H2):** hay **un solo borrador por usuario** y el historial está fuera de alcance (Semana 6), así que todo renglón nuevo va al borrador. La regla "cálculo terminado → cálculo nuevo" todavía no está definida en ninguna historia. Hoy estas ventajas no se aprovechan, pero estar en el modelo desde el principio evita una migración de datos cuando lleguen.
 
 ---
 
