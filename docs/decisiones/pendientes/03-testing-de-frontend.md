@@ -1,4 +1,4 @@
-# 0003 — Estrategia de testing de frontend (componentes React)
+# 03 — Estrategia de testing de frontend (componentes React)
 
 | Campo | Valor |
 | --- | --- |

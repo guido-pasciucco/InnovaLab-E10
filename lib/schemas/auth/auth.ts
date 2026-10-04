@@ -14,7 +14,7 @@ export const signupSchema = z.object({
   password: passwordField,
   // Optional in the form: an empty input arrives as "" and is valid.
   // The service turns it into "no display name". Kept inline: signup is its
-  // only consumer (see docs/decisiones/0004).
+  // only consumer (see docs/decisiones/establecidas/01).
   displayName: z
     .string()
     .trim()

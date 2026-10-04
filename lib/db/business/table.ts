@@ -3,7 +3,7 @@ import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { profiles } from "../profile/table";
 
 // ---------------------------------------------------------------------------
-// Server-side persistence (ADR 0005): real tables modeled from
+// Server-side persistence (ADR 02): real tables modeled from
 // erd-calculadora-inteligente.mmd. Consumed only by lib/services through
 // getDb(); never imported by domain code (lib/calc, lib/money) or client code.
 // Table names are snake_case in Postgres while fields stay camelCase in
