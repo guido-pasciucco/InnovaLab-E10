@@ -10,7 +10,7 @@
 
 La suite E2E (`tests/e2e/`) sigue la regla *Arrange por la puerta de atrás, Act por la puerta de adelante*:
 
-- Las **precondiciones genéricas** (un usuario confirmado, una sesión iniciada) viven como **fixtures** en `tests/e2e/fixtures/index.ts` (`user`, `authedPage`), con setup y teardown juntos.
+- Las **precondiciones genéricas** (un usuario confirmado, una sesión iniciada) viven como **fixtures** en `tests/e2e/fixtures.ts` (`user`, `authedPage`), con setup y teardown juntos.
 - El **escenario específico** de cada test se arma **dentro del test**, en su sección Arrange, llamando a una factory (ej. `createBusiness({ owner: user })`).
 - No se crea una fixture por página: los page objects (`tests/e2e/pages/`) son uno por página; las fixtures de datos son solo para precondiciones que se repiten entre specs.
 

@@ -132,10 +132,10 @@ lib/
   db.ts          # server-only, placeholder
 tests/
   support/       # entorno de .env.test, cliente Admin y factories (integración + E2E)
-  e2e/           # Playwright + Supabase local (auth; rls.spec.ts pendiente de pasar a integración)
+  e2e/           # Playwright + Supabase local (auth; RLS se prueba en lib/db/rls.int.test.ts)
 ```
 
-**Los tests unitarios y de integración están co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`): hoy son 18 `*.test.ts` (proyecto `unit`) y 1 `*.int.test.ts` (proyecto `integration`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
+**Los tests unitarios y de integración están co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`): hoy son 18 `*.test.ts` (proyecto `unit`) y 2 `*.int.test.ts` (proyecto `integration`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
 
 ### Contratos (vinculantes)
 
@@ -198,7 +198,7 @@ tests/
 3. **Vista de resultados** — `app/(calculator)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
 4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
 5. **Persistencia del borrador en servidor** — servicios de `lib/services` sobre `lib/db` (setup y costos) y la migración H0.2 (#91). Ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
-6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth; `rls.spec.ts` es un test de base sin navegador y pasa a integración según [`TEST.md`](TEST.md)).
+6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth; RLS se prueba como integración en `lib/db/rls.int.test.ts`, según [`TEST.md`](TEST.md)).
 7. **Pulido + despliegue** — lint/build limpios, despliegue único en Vercel verificado.
 8. **Fuera del alcance del MVP** — historial de cálculos y varios borradores por usuario.
 
@@ -306,7 +306,7 @@ tests/support/        # compartido por integración y E2E (nunca importa de test
   supabase.ts         # cliente Admin de Supabase (secret key)
   factories/          # crean y borran datos vía Admin API (p. ej. user.ts)
 tests/e2e/
-  fixtures/index.ts   # `test` y `expect`; todos los specs importan de acá
+  fixtures.ts         # `test` y `expect`; todos los specs importan de acá
   pages/              # Page Objects: los selectores viven solo acá
   helpers/            # Mailpit y login por la puerta de atrás (cookies de sesión)
   <feature>/          # specs agrupados por feature (p. ej. auth/)
@@ -314,7 +314,7 @@ tests/e2e/
 ```
 
 - Los specs piden precondiciones como fixtures: `user` (usuario confirmado que se borra al terminar el test) y `authedPage` (la `page` ya logueada como `user`). Si un spec crea datos por la UI, los registra en `cleanup` para que se borren igual.
-- Para agregar una entidad nueva: sumar una factory en `tests/support/factories/` (crear y borrar) y un fixture en `fixtures/index.ts` que la cree antes del test y la borre en el teardown.
+- Para agregar una entidad nueva: sumar una factory en `tests/support/factories/` (crear y borrar) y un fixture en `fixtures.ts` que la cree antes del test y la borre en el teardown.
 
 Notas:
 

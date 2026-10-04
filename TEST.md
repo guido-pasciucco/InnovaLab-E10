@@ -24,6 +24,7 @@ Reglas compartidas para escribir y mantener tests en todo el repo. Leé esta gu�
 - Los componentes de React no se unit-testean: las reglas se testean en `lib/`; la UI, en E2E.
 - Los specs de Playwright nunca corren bajo Vitest, y Vitest nunca corre specs de Playwright.
 - Un test que prueba la base sin navegador (políticas, RLS, consultas) es de integración, no E2E.
+- Un test de integración que no pertenece a un módulo sino a las políticas de la base (RLS) vive en `lib/db/` como `*.int.test.ts` (p. ej. `lib/db/rls.int.test.ts`).
 
 ## Nombres
 
@@ -93,6 +94,7 @@ afterEach(async () => {
 - El aislamiento contra Supabase es por **datos únicos**, no por rollback de transacción: el cliente y GoTrue abren sus propias conexiones.
 - La `SUPABASE_SECRET_KEY` vive solo en el proceso de tests, y el helper de entorno **se niega a correr** si alguna URL de `.env.test` no es local.
 - Factories y helpers compartidos por varios tipos de test viven en `tests/support/`, no dentro de `tests/e2e/`: un test de `lib/` nunca importa desde `tests/e2e/`. En `tests/support/` no hay archivos `*.test.ts`.
+- Alcance del código compartido: `tests/support/` lo usan integración y E2E; `tests/e2e/helpers/` es solo de E2E (Playwright, Mailpit, login por la puerta de atrás).
 
 ## Recursos
 
