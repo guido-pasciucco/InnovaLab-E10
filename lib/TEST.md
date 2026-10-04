@@ -51,7 +51,7 @@ function clientWith(signIn: () => Promise<unknown>) {
 ## Soporte de tests
 
 - Para importar módulos `server-only` en Vitest, el alias de `vitest.config.mts` lo resuelve al `empty.js` que trae el propio paquete; no lo esquives en el módulo.
-- Las contraseñas de prueba se arman en runtime desde un fixture, para que los scanners de secretos no las marquen. Nunca un literal en el test.
+- Las contraseñas de prueba se generan en runtime con `faker` (`faker.internet.password(...)`), para que los scanners de secretos no las marquen. Nunca un literal en el test.
 
 ## Checklist
 

@@ -51,7 +51,7 @@ Todo código que no sea genérico (`VALIDATION`, `UNAUTHORIZED`, `INTERNAL`) tie
 
 - **Ruta:** afirmá `res.status` y `await res.json()` contra el envelope exacto.
 - **Action:** afirmá el objeto `{ ok, code, message, details }`.
-- **Error inesperado:** afirmá que sale el `fallbackCode` y silenciá el log con `vi.spyOn(console, "error").mockImplementation(() => {})`.
+- **Error inesperado:** afirmá que sale el `fallbackCode` y silenciá el log con `vi.spyOn(console, "error").mockImplementation(() => {})`, y restauralo con `vi.restoreAllMocks()` en `afterEach` para que no siga activo en los tests siguientes.
 - **Control de flujo de Next:** `redirect()` tiene que atravesar el adaptador (`rejects.toMatchObject({ digest: expect.stringContaining("NEXT_REDIRECT") })`).
 
 ## Checklist

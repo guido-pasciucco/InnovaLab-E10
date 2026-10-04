@@ -1,8 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppError } from "./app-error";
 import { ok, handleRouteErrors } from "./handle-route-errors";
 
 describe("handleRouteErrors", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("passes successful responses through", async () => {
     const handler = handleRouteErrors(async () => ok({ hi: true }));
     const res = await handler();

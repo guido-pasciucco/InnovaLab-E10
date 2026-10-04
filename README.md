@@ -131,10 +131,11 @@ lib/
   db/            # esquema Drizzle, cliente getDrizzleClient() y reglas de escritura en servidor
   db.ts          # server-only, placeholder
 tests/
-  e2e/           # Playwright + Supabase local (auth, RLS)
+  support/       # entorno de .env.test, cliente Admin y factories (integración + E2E)
+  e2e/           # Playwright + Supabase local (auth; rls.spec.ts pendiente de pasar a integración)
 ```
 
-**Los tests unitarios no viven en `tests/unit/`.** Esa carpeta está vacía salvo un `.gitkeep`: los 19 archivos `*.test.ts` del repo están **co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
+**Los tests unitarios y de integración están co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`): hoy son 18 `*.test.ts` (proyecto `unit`) y 1 `*.int.test.ts` (proyecto `integration`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
 
 ### Contratos (vinculantes)
 
@@ -197,7 +198,7 @@ tests/
 3. **Vista de resultados** — `app/(calculator)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
 4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
 5. **Persistencia del borrador en servidor** — servicios de `lib/services` sobre `lib/db` (setup y costos) y la migración H0.2 (#91). Ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
-6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth y RLS).
+6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth; `rls.spec.ts` es un test de base sin navegador y pasa a integración según [`TEST.md`](TEST.md)).
 7. **Pulido + despliegue** — lint/build limpios, despliegue único en Vercel verificado.
 8. **Fuera del alcance del MVP** — historial de cálculos y varios borradores por usuario.
 
@@ -234,7 +235,7 @@ bunx tsc --noEmit  # type check
 Los tests E2E corren contra un Supabase local en Docker (con Mailpit para capturar los mails de auth), nunca contra el proyecto de Supabase en la nube.
 
 > [!NOTE]
-> No hay CI configurado por ahora: lint, typecheck, tests unitarios y E2E se corren localmente antes de abrir o mergear un PR. Las referencias a `CI` en `playwright.config.ts` quedan inactivas hasta que exista un pipeline.
+> No hay CI configurado por ahora: lint, typecheck, tests unitarios (`bun run test`), de integración (`bun run test:int`) y E2E se corren localmente antes de abrir o mergear un PR. Las referencias a `CI` en `playwright.config.ts` quedan inactivas hasta que exista un pipeline.
 
 Prerrequisitos, una vez por máquina:
 
