@@ -1,8 +1,8 @@
 import { z } from "zod/v4";
 
 // ---------------------------------------------------------------------------
-// Evaluation spike only: shared format helpers for the drizzle-zod schemas in
-// each domain's validation.ts.
+// Shared format helpers for the drizzle-zod schemas in each domain's
+// validation.ts.
 //
 // Numeric columns arrive as decimal strings (Drizzle maps `numeric` to
 // `string` in TypeScript): money with up to 2 decimals, quantities/rates/

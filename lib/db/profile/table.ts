@@ -1,10 +1,11 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 // ---------------------------------------------------------------------------
-// Evaluation spike only: real tables modeled from erd-calculadora-inteligente.mmd.
-// Not wired to any database and not imported by domain code (lib/calc,
-// lib/money) or any route. Table names are snake_case in Postgres while
-// fields stay camelCase in TypeScript, per the official Drizzle docs.
+// Server-side persistence (ADR 0005): real tables modeled from
+// erd-calculadora-inteligente.mmd. Consumed only by lib/services through
+// getDb(); never imported by domain code (lib/calc, lib/money) or client code.
+// Table names are snake_case in Postgres while fields stay camelCase in
+// TypeScript, per the official Drizzle docs.
 // ---------------------------------------------------------------------------
 
 export const profiles = pgTable("profiles", {
