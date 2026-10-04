@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { upsertCostingSetupInputSchema } from "./validation";
+import {
+  createCalculationInputSchema,
+  createScenarioInputSchema,
+  upsertCostingSetupInputSchema,
+  upsertPricingInputsInputSchema,
+} from "./validation";
 
 // The calculation input schemas reuse the field rules from lib/schemas/calculator-setup/fields.ts,
 // so they enforce the same constraints and messages as the form contract.
@@ -16,9 +21,91 @@ const validCostingSetup = {
   volume: 6,
 };
 
+const SERVER_ID = "6f1c2b7e-3d4a-4f5b-9c8d-1e2f3a4b5c6d";
+const SERVER_TIMESTAMP = new Date("2026-01-01T00:00:00.000Z");
+
+describe("createCalculationInputSchema", () => {
+  it("drops server-controlled fields when the input carries them", () => {
+    const input = {
+      productId: SERVER_ID,
+      id: SERVER_ID,
+      userId: SERVER_ID,
+      businessId: SERVER_ID,
+      status: "final",
+      schemaVersion: 2,
+      createdAt: SERVER_TIMESTAMP,
+      updatedAt: SERVER_TIMESTAMP,
+    };
+
+    const result = createCalculationInputSchema.parse(input);
+
+    expect(result).not.toHaveProperty("id");
+    expect(result).not.toHaveProperty("userId");
+    expect(result).not.toHaveProperty("businessId");
+    expect(result).not.toHaveProperty("status");
+    expect(result).not.toHaveProperty("schemaVersion");
+    expect(result).not.toHaveProperty("createdAt");
+    expect(result).not.toHaveProperty("updatedAt");
+  });
+});
+
+describe("upsertPricingInputsInputSchema", () => {
+  it("drops server-controlled fields when the input carries them", () => {
+    const input = {
+      marginConvention: "markup",
+      expectedMarginPct: "30.0000",
+      manualPrice: "1500.00",
+      calculationId: SERVER_ID,
+      createdAt: SERVER_TIMESTAMP,
+      updatedAt: SERVER_TIMESTAMP,
+    };
+
+    const result = upsertPricingInputsInputSchema.parse(input);
+
+    expect(result).not.toHaveProperty("calculationId");
+    expect(result).not.toHaveProperty("createdAt");
+    expect(result).not.toHaveProperty("updatedAt");
+  });
+});
+
+describe("createScenarioInputSchema", () => {
+  it("drops server-controlled fields when the input carries them", () => {
+    const input = {
+      name: "Escenario base",
+      isBase: true,
+      id: SERVER_ID,
+      calculationId: SERVER_ID,
+      createdAt: SERVER_TIMESTAMP,
+      updatedAt: SERVER_TIMESTAMP,
+    };
+
+    const result = createScenarioInputSchema.parse(input);
+
+    expect(result).not.toHaveProperty("id");
+    expect(result).not.toHaveProperty("calculationId");
+    expect(result).not.toHaveProperty("createdAt");
+    expect(result).not.toHaveProperty("updatedAt");
+  });
+});
+
 describe("upsertCostingSetupInputSchema", () => {
   it("accepts a valid costing setup with an integer volume", () => {
     expect(upsertCostingSetupInputSchema.safeParse(validCostingSetup).success).toBe(true);
+  });
+
+  it("drops server-controlled fields when the input carries them", () => {
+    const input = {
+      ...validCostingSetup,
+      calculationId: SERVER_ID,
+      createdAt: SERVER_TIMESTAMP,
+      updatedAt: SERVER_TIMESTAMP,
+    };
+
+    const result = upsertCostingSetupInputSchema.parse(input);
+
+    expect(result).not.toHaveProperty("calculationId");
+    expect(result).not.toHaveProperty("createdAt");
+    expect(result).not.toHaveProperty("updatedAt");
   });
 
   it("rejects a non-ARS currency with the shared message", () => {

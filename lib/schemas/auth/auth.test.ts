@@ -18,6 +18,12 @@ function fieldErrors(schema: z.ZodType, input: unknown) {
 }
 
 describe("loginSchema", () => {
+  it("accepts a complete valid object", () => {
+    const result = loginSchema.safeParse({ email: "ana@example.com", password: FAKE_PASSWORD });
+
+    expect(result.success).toBe(true);
+  });
+
   it("uses readable messages for login fields", () => {
     expect(fieldErrors(loginSchema, { email: "x", password: "1" })).toEqual({
       email: ["Enter a valid email address"],
@@ -43,6 +49,12 @@ describe("signupSchema", () => {
 });
 
 describe("passwordResetRequestSchema", () => {
+  it("accepts a complete valid object", () => {
+    const result = passwordResetRequestSchema.safeParse({ email: "ana@example.com" });
+
+    expect(result.success).toBe(true);
+  });
+
   it("uses readable messages for password reset", () => {
     expect(fieldErrors(passwordResetRequestSchema, { email: "x" })).toEqual({
       email: ["Enter a valid email address"],
@@ -51,6 +63,12 @@ describe("passwordResetRequestSchema", () => {
 });
 
 describe("passwordUpdateSchema", () => {
+  it("accepts a complete valid object", () => {
+    const result = passwordUpdateSchema.safeParse({ password: FAKE_PASSWORD });
+
+    expect(result.success).toBe(true);
+  });
+
   it("uses readable messages for password update", () => {
     expect(fieldErrors(passwordUpdateSchema, { password: "1" })).toEqual({
       password: ["Password must be at least 8 characters"],
