@@ -11,10 +11,14 @@
 // It does not format: the visual side ($ 1.234,50) is #95.
 // ---------------------------------------------------------------------------
 
-// `$` plus any whitespace, including the non-breaking spaces that arrive with
-// pasted text. Only these are noise; anything else is left for the patterns to
-// reject instead of being silently cleaned away.
-const NOISE = /[\s$]/g;
+// Whitespace anywhere, including the non-breaking spaces that arrive with
+// pasted text: `1 000 000` and `$ 1.234,50` are amounts written with grouping
+// spaces, so the space carries no meaning between digits and is removed
+// wherever it appears. `$` is different: only a single one at the very start is
+// currency notation and gets dropped, while a stray `$` anywhere else is a
+// mistake rather than noise and is left for the patterns to reject.
+const NOISE = /\s/g;
+const LEADING_CURRENCY = /^\$/;
 
 // Dot groups of exactly three digits: `1.500`, `1.234.567`. Demanding a full
 // group is what makes a dot unambiguous: a dot followed by one or two digits
@@ -43,7 +47,7 @@ const PLAIN = /^(\d+)(?:[.,](\d{1,2}))?$/;
  * written once and shown by both RHF and the service (lib/schemas/AGENTS.md).
  */
 export function parseARS(input: string): string | null {
-  const cleaned = input.replace(NOISE, "");
+  const cleaned = input.replace(NOISE, "").replace(LEADING_CURRENCY, "");
 
   // An empty amount is rejected rather than defaulted, and a leading minus is
   // rejected because a negative amount is never valid. Both are listed as

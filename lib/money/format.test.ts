@@ -24,7 +24,19 @@ describe("parseARS — accepts", () => {
   });
 
   it("ignores the non-breaking space that comes with pasted amounts", () => {
-    expect(parseARS("$ 1.234,50")).toBe("1234.50");
+    expect(parseARS("$ 1.234,50")).toBe("1234.50");
+  });
+
+  // Grouping spaces carry no meaning between digits, wherever they appear, so
+  // `1 23` is read exactly like `1 000 000`: the user reviews what landed in the
+  // field before saving. Rejecting the one and accepting the other would be
+  // arbitrary.
+  it.each([
+    ["1 23", "123"],
+    ["1 000 000", "1000000"],
+    ["1 234,50", "1234.50"],
+  ])("treats internal spaces as noise: %j becomes %j", (input, expected) => {
+    expect(parseARS(input)).toBe(expected);
   });
 
   it("never pads the fraction, so cents are not invented", () => {
@@ -54,6 +66,24 @@ describe("parseARS — rejects", () => {
 
   it("does not round a third decimal away", () => {
     expect(parseARS("1.234,567")).toBeNull();
+  });
+
+  // A `$` is only currency notation at the very start. Anywhere else it is a
+  // mistake, so it survives the cleanup and the patterns reject the input
+  // instead of quietly returning a valid amount for a malformed string.
+  it.each([
+    { input: "1$.234", why: "a dollar sign inside the digits" },
+    { input: "$1.500$", why: "a second dollar sign at the end" },
+  ])("returns null for $why: $input", ({ input }) => {
+    expect(parseARS(input)).toBeNull();
+  });
+
+  // Comma and dot together mean the US format, and the order they appear in
+  // decides nothing: `1.234,50` is Argentine, `1,234.50` is not. Neither is
+  // guessed.
+  it("rejects the US format while accepting the Argentine one", () => {
+    expect(parseARS("1,234.50")).toBeNull();
+    expect(parseARS("1.234,50")).toBe("1234.50");
   });
 });
 
