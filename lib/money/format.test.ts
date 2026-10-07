@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseARS } from "./format";
+import { formatARS, parseARS } from "./format";
 
 // The contract table in #94, row by row: 12 accepted shapes and 8 rejected
 // ones. The rejects carry as much weight as the accepts — parseARS must not
@@ -105,5 +105,91 @@ describe("parseARS — output shape", () => {
       const decimals = parsed!.split(".")[1];
       expect(decimals === undefined || decimals.length <= 2).toBe(true);
     }
+  });
+});
+
+// The display table from #95. These cases are the authority on the format:
+// #27 has the last word on the visible format, and until then any change to the
+// expectations below is a deliberate decision rather than a side effect.
+describe("formatARS — accepts", () => {
+  it.each([
+    ["1500", "$ 1.500,00"],
+    ["1234.5", "$ 1.234,50"],
+    ["0", "$ 0,00"],
+    ["1234567.89", "$ 1.234.567,89"],
+  ])("renders %j as %j", (amount, expected) => {
+    expect(formatARS(amount)).toBe(expected);
+  });
+
+  it.each([
+    { amount: "1", why: "a single digit needs no group" },
+    { amount: "12", why: "two digits fit in one group" },
+    { amount: "999", why: "three digits fill the first group exactly" },
+    { amount: "1000", why: "a dot starts at the fourth digit" },
+    { amount: "123456789", why: "grouping repeats over millions" },
+    { amount: "999999999999", why: "numeric(12,2) fits twelve digits" },
+  ])("groups $why: $amount", ({ amount }) => {
+    expect(formatARS(amount)).toMatch(/^\$ \d{1,3}(\.\d{3})*,00$/);
+  });
+
+  // Two decimals always, so the cents column lines up down a table.
+  it.each([
+    { amount: "0", why: "no decimals at all" },
+    { amount: "7.5", why: "one decimal" },
+    { amount: "1234.50", why: "already two" },
+  ])("pads to two decimals for $why: $amount", ({ amount }) => {
+    expect(formatARS(amount)).toMatch(/,00$|,50$/);
+  });
+});
+
+describe("formatARS — negatives", () => {
+  // The form rejects a negative amount, but a numeric column allows one and a
+  // contribution margin below zero is a real result, so the sign has to render.
+  // It goes after the `$`: a leading dash reads as a dash, not as a minus.
+  it.each([
+    ["-1234.50", "$ -1.234,50"],
+    ["-0.5", "$ -0,50"],
+    ["-1234567.89", "$ -1.234.567,89"],
+  ])("keeps the sign after the currency symbol: %j becomes %j", (amount, expected) => {
+    expect(formatARS(amount)).toBe(expected);
+  });
+
+  it("never turns a negative into a positive by dropping the sign", () => {
+    expect(formatARS("-1234.50")).not.toBe(formatARS("1234.50"));
+  });
+});
+
+describe("formatARS — unrenderable input", () => {
+  // The precondition says a decimal, so this should not happen: the input comes
+  // from a numeric column or from parseARS. Defined as an empty string rather
+  // than a throw, so a bad value cannot take down a results screen, and never as
+  // null, which would force every caller to handle a case that cannot occur.
+  it.each([
+    { amount: "", why: "an empty amount" },
+    { amount: "abc", why: "text" },
+    { amount: "1.234", why: "three decimals" },
+    { amount: "1,234.50", why: "the US format" },
+    { amount: "$1234.50", why: "an unparsed currency symbol" },
+    { amount: " 1500", why: "untrimmed whitespace" },
+  ])("returns an empty string for $why: $amount", ({ amount }) => {
+    expect(formatARS(amount)).toBe("");
+  });
+});
+
+describe("formatARS — round trip", () => {
+  // The two functions never call each other — a calculation sits between them —
+  // so a value that survives parseARS has to survive formatARS too.
+  it.each([
+    ["1500", "$ 1.500,00"],
+    ["1.234,50", "$ 1.234,50"],
+    ["0", "$ 0,00"],
+    ["1.234.567,89", "$ 1.234.567,89"],
+    ["0,50", "$ 0,50"],
+    ["99,99", "$ 99,99"],
+  ])("renders what parseARS read from %j: %j", (argentine, expected) => {
+    const parsed = parseARS(argentine);
+
+    expect(parsed).not.toBeNull();
+    expect(formatARS(parsed!)).toBe(expected);
   });
 });
