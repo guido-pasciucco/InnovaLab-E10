@@ -8,7 +8,8 @@
 // So parseARS only normalises — every operation below is string manipulation
 // on purpose, with no Number()/parseFloat(), which would lose cents.
 //
-// It does not format: the visual side ($ 1.234,50) is #95.
+// formatARS covers the visual side: it turns a stored decimal back into what a
+// person reads, "$ 1.234,50".
 // ---------------------------------------------------------------------------
 
 // Whitespace anywhere, including the non-breaking spaces that arrive with
@@ -69,4 +70,74 @@ export function parseARS(input: string): string | null {
   }
 
   return plain[2] === undefined ? plain[1] : `${plain[1]}.${plain[2]}`;
+}
+
+// ---------------------------------------------------------------------------
+// Display side (#95). The mirror of parseARS, and it does not call it: the two
+// never run back to back. The amount is parsed at the form boundary, stored as
+// a numeric column, read back as a string and formatted here, with the
+// calculation engine in between.
+//
+// No Intl.NumberFormat with "es-AR": its output varies by machine and by
+// runtime version, so the same amount could format differently in two
+// environments and the tests would only pass in one. The tests are the
+// authority, so the format is built from string operations instead.
+// ---------------------------------------------------------------------------
+
+// A stored decimal: an optional sign and up to two decimals, which is exactly
+// what `moneyString` accepts (lib/db/formats.ts), so anything the database can
+// hand back formats.
+const DECIMAL = /^(-?)(\d+)(?:\.(\d{1,2}))?$/;
+
+const CURRENCY_PREFIX = "$ ";
+const DECIMAL_SEPARATOR = ",";
+const GROUP_SEPARATOR = ".";
+
+// Two decimals always, so two rows of the same table line up and can be read at
+// a glance. `1234.5` becomes "50", not "5".
+function withTwoDecimals(digits: string | undefined): string {
+  if (digits === undefined) {
+    return "00";
+  }
+
+  return digits.length === 1 ? `${digits}0` : digits;
+}
+
+// A dot every three digits, counted from the right: 1 -> 1, 1234 -> 1.234,
+// 1234567 -> 1.234.567. Grouping from the right is what keeps it correct for
+// every length without special-casing.
+function withThousandsSeparators(digits: string): string {
+  const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, GROUP_SEPARATOR);
+
+  return grouped;
+}
+
+/**
+ * Renders a stored decimal the way an amount is read in Argentina: "$ 1.234,50".
+ *
+ * Always two decimals and always grouped, so the column of a table is scannable.
+ * A negative amount keeps its sign after the currency symbol ("$ -1.234,50"):
+ * a leading dash would read as a dash rather than as a minus.
+ *
+ * Unlike parseARS, an amount that is not a decimal returns an empty string
+ * instead of null. There is no reason to explain here — the caller renders
+ * whatever it gets, and an unrenderable amount must not crash a results screen.
+ * In practice this cannot happen: the input comes from a `numeric` column or
+ * from parseARS, both of which guarantee a valid decimal. It matters for
+ * negative amounts, which the form rejects but the database does allow, since
+ * a contribution margin below zero is a real result worth showing.
+ *
+ * Colours, warnings and whether a loss deserves an alert belong to the caller,
+ * not here: this file owns the format, the component owns the presentation.
+ */
+export function formatARS(amount: string): string {
+  const decimal = DECIMAL.exec(amount);
+  if (!decimal) {
+    return "";
+  }
+
+  const [, sign, integer, fraction] = decimal;
+  const cents = withTwoDecimals(fraction);
+
+  return `${CURRENCY_PREFIX}${sign}${withThousandsSeparators(integer)}${DECIMAL_SEPARATOR}${cents}`;
 }
