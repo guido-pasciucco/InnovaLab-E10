@@ -4,13 +4,15 @@ import { and, eq } from "drizzle-orm";
 
 import { businesses, products } from "@/lib/db/business/table";
 import { calculations, costingSetup } from "@/lib/db/calculation/table";
-import { getDrizzleClient, type Db } from "@/lib/db/client";
 import {
-  calculatorSetupSchema,
-  type CalculatorSetup,
-} from "@/lib/schemas/calculator-setup/calculator-setup";
+  saveCalculatorSetupInputSchema,
+  type SaveCalculatorSetupInput,
+} from "@/lib/db/calculation/validation";
+import { getDrizzleClient, type Db } from "@/lib/db/client";
 
 // Calculator setup persistence (ADR 0005: the draft lives server-side only).
+// Input is validated with the server gate from lib/db (saveCalculatorSetupInputSchema),
+// never with the client form contract.
 // Owner scoping: every query and write filters by the caller's userId.
 // The service throws (ZodError, AppError); doors translate. No try/catch.
 
@@ -50,8 +52,8 @@ export async function saveCalculatorSetupService(
   userId: string,
   input: unknown,
   db: Db = getDrizzleClient(),
-): Promise<CalculatorSetup> {
-  const setup = calculatorSetupSchema.parse(input);
+): Promise<SaveCalculatorSetupInput> {
+  const setup = saveCalculatorSetupInputSchema.parse(input);
 
   return db.transaction(async (tx) => {
     const business = await getOrCreateDefaultBusiness(tx, userId);
@@ -109,7 +111,7 @@ export async function saveCalculatorSetupService(
 export async function getCalculatorSetupService(
   userId: string,
   db: Db = getDrizzleClient(),
-): Promise<CalculatorSetup | null> {
+): Promise<SaveCalculatorSetupInput | null> {
   const [row] = await db
     .select({
       name: products.name,
@@ -124,5 +126,5 @@ export async function getCalculatorSetupService(
     .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
     .limit(1);
 
-  return row ? calculatorSetupSchema.parse(row) : null;
+  return row ? saveCalculatorSetupInputSchema.parse(row) : null;
 }
