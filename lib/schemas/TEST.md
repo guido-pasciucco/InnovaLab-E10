@@ -4,7 +4,7 @@ Casos específicos para los contratos de `lib/schemas/`. Las reglas compartidas 
 
 ## Qué se testea
 
-Una regla vive una sola vez en `fields.ts`, pero la consumen **dos contratos**: el del formulario (`lib/schemas/<contrato>/<contrato>.ts`) y el de la base (`lib/db/<dominio>/validation.ts`). Cada uno se testea por un motivo distinto:
+Una regla vive una sola vez en `fields.ts`, pero la consumen **dos contratos**: el del formulario (`lib/schemas/<contrato>/<contrato>.ts`) y el de la base (`lib/db/<dominio>/validation.ts`), que es la validación del servidor. Cada uno se testea por un motivo distinto:
 
 | Dónde | Qué prueba | Profundidad |
 | --- | --- | --- |

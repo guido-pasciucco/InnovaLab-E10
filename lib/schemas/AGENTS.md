@@ -2,12 +2,15 @@
 
 Cada regla de validación y su mensaje se escriben **una sola vez**, en el `fields.ts` del contrato. El formulario (cliente) y los schemas de la base (`lib/db/<dominio>/validation.ts`) se arman a partir de esas mismas reglas, y usan las **mismas claves**, así que guardar no requiere renombrar campos.
 
+El contrato del formulario sirve solo al formulario. El servidor nunca valida con él: el servicio valida con `lib/db/<dominio>/validation.ts` (ver `lib/db/AGENTS.md`, sección "Flujo"). Excepción pendiente por ahora: `lib/services/auth.ts` valida con los contratos de `auth/`, porque auth no tiene tabla propia (usa Supabase Auth).
+
 ## Quién toca este directorio
 
 | Rol | Qué hace en `lib/schemas/` |
 | --- | --- |
-| **Backend** | Dueño. Define las reglas, los mensajes y los contratos. |
-| **Frontend** | Consume los contratos desde `components/` y `app/`. Solo agrega campos puramente cosméticos del formulario (ver `lib/AGENTS.md`). |
+| **Backend y Frontend** | `fields.ts` es compartido: ahí acuerdan las reglas y los mensajes. |
+| **Frontend** | Dueño de los contratos (`<contrato>/<contrato>.ts`). Sirven al formulario y se consumen desde `components/` y `app/`. |
+| **Backend** | Consume `fields.ts` desde `lib/db/<dominio>/validation.ts`, que es la validación del servidor. No importa los contratos del formulario. |
 
 ## Estructura
 
@@ -35,7 +38,7 @@ lib/schemas/
    ```ts
    export const calculatorSetupSchema = z.object({ unit: unitField /* ... */ });
    ```
-3. **Usala en el `lib/db/<dominio>/validation.ts`** de la tabla como refinamiento de drizzle-zod:
+3. **Usala en el `lib/db/<dominio>/validation.ts`** de la tabla como refinamiento de drizzle-zod. Ese schema es el que usa el servicio para validar:
    ```ts
    createInsertSchema(costingSetup, { unit: unitField /* ... */ });
    ```
@@ -46,6 +49,7 @@ lib/schemas/
 | Tema | Regla |
 | --- | --- |
 | Fuente única | La regla y el mensaje viven solo en `fields.ts`. Ni el formulario ni `lib/db` redefinen una regla de negocio. |
+| Validación del servidor | Los servicios validan con `lib/db/<dominio>/validation.ts`, nunca con un contrato de `lib/schemas` (salvo la excepción pendiente de auth). |
 | Dirección de dependencias | `lib/db → lib/schemas`, nunca al revés. `lib/schemas` es puro y apto para el cliente: no importa `lib/db`, `drizzle-orm` ni `window`. |
 | Nombres de clave | La clave del formulario es igual al nombre de la columna en TypeScript (`unit`, `period`, `volume`, `name`). Si no coinciden, se renombra la columna, no se mapea. |
 | Nombres de columna | Sin prefijos que repitan el nombre de la tabla: `costing_setup.unit`, no `costing_setup.costing_unit`. |
@@ -66,5 +70,6 @@ Derivar el formulario con `createInsertSchema(products).shape.name` obligaría a
 - [ ] La regla nueva está en `fields.ts` y no está duplicada en otro lugar.
 - [ ] La clave del formulario coincide con el nombre de la columna.
 - [ ] `lib/schemas` no importa nada de `lib/db`.
+- [ ] Ningún servicio importa un contrato del formulario: valida con `lib/db/<dominio>/validation.ts`.
 - [ ] Hay un test que confirma el mismo mensaje en el formulario y en la base (ver [`TEST.md`](TEST.md) y [`../../TEST.md`](../../TEST.md)).
 - [ ] Si cambió una columna, la migración se generó con `bun run db:generate` (ver `lib/db/AGENTS.md`).

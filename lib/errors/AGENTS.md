@@ -95,8 +95,8 @@ const email = z.email({ error: "Enter a valid email address" });
 
 | Paso | Dónde | Qué pasa |
 | --- | --- | --- |
-| 1 | Form (cliente) | RHF valida con el mismo schema y muestra el mensaje. Si falla, no se envía nada |
-| 2 | Servicio | `schema.parse(input)` lanza un `ZodError`. El servicio no lo atrapa |
+| 1 | Form (cliente) | RHF valida con el contrato del formulario (mismas reglas de `fields.ts`) y muestra el mensaje. Si falla, no se envía nada |
+| 2 | Servicio | `schema.parse(input)` con el schema de `lib/db/<dominio>/validation.ts` lanza un `ZodError`. El servicio no lo atrapa |
 | 3 | Adaptador | `toAppError` lo convierte en `VALIDATION` con `details = z.flattenError(err)` |
 | 4 | Respuesta | `{ code: "VALIDATION", message: "Invalid input", details: { fieldErrors: { email: [...] } } }` |
 | 5 | Form (cliente) | `useServerFieldErrors` lee `details` con `getFieldErrors` y los pone en cada input con `setError` |
