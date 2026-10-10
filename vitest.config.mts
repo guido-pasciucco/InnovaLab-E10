@@ -11,6 +11,8 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Restore every vi.spyOn spy before each test, so a spy never leaks into the next one.
+    restoreMocks: true,
     // Playwright specs run with `bun run test:e2e`, never under vitest.
     exclude: [...configDefaults.exclude, "tests/e2e/**"],
     projects: [
