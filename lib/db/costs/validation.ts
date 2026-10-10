@@ -1,13 +1,8 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-import {
-  codeString,
-  moneyString,
-  nameString,
-  quantityString,
-  uuidString,
-} from "../formats";
+import { codeString, quantityString, uuidString } from "../formats";
+import { amountField, conceptField } from "../../schemas/costs/fields";
 import { businessCostLines, calcCostLines } from "./table";
 
 // ---------------------------------------------------------------------------
@@ -21,11 +16,11 @@ import { businessCostLines, calcCostLines } from "./table";
 // --- Persisted rows: mirror exactly what comes back from the database. ---
 
 export const businessCostLineRowSchema = createSelectSchema(businessCostLines, {
-  amountPeriod: moneyString,
+  amount: amountField,
 });
 
 export const calcCostLineRowSchema = createSelectSchema(calcCostLines, {
-  amount: moneyString,
+  amount: amountField,
   hours: quantityString.nullable(),
   hourlyRate: quantityString.nullable(),
   allocationPct: quantityString.nullable(),
@@ -36,10 +31,10 @@ export const calcCostLineRowSchema = createSelectSchema(calcCostLines, {
 export const createBusinessCostLineInputSchema = createInsertSchema(
   businessCostLines,
   {
-    concept: nameString(200),
+    concept: conceptField,
     behavior: codeString(40),
     traceability: codeString(40),
-    amountPeriod: moneyString,
+    amount: amountField,
     notes: z.string().trim().max(500).nullish(),
   },
 ).omit({
@@ -52,10 +47,10 @@ export const createBusinessCostLineInputSchema = createInsertSchema(
 export const createCalcCostLineInputSchema = createInsertSchema(calcCostLines, {
   scenarioId: uuidString.nullish(),
   sourceBusinessCostId: uuidString,
-  concept: nameString(200),
+  concept: conceptField,
   behavior: codeString(40),
   traceability: codeString(40),
-  amount: moneyString,
+  amount: amountField,
   hours: quantityString.nullish(),
   hourlyRate: quantityString.nullish(),
   allocationPct: quantityString.nullish(),

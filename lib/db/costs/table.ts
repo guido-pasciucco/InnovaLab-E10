@@ -26,7 +26,7 @@ export const businessCostLines = pgTable("business_cost_lines", {
   concept: text("concept").notNull(),
   behavior: text("behavior").notNull(),
   traceability: text("traceability").notNull(),
-  amountPeriod: numeric("amount_period", { precision: 12, scale: 2 }).notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
