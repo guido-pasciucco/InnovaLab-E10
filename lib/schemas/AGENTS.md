@@ -8,9 +8,8 @@ El contrato del formulario sirve solo al formulario. El servidor nunca valida co
 
 | Rol | Qué hace en `lib/schemas/` |
 | --- | --- |
-| **Backend y Frontend** | `fields.ts` es compartido: ahí acuerdan las reglas y los mensajes. |
-| **Frontend** | Dueño de los contratos (`<contrato>/<contrato>.ts`). Sirven al formulario y se consumen desde `components/` y `app/`. |
-| **Backend** | Consume `fields.ts` desde `lib/db/<dominio>/validation.ts`, que es la validación del servidor. No importa los contratos del formulario. |
+| **Backend** | Dueño de `fields.ts`, porque alimenta la validación del servidor (`lib/db/<dominio>/validation.ts`). Revisa todo cambio de reglas o mensajes. No importa los contratos del formulario. |
+| **Frontend** | Dueño de los contratos (`<contrato>/<contrato>.ts`). Sirven al formulario y se consumen desde `components/` y `app/`. Propone cambios a las reglas y mensajes de `fields.ts` por PR revisado por Backend. |
 
 ## Estructura
 
