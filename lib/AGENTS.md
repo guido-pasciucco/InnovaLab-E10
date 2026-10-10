@@ -11,7 +11,7 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 
 Guías de submódulos: [`schemas/AGENTS.md`](schemas/AGENTS.md), [`errors/AGENTS.md`](errors/AGENTS.md) y [`db/AGENTS.md`](db/AGENTS.md).
 
-Guías de testing: [`TEST.md`](TEST.md) (casos de `lib/`) y la compartida del repo, [`../TEST.md`](../TEST.md).
+Guías de testing: la compartida del repo, [`../TEST.md`](../TEST.md), y la sección [Tests](#tests) de esta guía.
 
 ## Mapa rápido
 
@@ -76,10 +76,29 @@ Tres aclaraciones que evitan las confusiones más comunes:
 ## Checklist para verificar un cambio en `lib/`
 
 - [ ] `calc/` y `money/` no importan nada de `app/`, `components/` ni `db/`.
-- [ ] Hay al menos un test que cubre el cambio, co-localizado junto al módulo (`<modulo>.test.ts`, o `<modulo>.int.test.ts` si toca la base). El test sigue [`TEST.md`](TEST.md) y [`../TEST.md`](../TEST.md).
+- [ ] Hay al menos un test que cubre el cambio, co-localizado junto al módulo (`<modulo>.test.ts`, o `<modulo>.int.test.ts` si toca la base). El test sigue [`../TEST.md`](../TEST.md) y la sección [Tests](#tests).
 - [ ] Los montos usan `decimal.js`, no `number` con decimales.
 - [ ] Si el cambio toca persistencia, respeta `db/AGENTS.md`.
 
 ## Siguiente paso
 
 Ver issues #12 (tipos), #13 (librerías) y #14 (motor). La persistencia del cálculo está decidida en el [ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md) (cierra lo que abría #15).
+
+## Tests
+
+Reglas compartidas en [`../TEST.md`](../TEST.md). Errores: [`errors/AGENTS.md`](errors/AGENTS.md#tests); schemas: [`schemas/AGENTS.md`](schemas/AGENTS.md#tests).
+
+| Módulo | Tipo | Cómo se aísla |
+| --- | --- | --- |
+| `calc/`, `money/` | Unit | Funciones puras: sin renderizar, sin mocks, sin importar `db/` |
+| `services/` con cliente externo | Unit | Cliente falso **inyectado** como parámetro (`vi.fn`, sin `vi.mock`) |
+| `services/` con persistencia | Integración | Postgres local real; `db` se pasa como parámetro |
+| `auth/`, `supabase/` | Unit | `vi.mock` de Next/infra + `vi.stubEnv`; el módulo se importa después con `await import()` |
+| `db/` (cliente) | Unit | URL falsa (`postgres()` no abre socket hasta la primera query); `vi.resetModules()` y limpiar el singleton global en `afterEach` |
+
+- **Integración:** `<modulo>.int.test.ts`, corre con `bun run test:int`. Un cliente por archivo, creado en `beforeAll` y cerrado en `afterAll` con `db.$client.end()`.
+- La factory de usuarios y `loadTestEnv` se importan desde `tests/support/`. Cada test crea su usuario, filtra por su `id` y lo borra en `afterEach`.
+- El aislamiento por dueño se prueba con **dos usuarios**: B no lee ni pisa lo de A.
+- Un `redirect()` se afirma por el `digest` del error de Next (`NEXT_REDIRECT;...;<destino>`).
+- `server-only` se resuelve en Vitest con el alias de `vitest.config.mts`; no lo esquives en el módulo.
+- Contraseñas de prueba con `faker.internet.password(...)` en runtime, nunca un literal.

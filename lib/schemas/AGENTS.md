@@ -41,7 +41,7 @@ lib/schemas/
    ```ts
    createInsertSchema(costingSetup, { unit: unitField /* ... */ });
    ```
-4. **Testeá los dos contratos** con el helper `fieldErrors`: el formulario cubre todos los casos de la regla y la base, un caso por campo con override que devuelva el mismo mensaje. Ver [`TEST.md`](TEST.md) y la guía compartida [`../../TEST.md`](../../TEST.md).
+4. **Testeá los dos contratos** con el helper `fieldErrors`: el formulario cubre todos los casos de la regla y la base, un caso por campo con override que devuelva el mismo mensaje. Ver la sección [Tests](#tests) y la guía compartida [`../../TEST.md`](../../TEST.md).
 
 ## Reglas
 
@@ -70,5 +70,21 @@ Derivar el formulario con `createInsertSchema(products).shape.name` obligaría a
 - [ ] La clave del formulario coincide con el nombre de la columna.
 - [ ] `lib/schemas` no importa nada de `lib/db`.
 - [ ] Ningún servicio importa un contrato del formulario: valida con `lib/db/<dominio>/validation.ts`.
-- [ ] Hay un test que confirma el mismo mensaje en el formulario y en la base (ver [`TEST.md`](TEST.md) y [`../../TEST.md`](../../TEST.md)).
+- [ ] Hay un test que confirma el mismo mensaje en el formulario y en la base (ver [Tests](#tests)).
 - [ ] Si cambió una columna, la migración se generó con `bun run db:generate` (ver `lib/db/AGENTS.md`).
+
+## Tests
+
+Reglas compartidas en [`../../TEST.md`](../../TEST.md). Una regla de `fields.ts` la consumen dos contratos, y cada uno se testea por un motivo distinto:
+
+| Dónde | Qué prueba | Profundidad |
+| --- | --- | --- |
+| Contrato del formulario | **La regla**: límites, `trim`, literales y mensajes | Todos los casos inválidos (`it.each` para las variantes) |
+| `lib/db/<dominio>/validation.ts` | **El cableado**: el override aplica el `Field` y los `.omit()` sacan los campos del servidor | Un caso por campo con override, más el caso válido |
+| `fields.ts` | Nada propio: se cubre a través del contrato | Solo si ningún contrato expone el `Field` |
+
+- No se testea Zod en sí (que `z.email()` rechace un email inválido), sino las decisiones del proyecto.
+- Se afirma sobre el mismo `fieldErrors` que recibe el formulario: `z.flattenError(result.error).fieldErrors` (helper `fieldErrors(schema, input)`). Para un `Field` suelto, `result.error.issues[0]?.message`.
+- Los mensajes se afirman **literalmente** (`toEqual({ name: ["Escribí el nombre de tu producto."] })`); en la base, el mismo literal que en el formulario.
+- Cada input público afirma que los campos del servidor (`id`, dueño, FKs, timestamps) no sobreviven al `parse`.
+- Cada contrato tiene un caso válido completo. Los inválidos parten de él y cambian un solo campo (`{ ...validSetup, volume: 0 }`).

@@ -1,15 +1,15 @@
 # TEST.md — Convenciones de testing del repo
 
-Reglas compartidas para escribir y mantener tests en todo el repo. Leé esta guía antes de crear o cambiar un test; después leé la guía específica del directorio que tocás.
+Reglas compartidas para escribir y mantener tests en todo el repo. Leé esta guía antes de crear o cambiar un test; después, la sección `## Tests` del `AGENTS.md` del directorio que tocás.
 
 ## Dónde está cada guía
 
 | Guía | Contenido |
 | --- | --- |
 | [`TEST.md`](TEST.md) | Esta guía: taxonomía, nombres, estructura, mocks, datos y recursos |
-| [`lib/TEST.md`](lib/TEST.md) | Tests de `lib/`: dominio puro, servicios (unit vs integración), módulos de infraestructura |
-| [`lib/errors/TEST.md`](lib/errors/TEST.md) | Camino del error: códigos de `AppError`, catálogo y adaptadores |
-| [`lib/schemas/TEST.md`](lib/schemas/TEST.md) | Contratos Zod: la regla se testea en el formulario; en la base, el cableado y los campos del servidor |
+| [`lib/AGENTS.md`](lib/AGENTS.md#tests) | Tests de `lib/`: qué tipo le toca a cada módulo, integración, soporte |
+| [`lib/errors/AGENTS.md`](lib/errors/AGENTS.md#tests) | Camino del error: códigos, catálogo y adaptadores |
+| [`lib/schemas/AGENTS.md`](lib/schemas/AGENTS.md#tests) | Contratos Zod: la regla en el formulario; en la base, el cableado y los campos del servidor |
 | [`README.md`](README.md#tests-end-to-end-playwright--supabase-local) | E2E con Playwright + Supabase local: prerrequisitos y comandos |
 
 ## Taxonomía de tests
@@ -23,8 +23,7 @@ Reglas compartidas para escribir y mantener tests en todo el repo. Leé esta gu�
 - Los tests unit e integración van **co-localizados**, nunca en una carpeta aparte.
 - Los componentes de React no se unit-testean: las reglas se testean en `lib/`; la UI, en E2E.
 - Los specs de Playwright nunca corren bajo Vitest, y Vitest nunca corre specs de Playwright.
-- Un test que prueba la base sin navegador (políticas, RLS, consultas) es de integración, no E2E.
-- Un test de integración que no pertenece a un módulo sino a las políticas de la base (RLS) vive en `lib/db/` como `*.int.test.ts` (p. ej. `lib/db/rls.int.test.ts`).
+- Un test que prueba la base sin navegador (políticas, RLS, consultas) es de integración, no E2E. Si no pertenece a un módulo sino a las políticas de la base, vive en `lib/db/` (p. ej. `lib/db/rls.int.test.ts`).
 
 ## Nombres
 
@@ -73,7 +72,7 @@ it("returns the unit cost when the volume is positive", () => {
 | Módulos de Next/infra en unit | Las reglas de Zod: se testean de verdad |
 
 - Preferí **inyectar** la dependencia (el servicio recibe `client` o `db`) antes que `vi.mock`.
-- Si mockeás `console`, hacelo con `vi.spyOn(console, "error").mockImplementation(...)` y restaurá.
+- `vitest.config.mts` tiene `restoreMocks: true`: cada `vi.spyOn` (p. ej. sobre `console`) se restaura solo antes de cada test.
 
 ## Datos y aislamiento
 
@@ -93,13 +92,11 @@ afterEach(async () => {
 
 - El aislamiento contra Supabase es por **datos únicos**, no por rollback de transacción: el cliente y GoTrue abren sus propias conexiones.
 - La `SUPABASE_SECRET_KEY` vive solo en el proceso de tests, y el helper de entorno **se niega a correr** si alguna URL de `.env.test` no es local.
-- Factories y helpers compartidos por varios tipos de test viven en `tests/support/`, no dentro de `tests/e2e/`: un test de `lib/` nunca importa desde `tests/e2e/`. En `tests/support/` no hay archivos `*.test.ts`.
-- Alcance del código compartido: `tests/support/` lo usan integración y E2E; `tests/e2e/helpers/` es solo de E2E (Playwright, Mailpit, login por la puerta de atrás).
+- Factories y helpers compartidos por integración y E2E viven en `tests/support/` (sin archivos `*.test.ts`); `tests/e2e/helpers/` es solo de E2E (Playwright, Mailpit, login por la puerta de atrás). Un test de `lib/` nunca importa desde `tests/e2e/`.
 
 ## Recursos
 
-- Los clientes y pools de base se crean **una vez por archivo o worker** y se cierran en `afterAll` (`.end()` del cliente `postgres`).
-- Nunca un pool nuevo por test: agota las conexiones de Supabase local y deja sockets abiertos.
+- Los clientes y pools de base se crean **una vez por archivo** y se cierran en `afterAll` (`.end()` del cliente `postgres`). Nunca un pool nuevo por test: agota las conexiones de Supabase local.
 
 ## Cómo correr
 
@@ -118,14 +115,10 @@ Lint, typecheck, `bun run test`, `bun run test:int` y E2E se corren **localmente
 
 ## Checklist para un test nuevo
 
-- [ ] El archivo está co-localizado y tiene el sufijo de su tipo (`.test.ts`, `.int.test.ts` o `.spec.ts`).
-- [ ] El `describe` es el nombre exacto de la unidad; el `it` dice resultado y escenario, en inglés, sin "should".
-- [ ] Un comportamiento por test, con Arrange / Act / Assert separados.
-- [ ] Solo se mockean bordes externos; en integración, la base es real.
-- [ ] Los datos son propios del test (factories, valores únicos) y se limpian aunque una baja falle.
-- [ ] Tiempo e ids son deterministas.
-- [ ] Ningún pool ni cliente queda abierto.
-- [ ] Leíste la guía `TEST.md` del directorio que tocás.
+- [ ] Archivo co-localizado con el sufijo de su tipo; `describe` = unidad exacta; `it` = resultado y escenario.
+- [ ] Un comportamiento por test (AAA); solo se mockean bordes externos; tiempo e ids deterministas.
+- [ ] Datos propios del test, limpiados aunque una baja falle; ningún pool ni cliente queda abierto.
+- [ ] Leíste la sección `## Tests` del `AGENTS.md` del directorio que tocás.
 
 ## Fuentes
 
