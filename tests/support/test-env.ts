@@ -2,8 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parseEnv } from "node:util";
 
-// Loads `.env.test` for the e2e suite and makes it win over anything
-// already in process.env.
+// Loads `.env.test` for the test process (e2e and integration suites) and
+// makes it win over anything already in process.env.
 //
 // Why this is needed:
 // - `next build` / `next start` run with NODE_ENV=production, so Next never
@@ -43,12 +43,12 @@ export function assertLocalUrl(key: string, value: string): void {
   try {
     host = new URL(value).hostname;
   } catch {
-    throw new Error(`[e2e] ${key} in ${ENV_FILE} is not a valid URL.`);
+    throw new Error(`[test] ${key} in ${ENV_FILE} is not a valid URL.`);
   }
   if (!LOCAL_HOSTS.has(host)) {
     throw new Error(
-      `[e2e] Refusing to run: ${key} points at "${host}", not a local host. ` +
-        "The e2e suite must only talk to the local Supabase stack.",
+      `[test] Refusing to run: ${key} points at "${host}", not a local host. ` +
+        "Tests must only talk to the local Supabase stack.",
     );
   }
 }
@@ -57,7 +57,7 @@ export function loadTestEnv(rootDir: string = process.cwd()): TestEnv {
   const file = path.join(rootDir, ENV_FILE);
   if (!existsSync(file)) {
     throw new Error(
-      `[e2e] Missing ${ENV_FILE}. Copy .env.test.example to ${ENV_FILE} and fill it ` +
+      `[test] Missing ${ENV_FILE}. Copy .env.test.example to ${ENV_FILE} and fill it ` +
         "with the values from `bunx supabase status`.",
     );
   }
@@ -69,7 +69,7 @@ export function loadTestEnv(rootDir: string = process.cwd()): TestEnv {
   }
 
   for (const key of REQUIRED_KEYS) {
-    if (!env[key]) throw new Error(`[e2e] ${key} is missing in ${ENV_FILE}.`);
+    if (!env[key]) throw new Error(`[test] ${key} is missing in ${ENV_FILE}.`);
   }
   for (const key of URL_KEYS) {
     if (env[key]) assertLocalUrl(key, env[key]);

@@ -47,6 +47,7 @@ Scripts disponibles:
 | Inicio en producción | `bun run start` |
 | Lint | `bun run lint` |
 | Tests unitarios | `bun run test` (convenciones en [`TEST.md`](TEST.md)) |
+| Tests de integración (Supabase local) | `bun run e2e:up` · `bun run test:int` |
 | Typecheck | `bunx tsc --noEmit` |
 | E2E (Supabase local) | `bun run e2e:up` · `bun run test:e2e` · `bun run e2e:down` |
 
@@ -130,10 +131,11 @@ lib/
   db/            # esquema Drizzle, cliente getDrizzleClient() y reglas de escritura en servidor
   db.ts          # server-only, placeholder
 tests/
-  e2e/           # Playwright + Supabase local (auth, RLS)
+  support/       # entorno de .env.test, cliente Admin y factories (integración + E2E)
+  e2e/           # Playwright + Supabase local (auth; rls.spec.ts pendiente de pasar a integración)
 ```
 
-**Los tests unitarios no viven en `tests/unit/`.** Esa carpeta está vacía salvo un `.gitkeep`: los 19 archivos `*.test.ts` del repo están **co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
+**Los tests unitarios y de integración están co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`): hoy son 18 `*.test.ts` (proyecto `unit`) y 1 `*.int.test.ts` (proyecto `integration`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
 
 ### Contratos (vinculantes)
 
@@ -166,7 +168,9 @@ tests/
 | Persistencia del cálculo (borrador) | `lib/db/` (server-only, Drizzle), accedida solo desde `lib/services` — ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md) |
 | Estado de interfaz en el cliente (no persiste el cálculo) | `lib/store` |
 | Pruebas unitarias | co-locadas con el módulo (`<modulo>.test.ts`), se corren con `bun run test`; convenciones en [`TEST.md`](TEST.md) |
+| Pruebas de integración | co-locadas con el módulo (`<modulo>.int.test.ts`), contra Supabase local; se corren con `bun run test:int` |
 | Pruebas e2e | `tests/e2e` (Playwright contra Supabase local) |
+| Soporte compartido de tests | `tests/support` (entorno de `.env.test`, cliente Admin de Supabase y factories) |
 | Quién es dueño de qué en `lib/` | [`lib/AGENTS.md`](lib/AGENTS.md) — "Frontera de responsabilidad" |
 
 ### Prohibido
@@ -194,7 +198,7 @@ tests/
 3. **Vista de resultados** — `app/(calculator)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
 4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
 5. **Persistencia del borrador en servidor** — servicios de `lib/services` sobre `lib/db` (setup y costos) y la migración H0.2 (#91). Ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
-6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth y RLS).
+6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth; `rls.spec.ts` es un test de base sin navegador y pasa a integración según [`TEST.md`](TEST.md)).
 7. **Pulido + despliegue** — lint/build limpios, despliegue único en Vercel verificado.
 8. **Fuera del alcance del MVP** — historial de cálculos y varios borradores por usuario.
 
@@ -231,7 +235,7 @@ bunx tsc --noEmit  # type check
 Los tests E2E corren contra un Supabase local en Docker (con Mailpit para capturar los mails de auth), nunca contra el proyecto de Supabase en la nube.
 
 > [!NOTE]
-> No hay CI configurado por ahora: lint, typecheck, tests unitarios y E2E se corren localmente antes de abrir o mergear un PR. Las referencias a `CI` en `playwright.config.ts` quedan inactivas hasta que exista un pipeline.
+> No hay CI configurado por ahora: lint, typecheck, tests unitarios (`bun run test`), de integración (`bun run test:int`) y E2E se corren localmente antes de abrir o mergear un PR. Las referencias a `CI` en `playwright.config.ts` quedan inactivas hasta que exista un pipeline.
 
 Prerrequisitos, una vez por máquina:
 
@@ -243,11 +247,13 @@ Prerrequisitos, una vez por máquina:
    ```
 
 3. Copiar `.env.test.example` a `.env.test` y completar las keys `Publishable` y `Secret` que muestra `bunx supabase status`. La `Secret` solo la usa el proceso de tests (factories y fixtures); nunca llega a la app.
+4. Node 24 (`package.json` engines): `nvm use` antes de correr los tests. Con Node 20, `@supabase/supabase-js` falla al no encontrar el WebSocket nativo.
 
 Cada vez que quieras correrlos:
 
 ```bash
 bun run e2e:up      # starts local Supabase and applies drizzle migrations
+bun run test:int    # vitest integration project (*.int.test.ts) against local Postgres
 bun run test:e2e    # builds the app and runs the specs on port 3100
 bun run e2e:down    # stops the local stack (keeps the db data)
 ```
@@ -295,17 +301,20 @@ bun run db:reset:local                # empties the db and re-applies drizzle mi
 Estructura de `tests/e2e/` (principio: preparar por la puerta de atrás, actuar por la de adelante; cada flujo se recorre por la UI solo en su propio spec):
 
 ```text
+tests/support/        # compartido por integración y E2E (nunca importa de tests/e2e/)
+  test-env.ts         # carga `.env.test` y rechaza URLs no locales
+  supabase.ts         # cliente Admin de Supabase (secret key)
+  factories/          # crean y borran datos vía Admin API (p. ej. user.ts)
 tests/e2e/
   fixtures/index.ts   # `test` y `expect`; todos los specs importan de acá
-  factories/          # crean y borran datos vía Admin API (p. ej. user.ts)
   pages/              # Page Objects: los selectores viven solo acá
-  helpers/            # env, Mailpit y clientes de Supabase
+  helpers/            # Mailpit y login por la puerta de atrás (cookies de sesión)
   <feature>/          # specs agrupados por feature (p. ej. auth/)
   global-setup.ts
 ```
 
 - Los specs piden precondiciones como fixtures: `user` (usuario confirmado que se borra al terminar el test) y `authedPage` (la `page` ya logueada como `user`). Si un spec crea datos por la UI, los registra en `cleanup` para que se borren igual.
-- Para agregar una entidad nueva: sumar una factory en `factories/` (crear y borrar) y un fixture en `fixtures/index.ts` que la cree antes del test y la borre en el teardown.
+- Para agregar una entidad nueva: sumar una factory en `tests/support/factories/` (crear y borrar) y un fixture en `fixtures/index.ts` que la cree antes del test y la borre en el teardown.
 
 Notas:
 

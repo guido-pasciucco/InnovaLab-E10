@@ -92,7 +92,7 @@ afterEach(async () => {
 
 - El aislamiento contra Supabase es por **datos únicos**, no por rollback de transacción: el cliente y GoTrue abren sus propias conexiones.
 - La `SUPABASE_SECRET_KEY` vive solo en el proceso de tests, y el helper de entorno **se niega a correr** si alguna URL de `.env.test` no es local.
-- Factories y helpers compartidos por varios tipos de test viven en un módulo de soporte común, no dentro de `tests/e2e/`: un test de `lib/` nunca importa desde `tests/e2e/`.
+- Factories y helpers compartidos por varios tipos de test viven en `tests/support/`, no dentro de `tests/e2e/`: un test de `lib/` nunca importa desde `tests/e2e/`. En `tests/support/` no hay archivos `*.test.ts`.
 
 ## Recursos
 
@@ -101,14 +101,18 @@ afterEach(async () => {
 
 ## Cómo correr
 
+Node 24 (`package.json` engines): corré `nvm use` antes. Con Node 20, `@supabase/supabase-js` falla al crear el cliente.
+
 ```bash
-bun run test        # Vitest
+nvm use             # Node 24 (.nvmrc)
+bun run test        # Vitest, proyecto unit (*.test.ts): sin red ni base
 bun run e2e:up      # levanta Supabase local y aplica migraciones (requisito de integración y E2E)
+bun run test:int    # Vitest, proyecto integration (*.int.test.ts): Postgres local, un archivo a la vez
 bun run test:e2e    # Playwright: build de la app y specs
 bun run e2e:down    # baja el stack (conserva los datos)
 ```
 
-Lint, typecheck, `bun run test` y E2E se corren **localmente antes de abrir o mergear un PR**.
+Lint, typecheck, `bun run test`, `bun run test:int` y E2E se corren **localmente antes de abrir o mergear un PR**.
 
 ## Checklist para un test nuevo
 

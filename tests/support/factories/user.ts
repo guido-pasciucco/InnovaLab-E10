@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { fakerES as faker } from "@faker-js/faker";
 import type { z } from "zod";
 import { signupSchema } from "@/lib/schemas/auth/auth";
-import { adminClient } from "../helpers/supabase";
+import { adminClient } from "../supabase";
 
 // User factory: arranges accounts through the Supabase Admin API (back
 // door), so no spec other than signup ever drives the signup UI.
@@ -51,7 +51,7 @@ export async function createUser(overrides: Partial<FakeUser> = {}): Promise<Cre
     email_confirm: true,
     user_metadata: { display_name: user.displayName },
   });
-  if (error || !data.user) throw new Error(`[e2e] createUser failed: ${error?.message ?? "no user"}`);
+  if (error || !data.user) throw new Error(`[test] createUser failed: ${error?.message ?? "no user"}`);
   return { ...user, id: data.user.id };
 }
 
@@ -62,11 +62,11 @@ export async function deleteUser(id: string): Promise<void> {
   const admin = adminClient();
 
   const { error: profileError } = await admin.from("profiles").delete().eq("id", id);
-  if (profileError) throw new Error(`[e2e] deleting profile ${id} failed: ${profileError.message}`);
+  if (profileError) throw new Error(`[test] deleting profile ${id} failed: ${profileError.message}`);
 
   const { error } = await admin.auth.admin.deleteUser(id);
   // Already gone is fine: cleanup must be idempotent.
-  if (error && error.status !== 404) throw new Error(`[e2e] deleteUser ${id} failed: ${error.message}`);
+  if (error && error.status !== 404) throw new Error(`[test] deleteUser ${id} failed: ${error.message}`);
 }
 
 // For users created outside the factory (the signup spec goes through the
@@ -77,7 +77,7 @@ export async function findUserIdByEmail(email: string): Promise<string | undefin
   const perPage = 1000;
   for (let page = 1; ; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
-    if (error) throw new Error(`[e2e] listUsers failed: ${error.message}`);
+    if (error) throw new Error(`[test] listUsers failed: ${error.message}`);
     const match = data.users.find((user) => user.email === email.toLowerCase());
     if (match) return match.id;
     if (data.users.length < perPage) return undefined;

@@ -5,7 +5,7 @@ import { ERROR_CATALOG } from "./catalog";
 // mention any specific feature. Everything else needs a DOMAIN_ prefix.
 const GENERIC_CODES = ["VALIDATION", "UNAUTHORIZED", "INTERNAL"];
 
-describe("ERROR_CATALOG naming convention", () => {
+describe("ERROR_CATALOG", () => {
   it("keeps generic codes with generic messages", () => {
     expect(ERROR_CATALOG.VALIDATION.message).toBe("Invalid input");
     expect(ERROR_CATALOG.INTERNAL.message).toBe("Something went wrong");

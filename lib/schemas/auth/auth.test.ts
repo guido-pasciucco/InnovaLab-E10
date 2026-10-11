@@ -6,7 +6,9 @@ import {
   passwordUpdateSchema,
   signupSchema,
 } from "./auth";
-import { FAKE_PASSWORD } from "@/test/fixtures/auth";
+import { fakerES as faker } from "@faker-js/faker";
+
+const FAKE_PASSWORD = faker.internet.password({ length: 16 });
 
 // Messages are defined once in the schema and shown on both sides:
 // by RHF in the client and by the service's ZodError on the server.
@@ -15,14 +17,16 @@ function fieldErrors(schema: z.ZodType, input: unknown) {
   return result.success ? {} : z.flattenError(result.error).fieldErrors;
 }
 
-describe("auth schemas", () => {
+describe("loginSchema", () => {
   it("uses readable messages for login fields", () => {
     expect(fieldErrors(loginSchema, { email: "x", password: "1" })).toEqual({
       email: ["Enter a valid email address"],
       password: ["Password must be at least 8 characters"],
     });
   });
+});
 
+describe("signupSchema", () => {
   it("uses readable messages for signup fields", () => {
     expect(
       fieldErrors(signupSchema, { email: "x", password: "1", displayName: "a".repeat(81) }),
@@ -36,11 +40,18 @@ describe("auth schemas", () => {
   it("accepts an empty display name (the field is optional in the form)", () => {
     expect(signupSchema.safeParse({ email: "a@b.com", password: FAKE_PASSWORD, displayName: "" }).success).toBe(true);
   });
+});
 
-  it("uses readable messages for password reset and update", () => {
+describe("passwordResetRequestSchema", () => {
+  it("uses readable messages for password reset", () => {
     expect(fieldErrors(passwordResetRequestSchema, { email: "x" })).toEqual({
       email: ["Enter a valid email address"],
     });
+  });
+});
+
+describe("passwordUpdateSchema", () => {
+  it("uses readable messages for password update", () => {
     expect(fieldErrors(passwordUpdateSchema, { password: "1" })).toEqual({
       password: ["Password must be at least 8 characters"],
     });

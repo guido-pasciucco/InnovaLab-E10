@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type SupabaseClient } from "@supabase/supabase-js";
 import { AppError } from "@/lib/errors/app-error";
-import { NEW_FAKE_PASSWORD, FAKE_PASSWORD } from "@/test/fixtures/auth";
+import { fakerES as faker } from "@faker-js/faker";
 import {
   confirmAuthLinkService,
   getSessionUserService,
@@ -15,6 +15,10 @@ import {
 function clientWith(signIn: () => Promise<unknown>) {
   return { auth: { signInWithPassword: vi.fn(signIn) } } as unknown as SupabaseClient;
 }
+
+// Generated once per file: only needs to satisfy the min-length rule.
+const FAKE_PASSWORD = faker.internet.password({ length: 16 });
+const NEW_FAKE_PASSWORD = faker.internet.password({ length: 16 });
 
 const valid = { email: "a@b.com", password: FAKE_PASSWORD };
 
@@ -109,6 +113,16 @@ describe("signupService", () => {
   it("throws AUTH_UNAVAILABLE when Supabase is down", async () => {
     const client = authClient({ signUp: async () => ({ error: { message: "Service unavailable", status: 503 } }) });
     await expect(signupService(client, input)).rejects.toMatchObject({ code: "AUTH_UNAVAILABLE" });
+  });
+
+  it("sends no display name instead of an empty string when the display name is blank", async () => {
+    const client = authClient({ signUp: async () => ({ error: null }) });
+    await signupService(client, { email: "a@b.com", password: FAKE_PASSWORD, displayName: "  " });
+    expect(client.auth.signUp).toHaveBeenCalledWith({
+      email: "a@b.com",
+      password: FAKE_PASSWORD,
+      options: { data: { display_name: undefined } },
+    });
   });
 });
 
@@ -219,18 +233,6 @@ describe("updatePasswordService", () => {
     const client = authClient({ updateUser: async () => ({ error: { message: "Bad gateway", status: 502 } }) });
     await expect(updatePasswordService(client, { password: NEW_FAKE_PASSWORD })).rejects.toMatchObject({
       code: "AUTH_UNAVAILABLE",
-    });
-  });
-});
-
-describe("signupService with an empty display name", () => {
-  it("sends no display name instead of an empty string", async () => {
-    const client = authClient({ signUp: async () => ({ error: null }) });
-    await signupService(client, { email: "a@b.com", password: FAKE_PASSWORD, displayName: "  " });
-    expect(client.auth.signUp).toHaveBeenCalledWith({
-      email: "a@b.com",
-      password: FAKE_PASSWORD,
-      options: { data: { display_name: undefined } },
     });
   });
 });

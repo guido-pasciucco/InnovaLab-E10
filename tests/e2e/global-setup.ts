@@ -1,4 +1,4 @@
-import { assertLocalUrl, loadTestEnv } from "./helpers/test-env";
+import { assertLocalUrl, loadTestEnv } from "../support/test-env";
 
 // Fails fast with an actionable message when the local stack is not up,
 // instead of letting every spec time out on auth or Mailpit calls.

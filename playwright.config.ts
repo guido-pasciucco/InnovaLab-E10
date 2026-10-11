@@ -1,5 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
-import { isTestOnlyKey, loadTestEnv } from "./tests/e2e/helpers/test-env";
+import { isTestOnlyKey, loadTestEnv } from "./tests/support/test-env";
 
 // E2E suite against a real local Supabase stack (see supabase/config.toml).
 // Prerequisites: `bun run supabase:start` and `bun run db:migrate:local`.

@@ -1,4 +1,4 @@
-import { buildUser } from "../factories/user";
+import { buildUser } from "../../support/factories/user";
 import { expect, test } from "../fixtures";
 import { waitForAuthLink } from "../helpers/mailpit";
 

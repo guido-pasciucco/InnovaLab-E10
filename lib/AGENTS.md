@@ -74,7 +74,7 @@ Tres aclaraciones que evitan las confusiones más comunes:
 ## Checklist para verificar un cambio en `lib/`
 
 - [ ] `calc/` y `money/` no importan nada de `app/`, `components/` ni `db/`.
-- [ ] Hay al menos un test que cubre el cambio, co-localizado junto al módulo (`<modulo>.test.ts`). No va en `tests/unit/`: esa carpeta está vacía y la práctica real del repo es la co-ubicación. El test sigue [`TEST.md`](TEST.md) y [`../TEST.md`](../TEST.md).
+- [ ] Hay al menos un test que cubre el cambio, co-localizado junto al módulo (`<modulo>.test.ts`, o `<modulo>.int.test.ts` si toca la base). El test sigue [`TEST.md`](TEST.md) y [`../TEST.md`](../TEST.md).
 - [ ] Los montos usan `decimal.js`, no `number` con decimales.
 - [ ] Si el cambio toca persistencia, respeta `db/AGENTS.md`.
 

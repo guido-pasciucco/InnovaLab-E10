@@ -11,6 +11,10 @@ describe("AppError", () => {
 });
 
 describe("toAppError", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("returns AppError instances untouched", () => {
     const err = new AppError("UNAUTHORIZED", { a: 1 });
     expect(toAppError(err)).toBe(err);
@@ -30,9 +34,7 @@ describe("toAppError", () => {
     expect(spy).toHaveBeenCalledTimes(2);
     spy.mockRestore();
   });
-});
 
-describe("toAppError with schema messages", () => {
   it("carries the schema's custom messages in details.fieldErrors", () => {
     const schema = z.object({ email: z.email({ error: "Enter a valid email address" }) });
     const result = schema.safeParse({ email: "x" });
@@ -40,12 +42,6 @@ describe("toAppError with schema messages", () => {
       formErrors: [],
       fieldErrors: { email: ["Enter a valid email address"] },
     });
-  });
-});
-
-describe("toAppError logging", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it("logs an expected AppError at the catalog's warn level", () => {

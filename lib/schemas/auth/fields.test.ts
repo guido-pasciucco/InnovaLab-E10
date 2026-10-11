@@ -9,11 +9,13 @@ function firstMessage(schema: z.ZodType, input: unknown) {
   return result.success ? undefined : result.error.issues[0]?.message;
 }
 
-describe("auth field rules", () => {
+describe("emailField", () => {
   it("rejects an invalid email with the shared message", () => {
     expect(firstMessage(emailField, "x")).toBe("Enter a valid email address");
   });
+});
 
+describe("passwordField", () => {
   it("rejects a short password with the shared message", () => {
     expect(firstMessage(passwordField, "1234567")).toBe("Password must be at least 8 characters");
   });
