@@ -46,7 +46,7 @@ Scripts disponibles:
 | Build de producción | `bun run build` |
 | Inicio en producción | `bun run start` |
 | Lint | `bun run lint` |
-| Tests unitarios | `bun run test` |
+| Tests unitarios | `bun run test` (convenciones en [`TEST.md`](TEST.md)) |
 | Typecheck | `bunx tsc --noEmit` |
 | E2E (Supabase local) | `bun run e2e:up` · `bun run test:e2e` · `bun run e2e:down` |
 
@@ -133,7 +133,7 @@ tests/
   e2e/           # Playwright + Supabase local (auth, RLS)
 ```
 
-**Los tests unitarios no viven en `tests/unit/`.** Esa carpeta está vacía salvo un `.gitkeep`: los 11 tests reales del repo están **co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`). La policy de review es 400 líneas por PR.
+**Los tests unitarios no viven en `tests/unit/`.** Esa carpeta está vacía salvo un `.gitkeep`: los 19 archivos `*.test.ts` del repo están **co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
 
 ### Contratos (vinculantes)
 
@@ -165,7 +165,7 @@ tests/
 | Matemática pura / dinero / esquemas | `lib/calc`, `lib/money`, `lib/schemas` |
 | Persistencia del cálculo (borrador) | `lib/db/` (server-only, Drizzle), accedida solo desde `lib/services` — ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md) |
 | Estado de interfaz en el cliente (no persiste el cálculo) | `lib/store` |
-| Pruebas unitarias | co-locadas con el módulo (`<modulo>.test.ts`), se corren con `bun run test` |
+| Pruebas unitarias | co-locadas con el módulo (`<modulo>.test.ts`), se corren con `bun run test`; convenciones en [`TEST.md`](TEST.md) |
 | Pruebas e2e | `tests/e2e` (Playwright contra Supabase local) |
 | Quién es dueño de qué en `lib/` | [`lib/AGENTS.md`](lib/AGENTS.md) — "Frontera de responsabilidad" |
 
