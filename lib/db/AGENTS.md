@@ -47,7 +47,7 @@ Las claves foráneas entre dominios se importan de `table.ts` a `table.ts`, en e
 ## Flujo
 
 1. El cliente envía entrada mínima (ejemplo: solo `productId`).
-2. El servidor valida con el esquema público (`create*InputSchema`).
+2. El servicio valida con el esquema público (`*InputSchema`, o uno compuesto por caso de uso a partir de ellos, como `saveCalculatorSetupInputSchema`). Nunca valida con un contrato de `lib/schemas`, que es solo del formulario.
 3. El servidor completa campos controlados (`userId` de sesión, `businessId`, identificadores).
 4. Inserción con Drizzle. Lectura de fila y validación con esquema de fila (`*RowSchema`).
 5. Mapeo a dominio, ejecución de `lib/calc` y escritura de `computed_results` por el servidor.

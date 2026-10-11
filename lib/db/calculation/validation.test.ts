@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   createCalculationInputSchema,
   createScenarioInputSchema,
+  saveCalculatorSetupInputSchema,
   upsertCostingSetupInputSchema,
   upsertPricingInputsInputSchema,
 } from "./validation";
@@ -140,5 +141,31 @@ describe("upsertCostingSetupInputSchema", () => {
     expect(fieldErrors(upsertCostingSetupInputSchema, { ...validCostingSetup, volume: 0 })).toEqual({
       volume: ["El volumen tiene que ser mayor que 0."],
     });
+  });
+});
+
+describe("saveCalculatorSetupInputSchema", () => {
+  const validSetup = { name: "Alfajores", ...validCostingSetup };
+
+  it("accepts a complete valid calculator setup", () => {
+    expect(saveCalculatorSetupInputSchema.parse(validSetup)).toEqual(validSetup);
+  });
+
+  it("reports every invalid field at once with the shared messages", () => {
+    expect(fieldErrors(saveCalculatorSetupInputSchema, { ...validSetup, name: " ", unit: "" })).toEqual({
+      name: ["Escribí el nombre de tu producto."],
+      unit: ["Escribí en qué unidad lo vendés (ej: caja, paquete, kilo)."],
+    });
+  });
+
+  it("drops server-controlled keys sent by the client", () => {
+    const parsed = saveCalculatorSetupInputSchema.parse({
+      ...validSetup,
+      id: "11111111-1111-4111-8111-111111111111",
+      businessId: "22222222-2222-4222-8222-222222222222",
+      calculationId: "33333333-3333-4333-8333-333333333333",
+    });
+
+    expect(parsed).toEqual(validSetup);
   });
 });

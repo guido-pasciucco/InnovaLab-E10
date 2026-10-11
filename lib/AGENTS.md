@@ -6,12 +6,12 @@ Todo lo que no es UI vive acá. Si es un cálculo, una validación o un tipo del
 
 | Rol | Qué hace en `lib/` |
 | --- | --- |
-| **Backend** | Dueño. Escribe y modifica todos los módulos salvo `store/` (ver "Frontera de responsabilidad"). |
-| **Frontend** | Dueño de `store/`. Fuera de ahí consume: importa `schemas/`, `calc/`, `money/` y `types/` desde `components/`, `app/` y `store/`. Solo modifica `schemas/` para agregar un campo puramente cosmético del formulario. |
+| **Backend** | Dueño. Escribe y modifica todos los módulos salvo `store/` y los contratos de formulario de `schemas/` (ver "Frontera de responsabilidad"). Incluye `schemas/<contrato>/fields.ts`, que alimenta la validación del servidor. |
+| **Frontend** | Dueño de `store/` y de los contratos de formulario de `schemas/`. Fuera de ahí consume: importa `calc/`, `money/` y `types/` desde `components/`, `app/` y `store/`. Propone cambios a las reglas y mensajes de `schemas/<contrato>/fields.ts` por PR revisado por Backend. |
 
 Guías de submódulos: [`schemas/AGENTS.md`](schemas/AGENTS.md), [`errors/AGENTS.md`](errors/AGENTS.md) y [`db/AGENTS.md`](db/AGENTS.md).
 
-Guías de testing: [`TEST.md`](TEST.md) (casos de `lib/`) y la compartida del repo, [`../TEST.md`](../TEST.md).
+Guías de testing: la compartida del repo, [`../TEST.md`](../TEST.md), y la sección [Tests](#tests) de esta guía.
 
 ## Mapa rápido
 
@@ -22,7 +22,7 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 | `auth/` | Guards de sesión para Server Components (`requireUser`) — solo servidor | Activa | Backend |
 | `calc/` | Motor de cálculo: funciones puras (entra config + costos, salen resultados) | Esqueleto (ver #14) | **Backend** |
 | `money/` | Aritmética decimal exacta con `decimal.js` | Esqueleto | **Backend** |
-| `schemas/` | Contratos Zod compartidos entre cliente y servidor; reglas de campo en `<contrato>/fields.ts` (ver `schemas/AGENTS.md`) | Activa (`auth/`, `calculator-setup/`) | **Backend** (define las reglas) |
+| `schemas/` | Reglas de campo en `<contrato>/fields.ts` (las consumen el formulario y la base) y contratos Zod del formulario; el servidor valida con `db/<dominio>/validation.ts` (ver `schemas/AGENTS.md`) | Activa (`auth/`, `calculator-setup/`) | **Backend** (`fields.ts`, Frontend propone) / **Frontend** (contratos) |
 | `store/` | Estado de interfaz en el cliente. **No** persiste el cálculo: el borrador vive en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)) | Esqueleto | **Frontend** (nota 4) |
 | `errors/` | Manejo centralizado de errores: catálogo, `AppError` y adaptadores `handleRouteErrors`/`handleActionErrors` (ver `errors/AGENTS.md`) | Activa | **Backend** (adaptadores de transporte) |
 | `db.ts` | Placeholder `server-only` | Temporal | Backend |
@@ -33,18 +33,20 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 
 ## Frontera de responsabilidad
 
-> **Regla de una línea: en `lib/` va todo lo que es cálculo, validación o regla de negocio, y su dueño es Backend. `lib/store/` es la única excepción: es de Frontend (nota 4). Fuera de `lib/`, `app/` y `components/` son de Frontend.**
+> **Regla de una línea: en `lib/` va todo lo que es cálculo, validación o regla de negocio, y su dueño es Backend. Las excepciones son `lib/store/` (Frontend, nota 4) y los contratos de formulario de `lib/schemas/` (Frontend, nota 2). Fuera de `lib/`, `app/` y `components/` son de Frontend.**
 
 | Zona | Dueño |
 | --- | --- |
-| `lib/calc/`, `lib/money/`, `lib/schemas/`, `lib/services/`, `lib/db/`, `lib/errors/`, `lib/types/`, `lib/auth/`, `lib/supabase/` | **Backend** |
+| `lib/calc/`, `lib/money/`, `lib/services/`, `lib/db/`, `lib/errors/`, `lib/types/`, `lib/auth/`, `lib/supabase/` | **Backend** |
+| `lib/schemas/<contrato>/fields.ts` | **Backend** (Frontend propone cambios por PR) — ver la nota 2 |
+| `lib/schemas/<contrato>/<contrato>.ts` | **Frontend** — ver la nota 2 |
 | `lib/store/` | **Frontend** — ver la nota 4 |
 | `app/`, `components/` | **Frontend** |
 
 Tres aclaraciones que evitan las confusiones más comunes:
 
 1. **Dominio no es servidor.** `calc/` y `money/` son código puro: se testean sin renderizar nada y pueden ejecutarse en el navegador, en un Server Action o en un script. Que Backend sea su dueño **no** implica que corran en un servidor: lo que define es quién escribe la fórmula. Dónde se guarda el borrador es otra decisión, y ya está tomada: solo en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)).
-2. **Una regla, dos consumidores.** `schemas/` pertenece a Backend porque ahí vive la REGLA (qué es válido, qué mensaje ve el usuario). El formulario de `components/` es Frontend y consume ese schema. Si el formulario y el schema discrepan, **la regla gana**: se arregla el schema, nunca el mensaje en el JSX.
+2. **Una regla, dos consumidores.** La REGLA (qué es válido, qué mensaje ve el usuario) vive una sola vez en `schemas/<contrato>/fields.ts`. Su dueño es Backend, porque alimenta la validación del servidor; Frontend propone cambios de reglas o mensajes por PR revisado por Backend. La consumen dos schemas: el contrato del formulario (`schemas/<contrato>/<contrato>.ts`, de Frontend, solo para el formulario) y `db/<dominio>/validation.ts` (de Backend, la validación del servidor). Los servicios nunca validan con el contrato del formulario. Si el formulario y el schema discrepan, **la regla gana**: se arregla en `fields.ts`, nunca el mensaje en el JSX.
 3. **Esto difiere del plan de sprints.** El plan listaba las funciones puras del motor bajo el rol Frontend. Esa asignación se corrige acá: las fórmulas y las validaciones son dominio, no interfaz. El plan se ajusta a esta frontera.
 
 4. **`lib/store/` es de Frontend.** Es estado de la interfaz en el cliente, no regla de negocio: consume los schemas de `lib/schemas/`, pero nunca define reglas ni mensajes de validación. **No persiste el cálculo**: el borrador se guarda solo en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)).
@@ -59,7 +61,7 @@ Tres aclaraciones que evitan las confusiones más comunes:
 
    El dueño ya está resuelto: un ticket que toca `lib/store/` se clasifica `FRONTEND`.
 
-**Consecuencia práctica:** una issue etiquetada `FRONTEND` puede tocar `lib/store/` y consumir cualquier schema, pero solo modifica `lib/schemas/` si agrega un campo puramente cosmético al formulario. Si el storage necesita una regla nueva, la agrega Backend en `lib/schemas/`. Lo que **nunca** se reparte es la fórmula: `lib/calc/` y `lib/money/` tienen un solo dueño.
+**Consecuencia práctica:** una issue etiquetada `FRONTEND` puede tocar `lib/store/` y los contratos de formulario de `lib/schemas/`. Una regla nueva o un mensaje nuevo va en `fields.ts`: Frontend lo propone por PR, Backend lo revisa y lo aplica también en `lib/db/<dominio>/validation.ts`. Lo que **nunca** se reparte es la fórmula: `lib/calc/` y `lib/money/` tienen un solo dueño.
 
 ## Reglas (no negociables)
 
@@ -74,10 +76,29 @@ Tres aclaraciones que evitan las confusiones más comunes:
 ## Checklist para verificar un cambio en `lib/`
 
 - [ ] `calc/` y `money/` no importan nada de `app/`, `components/` ni `db/`.
-- [ ] Hay al menos un test que cubre el cambio, co-localizado junto al módulo (`<modulo>.test.ts`, o `<modulo>.int.test.ts` si toca la base). El test sigue [`TEST.md`](TEST.md) y [`../TEST.md`](../TEST.md).
+- [ ] Hay al menos un test que cubre el cambio, co-localizado junto al módulo (`<modulo>.test.ts`, o `<modulo>.int.test.ts` si toca la base). El test sigue [`../TEST.md`](../TEST.md) y la sección [Tests](#tests).
 - [ ] Los montos usan `decimal.js`, no `number` con decimales.
 - [ ] Si el cambio toca persistencia, respeta `db/AGENTS.md`.
 
 ## Siguiente paso
 
 Ver issues #12 (tipos), #13 (librerías) y #14 (motor). La persistencia del cálculo está decidida en el [ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md) (cierra lo que abría #15).
+
+## Tests
+
+Reglas compartidas en [`../TEST.md`](../TEST.md). Errores: [`errors/AGENTS.md`](errors/AGENTS.md#tests); schemas: [`schemas/AGENTS.md`](schemas/AGENTS.md#tests).
+
+| Módulo | Tipo | Cómo se aísla |
+| --- | --- | --- |
+| `calc/`, `money/` | Unit | Funciones puras: sin renderizar, sin mocks, sin importar `db/` |
+| `services/` con cliente externo | Unit | Cliente falso **inyectado** como parámetro (`vi.fn`, sin `vi.mock`) |
+| `services/` con persistencia | Integración | Postgres local real; `db` se pasa como parámetro |
+| `auth/`, `supabase/` | Unit | `vi.mock` de Next/infra + `vi.stubEnv`; el módulo se importa después con `await import()` |
+| `db/` (cliente) | Unit | URL falsa (`postgres()` no abre socket hasta la primera query); `vi.resetModules()` y limpiar el singleton global en `afterEach` |
+
+- **Integración:** `<modulo>.int.test.ts`, corre con `bun run test:int`. Un cliente por archivo, creado en `beforeAll` y cerrado en `afterAll` con `db.$client.end()`.
+- La factory de usuarios y `loadTestEnv` se importan desde `tests/support/`. Cada test crea su usuario, filtra por su `id` y lo borra en `afterEach`.
+- El aislamiento por dueño se prueba con **dos usuarios**: B no lee ni pisa lo de A.
+- Un `redirect()` se afirma por el `digest` del error de Next (`NEXT_REDIRECT;...;<destino>`).
+- `server-only` se resuelve en Vitest con el alias de `vitest.config.mts`; no lo esquives en el módulo.
+- Contraseñas de prueba con `faker.internet.password(...)` en runtime, nunca un literal.

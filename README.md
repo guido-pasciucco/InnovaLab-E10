@@ -139,7 +139,7 @@ tests/
 
 ### Contratos (vinculantes)
 
-1. **Fuente única con Zod.** Todos los esquemas de validación viven en `lib/schemas`. React Hook Form (cliente), los Route Handlers y las Server Actions (servidor) los consumen. **Parsear en el borde**: la validación del servidor vive una sola vez en el servicio de `lib/services` (cubre ambas puertas); cada puerta le pasa la entrada cruda.
+1. **Fuente única con Zod.** Las reglas de validación y sus mensajes viven una sola vez en `lib/schemas/<contrato>/fields.ts`. React Hook Form (cliente) las consume a través del contrato del formulario; el servidor, a través de `lib/db/<dominio>/validation.ts`. **Parsear en el borde**: la validación del servidor vive una sola vez en el servicio de `lib/services` (cubre ambas puertas); cada puerta le pasa la entrada cruda.
 2. **Regla fetch-vs-import:**
    - Lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) y servicios (`lib/services`) → `import` directo. Sin HTTP involucrado.
    - Componente de cliente → API (`app/api/*`, si existiera) → **solo mediante `fetch`**. Nunca importar `route.ts`.

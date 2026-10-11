@@ -16,7 +16,7 @@ Los servicios **lanzan** errores; las puertas (Route Handlers y Server Actions) 
 3. Envolvé la puerta:
    - Ruta: `export const POST = handleRouteErrors(async (req) => { ... })`
    - Action: `export const miAction = handleActionErrors(async (prev, data) => miServicio(...))`
-4. Testeá el servicio verificando que lanza el código correcto (ver `lib/services/auth.test.ts`, [`TEST.md`](TEST.md) y la guía compartida [`../../TEST.md`](../../TEST.md)).
+4. Testeá el servicio verificando que lanza el código correcto (ver `lib/services/auth.test.ts`, la sección [Tests](#tests) y la guía compartida [`../../TEST.md`](../../TEST.md)).
 
 ## Cómo viaja un error
 
@@ -95,8 +95,8 @@ const email = z.email({ error: "Enter a valid email address" });
 
 | Paso | Dónde | Qué pasa |
 | --- | --- | --- |
-| 1 | Form (cliente) | RHF valida con el mismo schema y muestra el mensaje. Si falla, no se envía nada |
-| 2 | Servicio | `schema.parse(input)` lanza un `ZodError`. El servicio no lo atrapa |
+| 1 | Form (cliente) | RHF valida con el contrato del formulario (mismas reglas de `fields.ts`) y muestra el mensaje. Si falla, no se envía nada |
+| 2 | Servicio | `schema.parse(input)` con el schema de `lib/db/<dominio>/validation.ts` lanza un `ZodError`. El servicio no lo atrapa |
 | 3 | Adaptador | `toAppError` lo convierte en `VALIDATION` con `details = z.flattenError(err)` |
 | 4 | Respuesta | `{ code: "VALIDATION", message: "Invalid input", details: { fieldErrors: { email: [...] } } }` |
 | 5 | Form (cliente) | `useServerFieldErrors` lee `details` con `getFieldErrors` y los pone en cada input con `setError` |
@@ -176,7 +176,7 @@ Hay tres riesgos concretos:
    /** @throws AppError COUPON_INVALID si el cupón no existe o expiró */
    export async function applyCouponService(...) { ... }
    ```
-5. **Testeá el camino del error**: un test para el código que se maneja y otro que verifique que un error distinto **sigue subiendo**. Cómo escribirlos: [`TEST.md`](TEST.md) y [`../../TEST.md`](../../TEST.md).
+5. **Testeá el camino del error**: un test para el código que se maneja y otro que verifique que un error distinto **sigue subiendo**. Cómo escribirlos: sección [Tests](#tests).
 6. **Si el patrón se repite, extraé un helper** (por ejemplo `catchCode(promise, "COUPON_INVALID", fallback)`) para que el re-throw no dependa de acordarse.
 
 ### Checklist para revisar un `catch` dentro de `lib/services/`
@@ -186,5 +186,20 @@ Hay tres riesgos concretos:
 - [ ] Filtra por `err instanceof AppError && err.code === "..."`.
 - [ ] Todo lo demás se relanza con `throw err`.
 - [ ] El servicio atrapado documenta el código con `@throws`.
-- [ ] Hay un test para el código manejado y otro para uno que no se maneja (ver [`TEST.md`](TEST.md)).
+- [ ] Hay un test para el código manejado y otro para uno que no se maneja (ver [Tests](#tests)).
 
+## Tests
+
+Reglas compartidas en [`../../TEST.md`](../../TEST.md).
+
+| Capa | Qué afirma el test |
+| --- | --- |
+| Servicio | El **código**: `rejects.toMatchObject({ code: "AUTH_EMAIL_NOT_CONFIRMED" })`. Nunca `err.message` de un `AppError`: el texto se prueba en el catálogo |
+| Entrada inválida | `rejects.toBeInstanceOf(ZodError)` y, si corresponde, que no se llamó al cliente externo |
+| Catálogo | Todo código no genérico matchea `DOMINIO_CASO`; un código de dominio nuevo suma su `status` esperado |
+| Adaptador de ruta | `res.status` y `await res.json()` contra el envelope exacto `{ error: { code, message } }` |
+| Adaptador de action | El objeto `{ ok, code, message, details }`; un error inesperado sale con el `fallbackCode` (silenciá el log con `vi.spyOn(console, "error")`) |
+| Control de flujo | `redirect()` atraviesa el adaptador de action: `rejects.toMatchObject({ digest: expect.stringContaining("NEXT_REDIRECT") })` |
+| Formulario | `getFieldErrors` extrae los mensajes por campo de un `VALIDATION` |
+
+**Los dos lados del camino.** Por cada error manejado (obligatorio para todo `catch` en `lib/services/`), dos tests: el código manejado produce el resultado esperado, y un error **distinto** sigue subiendo intacto (`rejects.toBe(boom)`).

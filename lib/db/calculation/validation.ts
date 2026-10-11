@@ -15,6 +15,7 @@ import {
   pricingInputs,
   scenarios,
 } from "./table";
+import { createProductInputSchema } from "../business/validation";
 import {
   currencyField,
   periodField,
@@ -101,6 +102,21 @@ export const createScenarioInputSchema = createInsertSchema(scenarios, {
   updatedAt: true,
 });
 
+// Server gate for the calculator setup save (lib/services/calculator.ts). One
+// use case spans two tables (products.name + costing_setup), so it composes the
+// per-table input schemas instead of redefining rules: one parse reports every
+// field error, with keys equal to the column names (and the form keys).
+export const saveCalculatorSetupInputSchema = createProductInputSchema
+  .pick({ name: true })
+  .extend(
+    upsertCostingSetupInputSchema.pick({
+      unit: true,
+      volume: true,
+      currency: true,
+      period: true,
+    }).shape,
+  );
+
 // No public input schema for computed_results: rows are written by the server
 // after running lib/calc, never by the client.
 
@@ -118,3 +134,4 @@ export type UpsertPricingInputsInput = z.infer<
   typeof upsertPricingInputsInputSchema
 >;
 export type CreateScenarioInput = z.infer<typeof createScenarioInputSchema>;
+export type SaveCalculatorSetupInput = z.infer<typeof saveCalculatorSetupInputSchema>;
