@@ -15,18 +15,18 @@ import * as relations from "./relations";
 // is required. Migrations keep using DIRECT_URL (see drizzle.config.ts).
 const schema = { ...profile, ...business, ...calculation, ...costs, ...relations };
 
-function createDb(url: string) {
+function createDrizzleClient(url: string) {
   return drizzle(postgres(url, { prepare: false }), { schema });
 }
 
-export type Db = ReturnType<typeof createDb>;
+export type Db = ReturnType<typeof createDrizzleClient>;
 
 declare global {
   // Survives Next.js dev hot reloads so each edit does not open a new pool.
   var __drizzleClient: Db | undefined;
 }
 
-export function getDb(): Db {
+export function getDrizzleClient(): Db {
   if (globalThis.__drizzleClient) {
     return globalThis.__drizzleClient;
   }
@@ -37,6 +37,6 @@ export function getDb(): Db {
     throw new Error("Missing DATABASE_URL environment variable");
   }
 
-  globalThis.__drizzleClient = createDb(url);
+  globalThis.__drizzleClient = createDrizzleClient(url);
   return globalThis.__drizzleClient;
 }

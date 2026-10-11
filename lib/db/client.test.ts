@@ -12,19 +12,19 @@ afterEach(() => {
   globalThis.__drizzleClient = undefined;
 });
 
-describe("getDb", () => {
+describe("getDrizzleClient", () => {
   it("throws when DATABASE_URL is missing", async () => {
     vi.stubEnv("DATABASE_URL", "");
-    const { getDb } = await loadClientModule();
+    const { getDrizzleClient } = await loadClientModule();
 
-    expect(() => getDb()).toThrow("Missing DATABASE_URL environment variable");
+    expect(() => getDrizzleClient()).toThrow("Missing DATABASE_URL environment variable");
   });
 
   it("returns a Drizzle client with the query API for every table", async () => {
     vi.stubEnv("DATABASE_URL", "postgresql://user:pass@127.0.0.1:6543/postgres");
-    const { getDb } = await loadClientModule();
+    const { getDrizzleClient } = await loadClientModule();
 
-    const db = getDb();
+    const db = getDrizzleClient();
 
     expect(db.query.profiles).toBeDefined();
     expect(db.query.businessCostLines).toBeDefined();
@@ -33,8 +33,8 @@ describe("getDb", () => {
 
   it("reuses the same client across calls and module reloads", async () => {
     vi.stubEnv("DATABASE_URL", "postgresql://user:pass@127.0.0.1:6543/postgres");
-    const first = (await loadClientModule()).getDb();
-    const second = (await loadClientModule()).getDb();
+    const first = (await loadClientModule()).getDrizzleClient();
+    const second = (await loadClientModule()).getDrizzleClient();
 
     expect(second).toBe(first);
   });

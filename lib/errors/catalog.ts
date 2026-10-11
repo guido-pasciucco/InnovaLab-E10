@@ -84,6 +84,13 @@ export const ERROR_CATALOG = {
     message: "Could not update password",
     logLevel: "warn",
   },
+
+  // Calculator
+  CALC_UNAVAILABLE: {
+    status: 503,
+    message: "Calculator unavailable",
+    logLevel: "error",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;

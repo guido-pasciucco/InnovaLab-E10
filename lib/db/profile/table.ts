@@ -3,7 +3,7 @@ import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 // ---------------------------------------------------------------------------
 // Server-side persistence (ADR 02): real tables modeled from
 // erd-calculadora-inteligente.mmd. Consumed only by lib/services through
-// getDb(); never imported by domain code (lib/calc, lib/money) or client code.
+// getDrizzleClient(); never imported by domain code (lib/calc, lib/money) or client code.
 // Table names are snake_case in Postgres while fields stay camelCase in
 // TypeScript, per the official Drizzle docs.
 // ---------------------------------------------------------------------------

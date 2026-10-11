@@ -1,6 +1,6 @@
 # DB — Persistencia en servidor con Drizzle
 
-Estado: persistencia del cálculo en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)). Sus consumidores son los servicios de `lib/services`, que obtienen la base con `getDb()` (`client.ts`) como parámetro `db` con valor por defecto. Ni el dominio (`lib/calc`, `lib/money`) ni Frontend (`app/`, `components/`) importan este módulo.
+Estado: persistencia del cálculo en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)). Sus consumidores son los servicios de `lib/services`, que obtienen la base con `getDrizzleClient()` (`client.ts`) como parámetro `db` con valor por defecto. Ni el dominio (`lib/calc`, `lib/money`) ni Frontend (`app/`, `components/`) importan este módulo.
 
 ## Quién toca este directorio
 
@@ -21,12 +21,12 @@ lib/db/
 ├── costs/          # business_cost_lines, calc_cost_lines
 │   ├── table.ts        # en cada dominio: tablas (pgTable) y tipos inferidos
 │   └── validation.ts   # en cada dominio: esquemas drizzle-zod (*RowSchema, *InputSchema) y tipos
-├── client.ts       # cliente Drizzle de ejecución: getDb() sobre DATABASE_URL (server-only)
+├── client.ts       # cliente Drizzle de ejecución: getDrizzleClient() sobre DATABASE_URL (server-only)
 ├── formats.ts      # formatos compartidos (uuid, dinero, cantidades, nombres, códigos)
 └── relations.ts    # relaciones de consulta entre todas las tablas
 ```
 
-`getDb()` se conecta por `DATABASE_URL`, el pooler de transacciones de Supabase (puerto 6543). Ese pooler no admite sentencias preparadas, por eso el cliente usa `prepare: false`. Las migraciones siguen usando `DIRECT_URL` (ver `drizzle.config.ts`). El cliente se guarda en `globalThis` para que la recarga en caliente de `next dev` no abra un pool nuevo en cada cambio. Si falta `DATABASE_URL`, `getDb()` lanza un error al primer uso, no al importar el módulo.
+`getDrizzleClient()` se conecta por `DATABASE_URL`, el pooler de transacciones de Supabase (puerto 6543). Ese pooler no admite sentencias preparadas, por eso el cliente usa `prepare: false`. Las migraciones siguen usando `DIRECT_URL` (ver `drizzle.config.ts`). El cliente se guarda en `globalThis` para que la recarga en caliente de `next dev` no abra un pool nuevo en cada cambio. Si falta `DATABASE_URL`, `getDrizzleClient()` lanza un error al primer uso, no al importar el módulo.
 
 El rol de `DATABASE_URL` es `postgres`: dueño de las tablas y con `BYPASSRLS` (verificado en local; en producción, el usuario del pooler `postgres.<project-ref>` es ese mismo rol según la documentación de Supabase). **RLS no filtra las consultas de Drizzle.** Cada consulta de servicio filtra por el `userId` de la sesión; RLS queda como segunda red para el cliente de Supabase (ver ADR 0005).
 

@@ -17,7 +17,7 @@ Mientras tanto, la persistencia en servidor ya existía:
 
 - Tablas en `lib/db/{profile,business,calculation,costs}/table.ts`, entre ellas `calculations` (con `status`, por defecto `'draft'`), `products`, `costing_setup` y `calc_cost_lines`.
 - Migraciones versionadas en `drizzle/`, con RLS por propietario en `drizzle/20260928101613_enable_rls.sql`.
-- Un cliente de ejecución, `getDb()` en `lib/db/client.ts`, que se conecta por `DATABASE_URL`.
+- Un cliente de ejecución, `getDrizzleClient()` en `lib/db/client.ts`, que se conecta por `DATABASE_URL`.
 - Autenticación con Supabase funcionando y un guard de sesión, `requireUser()` en `lib/auth/require-user.ts`.
 
 Los tickets de H1 (#69) y H2 (#75) se habían escrito sobre la premisa local-first (clave `calc:wizard:v1`, `lineKey`, Provider con `hasHydrated`). El dueño del producto decidió que la persistencia del cálculo es solo servidor. Este documento registra esa decisión y lo que deja cerrado; no la vuelve a discutir.
@@ -69,7 +69,7 @@ Opción A, con estas nueve reglas:
    | Página (Server Component con `requireUser()` que lee por servicio) | `app/(calculator)/<ruta>/page.tsx` | FRONTEND |
    | Formulario (`useActionState` + `useServerFieldErrors`) | `components/calculator/*` (molde: `app/login/login-form.tsx`) | FRONTEND |
 
-   Frontend **no importa `lib/db`** (`lib/db/AGENTS.md`). Los servicios obtienen la base con `getDb()` por dentro, como parámetro `db` con valor por defecto, para poder testearlos.
+   Frontend **no importa `lib/db`** (`lib/db/AGENTS.md`). Los servicios obtienen la base con `getDrizzleClient()` por dentro, como parámetro `db` con valor por defecto, para poder testearlos.
 
 ## Rol de `DATABASE_URL` y RLS
 
@@ -85,7 +85,7 @@ Consecuencia: un servicio que omite el filtro por `userId` le muestra a un usuar
 **Tests de integración contra la base local de Supabase**, con `db` inyectado por parámetro:
 
 - `bun run e2e:up` ya levanta el stack (`supabase:start`) y aplica las migraciones de `drizzle/` (`db:migrate:local`), así que no hace falta infraestructura nueva.
-- El servicio recibe `db: Db = getDb()`. El test le pasa una conexión a la base local y prueba lo que importa en este tipo de código: el filtro por dueño, las restricciones de las tablas, las cascadas y el formato de `numeric`.
+- El servicio recibe `db: Db = getDrizzleClient()`. El test le pasa una conexión a la base local y prueba lo que importa en este tipo de código: el filtro por dueño, las restricciones de las tablas, las cascadas y el formato de `numeric`.
 - Se descarta un doble de la base (mock de Drizzle): no prueba ni el SQL ni las restricciones, que son justamente donde están los riesgos (un `where` faltante, una FK, un `numeric` mal redondeado).
 
 Las reglas puras (schemas, cálculo) siguen con tests unitarios sin base.
