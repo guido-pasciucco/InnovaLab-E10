@@ -1,11 +1,11 @@
 import { test as base, expect, type Page } from "@playwright/test";
-import { createUser, deleteUser, findUserIdByEmail, type CreatedUser } from "../../support/factories/user";
-import { signInSessionCookies } from "../helpers/session";
-import { DashboardPage } from "../pages/dashboard.page";
-import { LoginPage } from "../pages/login.page";
-import { ResetPasswordPage } from "../pages/reset-password.page";
-import { SignupPage } from "../pages/signup.page";
-import { UpdatePasswordPage } from "../pages/update-password.page";
+import { createUser, deleteUser, findUserIdByEmail, type CreatedUser } from "../support/factories/user";
+import { signInSessionCookies } from "./helpers/session";
+import { DashboardPage } from "./pages/dashboard.page";
+import { LoginPage } from "./pages/login.page";
+import { ResetPasswordPage } from "./pages/reset-password.page";
+import { SignupPage } from "./pages/signup.page";
+import { UpdatePasswordPage } from "./pages/update-password.page";
 
 // Every spec imports `test` and `expect` from here.
 //
