@@ -9,7 +9,7 @@ Reglas compartidas para escribir y mantener tests en todo el repo. Leé esta gu�
 | [`TEST.md`](TEST.md) | Esta guía: taxonomía, nombres, estructura, mocks, datos y recursos |
 | [`lib/TEST.md`](lib/TEST.md) | Tests de `lib/`: dominio puro, servicios (unit vs integración), módulos de infraestructura |
 | [`lib/errors/TEST.md`](lib/errors/TEST.md) | Camino del error: códigos de `AppError`, catálogo y adaptadores |
-| [`lib/schemas/TEST.md`](lib/schemas/TEST.md) | Contratos Zod: mismo input inválido, mismo mensaje en el formulario y en la base |
+| [`lib/schemas/TEST.md`](lib/schemas/TEST.md) | Contratos Zod: la regla se testea en el formulario; en la base, el cableado y los campos del servidor |
 | [`README.md`](README.md#tests-end-to-end-playwright--supabase-local) | E2E con Playwright + Supabase local: prerrequisitos y comandos |
 
 ## Taxonomía de tests

@@ -39,7 +39,7 @@ lib/schemas/
    ```ts
    createInsertSchema(costingSetup, { unit: unitField /* ... */ });
    ```
-4. **Testeá los dos contratos** con el helper `fieldErrors`: el mismo input inválido tiene que devolver el mismo mensaje en el formulario y en la base. Ver [`TEST.md`](TEST.md) y la guía compartida [`../../TEST.md`](../../TEST.md).
+4. **Testeá los dos contratos** con el helper `fieldErrors`: el formulario cubre todos los casos de la regla y la base, un caso por campo con override que devuelva el mismo mensaje. Ver [`TEST.md`](TEST.md) y la guía compartida [`../../TEST.md`](../../TEST.md).
 
 ## Reglas
 

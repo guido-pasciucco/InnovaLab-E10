@@ -46,7 +46,7 @@ function clientWith(signIn: () => Promise<unknown>) {
 ## `db/`
 
 - Un test del cliente recarga el módulo con `vi.resetModules()` y limpia el singleton global en `afterEach`.
-- `db/<dominio>/validation.test.ts` verifica que los schemas de la base usen las mismas reglas y mensajes que el formulario (ver [`schemas/TEST.md`](schemas/TEST.md)).
+- `db/<dominio>/validation.test.ts` verifica que los schemas de la base usen las mismas reglas y mensajes que el formulario (un caso por campo) y que el input público descarte los campos del servidor (ver [`schemas/TEST.md`](schemas/TEST.md)).
 
 ## Soporte de tests
 
