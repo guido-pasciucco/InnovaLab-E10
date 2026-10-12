@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatARS, parseARS } from "./format";
+import { formatARS, formatQuantity, parseARS } from "./format";
 
 // The contract table in #94, row by row: 12 accepted shapes and 8 rejected
 // ones. The rejects carry as much weight as the accepts — parseARS must not
@@ -19,8 +19,15 @@ describe("parseARS — accepts", () => {
     ["0,50", "0.50"],
     ["$ 1.234,50", "1234.50"],
     ["  1500  ", "1500"],
+    ["007", "7"],
+    ["00.50", "0.50"],
   ])("normalises %j to %j", (input, expected) => {
     expect(parseARS(input)).toBe(expected);
+  });
+
+  it("strips zero-width spaces and the BOM that arrive with pasted text", () => {
+    expect(parseARS("1\u200B500")).toBe("1500");
+    expect(parseARS("1\uFEFF500")).toBe("1500");
   });
 
   it("ignores the non-breaking space that comes with pasted amounts", () => {
@@ -56,6 +63,8 @@ describe("parseARS — rejects", () => {
     { input: "1,234.50", why: "the US format, with comma and dot together" },
     { input: "1.23.4", why: "an incomplete thousands group" },
     { input: "1,2,3", why: "two decimal commas" },
+    { input: "0.500", why: "a leading zero before a thousands dot" },
+    { input: "0.000", why: "a leading zero before a thousands dot" },
   ])("returns null for $why: $input", ({ input }) => {
     expect(parseARS(input)).toBeNull();
   });
@@ -157,6 +166,13 @@ describe("formatARS — negatives", () => {
   it("never turns a negative into a positive by dropping the sign", () => {
     expect(formatARS("-1234.50")).not.toBe(formatARS("1234.50"));
   });
+
+  it.each([{ amount: "-0" }, { amount: "-0.00" }])(
+    "normalises negative zero to zero: $amount",
+    ({ amount }) => {
+      expect(formatARS(amount)).toBe("$ 0,00");
+    },
+  );
 });
 
 describe("formatARS — unrenderable input", () => {
@@ -173,6 +189,10 @@ describe("formatARS — unrenderable input", () => {
     { amount: " 1500", why: "untrimmed whitespace" },
   ])("returns an empty string for $why: $amount", ({ amount }) => {
     expect(formatARS(amount)).toBe("");
+  });
+
+  it("keeps the money contract strict on quantity decimals", () => {
+    expect(formatARS("1234.5678")).toBe("");
   });
 });
 
@@ -191,5 +211,54 @@ describe("formatARS — round trip", () => {
 
     expect(parsed).not.toBeNull();
     expect(formatARS(parsed!)).toBe(expected);
+  });
+});
+
+// The quantity contract from BUG-003: `numeric(14,4)` columns (break-even
+// units, hours, rates, percentages) carry up to four decimals and are not
+// money, so they render without a currency symbol and at the four-decimal
+// scale instead of blanking through formatARS.
+describe("formatQuantity — accepts", () => {
+  it.each([
+    ["1500", "1.500,0000"],
+    ["1234.5678", "1.234,5678"],
+    ["1234.5", "1.234,5000"],
+    ["0", "0,0000"],
+    ["1234567.8912", "1.234.567,8912"],
+  ])("renders %j as %j", (amount, expected) => {
+    expect(formatQuantity(amount)).toBe(expected);
+  });
+
+  it("pads to four decimals when the fraction is short", () => {
+    expect(formatQuantity("7.5")).toBe("7,5000");
+  });
+});
+
+describe("formatQuantity — negatives", () => {
+  it.each([
+    ["-1234.5678", "-1.234,5678"],
+    ["-0.5", "-0,5000"],
+  ])("keeps the sign without a currency symbol: %j becomes %j", (amount, expected) => {
+    expect(formatQuantity(amount)).toBe(expected);
+  });
+
+  it.each([{ amount: "-0" }, { amount: "-0.0000" }])(
+    "normalises negative zero to zero: $amount",
+    ({ amount }) => {
+      expect(formatQuantity(amount)).toBe("0,0000");
+    },
+  );
+});
+
+describe("formatQuantity — unrenderable input", () => {
+  it.each([
+    { amount: "", why: "an empty amount" },
+    { amount: "abc", why: "text" },
+    { amount: "1.23456", why: "five decimals" },
+    { amount: "1,234.50", why: "the US format" },
+    { amount: "$1234.50", why: "an unparsed currency symbol" },
+    { amount: " 1500", why: "untrimmed whitespace" },
+  ])("returns an empty string for $why: $amount", ({ amount }) => {
+    expect(formatQuantity(amount)).toBe("");
   });
 });
