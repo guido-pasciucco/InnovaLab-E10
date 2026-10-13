@@ -48,7 +48,7 @@ Scripts disponibles:
 | Lint | `bun run lint` |
 | Tests unitarios | `bun run test` (convenciones en [`TEST.md`](TEST.md)) |
 | Tests de integración (Supabase local) | `bun run e2e:up` · `bun run test:int` |
-| Typecheck | `bunx tsc --noEmit` |
+| Typecheck | `bun run typecheck` |
 | E2E (Supabase local) | `bun run e2e:up` · `bun run test:e2e` · `bun run e2e:down` |
 
 Dependencias clave:
@@ -221,7 +221,7 @@ Otros comandos:
 bun run build   # production build (must pass before merging)
 bun run start   # serve the production build
 bun run lint    # ESLint with eslint-config-next
-bunx tsc --noEmit  # type check
+bun run typecheck  # genera los tipos de Next y verifica TypeScript sin build
 ```
 
 > [!NOTE]

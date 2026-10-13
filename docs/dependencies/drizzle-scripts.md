@@ -26,7 +26,7 @@ Los scripts `db:*` (`drizzle-kit ^0.31.10` sobre `drizzle-orm ^0.45.2`) conviert
 2. Ejecutar `bun run db:generate` tras cada cambio en `lib/db/<dominio>/table.ts`.
 3. Revisar el SQL generado en `./drizzle/` como cualquier otro código (nombres, tipos, `numeric` para dinero).
 4. En spike: `bun run db:push` contra una base descartable. En trabajo serio: `bun run db:migrate`.
-5. Verificar con `bunx tsc --noEmit` y `bun run lint` antes de pedir revisión.
+5. Verificar con `bun run typecheck` y `bun run lint` antes de pedir revisión.
 
 ## Ejemplo mínimo
 
