@@ -40,8 +40,11 @@ beforeAll(() => {
 });
 
 afterAll(async () => {
-  await db.$client.end();
-  globalThis.__drizzleClient = undefined;
+  try {
+    if (db) await db.$client.end();
+  } finally {
+    globalThis.__drizzleClient = undefined;
+  }
 });
 
 // Attempts every deletion even if one fails, then reports all failures.
@@ -141,20 +144,18 @@ describe("saveCalculatorSetupService", () => {
     expect(csRows[0].volume).toBe(24);
   });
 
-  it("rejects invalid input with ZodError and writes nothing", async () => {
+  it.each([
+    ["volume is zero", { volume: 0 }],
+    ["volume is negative", { volume: -1 }],
+    ["volume is fractional", { volume: 1.5 }],
+    ["name is whitespace-only", { name: "  " }],
+    ["currency is USD", { currency: "USD" }],
+    ["period is Anual", { period: "Anual" }],
+  ])("rejects input without persisting rows when %s", async (_scenario, invalidFields) => {
     const user = await makeUser();
 
     await expect(
-      saveCalculatorSetupService(user.id, { ...validInput, volume: 0 }, db),
-    ).rejects.toBeInstanceOf(ZodError);
-    await expect(
-      saveCalculatorSetupService(user.id, { ...validInput, volume: -1 }, db),
-    ).rejects.toBeInstanceOf(ZodError);
-    await expect(
-      saveCalculatorSetupService(user.id, { ...validInput, volume: 1.5 }, db),
-    ).rejects.toBeInstanceOf(ZodError);
-    await expect(
-      saveCalculatorSetupService(user.id, { ...validInput, name: "  " }, db),
+      saveCalculatorSetupService(user.id, { ...validInput, ...invalidFields }, db),
     ).rejects.toBeInstanceOf(ZodError);
 
     expect(await getDraftCalculationId(user.id, db)).toBeNull();
@@ -164,19 +165,26 @@ describe("saveCalculatorSetupService", () => {
       .from(businesses)
       .where(eq(businesses.ownerUserId, user.id));
     expect(businessRows).toHaveLength(0);
-  });
 
-  it("rejects currency USD and period Anual", async () => {
-    const user = await makeUser();
+    const productRows = await db
+      .select({ id: products.id })
+      .from(products)
+      .innerJoin(businesses, eq(products.businessId, businesses.id))
+      .where(eq(businesses.ownerUserId, user.id));
+    expect(productRows).toHaveLength(0);
 
-    await expect(
-      saveCalculatorSetupService(user.id, { ...validInput, currency: "USD" }, db),
-    ).rejects.toBeInstanceOf(ZodError);
-    await expect(
-      saveCalculatorSetupService(user.id, { ...validInput, period: "Anual" }, db),
-    ).rejects.toBeInstanceOf(ZodError);
+    const calcRows = await db
+      .select({ id: calculations.id })
+      .from(calculations)
+      .where(eq(calculations.userId, user.id));
+    expect(calcRows).toHaveLength(0);
 
-    expect(await getDraftCalculationId(user.id, db)).toBeNull();
+    const csRows = await db
+      .select({ calculationId: costingSetup.calculationId })
+      .from(costingSetup)
+      .innerJoin(calculations, eq(costingSetup.calculationId, calculations.id))
+      .where(eq(calculations.userId, user.id));
+    expect(csRows).toHaveLength(0);
   });
 
   it("user B cannot read or overwrite user A's draft", async () => {

@@ -9,13 +9,13 @@ export const productNameField = z
   .string()
   .trim()
   .min(1, { error: "Escribí el nombre de tu producto." })
-  .max(120);
+  .max(120, { error: "El nombre del producto debe tener como máximo 120 caracteres." });
 
 export const unitField = z
   .string()
   .trim()
   .min(1, { error: "Escribí en qué unidad lo vendés (ej: caja, paquete, kilo)." })
-  .max(40);
+  .max(40, { error: "La unidad debe tener como máximo 40 caracteres." });
 
 export const volumeField = z
   .int({ error: "Completá el volumen con un número entero." })

@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-import { codeString, nameString } from "../formats";
+import { businessNameField, businessTypeField } from "@/lib/schemas/business/fields";
 import { businesses, products } from "./table";
 import { productNameField } from "@/lib/schemas/calculator-setup/fields";
 
@@ -22,8 +22,8 @@ export const productRowSchema = createSelectSchema(products);
 // --- Public inputs: insert schema minus every server-controlled field. ---
 
 export const createBusinessInputSchema = createInsertSchema(businesses, {
-  name: nameString(120),
-  businessType: codeString(80),
+  name: businessNameField,
+  businessType: businessTypeField,
 }).omit({
   id: true,
   ownerUserId: true,
