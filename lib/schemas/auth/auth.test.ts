@@ -26,8 +26,8 @@ describe("loginSchema", () => {
 
   it("uses readable messages for login fields", () => {
     expect(fieldErrors(loginSchema, { email: "x", password: "1" })).toEqual({
-      email: ["Enter a valid email address"],
-      password: ["Password must be at least 8 characters"],
+      email: ["Ingresá un correo electrónico válido."],
+      password: ["La contraseña debe tener al menos 8 caracteres."],
     });
   });
 });
@@ -37,9 +37,9 @@ describe("signupSchema", () => {
     expect(
       fieldErrors(signupSchema, { email: "x", password: "1", displayName: "a".repeat(81) }),
     ).toEqual({
-      email: ["Enter a valid email address"],
-      password: ["Password must be at least 8 characters"],
-      displayName: ["Name must be at most 80 characters"],
+      email: ["Ingresá un correo electrónico válido."],
+      password: ["La contraseña debe tener al menos 8 caracteres."],
+      displayName: ["El nombre debe tener como máximo 80 caracteres."],
     });
   });
 
@@ -57,12 +57,26 @@ describe("passwordResetRequestSchema", () => {
 
   it("uses readable messages for password reset", () => {
     expect(fieldErrors(passwordResetRequestSchema, { email: "x" })).toEqual({
-      email: ["Enter a valid email address"],
+      email: ["Ingresá un correo electrónico válido."],
     });
   });
 });
 
 describe("passwordUpdateSchema", () => {
+  it("accepts a password when it has exactly 8 characters", () => {
+    const password = faker.internet.password({ length: 8 });
+
+    expect(passwordUpdateSchema.safeParse({ password }).success).toBe(true);
+  });
+
+  it("rejects a password when it has 7 characters", () => {
+    const password = faker.internet.password({ length: 7 });
+
+    expect(fieldErrors(passwordUpdateSchema, { password })).toEqual({
+      password: ["La contraseña debe tener al menos 8 caracteres."],
+    });
+  });
+
   it("accepts a complete valid object", () => {
     const result = passwordUpdateSchema.safeParse({ password: FAKE_PASSWORD });
 
@@ -71,7 +85,7 @@ describe("passwordUpdateSchema", () => {
 
   it("uses readable messages for password update", () => {
     expect(fieldErrors(passwordUpdateSchema, { password: "1" })).toEqual({
-      password: ["Password must be at least 8 characters"],
+      password: ["La contraseña debe tener al menos 8 caracteres."],
     });
   });
 });

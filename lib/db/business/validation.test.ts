@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createBusinessInputSchema, createProductInputSchema } from "./validation";
 
-// The business input schemas reuse the field rules from lib/schemas/calculator-setup/fields.ts,
-// so they enforce the same constraints and messages as the form contract.
+// DB tests cover shared-field wiring and removal of server-controlled fields.
 function fieldErrors(schema: z.ZodType, input: unknown) {
   const result = schema.safeParse(input);
   return result.success ? {} : z.flattenError(result.error).fieldErrors;
@@ -33,16 +32,16 @@ describe("createBusinessInputSchema", () => {
   it("rejects the name when it is whitespace-only", () => {
     const errors = fieldErrors(createBusinessInputSchema, { ...validBusiness, name: "   " });
 
-    expect(errors).toEqual({ name: ["Too small: expected string to have >=1 characters"] });
+    expect(errors).toEqual({ name: ["Escribí el nombre de tu negocio."] });
   });
 
-  it("rejects the business type when it exceeds 80 characters", () => {
+  it("rejects the business type when it is empty", () => {
     const errors = fieldErrors(createBusinessInputSchema, {
       ...validBusiness,
-      businessType: "a".repeat(81),
+      businessType: "",
     });
 
-    expect(errors).toEqual({ businessType: ["Too big: expected string to have <=80 characters"] });
+    expect(errors).toEqual({ businessType: ["Escribí el tipo de negocio."] });
   });
 
   it("drops server-controlled fields when the input carries them", () => {

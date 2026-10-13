@@ -18,7 +18,7 @@ export const signupSchema = z.object({
   displayName: z
     .string()
     .trim()
-    .max(80, { error: "Name must be at most 80 characters" })
+    .max(80, { error: "El nombre debe tener como máximo 80 caracteres." })
     .optional(),
 });
 
