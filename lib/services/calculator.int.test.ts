@@ -40,8 +40,11 @@ beforeAll(() => {
 });
 
 afterAll(async () => {
-  await db.$client.end();
-  globalThis.__drizzleClient = undefined;
+  try {
+    if (db) await db.$client.end();
+  } finally {
+    globalThis.__drizzleClient = undefined;
+  }
 });
 
 // Attempts every deletion even if one fails, then reports all failures.
