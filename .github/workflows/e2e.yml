@@ -18,12 +18,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
+          package-manager-cache: false
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.2'
@@ -39,12 +40,13 @@ jobs:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
+          package-manager-cache: false
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.2'
@@ -70,7 +72,7 @@ jobs:
         run: python3 -B scripts/ci/e2e_report.py
       - name: Upload failure evidence
         if: failure() && steps.report.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: playwright-report/
