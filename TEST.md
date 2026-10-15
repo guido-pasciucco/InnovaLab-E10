@@ -104,6 +104,7 @@ Node 24 (`package.json` engines): corré `nvm use` antes. Con Node 20, `@supabas
 
 ```bash
 nvm use             # Node 24 (.nvmrc)
+bun run lint:e2e    # rechaza tests E2E enfocados sin .env.test ni servicios
 bun run typecheck   # genera los tipos de Next y verifica TypeScript sin build
 bun run test        # Vitest, proyecto unit (*.test.ts): sin red ni base
 bun run e2e:up      # levanta Supabase local y aplica migraciones (requisito de integración y E2E)
@@ -113,6 +114,21 @@ bun run e2e:down    # baja el stack (conserva los datos)
 ```
 
 Lint, typecheck, `bun run test`, `bun run test:int` y E2E se corren **localmente antes de abrir o mergear un PR**.
+
+### Señal automática de E2E
+
+`.github/workflows/e2e.yml` ejecuta dos checks en cada PR hacia `main`:
+
+- `E2E focused-test guard`: `bun run lint:e2e`, sin entorno de integración. La regla `playwright/no-focused-test` rechaza `test.only`, `test.describe.only` y sus variantes soportadas; Playwright también usa `forbidOnly: true`.
+- `E2E Chromium`: instala Chromium, levanta Supabase local, genera `.env.test` con las claves efímeras, aplica migraciones y ejecuta todos los specs. El build pertenece a Playwright; no se duplica en el workflow.
+
+El código de salida del check representa el resultado. Un job omitido o cancelado no demuestra que E2E pasó. Los retries no cambian: los casos que pasan al reintentar se informan como `flaky`. Marcar estos checks como obligatorios requiere configurar las reglas de la rama en GitHub.
+
+Solo ante fallos se sube evidencia por 3 días: un HTML por archivo/línea y trazas depuradas que retienen acciones, tiempos y marcas de fallo. Se excluyen datos de autenticación, red, DOM, capturas, fuentes, logs y detalles de errores. El HTML indica si la preparación falló antes de obtener resultados. Los resultados crudos y `.env.test` nunca se publican; `test-results/` (incluido `.last-run.json`) y `playwright-report/` siguen fuera de Git.
+
+Para ejecutar manualmente, usá Actions → E2E → Run workflow y seleccioná la rama; GitHub ofrece esa opción cuando el workflow ya existe en la rama predeterminada. Los pushes nuevos al mismo PR cancelan la ejecución anterior.
+
+El generador `scripts/ci/e2e-env.ts` consume `bunx supabase status -o env` de la CLI fijada por `bun.lock`: `API_URL`, `DB_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY` y `MAILPIT_URL`. Rechaza campos ausentes y hosts no locales; no requiere secretos remotos ni publica la salida cruda. Lint general, unitarios, typecheck e integración siguen siendo validaciones locales.
 
 ## Checklist para un test nuevo
 

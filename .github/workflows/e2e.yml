@@ -1,0 +1,81 @@
+name: E2E
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-tests:
+    name: E2E focused-test guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+      - run: bun install --frozen-lockfile
+      - run: bun run lint:e2e
+
+  e2e:
+    name: E2E Chromium
+    needs: focused-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - name: Start local Supabase
+        # The CLI prints local keys on startup. Keep that log out of Actions/artifacts.
+        run: |
+          if ! bun run supabase:start > "$RUNNER_TEMP/supabase-start.log" 2>&1; then
+            echo "::error::Local Supabase failed to start; raw logs are not published because they may contain credentials."
+            exit 1
+          fi
+      - name: Generate local-only test environment
+        run: bun run scripts/ci/e2e-env.ts
+      - name: Apply migrations
+        run: bun run db:migrate:local
+      - name: Run the complete E2E suite
+        # Playwright builds Next itself. Do not swallow its exit code or build twice.
+        run: bun run test:e2e
+      - name: Prepare safe failure report and traces
+        id: report
+        if: failure()
+        run: python3 -B scripts/ci/e2e_report.py
+      - name: Upload failure evidence
+        if: failure() && steps.report.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: playwright-report/
+          retention-days: 3
+          if-no-files-found: error
+      - name: Stop local Supabase
+        if: always()
+        run: bun run supabase:stop

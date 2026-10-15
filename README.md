@@ -237,7 +237,15 @@ bun run typecheck  # genera los tipos de Next y verifica TypeScript sin build
 Los tests E2E corren contra un Supabase local en Docker (con Mailpit para capturar los mails de auth), nunca contra el proyecto de Supabase en la nube.
 
 > [!NOTE]
-> No hay CI configurado por ahora: lint, typecheck, tests unitarios (`bun run test`), de integración (`bun run test:int`) y E2E se corren localmente antes de abrir o mergear un PR. Las referencias a `CI` en `playwright.config.ts` quedan inactivas hasta que exista un pipeline.
+> El workflow `E2E` corre en cada PR hacia `main`: primero `bun run lint:e2e` (rechaza tests enfocados sin necesitar servicios), después la suite completa de Chromium contra Supabase efímero local. Usa Node 24, Bun 1.4.2 y las migraciones del repo; no usa secretos de producción y funciona también para forks. Playwright hace el build de Next una sola vez.
+>
+> El check `E2E Chromium` y su código de salida son la señal oficial del resultado. Si el guard falla, E2E queda omitido: eso no equivale a una suite aprobada. Los retries existentes pueden informar casos intermitentes (`flaky`); consultá el log. La configuración de checks obligatorios para merge se administra por separado en GitHub.
+>
+> Ante un fallo se publica por 3 días un artefacto con resumen HTML por archivo/línea y trazas depuradas de acciones, tiempos y marcas de error. Se omiten cookies, claves, tráfico de red, DOM, capturas, fuentes, logs y valores de errores; el reporte es evidencia auxiliar, no reemplaza el check. `test-results/`, `.last-run.json` y `playwright-report/` siguen ignorados: nunca se versionan ni se suben los resultados crudos.
+>
+> Para una ejecución manual: GitHub → Actions → E2E → Run workflow, eligiendo la rama (disponible cuando el workflow exista en la rama predeterminada). Una actualización del PR cancela su ejecución anterior.
+>
+> Lint general, typecheck, unitarios e integración continúan ejecutándose localmente antes de abrir o mergear un PR. También podés reproducir E2E localmente con los comandos siguientes; `forbidOnly` está siempre activo y `bun run lint:e2e` no necesita `.env.test`, Docker, Chromium ni Supabase.
 
 Prerrequisitos, una vez por máquina:
 
