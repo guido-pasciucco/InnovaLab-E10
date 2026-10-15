@@ -4,10 +4,10 @@
 | --- | --- |
 | ID | BUG-001 |
 | Severidad | Bloqueante |
-| Estado | Abierto — pendiente de detalle |
+| Estado | Cerrado — verificado en local (RED→GREEN) |
 | Origen | Code review de proyecto completo, 2026-10-10 |
 | Módulo | `drizzle/`, `lib/db/` |
-| Verificación | Lectura de código + análisis de esquema |
+| Verificación | Ejecutado contra Supabase local |
 
 ## Qué pasa
 
@@ -47,7 +47,12 @@ CREATE POLICY "calc_cost_lines_owner_insert" ON "calc_cost_lines"
 
 ## Reproducción
 
-No aplica: verificado por lectura del código y por lectura de la migración de RLS.
+Reproducido con tests de integración contra Supabase local
+(`lib/db/rls.int.test.ts`, commit `524903e`): antes del arreglo, el INSERT
+cruzado de Beto (fila propia apuntando a negocio/producto/línea de Ana) pasaba
+en ambas tablas — 2 failed / 8 passed. Después de la migración
+(`drizzle/20261015102837_rls_transitive_policies.sql`, commit `b051f19`), el
+cruzado falla por violación de RLS y el propio pasa — 10/10.
 
 ## Impacto
 
@@ -101,4 +106,7 @@ Evaluar además un helper o función `SECURITY DEFINER` para evitar repetir subc
 
 ## Qué NO se verificó
 
-No se ejecutaron las políticas contra una base real. La conclusión sobre el comportamiento del trigger de RI de Postgres —no consultando el RLS de la tabla referenciada— no se comprobó de forma empírica.
+El comportamiento interno del trigger de RI de Postgres (no consultar el RLS
+de la tabla referenciada) no se comprobó de forma aislada; con las políticas
+transitivas el INSERT cruzado se rechaza en el `WITH CHECK` antes de que el
+trigger importe, así que dejó de ser load-bearing para este bug.
