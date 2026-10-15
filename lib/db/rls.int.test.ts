@@ -65,14 +65,58 @@ async function createBusiness(userId: string, name: string): Promise<string> {
 }
 
 // Creates a product for a business via the admin client (bypasses RLS).
-async function createProduct(businessId: string, name: string): Promise<void> {
-  const { error } = await adminClient().from("products").insert({ business_id: businessId, name });
+async function createProduct(businessId: string, name: string): Promise<string> {
+  const { data, error } = await adminClient()
+    .from("products")
+    .insert({ business_id: businessId, name })
+    .select("id")
+    .single();
   if (error) throw new Error(`[int] createProduct failed: ${error.message}`);
+  return data.id;
 }
 
-type Owner = { user: CreatedUser; businessId: string; businessName: string; productName: string };
+// Creates a business cost line via the admin client (bypasses RLS).
+async function createBusinessCostLine(businessId: string): Promise<string> {
+  const { data, error } = await adminClient()
+    .from("business_cost_lines")
+    .insert({
+      business_id: businessId,
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "directo",
+      amount_period: "100.00",
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(`[int] createBusinessCostLine failed: ${error.message}`);
+  return data.id;
+}
 
-// Two users, each owning one business with one product.
+// Creates a calculation via the admin client (bypasses RLS).
+async function createCalculation(
+  userId: string,
+  businessId: string,
+  productId: string,
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from("calculations")
+    .insert({ user_id: userId, business_id: businessId, product_id: productId })
+    .select("id")
+    .single();
+  if (error) throw new Error(`[int] createCalculation failed: ${error.message}`);
+  return data.id;
+}
+
+type Owner = {
+  user: CreatedUser;
+  businessId: string;
+  businessName: string;
+  productId: string;
+  productName: string;
+  costLineId: string;
+};
+
+// Two users, each owning one business with one product and one cost line.
 async function arrangeTwoOwners(): Promise<{ ana: Owner; beto: Owner }> {
   const anaUser = await makeUser();
   const betoUser = await makeUser();
@@ -80,16 +124,22 @@ async function arrangeTwoOwners(): Promise<{ ana: Owner; beto: Owner }> {
     user: anaUser,
     businessId: await createBusiness(anaUser.id, "Panadería Ana"),
     businessName: "Panadería Ana",
+    productId: "",
     productName: "Factura",
+    costLineId: "",
   };
   const beto: Owner = {
     user: betoUser,
     businessId: await createBusiness(betoUser.id, "Cafetería Beto"),
     businessName: "Cafetería Beto",
+    productId: "",
     productName: "Café",
+    costLineId: "",
   };
-  await createProduct(ana.businessId, ana.productName);
-  await createProduct(beto.businessId, beto.productName);
+  ana.productId = await createProduct(ana.businessId, ana.productName);
+  beto.productId = await createProduct(beto.businessId, beto.productName);
+  ana.costLineId = await createBusinessCostLine(ana.businessId);
+  beto.costLineId = await createBusinessCostLine(beto.businessId);
   return { ana, beto };
 }
 
@@ -150,4 +200,92 @@ describe("public.products", () => {
       expect(data![0].name).toBe(owner.productName);
     },
   );
+});
+
+describe("public.calculations", () => {
+  it("a user cannot anchor their calculation to another user's business", async () => {
+    const { ana, beto } = await arrangeTwoOwners();
+    const client = await userClient(beto.user);
+
+    // Beto's own row, pointing at Ana's business and product.
+    const { error } = await client.from("calculations").insert({
+      user_id: beto.user.id,
+      business_id: ana.businessId,
+      product_id: ana.productId,
+    });
+
+    // Violates the WITH CHECK once ownership is transitive (BUG-001).
+    expect(error).not.toBeNull();
+    // Checked as admin, bypassing RLS: no row was kept.
+    const { data } = await adminClient()
+      .from("calculations")
+      .select("id")
+      .eq("user_id", beto.user.id);
+    expect(data).toHaveLength(0);
+  });
+
+  it("a user can insert a calculation on their own business", async () => {
+    const { beto } = await arrangeTwoOwners();
+    const client = await userClient(beto.user);
+
+    const { error } = await client.from("calculations").insert({
+      user_id: beto.user.id,
+      business_id: beto.businessId,
+      product_id: beto.productId,
+    });
+
+    expect(error).toBeNull();
+  });
+});
+
+describe("public.calc_cost_lines", () => {
+  it("a user cannot source a line from another user's cost line", async () => {
+    const { ana, beto } = await arrangeTwoOwners();
+    const betoCalculationId = await createCalculation(
+      beto.user.id,
+      beto.businessId,
+      beto.productId,
+    );
+    const client = await userClient(beto.user);
+
+    // Beto's own calculation, snapshotting Ana's cost line.
+    const { error } = await client.from("calc_cost_lines").insert({
+      calculation_id: betoCalculationId,
+      source_business_cost_id: ana.costLineId,
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "directo",
+      amount: "50.00",
+    });
+
+    // Violates the WITH CHECK once ownership is transitive (BUG-001).
+    expect(error).not.toBeNull();
+    // Checked as admin, bypassing RLS: no row was kept.
+    const { data } = await adminClient()
+      .from("calc_cost_lines")
+      .select("id")
+      .eq("calculation_id", betoCalculationId);
+    expect(data).toHaveLength(0);
+  });
+
+  it("a user can source a line from their own cost line", async () => {
+    const { beto } = await arrangeTwoOwners();
+    const betoCalculationId = await createCalculation(
+      beto.user.id,
+      beto.businessId,
+      beto.productId,
+    );
+    const client = await userClient(beto.user);
+
+    const { error } = await client.from("calc_cost_lines").insert({
+      calculation_id: betoCalculationId,
+      source_business_cost_id: beto.costLineId,
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "directo",
+      amount: "50.00",
+    });
+
+    expect(error).toBeNull();
+  });
 });
