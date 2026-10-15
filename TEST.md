@@ -104,6 +104,7 @@ Node 24 (`package.json` engines): corré `nvm use` antes. Con Node 20, `@supabas
 
 ```bash
 nvm use             # Node 24 (.nvmrc)
+bun run typecheck   # genera los tipos de Next y verifica TypeScript sin build
 bun run test        # Vitest, proyecto unit (*.test.ts): sin red ni base
 bun run e2e:up      # levanta Supabase local y aplica migraciones (requisito de integración y E2E)
 bun run test:int    # Vitest, proyecto integration (*.int.test.ts): Postgres local, un archivo a la vez

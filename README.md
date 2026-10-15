@@ -21,6 +21,7 @@ Cada sección del código tiene su propia guía en un `AGENTS.md`, para que tant
 | [`lib/AGENTS.md`](lib/AGENTS.md) | Mapa de los módulos de dominio, frontera Frontend/Backend, reglas y checklist de cambios en `lib/` | Backend (Frontend consume) |
 | [`lib/errors/AGENTS.md`](lib/errors/AGENTS.md) | Manejo centralizado de errores: catálogo, `AppError`, adaptadores de rutas y actions, convención de códigos | Backend (Frontend consume) |
 | [`lib/db/AGENTS.md`](lib/db/AGENTS.md) | Persistencia en servidor con Drizzle: reglas de esquema, migraciones y flujo de escritura | Backend |
+| [`lib/schemas/AGENTS.md`](lib/schemas/AGENTS.md) | Contratos Zod, campos compartidos y convenciones de validación y tests | Según la guía vigente |
 
 ---
 
@@ -48,7 +49,7 @@ Scripts disponibles:
 | Lint | `bun run lint` |
 | Tests unitarios | `bun run test` (convenciones en [`TEST.md`](TEST.md)) |
 | Tests de integración (Supabase local) | `bun run e2e:up` · `bun run test:int` |
-| Typecheck | `bunx tsc --noEmit` |
+| Typecheck | `bun run typecheck` |
 | E2E (Supabase local) | `bun run e2e:up` · `bun run test:e2e` · `bun run e2e:down` |
 
 Dependencias clave:
@@ -99,8 +100,9 @@ El recorrido guiado está en stub. Lo que existe:
 app/(calculator)/paso-1/page.tsx      4 líneas: "Step 1 — TODO"
 app/(calculator)/paso-2/page.tsx      stub
 app/(calculator)/resultados/page.tsx  stub
-lib/calc/  lib/money/  lib/store/  solo .gitkeep
-lib/schemas/                        auth/, calculator-setup/
+lib/calc/  lib/store/              solo .gitkeep
+lib/money/                        format.ts y format.test.ts (parseARS, formatARS)
+lib/schemas/                        auth/, calculator-setup/, business/ (campos)
 ```
 
 **`app/(calculator)/layout.tsx` no existe todavía.** Con la persistencia en servidor no hace falta para conservar el borrador entre pasos: cada página lo lee por servicio después de `requireUser()`.
@@ -120,8 +122,8 @@ components/
   charts/  forms/  ui/  calculator/
 lib/
   calc/          # pure domain math (costs, pricing, break-even) — vacío, solo .gitkeep
-  money/         # pure money formatting / rounding — vacío, solo .gitkeep
-  schemas/       # THE single Zod source of truth (auth/, calculator-setup/; field rules in <contract>/fields.ts)
+  money/         # parseARS y formatARS en format.ts, con format.test.ts
+  schemas/       # THE single Zod source of truth (auth/, calculator-setup/, business/; field rules in <contract>/fields.ts)
   services/      # lógica de negocio del servidor (transport-agnostic), usada por las Server Actions
   supabase/      # clientes Supabase por runtime (proxy, rsc) — server-only
   types/         # tipos compartidos (p. ej. FormState)
@@ -135,7 +137,7 @@ tests/
   e2e/           # Playwright + Supabase local (auth; RLS se prueba en lib/db/rls.int.test.ts)
 ```
 
-**Los tests unitarios y de integración están co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`): hoy son 18 `*.test.ts` (proyecto `unit`) y 2 `*.int.test.ts` (proyecto `integration`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
+**Los tests unitarios y de integración están co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`): la suite unitaria aprueba 19 archivos y 235 tests (proyecto `unit`). La integración registra 2 archivos y 17 casos: Calculator (11) y RLS (6). Su ejecución funcional requiere `.env.test` y Supabase local; el recuento de casos no implica que hayan pasado. Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
 
 ### Contratos (vinculantes)
 
@@ -193,7 +195,7 @@ tests/
 
 ## 3. 🗺️ Próximos pasos
 
-1. **Base del dominio** — `lib/schemas` (Zod, fuente única), `lib/calc` (costos/precios/punto de equilibrio), `lib/money`, con sus tests co-locados. Todo vacío hoy.
+1. **Base del dominio** — `lib/schemas` está activo y `lib/money` implementa `parseARS` y `formatARS`, con sus tests co-locados. `lib/calc` (costos/precios/punto de equilibrio) continúa pendiente.
 2. **Pasos del asistente** — `paso-1` y `paso-2` como páginas protegidas con `requireUser()` que leen el borrador por servicio, con formularios vinculados a `lib/schemas` que guardan por Server Action (`components/calculator` + `components/ui`).
 3. **Vista de resultados** — `app/(calculator)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
 4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
@@ -221,7 +223,7 @@ Otros comandos:
 bun run build   # production build (must pass before merging)
 bun run start   # serve the production build
 bun run lint    # ESLint with eslint-config-next
-bunx tsc --noEmit  # type check
+bun run typecheck  # genera los tipos de Next y verifica TypeScript sin build
 ```
 
 > [!NOTE]

@@ -5,6 +5,6 @@ import { z } from "zod";
 // (the password confirmation) reuse them instead of copying the rule.
 // Pure and client-safe: no db, no window.
 
-export const emailField = z.email({ error: "Enter a valid email address" });
+export const emailField = z.email({ error: "Ingresá un correo electrónico válido." });
 
-export const passwordField = z.string().min(8, { error: "Password must be at least 8 characters" });
+export const passwordField = z.string().min(8, { error: "La contraseña debe tener al menos 8 caracteres." });

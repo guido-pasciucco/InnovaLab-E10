@@ -18,6 +18,22 @@ const validSetup = {
 };
 
 describe("calculatorSetupSchema", () => {
+  it.each([
+    ["name", 120],
+    ["unit", 40],
+  ] as const)("accepts %s when it reaches the %i-character limit", (field, limit) => {
+    expect(calculatorSetupSchema.safeParse({ ...validSetup, [field]: "a".repeat(limit) }).success).toBe(true);
+  });
+
+  it.each([
+    ["name", 121, "El nombre del producto debe tener como máximo 120 caracteres."],
+    ["unit", 41, "La unidad debe tener como máximo 40 caracteres."],
+  ] as const)("rejects %s when it has %i characters", (field, length, message) => {
+    expect(fieldErrors(calculatorSetupSchema, { ...validSetup, [field]: "a".repeat(length) })).toEqual({
+      [field]: [message],
+    });
+  });
+
   it("accepts a complete valid setup", () => {
     expect(calculatorSetupSchema.safeParse(validSetup).success).toBe(true);
   });
