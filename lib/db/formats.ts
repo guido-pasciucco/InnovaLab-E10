@@ -14,12 +14,17 @@ export const uuidString = z.string().uuid();
 
 export const moneyString = z
   .string()
-  .regex(/^-?\d+(\.\d{1,2})?$/, "Expected a decimal string with up to 2 decimals");
+  // Integer part capped at 10 digits: every money column is numeric(12,2),
+  // so anything longer passes Zod and dies in Postgres with a 500 instead of
+  // a field error (BUG-004). The scale cap is what rejects `12,345`.
+  .regex(/^-?\d{1,10}(\.\d{1,2})?$/, "Expected a decimal string with up to 2 decimals");
 
 export const quantityString = z
   .string()
+  // Same bound: every quantity column is numeric(14,4), hence 10 integer
+  // digits as well (14 - 4).
   .regex(
-    /^-?\d+(\.\d{1,4})?$/,
+    /^-?\d{1,10}(\.\d{1,4})?$/,
     "Expected a decimal string with up to 4 decimals",
   );
 
