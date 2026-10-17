@@ -4,7 +4,7 @@
 | --- | --- |
 | **Estado** | ⏳ Necesidad registrada. Sin decisión de implementación. |
 | **Fecha** | 2026-10-09 |
-| **Relacionado** | [`docs/producto/05-Motor de cálculo de Innova Lab.md`](../../producto/05-Motor%20de%20cálculo%20de%20Innova%20Lab.md) · [`docs/producto/01-calculadora-inteligente.md`](../../producto/01-calculadora-inteligente.md) |
+| **Relacionado** | [`docs/producto/05-Motor de cálculo de Innova Lab.md`](../../../producto/05-Motor%20de%20cálculo%20de%20Innova%20Lab.md) · [`docs/producto/01-calculadora-inteligente.md`](../../../producto/01-calculadora-inteligente.md) |
 
 ## Problema
 
@@ -80,6 +80,6 @@ Paso 1. Decime cuál de estos dos se llena primero en un día normal de trabajo:
 
 ## Qué queda abierto
 
-- Si esa capa es un agente o un cuestionario con reglas fijas. La especificación de producto deja la IA generativa fuera del alcance del MVP ([`01-calculadora-inteligente.md`](../../producto/01-calculadora-inteligente.md)); este documento no revierte eso. Registra que la decisión del modelo tiene que existir, y que puede resolverse sin un modelo de lenguaje.
+- Si esa capa es un agente o un cuestionario con reglas fijas. La especificación de producto deja la IA generativa fuera del alcance del MVP ([`01-calculadora-inteligente.md`](../../../producto/01-calculadora-inteligente.md)); este documento no revierte eso. Registra que la decisión del modelo tiene que existir, y que puede resolverse sin un modelo de lenguaje.
 - Qué preguntas mínimas alcanzan para elegir entre los criterios que ya describe el motor, sin pedirle al usuario que nombre un método.
 - Cómo se le muestra al usuario la elección, en una frase de su negocio, y cómo puede corregirla si el recurso límite no es el que la capa supuso.

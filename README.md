@@ -2,7 +2,7 @@
 
 MVP de la Fase 1 de una calculadora inteligente para **costos, precios y análisis de punto de equilibrio** (`Costos / Precios / Punto de Equilibrio`).
 
-El **borrador del cálculo** de la Fase 1 se persiste **solo en el servidor**, con sesión obligatoria: vive en las tablas de `lib/db` y se guarda al confirmar cada paso. Ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
+El **borrador del cálculo** de la Fase 1 se persiste **solo en el servidor**, con sesión obligatoria: vive en las tablas de `lib/db` y se guarda al confirmar cada paso. Ver [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md).
 
 Lo que **ya está en marcha** y no es parte de la Fase 1 pendiente:
 
@@ -10,7 +10,7 @@ Lo que **ya está en marcha** y no es parte de la Fase 1 pendiente:
 - **Base de datos con Drizzle**: `drizzle.config.ts`, 4 migraciones aplicadas (RLS con políticas de propietario, FK de `profiles`, trigger de creación de perfil) y stack local de Supabase para los tests.
 
 > [!IMPORTANT]
-> Este README describía la Fase 1 como "sin backend" y el cálculo como "local-first". Ya no es cierto: la autenticación con Supabase está implementada, la base tiene migraciones aplicadas y el borrador del cálculo se guarda en servidor ([ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)). Lo que la Fase 1 tiene que entregar es **el cálculo** sobre esa base.
+> Este README describía la Fase 1 como "sin backend" y el cálculo como "local-first". Ya no es cierto: la autenticación con Supabase está implementada, la base tiene migraciones aplicadas y el borrador del cálculo se guarda en servidor ([ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)). Lo que la Fase 1 tiene que entregar es **el cálculo** sobre esa base.
 
 ## 📂 Guías por directorio
 
@@ -88,9 +88,9 @@ app -> components -> lib/calc
 
 ### División por fases
 
-- **Fase 1 (actual, MVP):** el **borrador del cálculo** se persiste solo en servidor, con sesión obligatoria (`requireUser()`). Un borrador por usuario (`calculations.status = 'draft'`), guardado al "Confirmar" de cada paso mediante Server Actions que llaman a servicios de `lib/services`. Sin `localStorage`, sin IndexedDB, sin híbrido. Ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
+- **Fase 1 (actual, MVP):** el **borrador del cálculo** se persiste solo en servidor, con sesión obligatoria (`requireUser()`). Un borrador por usuario (`calculations.status = 'draft'`), guardado al "Confirmar" de cada paso mediante Server Actions que llaman a servicios de `lib/services`. Sin `localStorage`, sin IndexedDB, sin híbrido. Ver [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md).
 - **Ya implementado (andamiaje, no Fase 1 pendiente):** autenticación con Supabase (login, signup, reset, update, confirm, dashboard, profile) con Server Actions, y base de datos con Drizzle, 4 migraciones aplicadas y RLS por propietario. Ese andamiaje sostiene la plataforma y la auth; lo que la Fase 1 tiene que agregar es el cálculo.
-- **Más adelante:** historial de cálculos y varios borradores por usuario. La persistencia con cuenta de usuario ya no es Fase 2: la contradicción con el "local-first" del README original quedó resuelta en el [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
+- **Más adelante:** historial de cálculos y varios borradores por usuario. La persistencia con cuenta de usuario ya no es Fase 2: la contradicción con el "local-first" del README original quedó resuelta en el [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md).
 
 ### Estado real del asistente
 
@@ -167,7 +167,7 @@ tests/
 | Tipos compartidos | `lib/types` (p. ej. `FormState`) |
 | UI del asistente, gráficos, primitivas | `components/calculator`, `components/charts`, `components/ui` |
 | Matemática pura / dinero / esquemas | `lib/calc`, `lib/money`, `lib/schemas` |
-| Persistencia del cálculo (borrador) | `lib/db/` (server-only, Drizzle), accedida solo desde `lib/services` — ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md) |
+| Persistencia del cálculo (borrador) | `lib/db/` (server-only, Drizzle), accedida solo desde `lib/services` — ver [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md) |
 | Estado de interfaz en el cliente (no persiste el cálculo) | `lib/store` |
 | Pruebas unitarias | co-locadas con el módulo (`<modulo>.test.ts`), se corren con `bun run test`; convenciones en [`TEST.md`](TEST.md) |
 | Pruebas de integración | co-locadas con el módulo (`<modulo>.int.test.ts`), contra Supabase local; se corren con `bun run test:int` |
@@ -186,9 +186,9 @@ tests/
 
 ### Preguntas abiertas (sin decidir, no asumir)
 
-1. ~~**Estado del asistente: librería o Context.**~~ **Sin objeto para H1/H2**: el borrador vive en servidor ([ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)), así que no hace falta estado global de cliente. Se reabre si vuelve a hacer falta — ver `lib/AGENTS.md` nota 4.
-2. ~~**Persistencia del cálculo: ¿local o en la base?**~~ **Resuelta: solo servidor, ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).** El ADR también registra qué pasa con `#33`, `#34` y `#63`.
-3. ~~LocalStorage vs IndexedDB para la persistencia de la Fase 1.~~ **Sin objeto**: el cálculo no se persiste en el cliente ([ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)).
+1. ~~**Estado del asistente: librería o Context.**~~ **Sin objeto para H1/H2**: el borrador vive en servidor ([ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)), así que no hace falta estado global de cliente. Se reabre si vuelve a hacer falta — ver `lib/AGENTS.md` nota 4.
+2. ~~**Persistencia del cálculo: ¿local o en la base?**~~ **Resuelta: solo servidor, ver [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md).** El ADR también registra qué pasa con `#33`, `#34` y `#63`.
+3. ~~LocalStorage vs IndexedDB para la persistencia de la Fase 1.~~ **Sin objeto**: el cálculo no se persiste en el cliente ([ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)).
 4. Proceso de cambios de esquemas: ¿cómo se proponen y migran los cambios en `lib/schemas`?
 
 ---
@@ -199,7 +199,7 @@ tests/
 2. **Pasos del asistente** — `paso-1` y `paso-2` como páginas protegidas con `requireUser()` que leen el borrador por servicio, con formularios vinculados a `lib/schemas` que guardan por Server Action (`components/calculator` + `components/ui`).
 3. **Vista de resultados** — `app/(calculator)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
 4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
-5. **Persistencia del borrador en servidor** — servicios de `lib/services` sobre `lib/db` (setup y costos) y la migración H0.2 (#91). Ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
+5. **Persistencia del borrador en servidor** — servicios de `lib/services` sobre `lib/db` (setup y costos) y la migración H0.2 (#91). Ver [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md).
 6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth; RLS se prueba como integración en `lib/db/rls.int.test.ts`, según [`TEST.md`](TEST.md)).
 7. **Pulido + despliegue** — lint/build limpios, despliegue único en Vercel verificado.
 8. **Fuera del alcance del MVP** — historial de cálculos y varios borradores por usuario.
@@ -320,4 +320,4 @@ tests/e2e/
 
 Notas:
 
-- El borrador del cálculo se persiste solo en servidor ([ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)): no guardar el cálculo en `lib/store`, `localStorage` ni IndexedDB.
+- El borrador del cálculo se persiste solo en servidor ([ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)): no guardar el cálculo en `lib/store`, `localStorage` ni IndexedDB.

@@ -1,6 +1,6 @@
 # DB — Persistencia en servidor con Drizzle
 
-Estado: persistencia del cálculo en servidor ([ADR 02](../../docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)). Sus consumidores son los servicios de `lib/services`, que obtienen la base con `getDrizzleClient()` (`client.ts`) como parámetro `db` con valor por defecto. Ni el dominio (`lib/calc`, `lib/money`) ni Frontend (`app/`, `components/`) importan este módulo.
+Estado: persistencia del cálculo en servidor ([ADR 02](../../docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)). Sus consumidores son los servicios de `lib/services`, que obtienen la base con `getDrizzleClient()` (`client.ts`) como parámetro `db` con valor por defecto. Ni el dominio (`lib/calc`, `lib/money`) ni Frontend (`app/`, `components/`) importan este módulo.
 
 ## Quién toca este directorio
 

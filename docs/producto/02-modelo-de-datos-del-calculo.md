@@ -246,6 +246,6 @@ Resultado: costo unitario 1200 · equilibrio 262 cajas← computed_results  (fut
 - Glosario de términos y nombres: [03 — Definiciones](./03-definiciones.md)
 - Esquema: `lib/db/profile/table.ts`, `lib/db/business/table.ts`, `lib/db/calculation/table.ts`, `lib/db/costs/table.ts`
 - Diagrama: `erd-calculadora-inteligente.mmd`
-- Decisión de persistencia: [ADR 02](../decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)
+- Decisión de persistencia: [ADR 02](../decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)
 - Conceptos de costos: [04 — Definición conceptual](./04-definicion-conceptual-calculadora-costos-emprendedores.md)
 - Historias: H1 (#69), H2 (#75); migración de `calc_cost_lines` (#91)
