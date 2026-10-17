@@ -317,7 +317,7 @@ Ejemplo: costo completo estimado $8.000 y precio $10.000. La diferencia es $2.00
 
 Si el usuario solicita un margen del 20% sobre el precio, el precio sugerido se obtiene como **$8.000 ÷ (1 − 0,20) = $10.000**.
 
-Recomendación: utilizar margen sobre el precio de venta, nombrarlo explícitamente y mostrar la fórmula. El equipo y el mentor deben validar qué componentes integran el costo utilizado como base.
+Recomendación: utilizar margen sobre el precio de venta, nombrarlo explícitamente y mostrar la fórmula. La convención se registra, todavía abierta, en [02 — Convención de margen](../decisiones/pendientes/negocio/02-convencion-de-margen.md). El equipo y el mentor deben validar qué componentes integran el costo utilizado como base.
 
 ## 7. Asignación de costos fijos en una aplicación con varios productos
 
@@ -335,6 +335,8 @@ Recomendación: diseñar el modelo de datos para gastos generales a nivel negoci
 El costeo basado en actividades (ABC) busca asignar con mayor precisión los costos indirectos siguiendo la cadena costo → actividad → inductor → producto.
 
 Ejemplo: preparar máquinas, controlar calidad o procesar pedidos son actividades. Cada producto recibe una parte de esos costos según cuánto consume de la actividad.
+
+**Una comparación sencilla:** supongamos $1.000.000 de costos indirectos. El modelo tradicional los reparte con una sola base —por ejemplo, horas de producción—. ABC primero identifica qué actividades generan esos costos y luego cuánto de cada actividad consume cada producto. Con la misma cifra de indirectos, el reparto entre productos y su costo resultante no coinciden.
 
 ABC puede ser útil cuando existen muchos productos, procesos diferentes y costos indirectos relevantes. No es “correcto” frente a un modelo tradicional “incorrecto”; responde a una necesidad de precisión y complejidad diferente.
 
@@ -453,11 +455,3 @@ Ante cada indicador, QA debería preguntar: de qué datos sale, qué supuesto ut
 Aplicación web para emprendedores argentinos que fabrican productos de distintos rubros. Permite guardar productos e insumos, construir costos a partir de materiales, mano de obra y gastos asignados, explorar precios y márgenes, comparar escenarios y comprender cuántas unidades deben venderse para cubrir los costos.
 
 La herramienta acompaña decisiones y ofrece cálculos transparentes; no reemplaza asesoramiento contable.
-
-Pan Artesano
-
-Panaderia artesanal con local a la calle sin delivery
-
-productos unitarios (4)
-
-ingredientes de los productos
