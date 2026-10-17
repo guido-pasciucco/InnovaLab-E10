@@ -24,7 +24,7 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 | `money/` | Aritmética decimal exacta con `decimal.js` | Esqueleto | **Backend** |
 | `schemas/` | Reglas de campo en `<contrato>/fields.ts` (las consumen el formulario y la base) y contratos Zod del formulario; el servidor valida con `db/<dominio>/validation.ts` (ver `schemas/AGENTS.md`) | Activa (`auth/`, `calculator-setup/`) | **Backend** (`fields.ts`, Frontend propone) / **Frontend** (contratos) |
 | `store/` | Estado de interfaz en el cliente. **No** persiste el cálculo: el borrador vive en servidor ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)) | Esqueleto | **Frontend** (nota 4) |
-| `errors/` | Manejo centralizado de errores: catálogo, `AppError` y adaptadores `handleRouteErrors`/`handleActionErrors` (ver `errors/AGENTS.md`) | Activa | **Backend** (adaptadores de transporte) |
+| `errors/` | Manejo centralizado de errores: catálogo, `AppError` y adaptadores `handleRouteErrors`/`handleActionErrors`/`handleRscErrors` (ver `errors/AGENTS.md`) | Activa | **Backend** (adaptadores de transporte) |
 | `db.ts` | Placeholder `server-only` | Temporal | Backend |
 | `db/` | Persistencia en servidor (Drizzle): tablas, migraciones y cliente `getDrizzleClient()`; la consumen los servicios de `services/` ([ADR 0005](../docs/decisiones/0005-persistencia-del-calculo-en-servidor.md)) | Activa | Backend |
 | `services/` | Lógica de negocio del servidor compartida por Server Actions y Route Handlers (transport-agnostic: recibe valores, devuelve datos planos) | Nueva (acuerdo vigente) | Backend |
@@ -71,7 +71,7 @@ Tres aclaraciones que evitan las confusiones más comunes:
 4. **Servidor queda en el servidor.** Lo marcado `server-only` (incluido `db/`) solo se importa desde Server Components, Server Actions o Route Handlers. Nunca desde un componente cliente.
 5. **Fuente única.** Cada fórmula vive en un solo lugar (`lib/calc`); los tipos se infieren (`z.infer`, `$inferSelect`), no se duplican a mano.
 6. **El servidor completa lo suyo.** `id`, dueño y timestamps los pone el servidor, nunca el cliente.
-7. **Servicios agnósticos al transporte.** `services/` no recibe `Request` ni devuelve `Response`/status codes: recibe valores y devuelve datos planos. Ante un fallo lanzan `AppError`, sin `try/catch`; cada puerta traduce con `handleRouteErrors` (status HTTP) o `handleActionErrors` (estado del form). Ver `errors/AGENTS.md`.
+7. **Servicios agnósticos al transporte.** `services/` no recibe `Request` ni devuelve `Response`/status codes: recibe valores y devuelve datos planos. Ante un fallo lanzan `AppError`, sin `try/catch`; cada puerta traduce con `handleRouteErrors` (status HTTP) o `handleActionErrors` (estado del form), y las lecturas de los Server Components se envuelven con `handleRscErrors`, que registra el fallo y lo re-lanza hacia la frontera del segmento. Ver `errors/AGENTS.md`.
 
 ## Checklist para verificar un cambio en `lib/`
 
