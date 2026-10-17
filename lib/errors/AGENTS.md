@@ -1,6 +1,6 @@
 # lib/errors/ — Manejo centralizado de errores
 
-Los servicios **lanzan** errores; las puertas (Route Handlers y Server Actions) los **traducen**. El `try/catch` existe en un solo lugar del proyecto: los adaptadores `handleRouteErrors` y `handleActionErrors`. Ningún servicio nuevo necesita escribirlo.
+Los servicios **lanzan** errores; las puertas (Route Handlers, Server Actions y lecturas RSC) los **traducen**. El `try/catch` existe en un solo lugar del proyecto: los adaptadores `handleRouteErrors`, `handleActionErrors` y `handleRscErrors` (puerta de lectura). Ningún servicio nuevo necesita escribirlo.
 
 ## Quién toca este directorio
 
@@ -16,6 +16,7 @@ Los servicios **lanzan** errores; las puertas (Route Handlers y Server Actions) 
 3. Envolvé la puerta:
    - Ruta: `export const POST = handleRouteErrors(async (req) => { ... })`
    - Action: `export const miAction = handleActionErrors(async (prev, data) => miServicio(...))`
+   - Lectura RSC: `const setup = await handleRscErrors(() => getCalculatorSetupService(user.id))`
 4. Testeá el servicio verificando que lanza el código correcto (ver `lib/services/auth.test.ts`, la sección [Tests](#tests) y la guía compartida [`../../TEST.md`](../../TEST.md)).
 
 ## Cómo viaja un error
@@ -26,6 +27,12 @@ servicio ──throw──▶ handleRouteErrors / handleActionErrors ──▶ t
           AppError   → queda igual                 │   ruta   → fail(code): status + JSON
           ZodError   → VALIDATION (+ details)      │   action → failResult(code): estado del form
           otra cosa  → fallbackCode (se loguea)    │
+
+lectura RSC ──throw──▶ handleRscErrors ──▶ toAppError() ──▶ rethrow ──▶ error.tsx (frontera)
+                        │
+   control de flujo     → intacto, sin log (redirect / notFound)
+   ZodError de lectura  → fallbackCode + cause (infra: nunca el VALIDATION silencioso)
+   AppError / otra cosa → log por catálogo; se re-lanza siempre
 ```
 
 | Pieza | Archivo | Responsabilidad |
@@ -37,12 +44,13 @@ servicio ──throw──▶ handleRouteErrors / handleActionErrors ──▶ t
 | `getFieldErrors` | `field-errors.ts` | Lee los mensajes por campo de un fallo `VALIDATION`. Es núcleo, así que se puede usar desde el cliente |
 | `handleRouteErrors` | `handle-route-errors.ts` | Puerta HTTP: error → `NextResponse` con el status del catálogo |
 | `handleActionErrors` | `handle-action-errors.ts` | Puerta action: resultado → `ServiceResult` serializable |
+| `handleRscErrors` | `handle-rsc-errors.ts` | Puerta de lectura RSC: loguea según el catálogo y re-lanza hacia la frontera `error.tsx`; nunca absorbe |
 
 ## Reglas
 
 1. **El servicio no traduce.** No devuelve status ni `Response`, y no arma mensajes. Lanza un código.
 2. **La action nunca le lanza al cliente.** Next oculta los mensajes de error en producción; `handleActionErrors` siempre devuelve estado.
-3. **`unstable_rethrow` va primero en todo `catch`.** `redirect()`, `notFound()` y `unauthorized()` funcionan lanzando. Si un `catch` se los traga, el redirect deja de funcionar sin avisar. Los dos adaptadores ya lo hacen; cualquier `catch` nuevo tiene que hacerlo también.
+3. **`unstable_rethrow` va primero en todo `catch`.** `redirect()`, `notFound()` y `unauthorized()` funcionan lanzando. Si un `catch` se los traga, el redirect deja de funcionar sin avisar. Los tres adaptadores ya lo hacen; cualquier `catch` nuevo tiene que hacerlo también.
 4. **Los errores desconocidos nunca llegan al cliente.** `toAppError` los loguea como `error` y expone solo el `fallbackCode` genérico. Los conocidos se loguean según el `logLevel` del catálogo.
 5. **Los mensajes viven en el catálogo.** El detalle específico (por ejemplo, errores por campo) va en `details`, nunca en un texto armado dentro del servicio.
 6. **Los servicios solo importan el núcleo.** Desde `lib/services/` se importa `app-error.ts` (y `catalog.ts` si hace falta el tipo `ErrorCode`), nunca `handle-*-errors.ts`. Los adaptadores dependen de Next (`next/server`, `next/navigation`) y solo los importan las puertas en `app/`.
@@ -50,7 +58,7 @@ servicio ──throw──▶ handleRouteErrors / handleActionErrors ──▶ t
 | Capa | Archivos | Depende de Next | Quién lo importa |
 | --- | --- | --- | --- |
 | Núcleo | `catalog.ts`, `app-error.ts` | No | Servicios, adaptadores |
-| Adaptadores | `handle-route-errors.ts`, `handle-action-errors.ts` | Sí | Solo puertas (`route.ts`, `actions.ts`) |
+| Adaptadores | `handle-route-errors.ts`, `handle-action-errors.ts`, `handle-rsc-errors.ts` | Sí | Solo puertas (`route.ts`, `actions.ts`) y lecturas RSC |
 
 > **Deuda conocida:** el catálogo guarda el `status` HTTP, que es conocimiento del transporte dentro del núcleo. Se deja así para mantener una fuente única. Si aparece otra puerta (un worker o un webhook), el primer paso es mover el mapeo código → status a `handle-route-errors.ts`.
 
@@ -199,6 +207,8 @@ Reglas compartidas en [`../../TEST.md`](../../TEST.md).
 | Catálogo | Todo código no genérico matchea `DOMINIO_CASO`; un código de dominio nuevo suma su `status` esperado |
 | Adaptador de ruta | `res.status` y `await res.json()` contra el envelope exacto `{ error: { code, message } }` |
 | Adaptador de action | El objeto `{ ok, code, message, details }`; un error inesperado sale con el `fallbackCode` (silenciá el log con `vi.spyOn(console, "error")`) |
+| Adaptador de lectura | El valor ok pasa sin log; un `ZodError` de lectura sale como `fallbackCode` + `cause` (nunca `VALIDATION`); `redirect()`/`notFound()` pasan por su `digest` |
+| Frontera de error | Excepción: sin unit test (vitest node, sin jsdom/RTL); sustitutos: lint + typecheck + smoke manual en dev |
 | Control de flujo | `redirect()` atraviesa el adaptador de action: `rejects.toMatchObject({ digest: expect.stringContaining("NEXT_REDIRECT") })` |
 | Formulario | `getFieldErrors` extrae los mensajes por campo de un `VALIDATION` |
 

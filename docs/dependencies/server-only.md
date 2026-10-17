@@ -13,9 +13,9 @@ En Next.js es fácil importar por accidente un helper de base de datos o un clie
 | Dónde aplica     | `lib/db.ts` y todo lo que toque secretos o Supabase (helpers de servidor, clientes con service role)                   |
 | Cómo se marca    | Primera línea del módulo: `import "server-only"`                                                                       |
 | Qué garantiza    | Error de build ante cualquier `import` transitivo desde código de cliente                                              |
-| Lectura de datos | Los Server Components leen la persistencia directo con `import` de `lib/db`. Nunca con `fetch` interno a la propia API |
+| Lectura de datos | Los Server Components leen la persistencia con `import` de `lib/services` (que usan `lib/db` por dentro). Nunca con `fetch` interno a la propia API |
 
-Regla de importación (ver README, sección de contratos): lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) por `import` directo; cliente → API solo por `fetch`; Server Component → persistencia por `import` de `lib/db`.
+Regla de importación (ver README, sección de contratos): lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) por `import` directo; cliente → API solo por `fetch`; Server Component → persistencia por `import` de `lib/services`.
 
 ## Ejemplo mínimo
 
@@ -28,15 +28,15 @@ import "server-only";
 
 ```tsx
 // app/(calculator)/resultados/page.tsx (Server Component)
-import { getCalculation } from "@/lib/db"; // directo, sin fetch
+import { getCalculatorSetupService } from "@/lib/services/calculator"; // directo, sin fetch
 ```
 
 ## Errores comunes
 
 - **Olvidar el `import "server-only"`.** Sin esa línea no hay protección: el módulo parece de servidor pero nada impide importarlo desde el cliente.
-- **Reexportar a través de un módulo compartido.** Si `lib/db` se reexporta desde un barrel importado por el cliente, el build falla igual (es lo correcto) pero el mensaje confunde. Importar `lib/db` solo desde Server Components, Route Handlers y Server Actions.
+- **Reexportar a través de un módulo compartido.** Si `lib/services` se reexporta desde un barrel importado por el cliente, el build falla igual (es lo correcto) pero el mensaje confunde. Importar `lib/services` solo desde Server Components, Route Handlers y Server Actions.
 - **Poner secretos en variables públicas.** Las variables `NEXT_PUBLIC_*` viajan al cliente por diseño; las claves privadas viven solo en variables de entorno de servidor.
-- **Hacer `fetch` a la propia API desde un Server Component.** Latencia y salto HTTP innecesarios; leer directo con `lib/db`.
+- **Hacer `fetch` a la propia API desde un Server Component.** Latencia y salto HTTP innecesarios; leer directo con `lib/services`.
 
 ## Paso siguiente
 
