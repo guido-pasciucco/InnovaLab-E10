@@ -22,6 +22,15 @@ const validCostingSetup = {
   volume: 6,
 };
 
+const validPricingInputs = {
+  marginConvention: "sobre precio de venta",
+  expectedMarginPct: "30.0000",
+};
+
+const validScenario = {
+  name: "Escenario optimista",
+};
+
 const SERVER_ID = "6f1c2b7e-3d4a-4f5b-9c8d-1e2f3a4b5c6d";
 const SERVER_TIMESTAMP = new Date("2026-01-01T00:00:00.000Z");
 
@@ -51,6 +60,31 @@ describe("createCalculationInputSchema", () => {
 });
 
 describe("upsertPricingInputsInputSchema", () => {
+  it("accepts a complete valid set of pricing inputs", () => {
+    expect(upsertPricingInputsInputSchema.safeParse(validPricingInputs).success).toBe(true);
+  });
+
+  // BUG-010: these fields used to resolve to `codeString`/`nameString` in
+  // lib/db/formats.ts, with no `error:` declared, so the user saw Zod's
+  // internal English message instead of a Spanish one.
+  it("reports the Spanish message when the margin convention is empty", () => {
+    expect(
+      fieldErrors(upsertPricingInputsInputSchema, { ...validPricingInputs, marginConvention: "" }),
+    ).toEqual({ marginConvention: ["Escribí la convención de margen."] });
+  });
+
+  it("reports the Spanish message when the margin convention is whitespace-only", () => {
+    expect(
+      fieldErrors(upsertPricingInputsInputSchema, { ...validPricingInputs, marginConvention: "   " }),
+    ).toEqual({ marginConvention: ["Escribí la convención de margen."] });
+  });
+
+  it("reports the Spanish message when the margin convention is not a string", () => {
+    expect(
+      fieldErrors(upsertPricingInputsInputSchema, { ...validPricingInputs, marginConvention: 42 }),
+    ).toEqual({ marginConvention: ["Escribí la convención de margen."] });
+  });
+
   it("drops server-controlled fields when the input carries them", () => {
     const input = {
       marginConvention: "markup",
@@ -70,6 +104,29 @@ describe("upsertPricingInputsInputSchema", () => {
 });
 
 describe("createScenarioInputSchema", () => {
+  it("accepts a complete valid scenario", () => {
+    expect(createScenarioInputSchema.safeParse(validScenario).success).toBe(true);
+  });
+
+  // BUG-010: same as `marginConvention` above, this used to be `nameString`.
+  it.each([
+    { value: "", why: "an empty name" },
+    { value: "   ", why: "a whitespace-only name" },
+    { value: 42, why: "a non-string name" },
+  ])("reports the Spanish message for $why", ({ value }) => {
+    expect(fieldErrors(createScenarioInputSchema, { ...validScenario, name: value })).toEqual({
+      name: ["Escribí el nombre del escenario."],
+    });
+  });
+
+  it("reports a Spanish message for the maximum length", () => {
+    expect(
+      fieldErrors(createScenarioInputSchema, { ...validScenario, name: "a".repeat(121) }),
+    ).toEqual({
+      name: ["El nombre del escenario debe tener como máximo 120 caracteres."],
+    });
+  });
+
   it("drops server-controlled fields when the input carries them", () => {
     const input = {
       name: "Escenario base",
