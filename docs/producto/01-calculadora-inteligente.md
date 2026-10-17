@@ -115,7 +115,7 @@ La aplicación se organiza como un **recorrido guiado**, evitando que el usuario
 
 **Entregable:** aplicación web responsive y funcional, con recorrido completo sin errores críticos.
 
-> ⚠️ **Criterio de cálculo:** antes del desarrollo debe acordarse **una única convención de margen** (por ejemplo, % sobre costo vs. % sobre precio de venta) y comunicarla claramente. Las fórmulas deben ser **verificables y consistentes** en toda la aplicación.
+> ⚠️ **Criterio de cálculo:** antes del desarrollo debe acordarse **una única convención de margen** (por ejemplo, % sobre costo vs. % sobre precio de venta) y comunicarla claramente. Las fórmulas deben ser **verificables y consistentes** en toda la aplicación. La convención pendiente se registra en [02 — Convención de margen](../decisiones/pendientes/negocio/02-convencion-de-margen.md).
 
 > 🚫 **Fuera de alcance del MVP:** contabilidad integral, liquidación impositiva, conexión bancaria, facturación electrónica, actualización automática por inflación, predicciones avanzadas e IA generativa. Es una herramienta de **apoyo**, no reemplaza asesoramiento contable ni impositivo.
 

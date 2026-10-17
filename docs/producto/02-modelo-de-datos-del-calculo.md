@@ -117,7 +117,7 @@ Otra cabecera 1 a 1 del cálculo.
 - `margin_convention`: sobre qué se calcula ese 30 % (sobre el costo o sobre el precio de venta, que dan resultados distintos).
 - `manual_price`: opcional, para la pregunta "ya vendo a $8000, ¿me conviene?".
 
-> **Convención de margen todavía abierta:** el `sobre costo` de este ejemplo es ilustrativo. La convención de margen sigue siendo una decisión abierta (ver [04 — Definición conceptual](./04-definicion-conceptual-calculadora-costos-emprendedores.md), sección 6, y el criterio de cálculo en [01 — Calculadora inteligente](./01-calculadora-inteligente.md)).
+> **Convención de margen todavía abierta:** el `sobre costo` de este ejemplo es ilustrativo. La convención de margen sigue siendo una decisión abierta (ver [04 — Definición conceptual](./04-definicion-conceptual-calculadora-costos-emprendedores.md), sección 6, y el criterio de cálculo en [01 — Calculadora inteligente](./01-calculadora-inteligente.md)). La decisión se registra en [02 — Convención de margen](../decisiones/pendientes/negocio/02-convencion-de-margen.md).
 
 ### Paso 7 — Ana prueba "¿y si…?" → `scenarios` (futuro)
 

@@ -317,7 +317,7 @@ Ejemplo: costo completo estimado $8.000 y precio $10.000. La diferencia es $2.00
 
 Si el usuario solicita un margen del 20% sobre el precio, el precio sugerido se obtiene como **$8.000 ÷ (1 − 0,20) = $10.000**.
 
-Recomendación: utilizar margen sobre el precio de venta, nombrarlo explícitamente y mostrar la fórmula. El equipo y el mentor deben validar qué componentes integran el costo utilizado como base.
+Recomendación: utilizar margen sobre el precio de venta, nombrarlo explícitamente y mostrar la fórmula. La convención se registra, todavía abierta, en [02 — Convención de margen](../decisiones/pendientes/negocio/02-convencion-de-margen.md). El equipo y el mentor deben validar qué componentes integran el costo utilizado como base.
 
 ## 7. Asignación de costos fijos en una aplicación con varios productos
 
