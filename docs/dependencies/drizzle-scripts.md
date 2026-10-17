@@ -42,7 +42,7 @@ La configuración vive en `drizzle.config.ts` (raíz): `schema` apunta al glob `
 
 ## Qué falta
 
-- **RLS y autorización van aparte.** Estos scripts crean tablas, no políticas. Sin RLS evaluado no hay aprobación posible (ver `docs/decisions/pending-orm-persistence.md`).
+- **RLS y autorización van aparte.** Estos scripts crean tablas, no políticas. Sin RLS evaluado no hay aprobación posible; la decisión de persistencia y el rol de RLS están en `docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md`.
 - **No migrar producción sin revisar.** Todo SQL generado se revisa en el PR; `db:push` está prohibido fuera del spike.
 
 ## Errores comunes
@@ -54,4 +54,4 @@ La configuración vive en `drizzle.config.ts` (raíz): `schema` apunta al glob `
 
 ## Paso siguiente
 
-Definir la estrategia de RLS y los criterios de aprobación en `docs/decisions/pending-orm-persistence.md`, y cablear la conexión solo cuando el spike se apruebe.
+Definir la estrategia de RLS —la decisión de persistencia y el rol de RLS están documentados en `docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md`— y cablear la conexión solo cuando el spike se apruebe.

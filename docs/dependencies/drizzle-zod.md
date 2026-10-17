@@ -2,7 +2,7 @@
 
 Drizzle ORM (`^0.45.2`) + `drizzle-zod` (`^0.8.3`, `drizzle-kit ^0.31.10` en dev) eliminan la duplicación entre el esquema de base de datos y los tipos de la aplicación. Cada tabla se define una vez y de ella se derivan los tipos TypeScript y los esquemas Zod de validación runtime.
 
-> **Estado: spike de evaluación.** Vive en `lib/db/` (rama `spike/drizzle-evaluacion`, sin pushear), no está cableado a ninguna base ni lo importa el dominio o las rutas. Ver `docs/decisions/pending-orm-persistence.md`.
+> **Estado: spike de evaluación.** Vive en `lib/db/` (rama `spike/drizzle-evaluacion`, sin pushear), no está cableado a ninguna base ni lo importa el dominio o las rutas. Ver `docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md`.
 
 ## Problema que resuelve
 
@@ -39,8 +39,8 @@ export type CreateBusinessInput = z.infer<typeof createBusinessInputSchema>;
 - **Tratar `numeric` como `number`.** Drizzle mapea `numeric` a `string` en TypeScript (dinero `numeric(12,2)`, cantidades `numeric(14,4)`). Validar como string decimal (`moneyString`, `quantityString`) y convertir a `Decimal` en la frontera con `lib/money`.
 - **Creer que la inferencia valida en runtime.** `$inferSelect` existe solo en compilación; la barrera de ejecución sigue siendo Zod.
 - **Importar `lib/db` desde el dominio.** `lib/calc` y `lib/money` permanecen puros; la conversión fila ↔ dominio ocurre en la frontera, nunca dentro del dominio.
-- **Olvidar lo pendiente.** RLS y autorización están sin evaluar y bloquean cualquier aprobación (ver documento de decisión pendiente).
+- **Olvidar lo pendiente.** RLS y autorización están sin evaluar y bloquean cualquier aprobación (ver `docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md`).
 
 ## Paso siguiente
 
-Ver `docs/decisions/pending-orm-persistence.md` para los criterios de aprobación y la alternativa (cliente Supabase con tipos generados).
+Ver `docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md` para la decisión de persistencia y el rol de RLS.
