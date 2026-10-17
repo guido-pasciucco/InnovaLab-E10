@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth/require-user";
+import { handleRscErrors } from "@/lib/errors/handle-rsc-errors";
 import { getCalculatorSetupService } from "@/lib/services/calculator";
 
 import { SetupForm } from "@/components/calculator/setup-form";
@@ -7,7 +8,7 @@ import type { CalculatorSetup } from "@/lib/schemas/calculator-setup/calculator-
 export default async function Paso1Page() {
   const user = await requireUser();
 
-  const setup = await getCalculatorSetupService(user.id);
+  const setup = await handleRscErrors(() => getCalculatorSetupService(user.id));
 
   const defaultValues: CalculatorSetup = setup
     ? {
