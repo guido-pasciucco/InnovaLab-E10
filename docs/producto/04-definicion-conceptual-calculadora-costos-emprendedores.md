@@ -336,6 +336,8 @@ El costeo basado en actividades (ABC) busca asignar con mayor precisión los cos
 
 Ejemplo: preparar máquinas, controlar calidad o procesar pedidos son actividades. Cada producto recibe una parte de esos costos según cuánto consume de la actividad.
 
+**Una comparación sencilla:** supongamos $1.000.000 de costos indirectos. El modelo tradicional los reparte con una sola base —por ejemplo, horas de producción—. ABC primero identifica qué actividades generan esos costos y luego cuánto de cada actividad consume cada producto. Con la misma cifra de indirectos, el reparto entre productos y su costo resultante no coinciden.
+
 ABC puede ser útil cuando existen muchos productos, procesos diferentes y costos indirectos relevantes. No es “correcto” frente a un modelo tradicional “incorrecto”; responde a una necesidad de precisión y complejidad diferente.
 
 Decisión para este proyecto: ABC queda como evolución futura, no como modelo del MVP. Para pequeños emprendedores de distintos rubros resulta más apropiado un modelo sencillo, explicable y verificable.
@@ -453,11 +455,3 @@ Ante cada indicador, QA debería preguntar: de qué datos sale, qué supuesto ut
 Aplicación web para emprendedores argentinos que fabrican productos de distintos rubros. Permite guardar productos e insumos, construir costos a partir de materiales, mano de obra y gastos asignados, explorar precios y márgenes, comparar escenarios y comprender cuántas unidades deben venderse para cubrir los costos.
 
 La herramienta acompaña decisiones y ofrece cálculos transparentes; no reemplaza asesoramiento contable.
-
-Pan Artesano
-
-Panaderia artesanal con local a la calle sin delivery
-
-productos unitarios (4)
-
-ingredientes de los productos

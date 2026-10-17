@@ -164,7 +164,7 @@ Para el MVP se recomienda una **arquitectura web liviana**. El núcleo es un **m
 | Validación de datos | Zod / React Hook Form |
 | Gráficos | Recharts / Chart.js |
 | Estado local | React state / Zustand |
-| Persistencia MVP | LocalStorage / IndexedDB (escenarios locales) |
+| Persistencia MVP | Servidor (PostgreSQL/Supabase) con sesión obligatoria · [ADR 02](../decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md) |
 | Backend opcional | Next.js API Routes / Node.js |
 | Base de datos opcional | PostgreSQL / Supabase |
 | Autenticación futura | Supabase Auth |

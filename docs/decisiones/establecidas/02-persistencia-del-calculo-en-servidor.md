@@ -10,8 +10,8 @@
 
 El repo se contradecía sobre dónde vive el borrador del cálculo:
 
-- `README.md:5` y `README.md:89` decían que el cálculo de la Fase 1 era **local-first**, con el estado en `lib/store` (LocalStorage o IndexedDB, sin resolver) y sin persistencia en servidor. `docs/producto/01-calculadora-inteligente.md:167` repetía "LocalStorage / IndexedDB" como persistencia del MVP.
-- `README.md:91` y la pregunta abierta nº 2 (`README.md:184`) reconocían que la definición conceptual del proyecto ya había dado por decidida la "persistencia mediante cuenta de usuario" (`docs/producto/definicion-conceptual-calculadora-costos-emprendedores.md:369`) y que esa contradicción seguía abierta.
+- `README.md:5` y `README.md:89` decían que el cálculo de la Fase 1 era **local-first**, con el estado en `lib/store` (LocalStorage o IndexedDB, sin resolver) y sin persistencia en servidor. `docs/producto/01-calculadora-inteligente.md:167` repetía "LocalStorage / IndexedDB" como persistencia del MVP (esa fila ya se corrigió al conciliar `docs/`).
+- `README.md:91` y la pregunta abierta nº 2 (`README.md:184`) reconocían que la definición conceptual del proyecto ya había dado por decidida la "persistencia mediante cuenta de usuario" (`../../producto/04-definicion-conceptual-calculadora-costos-emprendedores.md:371`) y que esa contradicción seguía abierta.
 
 Mientras tanto, la persistencia en servidor ya existía:
 
