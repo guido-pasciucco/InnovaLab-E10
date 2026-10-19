@@ -8,36 +8,47 @@ En Next.js es fácil importar por accidente un helper de base de datos o un clie
 
 ## Cómo se usa en este proyecto
 
-| Aspecto          | Decisión                                                                                                               |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Dónde aplica     | `lib/db.ts` y todo lo que toque secretos o Supabase (helpers de servidor, clientes con service role)                   |
-| Cómo se marca    | Primera línea del módulo: `import "server-only"`                                                                       |
-| Qué garantiza    | Error de build ante cualquier `import` transitivo desde código de cliente                                              |
-| Lectura de datos | Los Server Components leen la persistencia con `import` de `lib/services` (que usan `lib/db` por dentro). Nunca con `fetch` interno a la propia API |
+| Aspecto | Decisión |
+| --- | --- |
+| Dónde aplica | Los módulos que tocan la base o Supabase: `lib/db/` (el cliente `getDrizzleClient()` vive en `lib/db/client.ts`), `lib/services/`, `lib/supabase/` y `lib/auth/` |
+| Cómo se marca | Primera línea del módulo: `import "server-only"` |
+| Qué garantiza | Error de build ante cualquier `import` transitivo desde código de cliente |
+| Lectura de datos | Los Server Components leen la persistencia a través de los servicios de `lib/services` (que usan `lib/db` por dentro). Nunca importan `lib/db` ni hacen `fetch` a su propia API. Las lecturas RSC se envuelven con `handleRscErrors` (ver `lib/errors/`), que registra el fallo según el catálogo y lo re-lanza a la frontera del segmento |
 
-Regla de importación (ver README, sección de contratos): lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) por `import` directo; cliente → API solo por `fetch`; Server Component → persistencia por `import` de `lib/services`.
+Regla de importación (ver README raíz, sección 2, "Contratos (vinculantes)"): la lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) se importa directo; la persistencia del servidor se alcanza llamando a un servicio de `lib/services` (nunca importando `lib/db`, que es un detalle interno de los servicios); y un componente de cliente solo llega al servidor por `fetch`, jamás importando `route.ts`.
+
+> [!IMPORTANT]
+> No confundir dos reglas distintas, ambas vigentes. La **frontera cliente/servidor**: lo marcado `server-only` solo se importa desde el servidor (Server Components, Server Actions y Route Handlers), nunca desde un componente de cliente. La **regla de capas**: `lib/db` es un detalle interno y solo lo consumen los servicios de `lib/services`, aun del lado del servidor. Un Server Component cumple la primera regla y, por la segunda, igual lee la base a través de un servicio.
 
 ## Ejemplo mínimo
 
 ```ts
-// lib/db.ts
+// lib/db/client.ts
 import "server-only";
 
-// ... cliente de base de datos, helpers con secretos ...
+// ... getDrizzleClient() sobre DATABASE_URL, helpers con secretos ...
 ```
 
 ```tsx
-// app/(calculator)/resultados/page.tsx (Server Component)
-import { getCalculatorSetupService } from "@/lib/services/calculator"; // directo, sin fetch
+// app/(calculator)/paso-1/page.tsx (Server Component)
+import { requireUser } from "@/lib/auth/require-user";
+import { getCalculatorSetupService } from "@/lib/services/calculator";
+
+export default async function Paso1Page() {
+  const user = await requireUser();
+  const setup = await getCalculatorSetupService(user.id);
+  // ...
+}
 ```
 
 ## Errores comunes
 
 - **Olvidar el `import "server-only"`.** Sin esa línea no hay protección: el módulo parece de servidor pero nada impide importarlo desde el cliente.
-- **Reexportar a través de un módulo compartido.** Si `lib/services` se reexporta desde un barrel importado por el cliente, el build falla igual (es lo correcto) pero el mensaje confunde. Importar `lib/services` solo desde Server Components, Route Handlers y Server Actions.
+- **Importar `lib/db` fuera de `lib/services`.** `lib/db` es un detalle interno: aun del lado del servidor solo lo consumen los servicios de `lib/services`. Un Server Component, una Server Action o un Route Handler leen la base llamando a un servicio, no importando `lib/db`.
+- **Reexportar a través de un módulo compartido.** Si un módulo `server-only` se reexporta desde un barrel que importa el cliente, el build falla igual (es lo correcto) pero el mensaje confunde.
 - **Poner secretos en variables públicas.** Las variables `NEXT_PUBLIC_*` viajan al cliente por diseño; las claves privadas viven solo en variables de entorno de servidor.
-- **Hacer `fetch` a la propia API desde un Server Component.** Latencia y salto HTTP innecesarios; leer directo con `lib/services`.
+- **Hacer `fetch` a la propia API desde un Server Component.** Latencia y salto HTTP innecesarios; se llama al servicio de `lib/services` directo.
 
 ## Paso siguiente
 
-Ver README raíz, sección 2 (contratos): fuente única Zod, regla fetch-vs-import y lista de prohibiciones.
+Ver README raíz, sección 2, "Contratos (vinculantes)": fuente única Zod, regla fetch-vs-import y lista de prohibiciones.
