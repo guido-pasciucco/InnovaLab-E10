@@ -49,6 +49,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+          set -x
           labels="$(gh api "repos/$REPO/issues/$PR_NUMBER/labels" --jq '.[].name')"
 
           if echo "$labels" | grep -qxF "status: changes requested"; then
@@ -73,6 +74,7 @@ jobs:
         run: |
           repo_name="${{ github.event.repository.name }}"
 
+          set -x
           # 1) Field and option IDs for the Status single-select field.
           field_data="$(gh api graphql -f query='
             query($owner: String!, $number: Int!) {
