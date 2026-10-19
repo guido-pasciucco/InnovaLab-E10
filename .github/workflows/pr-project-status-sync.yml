@@ -43,7 +43,7 @@ jobs:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          labels="$(gh api "repos/$REPO/issues/${{ github.event.pull_request.number }}/labels" --jq '.labels[].name')"
+          labels="$(gh api "repos/$REPO/issues/${{ github.event.pull_request.number }}/labels" --jq '.[].name')"
 
           if echo "$labels" | grep -qxF "status: changes requested"; then
             echo "TARGET_STATUS=In progress" >> "$GITHUB_ENV"
