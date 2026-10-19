@@ -46,7 +46,10 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
   const hasSuccess = state?.ok && state.data;
 
   return (
-    <form onSubmit={handleSubmit(dispatchInTransition(submitAction))}>
+    <form
+      onSubmit={handleSubmit(dispatchInTransition(submitAction))}
+      noValidate
+    >
       {hasSuccess && (
         <div role="status">
           <p>Guardado</p>
