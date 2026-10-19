@@ -23,12 +23,13 @@ export default defineConfig({
   testDir: "tests/e2e",
   globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
-  // CI is not set up for this project yet (E2E runs locally only). These
-  // `process.env.CI` switches are inert until a CI pipeline sets `CI=true`.
-  forbidOnly: !!process.env.CI,
+  // Reject focused suites locally as well as in GitHub Actions.
+  forbidOnly: true,
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? "github" : "list",
+  reporter: process.env.CI
+    ? [["github"], ["json", { outputFile: "test-results/report.json" }]]
+    : "list",
   use: {
     baseURL: BASE_URL,
     trace: "retain-on-failure",
@@ -37,11 +38,11 @@ export default defineConfig({
   webServer: {
     // Production build, not `next dev` (stable timing, no on-demand compile).
     // NEXT_PUBLIC_* are inlined at build time, so the build itself must get
-    // the local values: both steps inherit `env` below. Binaries are called
-    // directly (not via `bun run`) so bun does not re-inject `.env`.
+    // the local values: both steps inherit `env` below. Invoke the Next CLI
+    // through Node (not `bun run`) for Windows portability without re-injecting `.env`.
     // Note: this overwrites the production build in `.next/` with one wired
     // to local Supabase; `next dev` uses `.next/dev` and is not affected.
-    command: `node_modules/.bin/next build && node_modules/.bin/next start --hostname 127.0.0.1 --port ${PORT}`,
+    command: `node node_modules/next/dist/bin/next build && node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port ${PORT}`,
     url: BASE_URL,
     // Never attach to a server started with unknown env (it could be wired
     // to the hosted project).
