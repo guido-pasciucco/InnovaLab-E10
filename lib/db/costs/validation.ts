@@ -1,13 +1,12 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
+import { moneyString, quantityString, uuidString } from "../formats";
 import {
-  codeString,
-  moneyString,
-  nameString,
-  quantityString,
-  uuidString,
-} from "../formats";
+  behaviorField,
+  conceptField,
+  traceabilityField,
+} from "@/lib/schemas/costs/fields";
 import { businessCostLines, calcCostLines } from "./table";
 
 // ---------------------------------------------------------------------------
@@ -36,9 +35,9 @@ export const calcCostLineRowSchema = createSelectSchema(calcCostLines, {
 export const createBusinessCostLineInputSchema = createInsertSchema(
   businessCostLines,
   {
-    concept: nameString(200),
-    behavior: codeString(40),
-    traceability: codeString(40),
+    concept: conceptField,
+    behavior: behaviorField,
+    traceability: traceabilityField,
     amountPeriod: moneyString,
     notes: z.string().trim().max(500).nullish(),
   },
@@ -52,9 +51,9 @@ export const createBusinessCostLineInputSchema = createInsertSchema(
 export const createCalcCostLineInputSchema = createInsertSchema(calcCostLines, {
   scenarioId: uuidString.nullish(),
   sourceBusinessCostId: uuidString,
-  concept: nameString(200),
-  behavior: codeString(40),
-  traceability: codeString(40),
+  concept: conceptField,
+  behavior: behaviorField,
+  traceability: traceabilityField,
   amount: moneyString,
   hours: quantityString.nullish(),
   hourlyRate: quantityString.nullish(),
