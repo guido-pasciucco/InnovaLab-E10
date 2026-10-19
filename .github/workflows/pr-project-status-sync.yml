@@ -49,11 +49,12 @@ jobs:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
         run: |
           PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
-          set -x
           labels="$(gh api "repos/$REPO/issues/$PR_NUMBER/labels" --jq '.[].name')"
 
           if echo "$labels" | grep -qxF "status: changes requested"; then
             echo "TARGET_STATUS=In progress" >> "$GITHUB_ENV"
+          elif echo "$labels" | grep -qxF "status: approved"; then
+            echo "TARGET_STATUS=Approved" >> "$GITHUB_ENV"
           elif echo "$labels" | grep -qxF "status: in review"; then
             echo "TARGET_STATUS=In review" >> "$GITHUB_ENV"
           elif echo "$labels" | grep -qxF "status: in progress"; then
@@ -74,7 +75,6 @@ jobs:
         run: |
           repo_name="${{ github.event.repository.name }}"
 
-          set -x
           # 1) Field and option IDs for the Status single-select field.
           field_data="$(gh api graphql -f query='
             query($owner: String!, $number: Int!) {
@@ -131,7 +131,6 @@ jobs:
               | select(.project.number == ($num | tonumber))
               | .id] | first')"
 
-          echo "DEBUG pr=$(gh api repos/$REPO/pulls/${{ github.event.pull_request.number || inputs.pr_number }} --jq '.number') item_id=$ITEM_ID project_id=$PROJECT_ID field_id=$STATUS_FIELD_ID option_id=$STATUS_OPTION_ID closing=$issue_data"
           if [ -z "$ITEM_ID" ] || [ "$ITEM_ID" = "null" ]; then
             echo "::warning::No linked issue from $repo_name found as an item in project $PROJECT_NUMBER. Make sure the PR body uses 'Fixes #N' (or Closes/Resolves) and the issue was added to the project."
             exit 0
