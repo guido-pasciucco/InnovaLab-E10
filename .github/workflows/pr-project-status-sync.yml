@@ -29,6 +29,7 @@ permissions:
 env:
   PROJECT_OWNER: guido-pasciucco
   PROJECT_NUMBER: "3"
+  REPO: ${{ github.repository }}
 
 jobs:
   sync:
@@ -46,7 +47,6 @@ jobs:
       - name: Compute target Status from current PR labels
         env:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
-          REPO: ${{ github.repository }}
         run: |
           PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
           set -x
