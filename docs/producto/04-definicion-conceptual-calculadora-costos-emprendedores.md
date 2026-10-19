@@ -372,6 +372,8 @@ Persistencia mediante cuenta de usuario.
 
 Modelo inicial sencillo y transparente; ABC fuera del MVP.
 
+> **Estado de registro:** estas decisiones están tomadas y rigen el alcance del producto, pero todavía no tienen una ficha individual en `docs/decisiones/establecidas/negocio/`. Ese directorio se creará con la primera de ellas; hasta entonces, esta sección es su fuente vigente.
+
 ## 11. Decisiones que el equipo todavía debe cerrar
 
 Definir si el cálculo principal utilizará producción real, producción esperada o capacidad normal para asignar determinados costos.
