@@ -1,0 +1,147 @@
+# Syncs PR status labels to the linked issue's Status field in the
+# user-owned Projects v2 board "Innova Lab - Equipo 10" (project #3).
+#
+# Flow: PR referencing an issue gets a `status:` label; the workflow moves
+# the *issue* item's Status in the project to the matching column.
+#
+# Requirements:
+# - Secret PROJECT_TOKEN: classic PAT with the `project` scope (the default
+#   GITHUB_TOKEN cannot access user-owned Projects v2).
+# - PRs must reference their issue with a closing keyword
+#   (Fixes #N / Closes #N / Resolves #N) so the issue can be resolved.
+
+name: PR status → Project issue status
+
+on:
+  pull_request:
+    types: [labeled, unlabeled]
+
+permissions:
+  pull-requests: read
+  contents: read
+
+env:
+  PROJECT_OWNER: guido-pasciucco
+  PROJECT_NUMBER: "3"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PROJECT_TOKEN is configured
+        env:
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          if [ -z "$PROJECT_TOKEN" ]; then
+            echo "::warning::Secret PROJECT_TOKEN is not set. Create a classic PAT with the 'project' scope and save it as the PROJECT_TOKEN secret. Skipping sync."
+            exit 0
+          fi
+
+      - name: Compute target Status from current PR labels
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          labels="$(gh api "repos/$REPO/issues/${{ github.event.pull_request.number }}/labels" --jq '.labels[].name')"
+
+          if echo "$labels" | grep -qxF "status: changes requested"; then
+            echo "TARGET_STATUS=In progress" >> "$GITHUB_ENV"
+          elif echo "$labels" | grep -qxF "status: in review"; then
+            echo "TARGET_STATUS=In review" >> "$GITHUB_ENV"
+          elif echo "$labels" | grep -qxF "status: in progress"; then
+            echo "TARGET_STATUS=In progress" >> "$GITHUB_ENV"
+          else
+            echo "TARGET_STATUS=" >> "$GITHUB_ENV"
+          fi
+
+      - name: Skip if no status label applies
+        if: env.TARGET_STATUS == ''
+        run: |
+          echo "No status:* label present on the PR; nothing to sync."
+
+      - name: Resolve project, field and option IDs, then sync issue Status
+        if: env.TARGET_STATUS != ''
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PR_NODE_ID: ${{ github.event.pull_request.node_id }}
+        run: |
+          repo_name="${{ github.event.repository.name }}"
+
+          # 1) Field and option IDs for the Status single-select field.
+          field_data="$(gh api graphql -f query='
+            query($owner: String!, $number: Int!) {
+              user(login: $owner) {
+                projectV2(number: $number) {
+                  id
+                  field(name: "Status") {
+                    ... on ProjectV2SingleSelectField {
+                      id
+                      options { id name }
+                    }
+                  }
+                }
+              }
+            }' -f owner="$PROJECT_OWNER" -F number="$PROJECT_NUMBER")"
+
+          PROJECT_ID="$(echo "$field_data" | jq -r '.data.user.projectV2.id')"
+          STATUS_FIELD_ID="$(echo "$field_data" | jq -r '.data.user.projectV2.field.id')"
+          STATUS_OPTION_ID="$(echo "$field_data" | \
+            jq -r --arg target "$TARGET_STATUS" \
+            '.data.user.projectV2.field.options[] | select(.name == $target) | .id')"
+
+          if [ -z "$STATUS_OPTION_ID" ] || [ "$STATUS_OPTION_ID" = "null" ]; then
+            echo "::error::Status option '$TARGET_STATUS' not found in project $PROJECT_NUMBER."
+            exit 1
+          fi
+
+          # 2) Issue linked to this PR via a closing keyword (Fixes/Closes/Resolves).
+          issue_data="$(gh api graphql -f query='
+            query($pr: ID!) {
+              node(id: $pr) {
+                ... on PullRequest {
+                  closingIssuesReferences(first: 10) {
+                    nodes {
+                      id
+                      number
+                      repository { name }
+                      projectItems(first: 20) {
+                        nodes { id project { number } }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f pr="$PR_NODE_ID")"
+
+          ITEM_ID="$(echo "$issue_data" | \
+            jq -r --arg num "$PROJECT_NUMBER" --arg repo "$repo_name" \
+            '[.data.node.closingIssuesReferences.nodes[]
+              | select(.repository.name == $repo)
+              | .projectItems.nodes[]
+              | select(.project.number == ($num | tonumber))
+              | .id] | first')"
+
+          if [ -z "$ITEM_ID" ] || [ "$ITEM_ID" = "null" ]; then
+            echo "::warning::No linked issue from $repo_name found as an item in project $PROJECT_NUMBER. Make sure the PR body uses 'Fixes #N' (or Closes/Resolves) and the issue was added to the project."
+            exit 0
+          fi
+
+          # 3) Update the issue item's Status.
+          gh api graphql -f query='
+            mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: $project
+                itemId: $item
+                fieldId: $field
+                value: { singleSelectOptionId: $value }
+              }) {
+                projectV2Item { id }
+              }
+            }' \
+            -f project="$PROJECT_ID" \
+            -f item="$ITEM_ID" \
+            -f field="$STATUS_FIELD_ID" \
+            -f value="${STATUS_OPTION_ID}" \
+            --jq '.data.updateProjectV2ItemFieldValue.projectV2Item.id' >/dev/null
+
+          echo "Synced issue item $ITEM_ID to Status '$TARGET_STATUS'."
