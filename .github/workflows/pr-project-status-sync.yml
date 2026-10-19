@@ -14,6 +14,11 @@ name: PR status → Project issue status
 
 on:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to sync (manual runs only)"
+        required: false
+        type: string
   pull_request:
     types: [labeled, unlabeled]
 
@@ -43,7 +48,8 @@ jobs:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          labels="$(gh api "repos/$REPO/issues/${{ github.event.pull_request.number }}/labels" --jq '.[].name')"
+          PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+          labels="$(gh api "repos/$REPO/issues/$PR_NUMBER/labels" --jq '.[].name')"
 
           if echo "$labels" | grep -qxF "status: changes requested"; then
             echo "TARGET_STATUS=In progress" >> "$GITHUB_ENV"
@@ -64,7 +70,6 @@ jobs:
         if: env.TARGET_STATUS != ''
         env:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
-          PR_NODE_ID: ${{ github.event.pull_request.node_id }}
         run: |
           repo_name="${{ github.event.repository.name }}"
 
@@ -94,6 +99,8 @@ jobs:
             echo "::error::Status option '$TARGET_STATUS' not found in project $PROJECT_NUMBER."
             exit 1
           fi
+
+          PR_NODE_ID="$(gh api "repos/$REPO/pulls/${{ github.event.pull_request.number || inputs.pr_number }}" --jq '.node_id')"
 
           # 2) Issue linked to this PR via a closing keyword (Fixes/Closes/Resolves).
           issue_data="$(gh api graphql -f query='
