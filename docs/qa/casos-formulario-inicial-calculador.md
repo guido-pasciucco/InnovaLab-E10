@@ -38,7 +38,7 @@
 
 ## Mensajes y textos de referencia
 
-Reglas y mensajes definidos **una sola vez** en `lib/schemas/calculator-setup/fields.ts` y compartidos entre formulario y base (ver ADR [`01-reglas-de-campo-compartidas.md`](../decisiones/establecidas/01-reglas-de-campo-compartidas.md)).
+Reglas y mensajes definidos **una sola vez** en `lib/schemas/calculator-setup/fields.ts` y compartidos entre formulario y base (ver ADR [`01-reglas-de-campo-compartidas.md`](../decisiones/establecidas/desarrollo/01-reglas-de-campo-compartidas.md)).
 
 | Campo | Regla | Mensaje exacto |
 | --- | --- | --- |
@@ -228,7 +228,7 @@ Cada caso se cierra copiando su fila al registro de evidencia del final, con fec
   3. Guardar datos distintos como B.
   4. Volver a iniciar sesión como A y abrir `/paso-1`.
 - **Resultado esperado:** B arranca sin el setup de A (o con el suyo propio); los datos quedan aislados por usuario; A sigue viendo sus datos sin cambios.
-- **Trazabilidad:** `lib/services/calculator.ts` (scope por `userId`), ADR [`02-persistencia-del-calculo-en-servidor.md`](../decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md); #36 (aislamiento entre dos usuarios).
+- **Trazabilidad:** `lib/services/calculator.ts` (scope por `userId`), ADR [`02-persistencia-del-calculo-en-servidor.md`](../decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md); #36 (aislamiento entre dos usuarios).
 - **Estado:** Pendiente
 
 ### CFI-17 — Moneda ARS y período Mensual visibles y no editables
