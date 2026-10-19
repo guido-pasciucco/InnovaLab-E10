@@ -2,15 +2,7 @@
 
 MVP de la Fase 1 de una calculadora inteligente para **costos, precios y análisis de punto de equilibrio** (`Costos / Precios / Punto de Equilibrio`).
 
-El **borrador del cálculo** de la Fase 1 se persiste **solo en el servidor**, con sesión obligatoria: vive en las tablas de `lib/db` y se guarda al confirmar cada paso. Ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
-
-Lo que **ya está en marcha** y no es parte de la Fase 1 pendiente:
-
-- **Autenticación con Supabase funcionando**: login, signup, recuperación y actualización de contraseña, confirmación de email y dashboard. Es el andamiaje de la plataforma, no la parte de historial que se había planeado para la Fase 2.
-- **Base de datos con Drizzle**: `drizzle.config.ts`, 4 migraciones aplicadas (RLS con políticas de propietario, FK de `profiles`, trigger de creación de perfil) y stack local de Supabase para los tests.
-
-> [!IMPORTANT]
-> Este README describía la Fase 1 como "sin backend" y el cálculo como "local-first". Ya no es cierto: la autenticación con Supabase está implementada, la base tiene migraciones aplicadas y el borrador del cálculo se guarda en servidor ([ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)). Lo que la Fase 1 tiene que entregar es **el cálculo** sobre esa base.
+El **borrador del cálculo** de la Fase 1 se persiste **solo en el servidor**, con sesión obligatoria: vive en las tablas de `lib/db` y se guarda al confirmar cada paso. Ver [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md).
 
 ## 📂 Guías por directorio
 
@@ -36,8 +28,6 @@ Stack del proyecto:
 | Tailwind CSS | 4 (`@tailwindcss/postcss`) | Estilos mediante el plugin de PostCSS |
 | TypeScript | 5, `strict`, `target ES2017`, alias `@/*` | Seguridad de tipos; `@/` apunta a la raíz del repositorio |
 | ESLint | 9 + `eslint-config-next` | Linting (reglas de Next.js) |
-| `next.config.ts` | stub (vacío) | Reservado para futura configuración de Next.js |
-| App Router | rutas de auth (`login`, `signup`, `reset-password`, `update-password`, `dashboard`, `profile`) + assistant (calculator) | Auth completo con Server Actions; el asistente (`paso-1`, `paso-2`, `resultados`) está en stub |
 
 Scripts disponibles:
 
@@ -84,60 +74,38 @@ app -> components -> lib/calc
 ```
 
 - `lib/calc`, `lib/money`, `lib/schemas`: dominio puro y universal. Sin APIs exclusivas del servidor, sin APIs exclusivas del navegador, sin I/O.
-- La infraestructura (p. ej. `lib/db.ts`) es **solo de servidor** (import `server-only`) y nunca se importa desde componentes de cliente.
-
-### División por fases
-
-- **Fase 1 (actual, MVP):** el **borrador del cálculo** se persiste solo en servidor, con sesión obligatoria (`requireUser()`). Un borrador por usuario (`calculations.status = 'draft'`), guardado al "Confirmar" de cada paso mediante Server Actions que llaman a servicios de `lib/services`. Sin `localStorage`, sin IndexedDB, sin híbrido. Ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
-- **Ya implementado (andamiaje, no Fase 1 pendiente):** autenticación con Supabase (login, signup, reset, update, confirm, dashboard, profile) con Server Actions, y base de datos con Drizzle, 4 migraciones aplicadas y RLS por propietario. Ese andamiaje sostiene la plataforma y la auth; lo que la Fase 1 tiene que agregar es el cálculo.
-- **Más adelante:** historial de cálculos y varios borradores por usuario. La persistencia con cuenta de usuario ya no es Fase 2: la contradicción con el "local-first" del README original quedó resuelta en el [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
-
-### Estado real del asistente
-
-El recorrido guiado está en stub. Lo que existe:
-
-```text
-app/(calculator)/paso-1/page.tsx      4 líneas: "Step 1 — TODO"
-app/(calculator)/paso-2/page.tsx      stub
-app/(calculator)/resultados/page.tsx  stub
-lib/calc/  lib/store/              solo .gitkeep
-lib/money/                        format.ts y format.test.ts (parseARS, formatARS)
-lib/schemas/                        auth/, calculator-setup/, business/ (campos)
-```
-
-**`app/(calculator)/layout.tsx` no existe todavía.** Con la persistencia en servidor no hace falta para conservar el borrador entre pasos: cada página lo lee por servicio después de `requireUser()`.
+- La infraestructura (p. ej. `lib/db/`, con `import "server-only"` en su cliente `lib/db/client.ts`) es **solo de servidor** y nunca se importa desde componentes de cliente.
 
 ### Estructura objetivo (construir hacia esto, no inventar árboles paralelos)
 
 ```text
 app/
-  (calculator)/          # stub: paso-1, paso-2, resultados. Falta layout.tsx
+  (calculator)/          # asistente guiado: paso-1, paso-2, resultados
   auth/              # confirmar email
   dashboard/         # destino tras login
   profile/
   login/  signup/  reset-password/  update-password/
-    actions.ts       # Server Action por feature (5 en total)
+    actions.ts       # Server Action por feature
 proxy.ts             # refresh de sesión Supabase en cada request (no bloquea; ver lib/supabase/proxy)
 components/
   charts/  forms/  ui/  calculator/
 lib/
-  calc/          # pure domain math (costs, pricing, break-even) — vacío, solo .gitkeep
-  money/         # parseARS y formatARS en format.ts, con format.test.ts
+  calc/          # pure domain math (costs, pricing, break-even)
+  money/         # parseARS y formatARS
   schemas/       # THE single Zod source of truth (auth/, calculator-setup/, business/; field rules in <contract>/fields.ts)
   services/      # lógica de negocio del servidor (transport-agnostic), usada por las Server Actions
   supabase/      # clientes Supabase por runtime (proxy, rsc) — server-only
   types/         # tipos compartidos (p. ej. FormState)
-  store/         # estado de interfaz en el cliente (no persiste el cálculo, ver ADR 02) — vacío, dueño: Frontend
+  store/         # estado de interfaz en el cliente (no persiste el cálculo, ver ADR 02)
   errors/        # catálogo central de errores + adaptadores de route y action
   auth/          # guard de sesión para Server Components (requireUser)
   db/            # esquema Drizzle, cliente getDrizzleClient() y reglas de escritura en servidor
-  db.ts          # server-only, placeholder
 tests/
   support/       # entorno de .env.test, cliente Admin y factories (integración + E2E)
   e2e/           # Playwright + Supabase local (auth; RLS se prueba en lib/db/rls.int.test.ts)
 ```
 
-**Los tests unitarios y de integración están co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`): la suite unitaria aprueba 19 archivos y 235 tests (proyecto `unit`). La integración registra 2 archivos y 17 casos: Calculator (11) y RLS (6). Su ejecución funcional requiere `.env.test` y Supabase local; el recuento de casos no implica que hayan pasado. Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
+**Los tests unitarios y de integración están co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
 
 ### Contratos (vinculantes)
 
@@ -149,7 +117,7 @@ tests/
    - Los Server Components leen la persistencia mediante los servicios de `lib/services` (que usan `lib/db` por dentro), nunca importando `lib/db` ni con `fetch` interno a su propia API.
    - Consumidores externos (app nativa, webhooks, terceros) → Route Handlers (contrato HTTP estable). Hoy no hay ninguno; ver [API HTTP de auth](docs/examples/http-auth-api.md) para cómo agregarlos. Una PWA no los necesita.
 3. **El dominio se mantiene universal.** Nada en `lib/calc`, `lib/money`, `lib/schemas` puede usar APIs de servidor de Node/Next ni `window`/`localStorage`.
-4. **La infraestructura permanece en el servidor.** `lib/db.ts` (y todo lo que toque secretos o Supabase) importa `server-only`.
+4. **La infraestructura permanece en el servidor.** `lib/db/` (su cliente, `lib/db/client.ts`, importa `server-only`) y todo lo que toque secretos o Supabase nunca se importan desde el cliente.
 5. **Los gráficos son solo de cliente.** Cada componente de gráficos usa `'use client'` más `dynamic(..., { ssr: false })`.
 
 > [!IMPORTANT]
@@ -167,7 +135,7 @@ tests/
 | Tipos compartidos | `lib/types` (p. ej. `FormState`) |
 | UI del asistente, gráficos, primitivas | `components/calculator`, `components/charts`, `components/ui` |
 | Matemática pura / dinero / esquemas | `lib/calc`, `lib/money`, `lib/schemas` |
-| Persistencia del cálculo (borrador) | `lib/db/` (server-only, Drizzle), accedida solo desde `lib/services` — ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md) |
+| Persistencia del cálculo (borrador) | `lib/db/` (server-only, Drizzle), accedida solo desde `lib/services` — ver [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md) |
 | Estado de interfaz en el cliente (no persiste el cálculo) | `lib/store` |
 | Pruebas unitarias | co-locadas con el módulo (`<modulo>.test.ts`), se corren con `bun run test`; convenciones en [`TEST.md`](TEST.md) |
 | Pruebas de integración | co-locadas con el módulo (`<modulo>.int.test.ts`), contra Supabase local; se corren con `bun run test:int` |
@@ -184,29 +152,9 @@ tests/
 - **I/O o APIs de plataforma en código de dominio.** `lib/calc`, `lib/money`, `lib/schemas` se mantienen puros y universales.
 - **Lógica de negocio dentro de Route Handlers o actions.** Va en `lib/services` (acuerdo de equipo vigente: capa `services/` aprobada para lógica compartida entre actions y routes).
 
-### Preguntas abiertas (sin decidir, no asumir)
-
-1. ~~**Estado del asistente: librería o Context.**~~ **Sin objeto para H1/H2**: el borrador vive en servidor ([ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)), así que no hace falta estado global de cliente. Se reabre si vuelve a hacer falta — ver `lib/AGENTS.md` nota 4.
-2. ~~**Persistencia del cálculo: ¿local o en la base?**~~ **Resuelta: solo servidor, ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).** El ADR también registra qué pasa con `#33`, `#34` y `#63`.
-3. ~~LocalStorage vs IndexedDB para la persistencia de la Fase 1.~~ **Sin objeto**: el cálculo no se persiste en el cliente ([ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)).
-4. Proceso de cambios de esquemas: ¿cómo se proponen y migran los cambios en `lib/schemas`?
-
 ---
 
-## 3. 🗺️ Próximos pasos
-
-1. **Base del dominio** — `lib/schemas` está activo y `lib/money` implementa `parseARS` y `formatARS`, con sus tests co-locados. `lib/calc` (costos/precios/punto de equilibrio) continúa pendiente.
-2. **Pasos del asistente** — `paso-1` y `paso-2` como páginas protegidas con `requireUser()` que leen el borrador por servicio, con formularios vinculados a `lib/schemas` que guardan por Server Action (`components/calculator` + `components/ui`).
-3. **Vista de resultados** — `app/(calculator)/resultados`, gráficos solo de cliente (`components/charts`, `'use client'` + `dynamic ssr:false`).
-4. **Borde del servidor** — Server Actions delgadas de validar-y-delegar (a `lib/services`) para lo que necesite servidor. Sin Route Handlers mientras no haya un consumidor externo.
-5. **Persistencia del borrador en servidor** — servicios de `lib/services` sobre `lib/db` (setup y costos) y la migración H0.2 (#91). Ver [ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md).
-6. **Cobertura E2E** — flujo del asistente con Playwright en `tests/e2e` (hoy solo hay specs de auth; RLS se prueba como integración en `lib/db/rls.int.test.ts`, según [`TEST.md`](TEST.md)).
-7. **Pulido + despliegue** — lint/build limpios, despliegue único en Vercel verificado.
-8. **Fuera del alcance del MVP** — historial de cálculos y varios borradores por usuario.
-
----
-
-## 4. 🚀 Primeros pasos
+## 3. 🚀 Primeros pasos
 
 Prerrequisitos: [Bun](https://bun.sh) 1.4.2+ (gestor de paquetes) y Node.js 24 LTS (runtime). La versión de Bun está fijada en `package.json` (`packageManager`) y la de Node en `.nvmrc` (con [nvm](https://github.com/nvm-sh/nvm): `nvm install && nvm use`).
 
@@ -237,7 +185,15 @@ bun run typecheck  # genera los tipos de Next y verifica TypeScript sin build
 Los tests E2E corren contra un Supabase local en Docker (con Mailpit para capturar los mails de auth), nunca contra el proyecto de Supabase en la nube.
 
 > [!NOTE]
-> No hay CI configurado por ahora: lint, typecheck, tests unitarios (`bun run test`), de integración (`bun run test:int`) y E2E se corren localmente antes de abrir o mergear un PR. Las referencias a `CI` en `playwright.config.ts` quedan inactivas hasta que exista un pipeline.
+> El workflow `E2E` corre en cada PR hacia `main`: primero `bun run lint:e2e` (rechaza tests enfocados sin necesitar servicios) y los tests Python del sanitizador, después la suite completa de Chromium contra Supabase efímero local. Usa Node 24, Bun 1.4.2 y las migraciones del repo; no usa secretos de producción y funciona también para forks. Playwright hace el build de Next una sola vez.
+>
+> El check `E2E Chromium` y su código de salida son la señal oficial del resultado. Si el guard falla, E2E queda omitido: eso no equivale a una suite aprobada. Los retries existentes pueden informar casos intermitentes (`flaky`); consultá el log. La configuración de checks obligatorios para merge se administra por separado en GitHub.
+>
+> Ante un fallo se publica por 3 días un artefacto con resumen HTML por archivo/línea y trazas depuradas de acciones, tiempos y marcas de error. Se omiten cookies, claves, tráfico de red, DOM, capturas, fuentes, logs y valores de errores; el reporte es evidencia auxiliar, no reemplaza el check. `test-results/`, `.last-run.json` y `playwright-report/` siguen ignorados: nunca se versionan ni se suben los resultados crudos.
+>
+> Para una ejecución manual: GitHub → Actions → E2E → Run workflow, eligiendo la rama (disponible cuando el workflow exista en la rama predeterminada). Una actualización del PR cancela su ejecución anterior.
+>
+> Lint general, typecheck, unitarios e integración continúan ejecutándose localmente antes de abrir o mergear un PR. También podés reproducir E2E localmente con los comandos siguientes; `forbidOnly` está siempre activo y `bun run lint:e2e` no necesita `.env.test`, Docker, Chromium ni Supabase.
 
 Prerrequisitos, una vez por máquina:
 
@@ -320,4 +276,4 @@ tests/e2e/
 
 Notas:
 
-- El borrador del cálculo se persiste solo en servidor ([ADR 02](docs/decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)): no guardar el cálculo en `lib/store`, `localStorage` ni IndexedDB.
+- El borrador del cálculo se persiste solo en servidor ([ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)): no guardar el cálculo en `lib/store`, `localStorage` ni IndexedDB.

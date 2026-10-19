@@ -117,6 +117,8 @@ Otra cabecera 1 a 1 del cálculo.
 - `margin_convention`: sobre qué se calcula ese 30 % (sobre el costo o sobre el precio de venta, que dan resultados distintos).
 - `manual_price`: opcional, para la pregunta "ya vendo a $8000, ¿me conviene?".
 
+> **Convención de margen todavía abierta:** el `sobre costo` de este ejemplo es ilustrativo. La convención de margen sigue siendo una decisión abierta (ver [04 — Definición conceptual](./04-definicion-conceptual-calculadora-costos-emprendedores.md), sección 6, y el criterio de cálculo en [01 — Calculadora inteligente](./01-calculadora-inteligente.md)). La decisión se registra en [02 — Convención de margen](../decisiones/pendientes/negocio/02-convencion-de-margen.md).
+
 ### Paso 7 — Ana prueba "¿y si…?" → `scenarios` (futuro)
 
 Variantes del mismo cálculo, sin duplicar la hoja.
@@ -241,9 +243,9 @@ Resultado: costo unitario 1200 · equilibrio 262 cajas← computed_results  (fut
 
 ## Referencias
 
-- Glosario de términos y nombres: [04 — Definiciones](./04-definiciones.md)
+- Glosario de términos y nombres: [03 — Definiciones](./03-definiciones.md)
 - Esquema: `lib/db/profile/table.ts`, `lib/db/business/table.ts`, `lib/db/calculation/table.ts`, `lib/db/costs/table.ts`
 - Diagrama: `erd-calculadora-inteligente.mmd`
-- Decisión de persistencia: [ADR 02](../decisiones/establecidas/02-persistencia-del-calculo-en-servidor.md)
-- Conceptos de costos: [02 — Conceptos básicos](./02-Conceptos%20básicos%20para%20comprender%20el%20cálculo%20de%20costos.md)
+- Decisión de persistencia: [ADR 02](../decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)
+- Conceptos de costos: [04 — Definición conceptual](./04-definicion-conceptual-calculadora-costos-emprendedores.md)
 - Historias: H1 (#69), H2 (#75); migración de `calc_cost_lines` (#91)
