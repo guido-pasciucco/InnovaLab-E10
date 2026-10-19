@@ -129,6 +129,7 @@ jobs:
               | select(.project.number == ($num | tonumber))
               | .id] | first')"
 
+          echo "DEBUG pr=$(gh api repos/$REPO/pulls/${{ github.event.pull_request.number || inputs.pr_number }} --jq '.number') item_id=$ITEM_ID project_id=$PROJECT_ID field_id=$STATUS_FIELD_ID option_id=$STATUS_OPTION_ID closing=$issue_data"
           if [ -z "$ITEM_ID" ] || [ "$ITEM_ID" = "null" ]; then
             echo "::warning::No linked issue from $repo_name found as an item in project $PROJECT_NUMBER. Make sure the PR body uses 'Fixes #N' (or Closes/Resolves) and the issue was added to the project."
             exit 0
