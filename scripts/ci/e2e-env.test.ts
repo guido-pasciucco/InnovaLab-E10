@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { mapSupabaseEnv } from "./e2e-env";
+import { spawnSync } from "node:child_process";
+import { describe, expect, it, vi } from "vitest";
+import { mapSupabaseEnv, readSupabaseEnv } from "./e2e-env";
 
 // Parser-only fixtures: no .env.test is created and no services are contacted.
 const status = [
@@ -10,6 +11,40 @@ const status = [
   'MAILPIT_URL="http://127.0.0.1:54324"',
   'JWT_SECRET="not-for-the-app"',
 ].join("\n");
+
+describe("readSupabaseEnv", () => {
+  it("keeps the mapping when status succeeds with the configured timeout", () => {
+    const runStatus = vi.fn(() => ({ status: 0, stdout: status }));
+
+    expect(readSupabaseEnv(runStatus)).toEqual(mapSupabaseEnv(status));
+    expect(runStatus).toHaveBeenCalledWith(
+      "bun", ["x", "supabase", "status", "-o", "env"],
+      { encoding: "utf8", timeout: 60_000 },
+    );
+  });
+
+  it("fails without exposing output when a child process times out", () => {
+    // Exercise a real timeout quickly; the separate assertion above checks the production 60s limit.
+    const timedOut = spawnSync(process.execPath, ["-e", "setTimeout(() => {}, 10_000)"], {
+      encoding: "utf8",
+      timeout: 100,
+    });
+    expect(timedOut.error).toHaveProperty("code", "ETIMEDOUT");
+    const runStatus = vi.fn(() => ({ ...timedOut, stdout: "sensitive-output", stderr: "sensitive-error" }));
+
+    expect(() => readSupabaseEnv(runStatus)).toThrow(
+      "[e2e] Cannot read local Supabase status. Check that the stack is healthy.",
+    );
+  });
+
+  it("fails without exposing output when status exits unsuccessfully", () => {
+    const runStatus = vi.fn(() => ({ status: 1, stdout: "sensitive-output", stderr: "sensitive-error" }));
+
+    expect(() => readSupabaseEnv(runStatus)).toThrow(
+      "[e2e] Cannot read local Supabase status. Check that the stack is healthy.",
+    );
+  });
+});
 
 describe("mapSupabaseEnv", () => {
   it("maps CLI fields to the app environment without copying unrelated keys", () => {

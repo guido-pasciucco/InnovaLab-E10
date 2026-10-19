@@ -30,6 +30,8 @@ jobs:
           bun-version: '1.4.2'
       - run: bun install --frozen-lockfile
       - run: bun run lint:e2e
+      - name: Sanitizer unit tests
+        run: python3 -B -m unittest discover -s scripts/ci -p "test_*.py"
 
   e2e:
     name: E2E Chromium
@@ -80,4 +82,5 @@ jobs:
           if-no-files-found: error
       - name: Stop local Supabase
         if: always()
+        continue-on-error: true
         run: bun run supabase:stop

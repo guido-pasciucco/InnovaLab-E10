@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 import { assertLocalUrl } from "../../tests/support/test-env";
@@ -26,13 +26,26 @@ export function mapSupabaseEnv(output: string): Record<string, string> {
   return env;
 }
 
-if (import.meta.main) {
-  const result = spawnSync("bun", ["x", "supabase", "status", "-o", "env"], { encoding: "utf8" });
+type StatusRunner = (
+  command: string,
+  args: string[],
+  options: { encoding: "utf8"; timeout: number },
+) => Pick<SpawnSyncReturns<string>, "error" | "status" | "stdout">;
+
+export function readSupabaseEnv(runStatus: StatusRunner = spawnSync): Record<string, string> {
+  const result = runStatus("bun", ["x", "supabase", "status", "-o", "env"], {
+    encoding: "utf8",
+    timeout: 60_000,
+  });
   if (result.error || result.status !== 0) {
     // Never echo raw status output: it contains administrative credentials.
     throw new Error("[e2e] Cannot read local Supabase status. Check that the stack is healthy.");
   }
-  const env = mapSupabaseEnv(result.stdout);
+  return mapSupabaseEnv(result.stdout);
+}
+
+if (import.meta.main) {
+  const env = readSupabaseEnv();
   for (const value of Object.values(env)) {
     if (process.env.GITHUB_ACTIONS === "true") console.log(`::add-mask::${value}`);
   }
