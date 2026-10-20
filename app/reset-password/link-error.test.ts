@@ -10,6 +10,12 @@ describe("linkErrorMessage", () => {
     expect(linkErrorMessage("AUTH_UNAVAILABLE")).toBe("Authentication unavailable");
   });
 
+  it("explains an expired session", () => {
+    expect(linkErrorMessage("AUTH_SESSION_MISSING")).toBe(
+      "Your session has expired. Please request a new link",
+    );
+  });
+
   it.each([undefined, "", "INTERNAL", "<script>", ["AUTH_LINK_INVALID", "x"]])(
     "shows nothing for %j (only known link errors are rendered)",
     (code) => {

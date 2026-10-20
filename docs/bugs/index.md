@@ -11,7 +11,7 @@ Este directorio agrupa los bugs detectados en el code review de proyecto complet
 | BUG-003 | `formatARS` devuelve cadena vacía para valores que la base sí puede devolver | Crítico | `lib/money/`, `lib/db/` | [BUG-003](BUG-003-format-ars-devuelve-cadena-vacia.md) | Abierto |
 | BUG-004 | El validador de dinero acepta más dígitos enteros de los que la columna soporta | Crítico | `lib/db/formats.ts` | [BUG-004](BUG-004-money-string-acepta-mas-digitos-que-la-columna.md) | Abierto |
 | BUG-005 | Los servicios reciben `userId` como parámetro, y la única frontera de autorización depende de la disciplina | Crítico | `lib/services/` | [BUG-005](BUG-005-servicios-reciben-userid-como-parametro.md) | Abierto |
-| BUG-006 | `/update-password` renderiza el formulario sin verificar sesión | Aviso | `app/update-password/` | [BUG-006](BUG-006-update-password-sin-verificar-sesion.md) | Abierto |
+| BUG-006 | `/update-password` renderiza el formulario sin verificar sesión | Aviso | `app/update-password/` | [BUG-006](BUG-006-update-password-sin-verificar-sesion.md) | Resuelto |
 | BUG-007 | El RLS está probado en 2 de 10 tablas | Aviso | `lib/db/rls.int.test.ts` | [BUG-007](BUG-007-rls-solo-testeado-en-2-de-10-tablas.md) | Abierto |
 | BUG-008 | `lib/supabase/rsc.ts` traga incondicionalmente cualquier error al escribir cookies | Aviso | `lib/supabase/rsc.ts` | [BUG-008](BUG-008-rsc-traga-errores-al-escribir-cookies.md) | Abierto |
 | BUG-009 | No existe ningún error boundary en `app/` | Aviso | `app/` | [BUG-009](BUG-009-no-existe-error-tsx.md) | Abierto |

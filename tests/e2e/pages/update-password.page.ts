@@ -8,7 +8,7 @@ export class UpdatePasswordPage {
   readonly successMessage: Locator;
   readonly errorAlert: Locator;
 
-  constructor(page: Page) {
+  constructor(private readonly page: Page) {
     this.heading = page.getByRole("heading", { name: "Set new password" });
     this.passwordInput = page.getByLabel("New password");
     this.confirmInput = page.getByLabel("Confirm password");
@@ -17,6 +17,10 @@ export class UpdatePasswordPage {
     // Scoped to <main>: Next also renders an empty role=alert route
     // announcer outside it, which would make a page-wide query ambiguous.
     this.errorAlert = page.getByRole("main").getByRole("alert");
+  }
+
+  async goto(): Promise<void> {
+    await this.page.goto("/update-password");
   }
 
   async setPassword(password: string): Promise<void> {

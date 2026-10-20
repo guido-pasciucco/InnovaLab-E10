@@ -5,11 +5,20 @@ import { AppError } from "@/lib/errors/app-error";
 import { getSessionUserService, type SessionUser } from "@/lib/services/auth";
 import { createRscSupabaseClient } from "@/lib/supabase/rsc";
 
+const DEFAULT_REDIRECT = "/login";
+
+export type RequireUserOptions = {
+  // Where the browser lands when there is no session. It is the page's own
+  // destination (not a Supabase email link), so it may carry a query string
+  // to explain what happened.
+  redirectTo?: string;
+};
+
 // Guard for protected Server Components: returns the validated session
-// user or redirects to /login. A missing session is routine (no log);
+// user or redirects. A missing session is routine (no log);
 // anything else (e.g. missing env) is logged and still treated as
 // signed out, so a broken setup never renders a protected page.
-export async function requireUser(): Promise<SessionUser> {
+export async function requireUser(options: RequireUserOptions = {}): Promise<SessionUser> {
   let user: SessionUser | null = null;
 
   try {
@@ -22,6 +31,6 @@ export async function requireUser(): Promise<SessionUser> {
   }
 
   // redirect() throws, so it stays outside the try.
-  if (!user) redirect("/login");
+  if (!user) redirect(options.redirectTo ?? DEFAULT_REDIRECT);
   return user;
 }

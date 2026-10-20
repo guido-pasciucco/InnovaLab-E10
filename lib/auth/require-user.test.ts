@@ -11,9 +11,9 @@ vi.mock("@/lib/services/auth", () => ({
 
 const { requireUser } = await import("./require-user");
 
-async function redirectTarget(): Promise<string> {
+async function redirectTarget(options?: Parameters<typeof requireUser>[0]): Promise<string> {
   try {
-    await requireUser();
+    await requireUser(options);
   } catch (err) {
     const [kind, , target] = ((err as { digest?: string }).digest ?? "").split(";");
     if (kind === "NEXT_REDIRECT") return target;
@@ -41,6 +41,14 @@ describe("requireUser", () => {
   it("redirects to /login when there is no session", async () => {
     getSessionUserService.mockRejectedValue(new AppError("UNAUTHORIZED"));
     await expect(redirectTarget()).resolves.toBe("/login");
+  });
+
+  it("redirects to the given path when there is no session", async () => {
+    getSessionUserService.mockRejectedValue(new AppError("UNAUTHORIZED"));
+
+    await expect(
+      redirectTarget({ redirectTo: "/reset-password?error=AUTH_SESSION_MISSING" }),
+    ).resolves.toBe("/reset-password?error=AUTH_SESSION_MISSING");
   });
 
   it("lets Next.js control-flow errors through (dynamic rendering bailout)", async () => {
