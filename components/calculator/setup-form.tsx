@@ -31,6 +31,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     register,
     handleSubmit,
     setError,
+    reset,
     formState: { errors, isDirty },
   } = useForm<CalculatorSetup>({
     resolver: zodResolver(calculatorSetupSchema),
@@ -46,6 +47,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
   const hasSuccess = state?.ok && state.data;
 
   const isSubmittingRef = useRef(false);
+  const lastProcessedStateRef = useRef<typeof state | null>(null);
 
   // Libera el bloqueo de doble envío cuando la acción termina (éxito o fallo).
   useEffect(() => {
@@ -53,6 +55,15 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
       isSubmittingRef.current = false;
     }
   }, [isPending]);
+
+  // Sincroniza el formulario con los datos confirmados por el servidor
+  // después de un guardado exitoso, sin sobrescribir ediciones pendientes.
+  useEffect(() => {
+    if (!hasSuccess || !state.data || isDirty) return;
+    if (lastProcessedStateRef.current === state) return;
+    lastProcessedStateRef.current = state;
+    reset(state.data);
+  }, [hasSuccess, state, reset, isDirty]);
 
   const handleSubmitAction = (data: CalculatorSetup) => {
     if (isSubmittingRef.current) return;
