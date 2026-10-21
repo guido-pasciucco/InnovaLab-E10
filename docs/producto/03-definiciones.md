@@ -55,10 +55,6 @@ Los datos propios de la app para un usuario de Supabase Auth.
 **`status: "draft"`**
 **Borrador**: un cálculo todavía en edición. En la Fase 1 hay uno por usuario.
 
-**`category`**
-La categoría que elige el usuario: `fixed` (fijos), `variable` (variables), `own_labor` (trabajo propio), `indirect` (indirectos).
-*Es el lenguaje del usuario; la UI agrupa los costos por esto. Propuesta en #91.*
-
 **`behavior` (comportamiento)**
 Si el costo **cambia con la cantidad producida**: `fixed` o `variable`.
 *Término clásico de costos: cómo se "comporta" el costo frente al volumen.*
@@ -67,9 +63,9 @@ Si el costo **cambia con la cantidad producida**: `fixed` o `variable`.
 Si el costo **se puede atribuir directamente a este producto**: `direct` o `indirect`.
 *Que se pueda "rastrear" hasta el producto. Lo indirecto hay que repartirlo con un criterio.*
 
-**`own_labor` (trabajo propio)**
-El valor del tiempo que el emprendedor pone él mismo.
-*Labor = mano de obra; own = propia. Se separa porque es el costo que más se olvida.*
+**`is_own_labor` (trabajo propio)**
+El valor del tiempo que el emprendedor pone él mismo, marcado con `true` en su propio renglón. Es una **tercera dimensión independiente**: ese renglón también es fijo o variable y directo o indirecto, y por su `behavior` entra en el total del período.
+*Labor = mano de obra; own = propia. Se separa porque es el costo que más se olvida. Fue confirmada como dimensión aparte en #76 (2026-10-17), y entra en el total por decisión [0001 — El trabajo propio SÍ entra en totalPeriodo](../decisiones/establecidas/negocio/0001-confirmar-trabajo-propio-en-totalperiodo.md). Columna `is_own_labor` a agregar por #91 (hoy no existe en la tabla).*
 
 **`amount` vs `amount_period`**
 `amount`: importe del renglón en el cálculo. `amount_period`: importe del catálogo, expresado por período (ej. por mes).
