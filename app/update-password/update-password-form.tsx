@@ -12,6 +12,7 @@ import { updatePassword } from "./actions";
 import { type PasswordUpdateState } from "@/lib/types/auth";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
+import { useTransportAwareAction } from "@/components/forms/use-transport-aware-action";
 import type { Path } from "react-hook-form";
 
 const initialState: PasswordUpdateState = undefined;
@@ -33,7 +34,8 @@ const SERVER_FIELDS: readonly Path<UpdatePasswordFormValues>[] = ["password"];
 
 export default function UpdatePasswordForm() {
   const router = useRouter();
-  const [state, submitAction, pending] = useActionState(updatePassword, initialState);
+  const { action, transportError } = useTransportAwareAction(updatePassword);
+  const [state, submitAction, pending] = useActionState(action, initialState);
   const {
     register,
     handleSubmit,
@@ -102,6 +104,12 @@ export default function UpdatePasswordForm() {
       {state && !state.ok && !hasServerFieldErrors && (
         <p role="alert" className="text-sm text-red-600">
           {state.message}
+        </p>
+      )}
+
+      {transportError && (
+        <p role="alert" className="text-sm text-red-600">
+          {transportError}
         </p>
       )}
 
