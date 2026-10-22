@@ -140,9 +140,11 @@ async function insertRow(
   values: Record<string, unknown>,
   idColumn = "id",
 ): Promise<string> {
-  const { data, error } = await adminClient().from(table).insert(values).select(idColumn).single();
-  if (error || !data) throw new Error(`[int] insert ${table} failed: ${error?.message ?? "no row"}`);
-  const id = data[idColumn];
+  const { data, error } = await adminClient().from(table).insert(values).select("*").single();
+  if (error || !data || typeof data !== "object") {
+  throw new Error(`[int] insert ${table} failed: ${error?.message ?? "no row"}`);
+  }
+  const id = (data as Record<string, unknown>)[idColumn];
   if (typeof id !== "string") throw new Error(`[int] insert ${table} returned no ${idColumn}`);
   return id;
 }
