@@ -1,10 +1,16 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import playwright from "eslint-plugin-playwright";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    files: ["tests/e2e/**/*.{ts,tsx}"],
+    plugins: { playwright },
+    rules: { "playwright/no-focused-test": "error" },
+  },
   // Frontera lib/db (ver lib/db/AGENTS.md): la persistencia solo se importa
   // desde lib/services/ y desde los tests. Todo lo demás pasa por services.
   {
