@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 
 import { moneyString, quantityString, uuidString } from "../formats";
 import {
+  amountField,
   behaviorField,
   conceptField,
   traceabilityField,
@@ -38,7 +39,7 @@ export const createBusinessCostLineInputSchema = createInsertSchema(
     concept: conceptField,
     behavior: behaviorField,
     traceability: traceabilityField,
-    amountPeriod: moneyString,
+    amountPeriod: amountField,
     notes: z.string().trim().max(500).nullish(),
   },
 ).omit({
@@ -54,7 +55,7 @@ export const createCalcCostLineInputSchema = createInsertSchema(calcCostLines, {
   concept: conceptField,
   behavior: behaviorField,
   traceability: traceabilityField,
-  amount: moneyString,
+  amount: amountField,
   hours: quantityString.nullish(),
   hourlyRate: quantityString.nullish(),
   allocationPct: quantityString.nullish(),

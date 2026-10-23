@@ -42,21 +42,28 @@ describe("createBusinessCostLineInputSchema", () => {
   });
 
   it.each([
-    { key: "concept", message: "Escribí el concepto del costo.", why: "empty" },
+    {
+      key: "concept",
+      value: "",
+      message: "Escribí el concepto del costo.",
+    },
     {
       key: "behavior",
-      message: "Escribí cómo se comporta el costo.",
-      why: "whitespace-only",
+      value: "no-es-una-opcion",
+      message: "Elegí cómo se comporta el costo: fijo o variable.",
     },
     {
       key: "traceability",
-      message: "Escribí cómo se relaciona el costo con el producto.",
-      why: "empty",
+      value: "no-es-una-opcion",
+      message: "Elegí cómo se relaciona el costo con el producto: directo o indirecto.",
     },
-  ])("reports the Spanish message for $key when it is $why", ({ key, message }) => {
-    const value = key === "behavior" ? "   " : "";
-
-    expect(fieldErrors(createBusinessCostLineInputSchema, { ...validBusinessCostLine, [key]: value })).toEqual({
+  ])("reports the Spanish message for $key", ({ key, value, message }) => {
+    expect(
+      fieldErrors(createBusinessCostLineInputSchema, {
+        ...validBusinessCostLine,
+        [key]: value,
+      }),
+    ).toEqual({
       [key]: [message],
     });
   });
@@ -100,14 +107,25 @@ describe("createCalcCostLineInputSchema", () => {
   });
 
   it.each([
-    { key: "concept", message: "Escribí el concepto del costo." },
-    { key: "behavior", message: "Escribí cómo se comporta el costo." },
+    {
+      key: "concept",
+      value: "",
+      message: "Escribí el concepto del costo.",
+    },
+    {
+      key: "behavior",
+      value: "no-es-una-opcion",
+      message: "Elegí cómo se comporta el costo: fijo o variable.",
+    },
     {
       key: "traceability",
-      message: "Escribí cómo se relaciona el costo con el producto.",
+      value: "no-es-una-opcion",
+      message: "Elegí cómo se relaciona el costo con el producto: directo o indirecto.",
     },
-  ])("reports the Spanish message for $key on the calculation line", ({ key, message }) => {
-    expect(fieldErrors(createCalcCostLineInputSchema, { ...validCalcCostLine, [key]: "" })).toEqual({
+  ])("reports the Spanish message for $key on the calculation line", ({ key, value, message }) => {
+    expect(
+      fieldErrors(createCalcCostLineInputSchema, { ...validCalcCostLine, [key]: value }),
+    ).toEqual({
       [key]: [message],
     });
   });
