@@ -107,6 +107,27 @@ async function createCalculation(
   return data.id;
 }
 
+// Creates a calculation cost line via the admin client (bypasses RLS).
+async function createCalculationCostLine(
+  calculationId: string,
+  sourceBusinessCostId: string,
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from("calc_cost_lines")
+    .insert({
+      calculation_id: calculationId,
+      source_business_cost_id: sourceBusinessCostId,
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "directo",
+      amount: "50.00",
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(`[int] createCalculationCostLine failed: ${error.message}`);
+  return data.id;
+}
+
 type Owner = {
   user: CreatedUser;
   businessId: string;
@@ -236,6 +257,38 @@ describe("public.calculations", () => {
 
     expect(error).toBeNull();
   });
+
+  it("a user cannot re-anchor their calculation to another user's business", async () => {
+    const { ana, beto } = await arrangeTwoOwners();
+    const calculationId = await createCalculation(beto.user.id, beto.businessId, beto.productId);
+    const client = await userClient(beto.user);
+
+    const { error } = await client
+      .from("calculations")
+      .update({ business_id: ana.businessId, product_id: ana.productId })
+      .eq("id", calculationId);
+
+    expect(error).toMatchObject({ code: "42501" });
+    const { data } = await adminClient()
+      .from("calculations")
+      .select("business_id, product_id")
+      .eq("id", calculationId)
+      .single();
+    expect(data).toMatchObject({ business_id: beto.businessId, product_id: beto.productId });
+  });
+
+  it("a user can update their own calculation status", async () => {
+    const { beto } = await arrangeTwoOwners();
+    const calculationId = await createCalculation(beto.user.id, beto.businessId, beto.productId);
+    const client = await userClient(beto.user);
+
+    const { error } = await client
+      .from("calculations")
+      .update({ status: "in_review" })
+      .eq("id", calculationId);
+
+    expect(error).toBeNull();
+  });
 });
 
 describe("public.calc_cost_lines", () => {
@@ -285,6 +338,48 @@ describe("public.calc_cost_lines", () => {
       traceability: "directo",
       amount: "50.00",
     });
+
+    expect(error).toBeNull();
+  });
+
+  it("a user cannot re-anchor a calculation line to another user's cost line", async () => {
+    const { ana, beto } = await arrangeTwoOwners();
+    const betoCalculationId = await createCalculation(
+      beto.user.id,
+      beto.businessId,
+      beto.productId,
+    );
+    const lineId = await createCalculationCostLine(betoCalculationId, beto.costLineId);
+    const client = await userClient(beto.user);
+
+    const { error } = await client
+      .from("calc_cost_lines")
+      .update({ source_business_cost_id: ana.costLineId })
+      .eq("id", lineId);
+
+    expect(error).toMatchObject({ code: "42501" });
+    const { data } = await adminClient()
+      .from("calc_cost_lines")
+      .select("source_business_cost_id")
+      .eq("id", lineId)
+      .single();
+    expect(data).toMatchObject({ source_business_cost_id: beto.costLineId });
+  });
+
+  it("a user can update their own calculation line amount", async () => {
+    const { beto } = await arrangeTwoOwners();
+    const betoCalculationId = await createCalculation(
+      beto.user.id,
+      beto.businessId,
+      beto.productId,
+    );
+    const lineId = await createCalculationCostLine(betoCalculationId, beto.costLineId);
+    const client = await userClient(beto.user);
+
+    const { error } = await client
+      .from("calc_cost_lines")
+      .update({ amount: "75.00" })
+      .eq("id", lineId);
 
     expect(error).toBeNull();
   });

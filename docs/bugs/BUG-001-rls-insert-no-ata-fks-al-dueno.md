@@ -4,7 +4,7 @@
 | --- | --- |
 | ID | BUG-001 |
 | Severidad | Bloqueante |
-| Estado | Cerrado — verificado en local (RED→GREEN) |
+| Estado | Cerrado — verificado en local (RED→GREEN; INSERT + UPDATE) |
 | Origen | Code review de proyecto completo, 2026-10-10 |
 | Módulo | `drizzle/`, `lib/db/` |
 | Verificación | Ejecutado contra Supabase local |
@@ -52,7 +52,10 @@ Reproducido con tests de integración contra Supabase local
 cruzado de Beto (fila propia apuntando a negocio/producto/línea de Ana) pasaba
 en ambas tablas — 2 failed / 8 passed. Después de la migración
 (`drizzle/20261015102837_rls_transitive_policies.sql`, commit `b051f19`), el
-cruzado falla por violación de RLS y el propio pasa — 10/10.
+INSERT cruzado falla por violación de RLS y el propio pasa. La regresión también
+cubre UPDATE: no permite reanclar una fila propia a referencias de otro dueño y
+mantiene permitidas las actualizaciones sobre datos propios. La suite versionada
+queda en 14/14 casos verdes para este archivo contra Supabase local.
 
 ## Impacto
 
@@ -100,7 +103,7 @@ CREATE POLICY "calc_cost_lines_owner_insert" ON "calc_cost_lines"
 
 Aplicar el mismo `WITH CHECK` extendido a las políticas de UPDATE de ambas tablas (`calculations_owner_update`, `calc_cost_lines_owner_update`): el `USING` ya restringe tocar filas propias, pero el `WITH CHECK` actual permitiría cambiar `business_id`, `product_id` o `source_business_cost_id` a ids ajenos dentro de una fila propia.
 
-Verificación de la propuesta: reproducir contra el Supabase local con dos usuarios, donde el insert cruzado debe fallar por violación de RLS, y correr la suite de integración existente (`bun run test:int`) para confirmar que el flujo legítimo sigue en verde.
+Verificación de la propuesta: reproducir contra el Supabase local con dos usuarios, donde los INSERT y UPDATE cruzados deben fallar por violación de RLS, y correr la suite de integración existente (`bun run test:int`) para confirmar que el flujo legítimo sigue en verde.
 
 Evaluar además un helper o función `SECURITY DEFINER` para evitar repetir subconsultas en 40 políticas. Tradeoff: políticas más verbosas y con coste de planificación en cada INSERT.
 
