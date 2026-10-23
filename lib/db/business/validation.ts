@@ -23,7 +23,7 @@ export const productRowSchema = createSelectSchema(products);
 
 export const createBusinessInputSchema = createInsertSchema(businesses, {
   name: businessNameField,
-  businessType: businessTypeField,
+  businessType: businessTypeField.nullish(),
 }).omit({
   id: true,
   ownerUserId: true,

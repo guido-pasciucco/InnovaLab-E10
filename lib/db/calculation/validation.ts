@@ -1,13 +1,7 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-import {
-  codeString,
-  moneyString,
-  nameString,
-  quantityString,
-  uuidString,
-} from "../formats";
+import { moneyString, quantityString, uuidString } from "../formats";
 import {
   calculations,
   computedResults,
@@ -22,6 +16,10 @@ import {
   unitField,
   volumeField,
 } from "@/lib/schemas/calculator-setup/fields";
+import {
+  marginConventionField,
+  scenarioNameField,
+} from "@/lib/schemas/calculation/fields";
 
 // ---------------------------------------------------------------------------
 // Zod schemas derived from the Drizzle tables (server-side persistence, ADR 02).
@@ -84,7 +82,7 @@ export const upsertCostingSetupInputSchema = createInsertSchema(costingSetup, {
 });
 
 export const upsertPricingInputsInputSchema = createInsertSchema(pricingInputs, {
-  marginConvention: codeString(40),
+  marginConvention: marginConventionField,
   expectedMarginPct: quantityString,
   manualPrice: moneyString.nullish(),
 }).omit({
@@ -94,7 +92,7 @@ export const upsertPricingInputsInputSchema = createInsertSchema(pricingInputs, 
 });
 
 export const createScenarioInputSchema = createInsertSchema(scenarios, {
-  name: nameString(120),
+  name: scenarioNameField,
 }).omit({
   id: true,
   calculationId: true,

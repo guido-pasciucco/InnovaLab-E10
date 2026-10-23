@@ -28,5 +28,11 @@ export const quantityString = z
     "Expected a decimal string with up to 4 decimals",
   );
 
-export const nameString = (max: number) => z.string().trim().min(1).max(max);
-export const codeString = (max: number) => z.string().trim().min(1).max(max);
+// BUG-010: `nameString` and `codeString` used to live here as two identical
+// `z.string().trim().min(1).max(max)` helpers, neither declaring an `error:`.
+// Zod 4 then sent its internal English message to the form ("Too small:
+// expected string to have >=1 characters") through `toAppError` →
+// `field-errors.ts` → `setError`. They are gone: per `lib/schemas/AGENTS.md`
+// every rule and its message lives in a domain `fields.ts` — see
+// `lib/schemas/business/fields.ts`, `lib/schemas/calculation/fields.ts` and
+// `lib/schemas/costs/fields.ts`.

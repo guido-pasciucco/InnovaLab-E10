@@ -29,6 +29,22 @@ describe("createBusinessInputSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts a business when businessType is omitted", () => {
+    const input = { name: validBusiness.name };
+
+    const result = createBusinessInputSchema.safeParse(input);
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a business when businessType is null", () => {
+    const input = { ...validBusiness, businessType: null };
+
+    const result = createBusinessInputSchema.safeParse(input);
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects the name when it is whitespace-only", () => {
     const errors = fieldErrors(createBusinessInputSchema, { ...validBusiness, name: "   " });
 

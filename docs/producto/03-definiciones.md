@@ -1,6 +1,6 @@
 # Definiciones
 
-Glosario corto de las palabras que aparecen en el código, el esquema y las issues, y **por qué se llaman así**. Para el recorrido completo de las tablas, ver [03 — Modelo de datos del cálculo](./03-modelo-de-datos-del-calculo.md).
+Glosario corto de las palabras que aparecen en el código, el esquema y las issues, y **por qué se llaman así**. Para el recorrido completo de las tablas, ver [02 — Modelo de datos del cálculo](./02-modelo-de-datos-del-calculo.md).
 
 Cada entrada: **qué es** · *por qué el nombre*.
 
