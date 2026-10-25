@@ -18,11 +18,12 @@
     "db:push": "bunx drizzle-kit push",
     "db:migrate:local": "DIRECT_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bunx drizzle-kit migrate",
     "db:reset:local": "supabase db reset && bun run db:migrate:local",
+    "db:drift:local": "bun run scripts/db/drift.ts",
     "test": "vitest run --project unit",
     "test:int": "vitest run --project integration",
     "test:e2e": "playwright test",
     "e2e:setup": "playwright install chromium",
-    "e2e:up": "bun run supabase:start && bun run db:migrate:local",
+    "e2e:up": "bun run supabase:start && bun run db:migrate:local && bun run db:drift:local",
     "e2e:down": "bun run supabase:stop",
     "supabase:start": "supabase start -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "supabase:stop": "supabase stop"
