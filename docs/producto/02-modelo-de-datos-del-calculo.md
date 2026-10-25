@@ -83,21 +83,24 @@ Es **1 a 1** con el cálculo: su clave primaria es el propio `calculation_id`, a
 
 Los **renglones de la hoja**: todo lo que le cuesta hacer el producto en *este* cálculo.
 
-| calculation_id | concept | category | behavior | traceability | amount |
+| calculation_id | concept | behavior | traceability | is_own_labor | amount |
 |---|---|---|---|---|---|
-| c-2 | alquiler del taller | fixed | fixed | direct | 150000.00 |
-| c-2 | harina | variable | variable | direct | 30000.00 |
-| c-2 | horas de amasado | own_labor | variable | direct | 40000.00 |
-| c-2 | contador | indirect | fixed | indirect | 20000.00 |
+| c-2 | alquiler del taller | fixed | indirect | false | 150000.00 |
+| c-2 | harina | variable | direct | false | 30000.00 |
+| c-2 | horas de amasado | variable | direct | true | 40000.00 |
+| c-2 | contador | fixed | indirect | false | 20000.00 |
 
 Cada renglón cuelga del **cálculo**, no del producto. Para saber de qué producto es un costo: renglón → cálculo → producto.
 
 No es solo "lo que el producto consume". Es **todo lo que cuesta hacerlo**: el alquiler y el contador no se "usan" en el alfajor, pero hay que repartirlos entre las cajas.
 
-Dos formas de clasificar el mismo costo:
+Cada costo se describe con **tres datos independientes que el usuario responde por separado** — sin valores deducidos "por convención" (modelo confirmado en #76, 2026-10-17):
 
-- **`category`** (fijos, variables, trabajo propio, indirectos): el lenguaje del usuario. Es lo que eligió y es lo que la UI usa para agruparlo. *Columna propuesta en #91.*
-- **`behavior`** (¿cambia si hago más unidades?) y **`traceability`** (¿es solo de este producto o de todo el negocio?): el lenguaje del motor de cálculo. Hoy se completan **por convención** a partir de la categoría; son un supuesto, no un dato que haya dado el usuario.
+- **`behavior`** (¿cambia si hago más unidades?): `fixed` o `variable`.
+- **`traceability`** (¿se puede asignar directo a este producto o es de todo el negocio?): `direct` o `indirect`. Cada renglón guarda exactamente lo que respondió el usuario: no se adivina a partir de ningún menú de categorías, así que sí se puede, por ejemplo, un costo indirecto *variable* (el gas del horno compartido).
+- **`is_own_labor`** (columna que agrega #91, hoy no existe en la tabla): ¿es trabajo propio del emprendedor? Tercera dimensión independiente — un renglón de trabajo propio también es fijo o variable y directo o indirecto. Como tal, **entra en `totalPeriodo`** por su `behavior` (decisión [0001 — El trabajo propio SÍ entra en totalPeriodo](../decisiones/establecidas/negocio/0001-confirmar-trabajo-propio-en-totalperiodo.md)).
+
+**No existe `category` ni `categoryToAxes`.** Cualquier combinación de los tres datos es válida y no se deriva de los otros ejes. Cómo agrupa la UI filas con tres ejes es una decisión abierta del dueño de la historia (ver #75).
 
 Otros campos:
 
