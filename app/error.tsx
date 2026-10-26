@@ -6,12 +6,15 @@ export default function Error({
   error,
   retry,
 }: {
-  error: Error;
-  retry: () => void;
-}) {
+
   error: Error & { digest?: string };
   retry: () => void;
 
+}) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+  
   return (
     <div role="alert" className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
       <h2 className="text-2xl font-bold">
