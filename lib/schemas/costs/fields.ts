@@ -32,6 +32,13 @@ export const conceptField = z
 // the column. Mixing them would make an 11-digit amount say "no es un
 // número" instead of "demasiado grande".
 //
+// We use four `.pipe()` stages instead of one regex so each invalid input
+// exposes exactly one actionable message (empty, not a number, negative,
+// too many decimals, too large). The pipeline order is intentional: each
+// stage only runs when the previous one passed, so the user never sees two
+// conflicting errors for the same value. The tests in costs.test.ts assert
+// each stage's message individually.
+//
 // The integer-digit bound mirrors the column: `amount`/`amount_period` are
 // numeric(12,2), which holds 10 integer digits (BUG-004). Without it a longer
 // value passes validation and fails in Postgres with a 500 instead of a field

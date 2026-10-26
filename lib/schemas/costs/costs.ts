@@ -15,12 +15,16 @@ import {
 // so the column can plug in without renaming; the db validation wires it
 // when the migration lands.
 //
+// These types (`CalcCostLine`, `CostBehavior`, `CostTraceability`) are
+// scaffolding for the form ticket: they have no consumers outside tests yet.
+// Keep them until a real consumer appears, then move them to the domain.
+//
 // `amount` is a validated decimal string — never a float — so no money rule
 // leaks into the domain.
 //
 // The dimensions are independent: the user answers each one separately, and
 // no refinement crosses them (decision confirmed 2026-10-17).
-export const costLineSchema = z.object({
+export const calcCostLineSchema = z.object({
   concept: conceptField,
   amount: amountField,
   behavior: behaviorField,
@@ -30,5 +34,4 @@ export const costLineSchema = z.object({
 
 export type CostBehavior = z.infer<typeof behaviorField>;
 export type CostTraceability = z.infer<typeof traceabilityField>;
-export type CostLineInput = z.input<typeof costLineSchema>;
-export type CostLine = z.infer<typeof costLineSchema>;
+export type CalcCostLine = z.infer<typeof calcCostLineSchema>;
