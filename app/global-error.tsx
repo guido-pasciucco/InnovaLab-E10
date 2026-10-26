@@ -1,13 +1,20 @@
 "use client";
+import "./globals.css";
+import { useEffect } from "react";
 
 export default function GlobalError({
   error,
-  reset,
+  retry,
 }: {
   error: Error;
-  reset: () => void;
+  retry: () => void;
 }) {
-  console.error(error);
+  error: Error & { digest?: string };
+  retry: () => void;
+}) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
 
   return (
     <html lang="es">
@@ -20,9 +27,14 @@ export default function GlobalError({
           <p className="text-gray-600">
             Se produjo un error inesperado.
           </p>
+          {error.digest && (
+            <p className="text-gray-600">
+              Digest: {error.digest}
+            </p>
+          )}
 
           <button
-            onClick={() => reset()}
+            onClick={() => retry()}
             className="rounded bg-black px-4 py-2 text-white"
           >
             Reintentar

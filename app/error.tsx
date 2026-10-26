@@ -1,16 +1,19 @@
 "use client";
 
+import { useEffect } from "react";
+
 export default function Error({
   error,
-  reset,
+  retry,
 }: {
   error: Error;
-  reset: () => void;
+  retry: () => void;
 }) {
-  console.error(error);
+  error: Error & { digest?: string };
+  retry: () => void;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+    <div role="alert" className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
       <h2 className="text-2xl font-bold">
         Ha ocurrido un error
       </h2>
@@ -20,7 +23,7 @@ export default function Error({
       </p>
 
       <button
-        onClick={() => reset()}
+        onClick={() => retry()}
         className="rounded bg-black px-4 py-2 text-white"
       >
         Reintentar
