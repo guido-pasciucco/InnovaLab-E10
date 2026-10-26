@@ -36,27 +36,37 @@ const validCalcCostLine = {
 // so Zod 4 sent its internal English message ("Too small: expected string to
 // have >=1 characters") to the form through `toAppError` → `field-errors.ts` →
 // `setError`.
+//
+// This PR also replaces `moneyString` with `amountField` on the amount columns,
+// so the same Spanish messages the form shows reach the server too.
 describe("createBusinessCostLineInputSchema", () => {
   it("accepts a complete valid cost line", () => {
     expect(createBusinessCostLineInputSchema.safeParse(validBusinessCostLine).success).toBe(true);
   });
 
   it.each([
-    { key: "concept", message: "Escribí el concepto del costo.", why: "empty" },
+    {
+      key: "concept",
+      value: "",
+      message: "Escribí el concepto del costo.",
+    },
     {
       key: "behavior",
-      message: "Escribí cómo se comporta el costo.",
-      why: "whitespace-only",
+      value: "no-es-una-opcion",
+      message: "Elegí cómo se comporta el costo: fijo o variable.",
     },
     {
       key: "traceability",
-      message: "Escribí cómo se relaciona el costo con el producto.",
-      why: "empty",
+      value: "no-es-una-opcion",
+      message: "Elegí cómo se relaciona el costo con el producto: directo o indirecto.",
     },
-  ])("reports the Spanish message for $key when it is $why", ({ key, message }) => {
-    const value = key === "behavior" ? "   " : "";
-
-    expect(fieldErrors(createBusinessCostLineInputSchema, { ...validBusinessCostLine, [key]: value })).toEqual({
+  ])("reports the Spanish message for $key", ({ key, value, message }) => {
+    expect(
+      fieldErrors(createBusinessCostLineInputSchema, {
+        ...validBusinessCostLine,
+        [key]: value,
+      }),
+    ).toEqual({
       [key]: [message],
     });
   });
@@ -76,6 +86,15 @@ describe("createBusinessCostLineInputSchema", () => {
     ).toEqual({
       concept: ["El concepto del costo debe tener como máximo 200 caracteres."],
     });
+  });
+
+  it("rejects a negative amount on the business line", () => {
+    expect(
+      fieldErrors(createBusinessCostLineInputSchema, {
+        ...validBusinessCostLine,
+        amountPeriod: "-1",
+      }),
+    ).toEqual({ amountPeriod: ["El importe no puede ser negativo."] });
   });
 
   it("drops server-controlled fields when the input carries them", () => {
@@ -100,16 +119,33 @@ describe("createCalcCostLineInputSchema", () => {
   });
 
   it.each([
-    { key: "concept", message: "Escribí el concepto del costo." },
-    { key: "behavior", message: "Escribí cómo se comporta el costo." },
+    {
+      key: "concept",
+      value: "",
+      message: "Escribí el concepto del costo.",
+    },
+    {
+      key: "behavior",
+      value: "no-es-una-opcion",
+      message: "Elegí cómo se comporta el costo: fijo o variable.",
+    },
     {
       key: "traceability",
-      message: "Escribí cómo se relaciona el costo con el producto.",
+      value: "no-es-una-opcion",
+      message: "Elegí cómo se relaciona el costo con el producto: directo o indirecto.",
     },
-  ])("reports the Spanish message for $key on the calculation line", ({ key, message }) => {
-    expect(fieldErrors(createCalcCostLineInputSchema, { ...validCalcCostLine, [key]: "" })).toEqual({
+  ])("reports the Spanish message for $key on the calculation line", ({ key, value, message }) => {
+    expect(
+      fieldErrors(createCalcCostLineInputSchema, { ...validCalcCostLine, [key]: value }),
+    ).toEqual({
       [key]: [message],
     });
+  });
+
+  it("rejects a negative amount on the calculation line", () => {
+    expect(
+      fieldErrors(createCalcCostLineInputSchema, { ...validCalcCostLine, amount: "-1" }),
+    ).toEqual({ amount: ["El importe no puede ser negativo."] });
   });
 
   it("drops server-controlled fields when the input carries them", () => {
