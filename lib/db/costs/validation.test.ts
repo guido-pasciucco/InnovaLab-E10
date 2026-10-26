@@ -36,6 +36,9 @@ const validCalcCostLine = {
 // so Zod 4 sent its internal English message ("Too small: expected string to
 // have >=1 characters") to the form through `toAppError` → `field-errors.ts` →
 // `setError`.
+//
+// This PR also replaces `moneyString` with `amountField` on the amount columns,
+// so the same Spanish messages the form shows reach the server too.
 describe("createBusinessCostLineInputSchema", () => {
   it("accepts a complete valid cost line", () => {
     expect(createBusinessCostLineInputSchema.safeParse(validBusinessCostLine).success).toBe(true);
@@ -85,6 +88,15 @@ describe("createBusinessCostLineInputSchema", () => {
     });
   });
 
+  it("rejects a negative amount on the business line", () => {
+    expect(
+      fieldErrors(createBusinessCostLineInputSchema, {
+        ...validBusinessCostLine,
+        amountPeriod: "-1",
+      }),
+    ).toEqual({ amountPeriod: ["El importe no puede ser negativo."] });
+  });
+
   it("drops server-controlled fields when the input carries them", () => {
     const result = createBusinessCostLineInputSchema.parse({
       ...validBusinessCostLine,
@@ -128,6 +140,12 @@ describe("createCalcCostLineInputSchema", () => {
     ).toEqual({
       [key]: [message],
     });
+  });
+
+  it("rejects a negative amount on the calculation line", () => {
+    expect(
+      fieldErrors(createCalcCostLineInputSchema, { ...validCalcCostLine, amount: "-1" }),
+    ).toEqual({ amount: ["El importe no puede ser negativo."] });
   });
 
   it("drops server-controlled fields when the input carries them", () => {
