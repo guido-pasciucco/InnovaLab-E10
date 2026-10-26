@@ -65,7 +65,7 @@ Si el costo **se puede atribuir directamente a este producto**: `direct` o `indi
 
 **`is_own_labor` (trabajo propio)**
 El valor del tiempo que el emprendedor pone él mismo, marcado con `true` en su propio renglón: es un **booleano**. Es una **tercera dimensión independiente** — no es un valor de `behavior` ni de `traceability`, porque ese renglón también es fijo o variable y directo o indirecto, y por su `behavior` entra en el total del período.
-*Labor = mano de obra; own = propia. Se separa porque es el costo que más se olvida. Fue confirmada como dimensión aparte en #76 (2026-10-17), y entra en el total por decisión [0001 — El trabajo propio SÍ entra en totalPeriodo](../decisiones/establecidas/negocio/0001-confirmar-trabajo-propio-en-totalperiodo.md). Columna `is_own_labor` a agregar por #91 (hoy no existe en la tabla).*
+*Labor = mano de obra; own = propia. Se separa porque es el costo que más se olvida. Fue confirmada como dimensión aparte en #76 (2026-10-17), y entra en el total por decisión [0001 — El trabajo propio SÍ entra en totalPeriodo](../decisiones/establecidas/negocio/0001-confirmar-trabajo-propio-en-totalperiodo.md). Columna `is_own_labor` a agregar por #91 (hoy no existe en la tabla). El porqué de registrarlo aparte del concepto está en [0002 — El trabajo propio se registra aparte del concepto](../decisiones/establecidas/negocio/0002-trabajo-propio-se-registra-aparte-del-concepto.md).*
 
 > **No existe `category`.** El modelo confirmado el 2026-10-17 (ver #76) tiene tres datos independientes (`behavior`, `traceability`, `is_own_labor`) y ningún enum de cuatro categorías ni `categoryToAxes`. Cómo agrupa la UI las filas es una decisión abierta del dueño de la historia (ver #75).
 
