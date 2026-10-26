@@ -14,6 +14,7 @@ Cada sección del código tiene su propia guía en un `AGENTS.md`, para que tant
 | [`lib/errors/AGENTS.md`](lib/errors/AGENTS.md) | Manejo centralizado de errores: catálogo, `AppError`, adaptadores de rutas y actions, convención de códigos | Backend (Frontend consume) |
 | [`lib/db/AGENTS.md`](lib/db/AGENTS.md) | Persistencia en servidor con Drizzle: reglas de esquema, migraciones y flujo de escritura | Backend |
 | [`lib/schemas/AGENTS.md`](lib/schemas/AGENTS.md) | Contratos Zod, campos compartidos y convenciones de validación y tests | Según la guía vigente |
+| [`docs/README.md`](docs/README.md) | Cómo se escriben las docs: tipos, forma de una decisión de negocio y qué referencias no van | Producto (reglas) / Backend (docs técnicas) |
 
 ---
 
