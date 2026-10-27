@@ -50,7 +50,7 @@ El borrador se edita en el navegador y se sincroniza con la base. Descartada:
 Opción A, con estas nueve reglas:
 
 1. **Persistencia solo servidor.** Nada de borrador en `localStorage`, nada de híbrido, nada de IndexedDB. El borrador vive en las tablas existentes (`calculations`, `products`, `costing_setup`, `calc_cost_lines`).
-2. **La calculadora requiere sesión.** Toda página de `app/(calculator)/` llama a `requireUser()` (`lib/auth/require-user.ts`). El id de usuario sale **siempre de la sesión** (`requireUser()` / `getSessionUserService`), **nunca** del input del cliente. Los servicios reciben `userId` como parámetro.
+2. **La calculadora requiere sesión.** Toda página de `app/(calculator)/` llama a `requireUser()` (`lib/auth/require-user.ts`). El id de usuario sale **siempre de la sesión** (`requireUser()` / `getSessionUserService`), **nunca** del input del cliente. Propuesta BUG-005 (#124), pendiente de revisión de Backend antes del merge: los servicios públicos de Calculator reciben un cliente Supabase de sesión construido en servidor, verifican la identidad con `getSessionUserService(client)` en cada operación y nunca aceptan un `userId` como autorización. Esto incluye `getDraftCalculationId`. Los helpers privados pueden recibir el ID ya validado.
 3. **Se guarda al "Confirmar" de cada paso**, no en cada tecla. El feedback rápido se da con `useActionState` (pendiente → "Guardando…", ok → "Guardado") y con `useOptimistic` para editar y eliminar filas de costo.
 4. **Un borrador por usuario** (`calculations.status = 'draft'`). H1 deja fuera "varias fichas". Como `calculations` exige `business_id` y `product_id`, cada usuario tiene un **negocio implícito por defecto**, creado en el primer guardado.
 5. **El catálogo reutilizable `business_cost_lines` sigue fuera de alcance.** Por eso `calc_cost_lines.source_business_cost_id` tiene que pasar a ser anulable (migración en H0.2, #91).
@@ -69,7 +69,7 @@ Opción A, con estas nueve reglas:
    | Página (Server Component con `requireUser()` que lee por servicio) | `app/(calculator)/<ruta>/page.tsx` | FRONTEND |
    | Formulario (`useActionState` + `useServerFieldErrors`) | `components/calculator/*` (molde: `app/login/login-form.tsx`) | FRONTEND |
 
-   Frontend **no importa `lib/db`** (`lib/db/AGENTS.md`). Los servicios obtienen la base con `getDrizzleClient()` por dentro, como parámetro `db` con valor por defecto, para poder testearlos.
+   Frontend **no importa `lib/db`** (`lib/db/AGENTS.md`). Los servicios obtienen la base con `getDrizzleClient()` por dentro, después de autenticar, con un parámetro `database?: Db` inyectable para poder testearlos. El cliente de sesión también es inyectable: en integración usa la publishable key local y un inicio de sesión real; nunca un ID ni un cliente administrativo como identidad. Las puertas conservan `requireUser()` para mantener la redirección a login. Los servicios no importan adaptadores de Next.js.
 
 ## Rol de `DATABASE_URL` y RLS
 
