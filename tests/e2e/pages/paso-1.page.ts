@@ -8,6 +8,7 @@ export class Paso1Page {
   readonly volumeInput: Locator;
   readonly saveButton: Locator;
   readonly confirmation: Locator;
+  readonly fieldError: Locator;
 
   constructor(private readonly page: Page) {
     this.nameInput = page.getByLabel("Nombre del producto", { exact: true });
@@ -15,6 +16,7 @@ export class Paso1Page {
     this.volumeInput = page.getByLabel("Volumen", { exact: true });
     this.saveButton = page.getByRole("button", { name: /^(Guardar|Guardando…)$/ });
     this.confirmation = page.getByRole("main").getByRole("status");
+    this.fieldError = page.getByRole("main").getByRole("alert");
   }
 
   async goto(): Promise<void> {
@@ -58,5 +60,19 @@ export class Paso1Page {
     });
     expect(response.ok()).toBe(true);
     await response.finished();
+  }
+
+  // Defensive regression: simulate a programmatic edit despite disabled UI.
+  // This is not a normal user interaction while a save is pending.
+  async simulatePendingNameEdit(name: string): Promise<void> {
+    await this.nameInput.evaluate((input: HTMLInputElement) => { input.disabled = false; });
+    await this.nameInput.fill(name);
+  }
+
+  async submitAgainWhilePending(): Promise<void> {
+    await this.saveButton.evaluate((button: HTMLButtonElement) => {
+      button.form?.requestSubmit();
+      button.form?.requestSubmit();
+    });
   }
 }
