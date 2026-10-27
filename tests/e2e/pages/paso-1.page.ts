@@ -59,7 +59,9 @@ export class Paso1Page {
         && request.method() === "POST" && Boolean(request.headers()["next-action"]);
     });
     expect(response.ok()).toBe(true);
-    await response.finished();
+    // Server Actions stream their result. Wait for the form to finish its
+    // transition instead of transport EOF; callers assert the business result.
+    await expect(this.saveButton).toBeEnabled();
   }
 
   // Defensive regression: simulate a programmatic edit despite disabled UI.

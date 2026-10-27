@@ -41,7 +41,10 @@ test("a server-rejected save does not show the previous success or replace persi
     await expect(setup.confirmation).toHaveCount(0);
     await setup.expectValues(edited);
   } finally {
-    await authedPage.unrouteAll({ behavior: "wait" });
+    // A test timeout may already have closed the context and its routes.
+    if (!authedPage.isClosed()) {
+      await authedPage.unrouteAll({ behavior: "wait" });
+    }
   }
   await authedPage.reload();
   await setup.expectValues(saved);
