@@ -13,6 +13,7 @@ import {
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { buildConfirmation } from "@/components/calculator/build-confirmation";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { LiveCostCard } from "@/components/calculator/live-cost-card";
 
 type SetupFormProps = {
   defaultValues: CalculatorSetup;
@@ -72,6 +73,8 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
   };
 
   return (
+    <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]"> 
+      
     <form
       onSubmit={handleSubmit(handleSubmitAction)}
       noValidate
@@ -160,5 +163,8 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
         {isPending ? "Guardando…" : "Guardar"}
       </button>
     </form>
+    
+    <LiveCostCard volume={200}/>
+    </div >
   );
 }
