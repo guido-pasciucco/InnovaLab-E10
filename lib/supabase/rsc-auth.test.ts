@@ -76,13 +76,11 @@ describe("login", () => {
 });
 
 describe("logout", () => {
-  it("returns AUTH_SIGNOUT_FAILED when deleting session cookies fails", async () => {
+  it("redirects to login when remote sign out completes but deleting session cookies fails", async () => {
     expect(await login(undefined, credentials)).toMatchObject({ ok: true });
     failWrites();
 
-    const result = await logout();
-
-    expect(result).toMatchObject({ ok: false, code: "AUTH_SIGNOUT_FAILED" });
+    await expect(logout()).rejects.toMatchObject({ digest: expect.stringContaining("/login?notice=signed-out") });
     expect(loggedOutput()).not.toContain("synthetic-sensitive-token");
   });
 });

@@ -3,6 +3,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
+import { CookiePersistenceError } from "@/lib/errors/cookie-persistence-error";
 
 // RSC reads cannot persist cookies. The proxy owns session renewal and
 // forwards refreshed cookies to both the rendered request and the browser.
@@ -39,7 +40,7 @@ async function createSessionClient(writable: boolean) {
           unstable_rethrow(error);
           // Auth SDK subscribers can log a thrown error before the door sees
           // it. Do not forward arbitrary cookie errors or causes containing tokens.
-          throw new Error("Failed to persist authentication cookies");
+          throw new CookiePersistenceError();
         }
       },
     },

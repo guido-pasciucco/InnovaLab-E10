@@ -63,7 +63,7 @@ describe("createWritableSupabaseClient", () => {
       { name: "session.2", value: "chunk-2", options: {} },
     ], {});
 
-    expect(write).toThrow("Failed to persist authentication cookies");
+    expect(write).toThrow("AUTH_COOKIE_PERSISTENCE");
     expect(set).toHaveBeenCalledTimes(failedWrite);
   });
 

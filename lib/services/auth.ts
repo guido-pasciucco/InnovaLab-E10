@@ -9,6 +9,7 @@ import {
 } from "@/lib/schemas/auth/auth";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CATALOG, type ErrorCode } from "@/lib/errors/catalog";
+import { isCookiePersistenceError } from "@/lib/errors/cookie-persistence-error";
 
 // Auth services throw on failure; the doors (handleRouteErrors /
 // handleActionErrors) translate errors. Input is raw and unvalidated:
@@ -90,14 +91,28 @@ export async function signupService(
 
 export async function logoutService(
   client: SupabaseClient,
-): Promise<Record<string, never>> {
-  const { error } = await client.auth.signOut();
+): Promise<{ cookiesPersisted: boolean }> {
+  let error: SupabaseAuthFailure | null;
+
+  try {
+    ({ error } = await client.auth.signOut());
+  } catch (caught) {
+    // _removeSession notifies the cookie subscriber after the remote logout
+    // request succeeds. Keep that proven outcome distinct from a failed
+    // provider request, and let every other exception reach the action door.
+    if (isCookiePersistenceError(caught)) return { cookiesPersisted: false };
+    throw caught;
+  }
 
   if (error) {
+    // signOut reaches the remote endpoint before the SDK clears local storage.
+    // This marker therefore means the remote session closed, but the browser
+    // cookie cleanup did not finish and must not be presented as a remote failure.
+    if (isCookiePersistenceError(error)) return { cookiesPersisted: false };
     throw new AppError("AUTH_SIGNOUT_FAILED");
   }
 
-  return {};
+  return { cookiesPersisted: true };
 }
 
 export type SessionUser = { id: string; email: string | undefined };
