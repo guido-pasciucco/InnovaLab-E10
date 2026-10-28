@@ -29,9 +29,11 @@ const token = [
 ].join(".");
 const sessionResponse = { access_token: token, refresh_token: "synthetic-refresh-token", token_type: "bearer", expires_in: 3600, user: fakeUser };
 const credentials = { email: fakeUser.email, password: faker.internet.password({ length: 16 }) };
+let logoutStatus = 204;
 
 beforeEach(() => {
   store.clear();
+  logoutStatus = 204;
   set.mockReset().mockImplementation((name, value) => { store.set(name, value); });
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_synthetic");
@@ -39,7 +41,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(typeof input === "string" ? input : input instanceof URL ? input : input.url);
     if (url.hostname !== "127.0.0.1") throw new Error("Non-local provider");
-    if (url.pathname.endsWith("/logout")) return new Response(null, { status: 204 });
+    if (url.pathname.endsWith("/logout")) return new Response(null, { status: logoutStatus });
     if (url.pathname.endsWith("/recover")) return Response.json({});
     if (url.pathname.endsWith("/user")) return Response.json(init?.method === "PUT"
       ? { ...fakeUser, updated_at: "2026-01-01T00:00:00Z" }
@@ -76,11 +78,36 @@ describe("login", () => {
 });
 
 describe("logout", () => {
+  it("returns a confirmed result when the provider and cookie cleanup succeed", async () => {
+    expect(await login(undefined, credentials)).toMatchObject({ ok: true });
+
+    await expect(logout()).resolves.toEqual({
+      ok: true,
+      data: { remote: "confirmed", cookiesPersisted: true },
+    });
+  });
+
   it("redirects to login when remote sign out completes but deleting session cookies fails", async () => {
     expect(await login(undefined, credentials)).toMatchObject({ ok: true });
     failWrites();
 
     await expect(logout()).rejects.toMatchObject({ digest: expect.stringContaining("/login?notice=signed-out") });
+    expect(loggedOutput()).not.toContain("synthetic-sensitive-token");
+  });
+
+  it("redirects with a neutral notice when the provider fails after cookie cleanup succeeds", async () => {
+    expect(await login(undefined, credentials)).toMatchObject({ ok: true });
+    logoutStatus = 500;
+
+    await expect(logout()).rejects.toMatchObject({ digest: expect.stringContaining("/login?notice=sign-out-unknown") });
+  });
+
+  it("redirects with a neutral notice when the provider fails before cookie cleanup fails", async () => {
+    expect(await login(undefined, credentials)).toMatchObject({ ok: true });
+    logoutStatus = 500;
+    failWrites();
+
+    await expect(logout()).rejects.toMatchObject({ digest: expect.stringContaining("/login?notice=sign-out-unknown") });
     expect(loggedOutput()).not.toContain("synthetic-sensitive-token");
   });
 });

@@ -14,6 +14,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {notice === "signed-out" && (
           <p role="status" className="mt-2 text-center text-sm text-gray-600">Sesión cerrada</p>
         )}
+        {notice === "sign-out-unknown" && (
+          <p role="status" className="mt-2 text-center text-sm text-gray-600">
+            No se pudo confirmar el cierre de sesión. Volvé a iniciar sesión.
+          </p>
+        )}
         <p className="mt-2 text-center text-sm text-gray-600">
           Ingrese sus credenciales para continuar
         </p>

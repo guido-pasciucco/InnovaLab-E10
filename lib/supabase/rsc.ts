@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
 import { CookiePersistenceError } from "@/lib/errors/cookie-persistence-error";
+import { attachLogoutOutcome, createLogoutOutcomeTracker } from "@/lib/supabase/logout-outcome";
 
 // RSC reads cannot persist cookies. The proxy owns session renewal and
 // forwards refreshed cookies to both the rendered request and the browser.
@@ -26,8 +27,10 @@ async function createSessionClient(writable: boolean) {
   }
 
   const cookieStore = await cookies();
+  const logoutOutcome = writable ? createLogoutOutcomeTracker() : undefined;
 
-  return createServerClient(supabaseUrl, supabaseKey, {
+  const client = createServerClient(supabaseUrl, supabaseKey, {
+    global: logoutOutcome ? { fetch: logoutOutcome.fetch } : undefined,
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {
@@ -45,4 +48,7 @@ async function createSessionClient(writable: boolean) {
       },
     },
   });
+
+  if (logoutOutcome) attachLogoutOutcome(client, logoutOutcome.getOutcome);
+  return client;
 }

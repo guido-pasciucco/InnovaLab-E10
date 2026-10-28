@@ -17,10 +17,15 @@ const logoutAction = handleActionErrors(
 export async function logout() {
   const result = await logoutAction();
 
-  // The remote session has already closed, but partial cookie deletion can
-  // make the dashboard render as anonymous before client state receives this
-  // result. Redirect explicitly to a safe public page with a non-sensitive notice.
-  if (result.ok && !result.data.cookiesPersisted) redirect("/login?notice=signed-out");
+  // Partial deletion can make the dashboard render as anonymous before client
+  // state receives this result. Only a tracked successful provider response
+  // confirms logout; every other local inconsistency gets a neutral notice.
+  if (result.ok && !result.data.cookiesPersisted) {
+    redirect(result.data.remote === "confirmed"
+      ? "/login?notice=signed-out"
+      : "/login?notice=sign-out-unknown");
+  }
+  if (result.ok && result.data.remote === "failed") redirect("/login?notice=sign-out-unknown");
 
   return result;
 }
