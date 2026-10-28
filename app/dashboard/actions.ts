@@ -1,7 +1,7 @@
 "use server";
 
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
-import { createRscSupabaseClient } from "@/lib/supabase/rsc";
+import { createWritableSupabaseClient } from "@/lib/supabase/rsc";
 import { logoutService } from "@/lib/services/auth";
 
 // Action door for the dashboard sign-out button. Called directly (no form),
@@ -9,6 +9,6 @@ import { logoutService } from "@/lib/services/auth";
 // navigating blindly. handleActionErrors keeps unexpected throws out of
 // the client; sign-out failures surface as AUTH_SIGNOUT_FAILED.
 export const logout = handleActionErrors(
-  async () => logoutService(await createRscSupabaseClient()),
+  async () => logoutService(await createWritableSupabaseClient()),
   "AUTH_SIGNOUT_FAILED",
 );

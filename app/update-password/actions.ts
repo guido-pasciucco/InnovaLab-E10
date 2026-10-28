@@ -1,7 +1,7 @@
 "use server";
 
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
-import { createRscSupabaseClient } from "@/lib/supabase/rsc";
+import { createWritableSupabaseClient } from "@/lib/supabase/rsc";
 import { updatePasswordService } from "@/lib/services/auth";
 import { passwordUpdateSchema } from "@/lib/schemas/auth/auth";
 import { type PasswordUpdateState } from "@/lib/types/auth";
@@ -13,6 +13,6 @@ import z from "zod";
 // client-side in the form; the service validates the password.
 export const updatePassword = handleActionErrors(
   async (_prevState: PasswordUpdateState, data: z.infer<typeof passwordUpdateSchema>) =>
-    updatePasswordService(await createRscSupabaseClient(), data),
+    updatePasswordService(await createWritableSupabaseClient(), data),
   "AUTH_UNAVAILABLE",
 );

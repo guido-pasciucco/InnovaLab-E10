@@ -1,7 +1,7 @@
 "use server";
 
 import { type LoginState } from "@/lib/types/auth";
-import { createRscSupabaseClient } from "@/lib/supabase/rsc";
+import { createWritableSupabaseClient } from "@/lib/supabase/rsc";
 import { loginService } from "@/lib/services/auth";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
 import z from "zod";
@@ -13,6 +13,6 @@ import { loginSchema } from "@/lib/schemas/auth/auth";
 // Client-side RHF validation is UX only; the service revalidates.
 export const login = handleActionErrors(
   async (_prevState: LoginState, data: z.infer<typeof loginSchema>) =>
-    loginService(await createRscSupabaseClient(), data),
+    loginService(await createWritableSupabaseClient(), data),
   "AUTH_UNAVAILABLE",
 );
