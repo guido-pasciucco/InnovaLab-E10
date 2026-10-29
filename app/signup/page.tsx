@@ -16,7 +16,7 @@ function CalculatorMark({ className = "" }: { className?: string }) {
 export default function SignupPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_0%_100%,#f8fffa_0,transparent_22rem),linear-gradient(135deg,#e7fff0_0%,#cef8da_52%,#bcf0ce_100%)] px-4 py-6 text-[#12321e] sm:px-8 sm:py-10">
-      <div className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
+      <div className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-4xl items-center gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-8">
         <section className="max-w-md">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-xs font-bold text-[#136831]">
