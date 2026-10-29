@@ -15,9 +15,14 @@ test("signup, confirm the email through Mailpit, log in and reach the dashboard"
   const user = buildUser({ displayName: "E2E Signup" });
   cleanup.trackUserEmail(user.email);
 
-  // Act: sign up (the form pushes to /login on success) and confirm.
+  // Act: sign up (the form shows a confirmation dialog on success; its
+  // link continues to /login) and confirm.
   await signupPage.goto();
   await signupPage.signUp(user);
+  await expect(signupPage.successDialog).toBeVisible();
+  // The dialog informs the next step without claiming the email is verified.
+  await expect(signupPage.successDialog).toContainText("verifiques tu cuenta");
+  await signupPage.continueToLogin();
   await expect(page).toHaveURL("/login");
 
   // Email confirmations are ON (supabase/config.toml). With PKCE, GoTrue
