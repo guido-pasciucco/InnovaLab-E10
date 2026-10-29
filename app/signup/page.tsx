@@ -23,7 +23,7 @@ export default function SignupPage() {
               <CalculatorMark className="lg:scale-150" />
               <span>Calculadora</span>
             </div>
-            <span className="rounded-full border border-[#9edeb4] bg-white/70 px-2 py-1 text-[10px] font-medium text-[#39714b] lg:text-xs">
+            <span className="rounded-full border border-[#9edeb4] bg-white/70 px-2 py-1 text-[10px] font-medium text-[#39714b] lg:text-[13px]">
               Paso previo: acceso
             </span>
           </div>
@@ -32,7 +32,7 @@ export default function SignupPage() {
             <CalculatorMark className="scale-75" />
           </div>
 
-          <h1 className="mt-4 max-w-xs text-2xl font-bold leading-tight tracking-tight text-[#12321e] sm:text-3xl lg:max-w-md lg:text-[40px]">
+          <h1 className="mt-4 max-w-xs text-2xl font-bold leading-tight tracking-tight text-[#12321e] sm:text-3xl lg:max-w-md lg:text-[46px]">
             Guardá tus cálculos y retomalos cuando quieras
           </h1>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-[#497154] lg:text-lg">
@@ -41,7 +41,7 @@ export default function SignupPage() {
 
           <ul className="mt-4 flex flex-wrap gap-2" aria-label="Beneficios de crear una cuenta">
             {BENEFITS.map((benefit) => (
-              <li key={benefit} className="flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-[#326842] shadow-sm lg:gap-2 lg:px-3.5 lg:py-2 lg:text-sm">
+              <li key={benefit} className="flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-[#326842] shadow-sm lg:gap-2 lg:px-3.5 lg:py-2 lg:text-[15px]">
                 <span aria-hidden="true" className="text-[#168a3d]">✓</span>
                 {benefit}
               </li>
@@ -50,8 +50,8 @@ export default function SignupPage() {
         </section>
 
         <section className="w-full rounded-2xl border border-white/80 bg-white/95 p-5 shadow-[0_16px_36px_rgba(24,105,52,0.15)] sm:p-6 lg:p-10">
-          <h2 className="text-xl font-bold tracking-tight text-[#12321e] lg:text-[28px]">Crear cuenta</h2>
-          <p className="mt-1 text-xs text-[#5c7563] lg:text-sm">Es gratis y te lleva un minuto.</p>
+          <h2 className="text-xl font-bold tracking-tight text-[#12321e] lg:text-[30px]">Crear cuenta</h2>
+          <p className="mt-1 text-xs text-[#5c7563] lg:text-base">Es gratis y te lleva un minuto.</p>
           <div className="mt-4"><SignupForm /></div>
         </section>
       </div>
