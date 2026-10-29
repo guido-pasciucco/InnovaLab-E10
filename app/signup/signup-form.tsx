@@ -72,7 +72,7 @@ function PasswordInput({ label, error, hint, id, autoComplete, disabled, ...prop
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs font-medium text-[#31503a] lg:text-[15px]">{label}</label>
+      <label htmlFor={id} className="text-xs font-medium text-[#31503a] lg:text-sm">{label}</label>
       <div className="relative">
         <input
           {...props}
@@ -82,7 +82,7 @@ function PasswordInput({ label, error, hint, id, autoComplete, disabled, ...prop
           disabled={disabled}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy || undefined}
-          className={`h-10 w-full rounded-md border bg-white px-3 pr-10 text-sm text-[#17351f] outline-none transition focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[44px] lg:text-base ${error ? "border-red-500" : "border-[#b7c9bb]"}`}
+          className={`h-10 w-full rounded-md border bg-white px-3 pr-10 text-sm text-[#17351f] outline-none transition focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${error ? "border-red-500" : "border-[#b7c9bb]"}`}
         />
         <button
           type="button"
@@ -185,14 +185,14 @@ export default function SignupForm() {
       className="flex flex-col gap-3 lg:gap-3"
     >
       <div className="flex flex-col gap-1">
-        <label htmlFor="displayName" className="text-xs font-medium text-[#31503a] lg:text-[15px]">Nombre y apellido</label>
-        <input {...register("displayName")} id="displayName" type="text" autoComplete="name" placeholder="Tu nombre y apellido" disabled={pending} aria-invalid={errors.displayName ? true : undefined} aria-describedby={errors.displayName ? "displayName-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[44px] lg:text-base ${errors.displayName ? "border-red-500" : "border-[#b7c9bb]"}`} />
+        <label htmlFor="displayName" className="text-xs font-medium text-[#31503a] lg:text-sm">Nombre y apellido</label>
+        <input {...register("displayName")} id="displayName" type="text" autoComplete="name" placeholder="Tu nombre y apellido" disabled={pending} aria-invalid={errors.displayName ? true : undefined} aria-describedby={errors.displayName ? "displayName-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${errors.displayName ? "border-red-500" : "border-[#b7c9bb]"}`} />
         {errors.displayName && <p id="displayName-error" role="alert" className="text-xs text-red-600 lg:text-sm">{errors.displayName.message}</p>}
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-xs font-medium text-[#31503a] lg:text-[15px]">Correo electrónico</label>
-        <input {...register("email")} id="email" type="email" autoComplete="email" placeholder="nombre@correo.com" disabled={pending} aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? "email-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[44px] lg:text-base ${errors.email ? "border-red-500" : "border-[#b7c9bb]"}`} />
+        <label htmlFor="email" className="text-xs font-medium text-[#31503a] lg:text-sm">Correo electrónico</label>
+        <input {...register("email")} id="email" type="email" autoComplete="email" placeholder="nombre@correo.com" disabled={pending} aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? "email-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${errors.email ? "border-red-500" : "border-[#b7c9bb]"}`} />
         {errors.email && <p id="email-error" role="alert" className="text-xs text-red-600 lg:text-sm">{errors.email.message}</p>}
       </div>
 
@@ -203,7 +203,7 @@ export default function SignupForm() {
       {state && !state.ok && !hasServerFieldErrors && <p role="alert" className="text-xs text-red-600">{state.message}</p>}
       {transportError && <p role="alert" className="text-xs text-red-600">{transportError}</p>}
 
-      <button type="submit" disabled={pending || Boolean(state?.ok)} className="mt-1 h-10 w-full rounded-md bg-[#31df4f] px-4 text-sm font-bold text-[#103b1c] shadow-[0_4px_10px_rgba(37,213,73,0.35)] transition hover:bg-[#24ca42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] disabled:cursor-not-allowed disabled:bg-[#b5eebe] lg:h-[46px] lg:text-base">
+      <button type="submit" disabled={pending || Boolean(state?.ok)} className="mt-1 h-10 w-full rounded-md bg-[#31df4f] px-4 text-sm font-bold text-[#103b1c] shadow-[0_4px_10px_rgba(37,213,73,0.35)] transition hover:bg-[#24ca42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] disabled:cursor-not-allowed disabled:bg-[#b5eebe] lg:h-[44px] lg:text-base">
         {pending ? "Creando cuenta…" : "Crear cuenta"}
       </button>
       <p className="text-center text-xs text-[#607565] lg:text-sm">¿Ya tenés cuenta? <Link ref={loginLinkRef} href="/login" className="font-semibold text-[#168a3d] underline-offset-2 hover:underline">Iniciar sesión</Link></p>
