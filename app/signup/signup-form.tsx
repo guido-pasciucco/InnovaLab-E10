@@ -20,6 +20,35 @@ type PasswordInputProps = ComponentPropsWithRef<"input"> & { label: string; erro
 const initialState: SignupState = undefined;
 const SERVER_FIELDS: readonly Path<SignupFormValues>[] = ["displayName", "email", "password"];
 
+// Dev-only server error preview (see the floating control below). NODE_ENV is
+// statically replaced by Next at build time, so production builds eliminate
+// the control entirely: no QA buttons ship, and no demo route exists.
+const SHOW_ERROR_PREVIEW = process.env.NODE_ENV === "development";
+
+type PreviewField = "displayName" | "email" | "password" | "confirmPassword";
+
+// The preview never invents text: it parses deliberately invalid samples
+// through the real screen contract and keeps the first message per field.
+// displayName has no required rule (it is optional by schema), so its sample
+// exercises its only real rule (the 81+ character limit).
+function parsePreviewMessages(): Partial<Record<PreviewField, string>> {
+  const firstMessage = (input: unknown, field: PreviewField): string | undefined => {
+    const result = signupFormSchema.safeParse(input);
+    if (result.success) return undefined;
+    return z.flattenError(result.error).fieldErrors[field]?.[0];
+  };
+
+  return {
+    displayName: firstMessage({ displayName: "x".repeat(81), email: "a@b.com", password: "segura-ejemplo", confirmPassword: "segura-ejemplo" }, "displayName"),
+    email: firstMessage({ email: "correo-no-valido" }, "email"),
+    password: firstMessage({ password: "corta" }, "password"),
+    // Both passwords valid but different: only the mismatch rule reacts.
+    confirmPassword: firstMessage({ email: "a@b.com", password: "segura-ejemplo", confirmPassword: "distinta-ejemplo" }, "confirmPassword"),
+  };
+}
+
+const PREVIEW_FIELD_MESSAGES = SHOW_ERROR_PREVIEW ? parsePreviewMessages() : {};
+
 function EyeIcon({ visible }: { visible: boolean }) {
   return visible ? (
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
@@ -128,10 +157,27 @@ function SignupSuccessDialog({ returnFocusRef }: { returnFocusRef: RefObject<HTM
 
 export default function SignupForm() {
   const loginLinkRef = useRef<HTMLAnchorElement>(null);
+  const [showPreviewErrors, setShowPreviewErrors] = useState(false);
   const { action, transportError } = useTransportAwareAction(signup);
   const [state, submitAction, pending] = useActionState(action, initialState);
-  const { register, handleSubmit, setError, formState: { errors } } = useForm<SignupFormValues>({ resolver: zodResolver(signupFormSchema) });
+  const { register, handleSubmit, setError, clearErrors, formState: { errors } } = useForm<SignupFormValues>({ resolver: zodResolver(signupFormSchema) });
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
+
+  // Shows/hides the dev-only error preview by writing through RHF's own
+  // mechanisms (setError/clearErrors), so the messages render exactly like
+  // real ones: under each field, in red, with the Figma styles. Invalid
+  // edits by the preview never reach the server; a real submit replaces
+  // them with the resolver's result.
+  useEffect(() => {
+    if (!SHOW_ERROR_PREVIEW) return;
+    if (showPreviewErrors) {
+      for (const [field, message] of Object.entries(PREVIEW_FIELD_MESSAGES)) {
+        if (message) setError(field as Path<SignupFormValues>, { type: "preview", message });
+      }
+    } else {
+      clearErrors(Object.keys(PREVIEW_FIELD_MESSAGES) as Path<SignupFormValues>[]);
+    }
+  }, [showPreviewErrors, setError, clearErrors]);
 
   return (
     <form
@@ -162,6 +208,18 @@ export default function SignupForm() {
       </button>
       <p className="text-center text-xs text-[#607565]">¿Ya tenés cuenta? <Link ref={loginLinkRef} href="/login" className="font-semibold text-[#168a3d] underline-offset-2 hover:underline">Iniciar sesión</Link></p>
       {state?.ok && <SignupSuccessDialog returnFocusRef={loginLinkRef} />}
+
+      {SHOW_ERROR_PREVIEW && (
+        <button
+          type="button"
+          onClick={() => setShowPreviewErrors((visible) => !visible)}
+          aria-pressed={showPreviewErrors}
+          className="fixed bottom-3 left-3 z-40 flex items-center gap-1.5 rounded-full border border-[#d6eadb] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#31503a] shadow-md transition hover:border-[#3ad85c] sm:left-auto sm:right-3"
+        >
+          <span aria-hidden="true" className={`size-2 rounded-full ${showPreviewErrors ? "bg-red-500" : "bg-[#3ad85c]"}`} />
+          {showPreviewErrors ? "Ocultar errores (demo)" : "Mostrar errores (demo)"}
+        </button>
+      )}
     </form>
   );
 }
