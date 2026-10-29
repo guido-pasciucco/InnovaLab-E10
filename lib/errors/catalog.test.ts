@@ -18,6 +18,13 @@ describe("ERROR_CATALOG", () => {
     }
   });
 
+  it("exposes CALC_DRAFT_MISSING as a silent 404", () => {
+    expect(ERROR_CATALOG.CALC_DRAFT_MISSING).toMatchObject({
+      status: 404,
+      logLevel: "silent",
+    });
+  });
+
   it("exposes the auth-specific codes", () => {
     expect(ERROR_CATALOG.AUTH_INVALID_CREDENTIALS).toMatchObject({ status: 401 });
     expect(ERROR_CATALOG.AUTH_UNAVAILABLE).toMatchObject({ status: 503 });
