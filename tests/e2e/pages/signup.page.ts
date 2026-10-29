@@ -7,6 +7,7 @@ export class SignupPage {
   readonly confirmPasswordInput: Locator;
   readonly submitButton: Locator;
   readonly successDialog: Locator;
+  readonly loginLink: Locator;
 
   constructor(private readonly page: Page) {
     this.nameInput = page.getByLabel("Nombre y apellido");
@@ -16,6 +17,7 @@ export class SignupPage {
     this.submitButton = page.getByRole("button", { name: "Crear cuenta" });
     // The dialog's accessible name comes from its labelled heading.
     this.successDialog = page.getByRole("dialog", { name: "¡Cuenta creada!" });
+    this.loginLink = page.getByRole("link", { name: "Iniciar sesión" });
   }
 
   async goto(): Promise<void> {

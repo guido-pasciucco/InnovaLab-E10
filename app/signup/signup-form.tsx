@@ -1,49 +1,49 @@
 "use client";
 
-import { useEffect, useRef, useState, type ComponentPropsWithRef } from "react";
-import { useActionState } from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useActionState, useEffect, useRef, useState, type ComponentPropsWithRef, type RefObject } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, type Path } from "react-hook-form";
 import { z } from "zod";
-import { signupFormSchema } from "@/lib/schemas/auth/auth";
-import { signup } from "./actions";
-import { type SignupState } from "@/lib/types/auth";
+
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
-import type { Path } from "react-hook-form";
+import { useTransportAwareAction } from "@/components/forms/use-transport-aware-action";
+import { signupFormSchema } from "@/lib/schemas/auth/auth";
+import type { SignupState } from "@/lib/types/auth";
+
+import { signup } from "./actions";
+
+type SignupFormValues = z.infer<typeof signupFormSchema>;
+type PasswordInputProps = ComponentPropsWithRef<"input"> & { label: string; error?: string; hint?: string };
 
 const initialState: SignupState = undefined;
-
-// Types come from the screen's contract (single source): signupSchema plus
-// the frontend-only password confirmation. If a field rule changes, the
-// form follows on its own.
-type SignupFormValues = z.infer<typeof signupFormSchema>;
-
-// Fields the server may flag; module-level so the reference stays stable.
 const SERVER_FIELDS: readonly Path<SignupFormValues>[] = ["displayName", "email", "password"];
 
-// Password field with a show/hide control. Reused for the password and its
-// confirmation. The `register` props ride in through `props`.
-type PasswordInputProps = ComponentPropsWithRef<"input"> & {
-  label: string;
-  error?: string;
-  hint?: string;
-};
+function EyeIcon({ visible }: { visible: boolean }) {
+  return visible ? (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
+      <path d="m3 3 18 18" />
+      <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+      <path d="M9.9 4.2A10.7 10.7 0 0 1 12 4c5.5 0 9.4 5.1 9.9 7.8a12.3 12.3 0 0 1-3.1 4.9M6.6 6.6C4.6 8.2 2.5 10.6 2.1 11.8 2.6 14.5 6.5 19.6 12 19.6c.8 0 1.6-.1 2.3-.3" />
+    </svg>
+  ) : (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
+      <path d="M2.1 12S5.7 5.5 12 5.5 21.9 12 21.9 12 18.3 18.5 12 18.5 2.1 12 2.1 12Z" />
+      <circle cx="12" cy="12" r="2.8" />
+    </svg>
+  );
+}
 
 function PasswordInput({ label, error, hint, id, autoComplete, disabled, ...props }: PasswordInputProps) {
   const [show, setShow] = useState(false);
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
-  const describedBy = [hint ? hintId : undefined, error ? errorId : undefined]
-    .filter(Boolean)
-    .join(" ");
+  const describedBy = [hint ? hintId : undefined, error ? errorId : undefined].filter(Boolean).join(" ");
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium text-gray-700">
-        {label}
-      </label>
+      <label htmlFor={id} className="text-xs font-medium text-[#31503a]">{label}</label>
       <div className="relative">
         <input
           {...props}
@@ -53,9 +53,7 @@ function PasswordInput({ label, error, hint, id, autoComplete, disabled, ...prop
           disabled={disabled}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy || undefined}
-          className={`min-h-14 w-full rounded-[10px] border bg-white py-3 pl-4 pr-24 text-lg text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-green-600,var(--color-blue-600))] aria-invalid:border-red-600 aria-invalid:focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:bg-gray-100 ${
-            error ? "border-red-600" : "border-gray-400"
-          }`}
+          className={`h-10 w-full rounded-md border bg-white px-3 pr-10 text-sm text-[#17351f] outline-none transition focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 ${error ? "border-red-500" : "border-[#b7c9bb]"}`}
         />
         <button
           type="button"
@@ -63,198 +61,107 @@ function PasswordInput({ label, error, hint, id, autoComplete, disabled, ...prop
           aria-pressed={show}
           aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
           disabled={disabled}
-          className="absolute inset-y-0 right-0 flex w-24 items-center justify-center rounded-[10px] text-sm font-medium text-gray-600 hover:text-gray-900"
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-[#6a806f] hover:text-[#174425] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#3ad85c]"
         >
-          {show ? "Ocultar" : "Mostrar"}
+          <EyeIcon visible={show} />
         </button>
       </div>
-      {hint && (
-        <p id={hintId} className="text-xs text-gray-500">
-          {hint}
-        </p>
-      )}
-      {error && (
-        <p id={errorId} role="alert" className="text-sm text-red-600">
-          {error}
-        </p>
-      )}
+      {hint && <p id={hintId} className="text-[10px] text-[#6a806f]">{hint}</p>}
+      {error && <p id={errorId} role="alert" className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }
 
-// Accessible confirmation shown after a successful signup. It does NOT
-// claim the email is verified: verification happens when the person
-// confirms the email link (a different flow). Staying on the page lets
-// everyone read the next step at their own pace; the link to /login is
-// the explicit way to continue.
-function SignupSuccessDialog() {
-  const dialogRef = useRef<HTMLDivElement>(null);
+function SignupSuccessDialog({ returnFocusRef }: { returnFocusRef: RefObject<HTMLAnchorElement | null> }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(true);
 
+  const closeDialog = () => {
+    dialogRef.current?.close();
+    setOpen(false);
+    requestAnimationFrame(() => returnFocusRef.current?.focus());
+  };
+
   useEffect(() => {
-    dialogRef.current?.focus();
+    const dialog = dialogRef.current;
+    if (!dialog || dialog.open) return;
+    dialog.showModal();
+    dialog.querySelector<HTMLAnchorElement>("[data-dialog-primary-action]")?.focus();
   }, []);
 
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={() => setOpen(false)}
-    >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="signup-success-title"
-        aria-describedby="signup-success-body"
-        tabIndex={-1}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") setOpen(false);
-        }}
-        onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-sm rounded-lg bg-white p-8 shadow-md focus-visible:outline-2 focus-visible:outline-[var(--brand-green-600,var(--color-blue-600))]"
-      >
-        <h2 id="signup-success-title" className="text-2xl font-bold text-gray-900">
-          ¡Cuenta creada!
-        </h2>
-        <p id="signup-success-body" className="mt-3 text-sm text-gray-700">
-          Te enviamos un correo para que <strong>verifiques tu cuenta</strong>. Revisá tu
-          bandeja de entrada (por si está en el spam) y tocá el enlace de verificación.
-        </p>
-        <p className="mt-2 text-sm text-gray-600">
-          Tu correo todavía no quedó verificado: se confirma cuando seguís ese enlace.
-        </p>
-        <LinkToLogin />
-      </div>
-    </div>
-  );
-}
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="signup-success-title"
+      aria-describedby="signup-success-body"
+      onCancel={(event) => {
+        event.preventDefault();
+        closeDialog();
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== "Tab") return;
+        const focusable = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
+        const first = focusable.at(0);
+        const last = focusable.at(-1);
+        if (!first || !last) return;
 
-// Shared by the dialog and the card bottom: the explicit way to continue.
-function LinkToLogin() {
-  return (
-    <Link
-      href="/login"
-      className="mt-6 flex min-h-[54px] items-center justify-center rounded-[14px] bg-[var(--brand-green-600,var(--color-blue-600))] px-4 py-3 text-lg font-semibold text-white hover:bg-[var(--brand-green-700,var(--color-blue-700))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-green-600,var(--color-blue-600))]"
+        if ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus();
+        }
+      }}
+      className="w-[min(100%-2rem,23rem)] rounded-2xl border border-[#d6eadb] bg-white p-6 text-[#17351f] shadow-2xl backdrop:bg-[#12321e]/35 focus:outline-none"
     >
-      Ir a iniciar sesión
-    </Link>
+      <h2 id="signup-success-title" className="text-xl font-bold">¡Cuenta creada!</h2>
+      <p id="signup-success-body" className="mt-3 text-sm leading-relaxed text-[#496352]">
+        Revisá tu correo y seguí el enlace de verificación para activar tu cuenta.
+      </p>
+      <p className="mt-2 text-xs text-[#657a6b]">Todavía tenés que verificar el correo antes de iniciar sesión.</p>
+      <Link href="/login" data-dialog-primary-action className="mt-5 flex h-10 items-center justify-center rounded-md bg-[#31df4f] px-4 text-sm font-bold text-[#103b1c] hover:bg-[#24ca42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d]">
+        Ir a iniciar sesión
+      </Link>
+    </dialog>
   );
 }
 
 export default function SignupForm() {
-  const [state, submitAction, pending] = useActionState(signup, initialState);
-  const {
-    register,
-    handleSubmit,
-    setError,
-    formState: { errors },
-  } = useForm<SignupFormValues>({
-    resolver: zodResolver(signupFormSchema),
-  });
-
+  const loginLinkRef = useRef<HTMLAnchorElement>(null);
+  const { action, transportError } = useTransportAwareAction(signup);
+  const [state, submitAction, pending] = useActionState(action, initialState);
+  const { register, handleSubmit, setError, formState: { errors } } = useForm<SignupFormValues>({ resolver: zodResolver(signupFormSchema) });
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
 
   return (
-    // RHF validates in the client with the screen's contract (including the
-    // password confirmation); only then it dispatches to the action (wrapped
-    // in a transition by the helper). The confirmation is stripped here so
-    // the server keeps receiving exactly the signupSchema payload.
     <form
-      onSubmit={handleSubmit(({ displayName, email, password }) =>
-        dispatchInTransition(submitAction)({ displayName, email, password }),
-      )}
-      className="flex flex-col gap-4"
+      onSubmit={handleSubmit(({ displayName, email, password }) => dispatchInTransition(submitAction)({ displayName, email, password }))}
+      className="flex flex-col gap-3"
     >
       <div className="flex flex-col gap-1">
-        <label htmlFor="displayName" className="text-sm font-medium text-gray-700">
-          Nombre y apellido
-        </label>
-        <input
-          {...register("displayName")}
-          id="displayName"
-          type="text"
-          autoComplete="name"
-          placeholder="Tu nombre y apellido"
-          disabled={pending}
-          aria-invalid={errors.displayName ? true : undefined}
-          aria-describedby={errors.displayName ? "displayName-error" : undefined}
-          className={`min-h-14 w-full rounded-[10px] border bg-white py-3 px-4 text-lg text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-green-600,var(--color-blue-600))] aria-invalid:border-red-600 aria-invalid:focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:bg-gray-100 ${
-            errors.displayName ? "border-red-600" : "border-gray-400"
-          }`}
-        />
-        {errors.displayName && (
-          <p id="displayName-error" role="alert" className="text-sm text-red-600">
-            {errors.displayName.message}
-          </p>
-        )}
+        <label htmlFor="displayName" className="text-xs font-medium text-[#31503a]">Nombre y apellido</label>
+        <input {...register("displayName")} id="displayName" type="text" autoComplete="name" placeholder="Tu nombre y apellido" disabled={pending} aria-invalid={errors.displayName ? true : undefined} aria-describedby={errors.displayName ? "displayName-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 ${errors.displayName ? "border-red-500" : "border-[#b7c9bb]"}`} />
+        {errors.displayName && <p id="displayName-error" role="alert" className="text-xs text-red-600">{errors.displayName.message}</p>}
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium text-gray-700">
-          Correo electrónico
-        </label>
-        <input
-          {...register("email")}
-          id="email"
-          type="email"
-          autoComplete="email"
-          disabled={pending}
-          aria-invalid={errors.email ? true : undefined}
-          aria-describedby={errors.email ? "email-error" : undefined}
-          className={`min-h-14 w-full rounded-[10px] border bg-white py-3 px-4 text-lg text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-green-600,var(--color-blue-600))] aria-invalid:border-red-600 aria-invalid:focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:bg-gray-100 ${
-            errors.email ? "border-red-600" : "border-gray-400"
-          }`}
-        />
-        {errors.email && (
-          <p id="email-error" role="alert" className="text-sm text-red-600">
-            {errors.email.message}
-          </p>
-        )}
+        <label htmlFor="email" className="text-xs font-medium text-[#31503a]">Correo electrónico</label>
+        <input {...register("email")} id="email" type="email" autoComplete="email" placeholder="nombre@correo.com" disabled={pending} aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? "email-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 ${errors.email ? "border-red-500" : "border-[#b7c9bb]"}`} />
+        {errors.email && <p id="email-error" role="alert" className="text-xs text-red-600">{errors.email.message}</p>}
       </div>
 
-      <PasswordInput
-        {...register("password")}
-        id="password"
-        label="Contraseña"
-        autoComplete="new-password"
-        hint="Mínimo 8 caracteres."
-        error={errors.password?.message}
-        disabled={pending}
-      />
+      <PasswordInput {...register("password")} id="password" label="Contraseña" autoComplete="new-password" hint="Mínimo 8 caracteres." error={errors.password?.message} disabled={pending} />
+      <PasswordInput {...register("confirmPassword")} id="confirmPassword" label="Confirmar contraseña" autoComplete="new-password" error={errors.confirmPassword?.message} disabled={pending} />
 
-      <PasswordInput
-        {...register("confirmPassword")}
-        id="confirmPassword"
-        label="Confirmar contraseña"
-        autoComplete="new-password"
-        error={errors.confirmPassword?.message}
-        disabled={pending}
-      />
+      <p className="rounded-md border border-[#d7e5d9] bg-[#f8fcf8] px-3 py-2 text-[11px] leading-relaxed text-[#607565]"><span className="font-semibold text-[#31503a]">Términos y condiciones:</span> Documentación pendiente. No se exigen todavía.</p>
+      {state && !state.ok && !hasServerFieldErrors && <p role="alert" className="text-xs text-red-600">{state.message}</p>}
+      {transportError && <p role="alert" className="text-xs text-red-600">{transportError}</p>}
 
-      {/* Informative only: the legal text does not exist yet, so there is
-          nothing to accept (see issue #183). No checkbox on purpose. */}
-      <p className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-        <span className="font-medium text-gray-900">Términos y Condiciones:</span>{" "}
-        Documentación pendiente. No se exigen todavía.
-      </p>
-
-      {state && !state.ok && !hasServerFieldErrors && (
-        <p role="alert" className="text-sm text-red-600">
-          {state.message}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={pending || Boolean(state?.ok)}
-        className="min-h-[54px] w-full rounded-[14px] bg-[var(--brand-green-600,var(--color-blue-600))] px-4 py-3 text-lg font-semibold text-white hover:bg-[var(--brand-green-700,var(--color-blue-700))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-green-600,var(--color-blue-600))] disabled:cursor-not-allowed disabled:bg-[var(--brand-green-100,var(--color-blue-300))]"
-      >
+      <button type="submit" disabled={pending || Boolean(state?.ok)} className="mt-1 h-10 w-full rounded-md bg-[#31df4f] px-4 text-sm font-bold text-[#103b1c] shadow-[0_4px_10px_rgba(37,213,73,0.35)] transition hover:bg-[#24ca42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] disabled:cursor-not-allowed disabled:bg-[#b5eebe]">
         {pending ? "Creando cuenta…" : "Crear cuenta"}
       </button>
-
-      {state?.ok && <SignupSuccessDialog />}
+      <p className="text-center text-xs text-[#607565]">¿Ya tenés cuenta? <Link ref={loginLinkRef} href="/login" className="font-semibold text-[#168a3d] underline-offset-2 hover:underline">Iniciar sesión</Link></p>
+      {state?.ok && <SignupSuccessDialog returnFocusRef={loginLinkRef} />}
     </form>
   );
 }
