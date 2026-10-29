@@ -1,14 +1,18 @@
 import { formatARS } from "@/lib/money/format";
 
 type LiveCostCardProps = {
-    unitCost?: string;
-    fixedCosts?: string;
-    variablePerUnit?: string;
+    unitCost?: string | number;
+    fixedCosts?: string | number;
+    variablePerUnit?: string | number;
     volume?: number;
+
   }; 
-                     
+
   function displayMoney(value?: string | number) {
-    return value?.trim() ? formatARS(Number(value)) : "—";
+    if ( value === undefined || value === null || value === "") {
+      return "—";
+    }
+    return formatARS(String(value));
   }
   export function LiveCostCard({
     unitCost,
