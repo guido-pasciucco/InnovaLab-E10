@@ -1,10 +1,15 @@
+import { formatARS } from "@/lib/money/format";
+
 type LiveCostCardProps = {
     unitCost?: string;
     fixedCosts?: string;
     variablePerUnit?: string;
     volume?: number;
-  };
-  
+  }; 
+                     
+  function displayMoney(value?: string | number) {
+    return value?.trim() ? formatARS(Number(value)) : "—";
+  }
   export function LiveCostCard({
     unitCost,
     fixedCosts,
@@ -13,41 +18,27 @@ type LiveCostCardProps = {
   }: LiveCostCardProps) {
     return (
       <div
-        className="relative overflow-hidden rounded-[32px] p-6 text-white shadow-2xl"
-        style={{
-          background:
-            "linear-gradient(135deg, #0b1f10 0%, #0a7a12 100%)",
-        }}
-      >
-        <div
-          className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl"
-          style={{
-            backgroundColor: "#39ff14",
-            opacity: 0.3,
-          }}
-        />
-  
+        className="rounded-[32px] bg-[#BDEBCF] p-6 text-[#0B1F10] shadow-lg">
         <p
-          className="text-xs uppercase tracking-[0.2em]"
-          style={{ color: "#c8d3cc" }}
+          className="text-xs uppercase tracking-[0.2em] text-[#4D6354]"
+         
         >
           COSTO UNITARIO EN VIVO
         </p>
   
         <div className="mt-8">
           <h2
-            className="text-5xl font-bold"
-            style={{ color: "#39ff14" }}
+            aria-label={`Costo unitario ${displayMoney(unitCost)}`}
+            className="text-4xl font-bold"
           >
-            {unitCost ?? "—"}
+            {displayMoney(unitCost)}
           </h2>
   
           <div
-            className="mt-4 h-2 w-16 rounded-full"
-            style={{ backgroundColor: "#39ff14" }}
+            className="mt-4 h-2 w-16 rounded-full bg-[#D3F5E1]" 
           />
   
-          <p className="mt-3 text-sm text-gray-300">
+          <p className="mt-3 text-sm text-[#4D6354]">
             por unidad
           </p>
         </div>
@@ -55,20 +46,18 @@ type LiveCostCardProps = {
         <div className="mt-10">
           <div className="flex items-center justify-between py-4">
             <span>Costos fijos</span>
-            <span>{fixedCosts ?? "—"}</span>
+            <span>{displayMoney(fixedCosts)}</span>
           </div>
   
           <div
-            className="flex items-center justify-between border-t py-4"
-            style={{ borderColor: "#4d6354" }}
+            className="flex items-center justify-between border-t border-[#D3F5E1] py-4"
           >
             <span>Variable por unidad</span>
-            <span>{variablePerUnit ?? "—"}</span>
+            <span>{displayMoney(variablePerUnit)}</span>
           </div>
   
           <div
-            className="flex items-center justify-between border-t py-4"
-            style={{ borderColor: "#4d6354" }}
+            className="flex items-center justify-between border-t border-[#D3F5E1] py-4"
           >
             <span>Volumen</span>
             <span>{volume ?? "—"}</span>
