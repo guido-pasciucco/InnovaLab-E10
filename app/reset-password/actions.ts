@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
-import { createRscSupabaseClient } from "@/lib/supabase/rsc";
+import { createWritableSupabaseClient } from "@/lib/supabase/rsc";
 import { requestPasswordResetService } from "@/lib/services/auth";
 import { getSiteOrigin } from "@/lib/site-origin";
 import { type PasswordResetState } from "@/lib/types/auth";
@@ -17,7 +17,7 @@ export const requestPasswordReset = handleActionErrors(
     // The link lands on /auth/confirm, which exchanges the PKCE code for a
     // session and then continues to /update-password.
     const redirectTo = `${getSiteOrigin(await headers())}/auth/confirm?next=/update-password`;
-    return requestPasswordResetService(await createRscSupabaseClient(), data, redirectTo);
+    return requestPasswordResetService(await createWritableSupabaseClient(), data, redirectTo);
   },
   "AUTH_UNAVAILABLE",
 );

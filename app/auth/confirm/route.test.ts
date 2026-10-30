@@ -5,7 +5,7 @@ import { AppError } from "@/lib/errors/app-error";
 const confirmAuthLinkService = vi.fn();
 const client = { tag: "rsc-client" };
 
-vi.mock("@/lib/supabase/rsc", () => ({ createRscSupabaseClient: async () => client }));
+vi.mock("@/lib/supabase/rsc", () => ({ createWritableSupabaseClient: async () => client }));
 vi.mock("@/lib/services/auth", () => ({
   confirmAuthLinkService: (...args: unknown[]) => confirmAuthLinkService(...args),
 }));

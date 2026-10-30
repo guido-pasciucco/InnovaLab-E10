@@ -11,6 +11,8 @@ import {
   signupService,
   updatePasswordService,
 } from "./auth";
+import { CookiePersistenceError } from "@/lib/errors/cookie-persistence-error";
+import { attachLogoutOutcome } from "@/lib/supabase/logout-outcome";
 
 function clientWith(signIn: () => Promise<unknown>) {
   return { auth: { signInWithPassword: vi.fn(signIn) } } as unknown as SupabaseClient;
@@ -129,12 +131,46 @@ describe("signupService", () => {
 describe("logoutService", () => {
   it("resolves when sign out succeeds", async () => {
     const client = authClient({ signOut: async () => ({ error: null }) });
-    await expect(logoutService(client)).resolves.toEqual({});
+    await expect(logoutService(client)).resolves.toEqual({ remote: "confirmed", cookiesPersisted: true });
+  });
+
+  it("reports a completed remote sign out when persisting cookie deletion fails", async () => {
+    const client = authClient({ signOut: async () => ({ error: new CookiePersistenceError() }) });
+    attachLogoutOutcome(client, () => "confirmed");
+
+    await expect(logoutService(client)).resolves.toEqual({ remote: "confirmed", cookiesPersisted: false });
+  });
+
+  it("reports a failed remote sign out when cookie cleanup fails afterwards", async () => {
+    const client = authClient({ signOut: async () => { throw new CookiePersistenceError(); } });
+    attachLogoutOutcome(client, () => "failed");
+
+    await expect(logoutService(client)).resolves.toEqual({ remote: "failed", cookiesPersisted: false });
+  });
+
+  it("reports an indeterminate remote sign out when cookie cleanup has no tracked response", async () => {
+    const client = authClient({ signOut: async () => { throw new CookiePersistenceError(); } });
+
+    await expect(logoutService(client)).resolves.toEqual({ remote: "indeterminate", cookiesPersisted: false });
   });
 
   it("throws AUTH_SIGNOUT_FAILED when Supabase fails", async () => {
     const client = authClient({ signOut: async () => ({ error: { message: "x" } }) });
     await expect(logoutService(client)).rejects.toEqual(new AppError("AUTH_SIGNOUT_FAILED"));
+  });
+
+  it("returns a failed remote result when Supabase returns an error after tracked cleanup", async () => {
+    const client = authClient({ signOut: async () => ({ error: { message: "x" } }) });
+    attachLogoutOutcome(client, () => "failed");
+
+    await expect(logoutService(client)).resolves.toEqual({ remote: "failed", cookiesPersisted: true });
+  });
+
+  it("propagates a thrown provider failure", async () => {
+    const failure = new Error("provider unavailable");
+    const client = authClient({ signOut: async () => { throw failure; } });
+
+    await expect(logoutService(client)).rejects.toBe(failure);
   });
 });
 

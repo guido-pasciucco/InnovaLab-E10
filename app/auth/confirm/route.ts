@@ -4,7 +4,7 @@ import { toAppError } from "@/lib/errors/app-error";
 import { type ErrorCode } from "@/lib/errors/catalog";
 import { confirmAuthLinkService } from "@/lib/services/auth";
 import { safeNextPath } from "@/lib/safe-next-path";
-import { createRscSupabaseClient } from "@/lib/supabase/rsc";
+import { createWritableSupabaseClient } from "@/lib/supabase/rsc";
 
 const DEFAULT_NEXT = "/update-password";
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   let failure: ErrorCode | null = null;
   try {
-    await confirmAuthLinkService(await createRscSupabaseClient(), {
+    await confirmAuthLinkService(await createWritableSupabaseClient(), {
       code: searchParams.get("code"),
       tokenHash: searchParams.get("token_hash"),
       type: searchParams.get("type"),
