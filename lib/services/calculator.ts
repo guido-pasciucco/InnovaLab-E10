@@ -1,7 +1,9 @@
 import "server-only";
 
+import Decimal from "decimal.js";
 import { and, desc, eq } from "drizzle-orm";
 
+import { calculateCostTotals, type CostLine } from "@/lib/calc/calculateCostTotals";
 import { businesses, products } from "@/lib/db/business/table";
 import { calculations, costingSetup } from "@/lib/db/calculation/table";
 import {
@@ -9,7 +11,12 @@ import {
   type SaveCalculatorSetupInput,
 } from "@/lib/db/calculation/validation";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
-import type { CalculatorDraftSetup } from "@/lib/types/calculator";
+import { calcCostLines } from "@/lib/db/costs/table";
+import { AppError } from "@/lib/errors/app-error";
+import type {
+  CalculatorCostSummary,
+  CalculatorDraftSetup,
+} from "@/lib/types/calculator";
 
 // Calculator setup persistence (ADR 0005: the draft lives server-side only).
 // Input is validated with the server gate from lib/db (saveCalculatorSetupInputSchema),
@@ -189,5 +196,125 @@ export async function getCalculatorDraftSetupService(
       currency: draft.currency,
       period: draft.period,
     }),
+  };
+}
+
+// The database persists the cost dimensions as `fixed | variable` and
+// `direct | indirect` (lib/schemas/costs/fields.ts), while the pure engine
+// speaks `fijo | variable` and `directo | indirecto`. The translation lives
+// here, at the application boundary; the persisted vocabulary never changes.
+// Unknown values pass through untouched so the engine rejects them instead of
+// the service silently coercing bad data.
+const ENGINE_BEHAVIOR: Record<string, string> = {
+  fixed: "fijo",
+  variable: "variable",
+};
+
+const ENGINE_TRACEABILITY: Record<string, string> = {
+  direct: "directo",
+  indirect: "indirecto",
+};
+
+function emptyCostSummary(
+  calculationId: string | null,
+  volume: number | null = null,
+): CalculatorCostSummary {
+  return {
+    calculationId,
+    totalFixed: null,
+    variableUnit: null,
+    unitCost: null,
+    volume,
+    currency: "ARS",
+  };
+}
+
+/**
+ * Read model for the step 1 "live unit cost" card (#172): totals for the
+ * user's draft, computed on the fly with the pure engine. It never writes
+ * `computed_results` or `calc_cost_lines`.
+ *
+ * Null semantics:
+ * - no draft: `calculationId`, the amounts and `volume` are null.
+ * - draft without `costing_setup`: `calculationId` is returned; everything
+ *   else is null because there is no volume to divide by.
+ * - draft with setup and no cost lines: `calculationId` and `volume` are
+ *   returned; the amounts stay null because there are no costs yet.
+ * - draft with setup and cost lines: the three amounts are decimal strings,
+ *   and a category with no lines is "0.00", not null.
+ *
+ * `unitCost` is the engine's `unitarioPorDocena` (totalPeriodo / volume); the
+ * divisor is already the setup volume, so it is exposed as-is, without
+ * multiplying or dividing by 12. `variableUnit` is the one division the engine
+ * does not expose: subtotalVariable / volume, rounded like the engine.
+ *
+ * @throws AppError CALC_COST_SUMMARY_FAILED when the engine rejects the
+ * persisted lines (invalid behavior, traceability, amount or volume).
+ */
+export async function getCalculatorCostSummaryService(
+  userId: string,
+  db: Db = getDrizzleClient(),
+): Promise<CalculatorCostSummary> {
+  const calculationId = await getDraftCalculationId(userId, db);
+
+  if (!calculationId) {
+    return emptyCostSummary(null);
+  }
+
+  const [setup] = await db
+    .select({ volume: costingSetup.volume })
+    .from(costingSetup)
+    .where(eq(costingSetup.calculationId, calculationId))
+    .limit(1);
+
+  if (!setup) {
+    return emptyCostSummary(calculationId);
+  }
+
+  const rows = await db
+    .select({
+      id: calcCostLines.id,
+      behavior: calcCostLines.behavior,
+      traceability: calcCostLines.traceability,
+      amount: calcCostLines.amount,
+    })
+    .from(calcCostLines)
+    .where(eq(calcCostLines.calculationId, calculationId));
+
+  if (rows.length === 0) {
+    return emptyCostSummary(calculationId, setup.volume);
+  }
+
+  // #91 adds `is_own_labor` to calc_cost_lines. Until it lands, every line is
+  // "not own labor": that cross-cut never changes totalFixed, variableUnit or
+  // unitCost, because own labor already enters the total through its behavior.
+  const lines: CostLine[] = rows.map((row) => ({
+    id: row.id,
+    behavior: ENGINE_BEHAVIOR[row.behavior] ?? row.behavior,
+    traceability: ENGINE_TRACEABILITY[row.traceability] ?? row.traceability,
+    isOwnLabor: false,
+    amount: row.amount,
+  }));
+
+  const totals = calculateCostTotals({ lines, volume: setup.volume });
+
+  if (!totals.ok) {
+    throw new AppError("CALC_COST_SUMMARY_FAILED", undefined, { cause: totals });
+  }
+
+  // The engine does not expose variable/volume: make that single division
+  // here, with the same rounding as the engine (2 decimals, HALF_UP). Do not
+  // recompute subtotals or totals.
+  const variableUnit = new Decimal(totals.subtotalVariable)
+    .div(totals.volume)
+    .toFixed(2, Decimal.ROUND_HALF_UP);
+
+  return {
+    calculationId,
+    totalFixed: totals.subtotalFijo,
+    variableUnit,
+    unitCost: totals.unitarioPorDocena,
+    volume: totals.volume,
+    currency: "ARS",
   };
 }
