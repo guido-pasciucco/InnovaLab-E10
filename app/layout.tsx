@@ -26,7 +26,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="relative min-h-full flex flex-col bg-gradient-to-br from-[#EAFCF1] via-[#D3F5E1] to-[#BDEBCF] text-slate-800 overflow-x-hidden">
+      <body 
+        suppressHydrationWarning
+        className="relative min-h-full flex flex-col bg-gradient-to-br from-[#EAFCF1] via-[#D3F5E1] to-[#BDEBCF] text-slate-800 overflow-x-hidden"
+      >
         
         {/* Capas de luces difuminadas de Figma */}
         <div className="pointer-events-none absolute -top-20 -right-20 w-[420px] h-[420px] rounded-full bg-[#39FF14]/30 blur-[110px]" />
@@ -34,7 +37,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[360px] h-[360px] rounded-full bg-white/70 blur-[100px]" />
 
         {/* Elemento decorativo global: Carrito (Esquina inferior izquierda) */}
-        <div className="pointer-events-none absolute bottom-4 left-4 w-[300px] h-[300px] -rotate-8 opacity-90 z-0">
+        <div 
+          className="pointer-events-none absolute bottom-4 left-4 w-[300px] h-[300px] opacity-90 z-0"
+          style={{ transform: 'rotate(-20deg)' }}
+        >
           <img 
             src="/images/carrito.png" 
             alt="Carrito decorativo" 
@@ -42,8 +48,23 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           />
         </div>
 
+        {/* Elemento decorativo global: Calculadora (Esquina superior derecha) */}
+        <div 
+          className="pointer-events-none absolute top-6 right-6 w-[260px] h-[260px] opacity-90 z-0"
+          style={{ transform: 'rotate(20deg)' }}
+        >
+          <img 
+            src="/images/calculadora.png" 
+            alt="Calculadora decorativa" 
+            className="w-full h-full object-contain"
+          />
+        </div>
+
         {/* Elemento decorativo global: Monedas (Esquina inferior derecha) */}
-        <div className="pointer-events-none absolute bottom-4 right-4 w-[270px] h-[270px] rotate-8 opacity-90 z-0">
+        <div 
+          className="pointer-events-none absolute bottom-4 right-4 w-[270px] h-[270px] opacity-90 z-0"
+          style={{ transform: 'rotate(20deg)' }}
+        >
           <img 
             src="/images/monedas.png" 
             alt="Monedas decorativas" 
