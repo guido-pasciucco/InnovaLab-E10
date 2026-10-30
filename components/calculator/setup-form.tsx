@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Path } from "react-hook-form";
@@ -71,9 +71,15 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     dispatchInTransition(submitAction)(data);
   };
 
+  // The ref is read inside the submit event, not during render. Building the
+  // handler here keeps react-hooks/refs from treating it as a render-time read.
+  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    void handleSubmit(handleSubmitAction)(event);
+  };
+
   return (
     <form
-      onSubmit={handleSubmit(handleSubmitAction)}
+      onSubmit={handleFormSubmit}
       noValidate
       className="mt-6 flex flex-col gap-4"
     >

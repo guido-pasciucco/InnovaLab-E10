@@ -67,3 +67,12 @@ Para lo que drizzle-kit no modela (RLS, triggers, FKs a `auth.users`, carga de d
 Todo `drizzle/`, incluido `meta/`, se versiona: `generate` compara los `lib/db/*/table.ts` contra el último snapshot. Cada snapshot es una foto completa del schema (cientos de líneas), y `.gitattributes` los marca como generados para que GitHub los colapse en la revisión. drizzle-kit no tiene comando para unir migraciones. Si dos migraciones de un PR todavía no se aplicaron en ninguna base, se borran con `bunx drizzle-kit drop` (elimina el `.sql`, el snapshot y la entrada del journal) y se regeneran juntas. `drop` no verifica si la migración ya se aplicó: nunca la uses sobre una migración que ya está en `main` o en alguna base.
 
 `drizzle-kit push` solo sirve para prototipar en una base local: no deja historial.
+
+### Base local y drift
+
+La base local es descartable y tiene que poder reconstruirse desde `drizzle/` de la rama actual. Antes de trabajar y al cambiar de rama, corré `bun run db:drift:local`: compara el `sha256` de cada `drizzle/*.sql` contra `drizzle.__drizzle_migrations` y falla si hay pendientes u huérfanas.
+
+- **Pendientes** (archivos de la rama sin aplicar): `bun run db:migrate:local`.
+- **Huérfanas** (migraciones aplicadas de otra rama): `bun run db:reset:local`.
+
+`db:migrate:local` solo no alcanza para detectar el problema: drizzle-kit aplica por `created_at`, no por hash, y puede saltear una migración pendiente con exit 0 ([drizzle-orm#5769](https://github.com/drizzle-team/drizzle-orm/issues/5769)).
