@@ -13,69 +13,67 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: {
-    template: "%s | InnovaLab E10",
-    default: "InnovaLab E10",
-  },
-  description: "Calculadora de costos, precios y punto de equilibrio.",
+  title: "Calculadora Inteligente de Costos",
+  description: "Calculá tus costos, definí tus precios y encontrá tu punto de equilibrio.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html
-      lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased overflow-x-clip`}>
       <body 
         suppressHydrationWarning
-        className="relative min-h-full flex flex-col bg-gradient-to-br from-[#EAFCF1] via-[#D3F5E1] to-[#BDEBCF] text-slate-800 overflow-x-hidden"
+        className="relative min-h-full flex flex-col bg-gradient-to-br from-[#EAFCF1] via-[#D3F5E1] to-[#BDEBCF] text-slate-800"
       >
-        
         {/* Capas de luces difuminadas de Figma */}
         <div className="pointer-events-none absolute -top-20 -right-20 w-[420px] h-[420px] rounded-full bg-[#39FF14]/30 blur-[110px]" />
-        <div className="pointer-events-none absolute -bottom-20 -left-20 w-[460px] h-[460px] rounded-full bg-[#5EEAD4]/45 blur-[130px]" />
-        <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[360px] h-[360px] rounded-full bg-white/70 blur-[100px]" />
 
-        {/* Elemento decorativo global: Carrito (Esquina inferior izquierda) */}
+        {/* Elemento decorativo global: Carrito (Esquina inferior izquierda - fijo al viewport) */}
         <div 
-          className="pointer-events-none absolute bottom-4 left-4 w-[300px] h-[300px] opacity-90 z-0"
+          className="pointer-events-none fixed bottom-4 left-4 w-[300px] h-[300px] opacity-90 z-0"
           style={{ transform: 'rotate(-20deg)' }}
         >
           <img 
             src="/images/carrito.png" 
-            alt="Carrito decorativo" 
+            alt="" 
+            aria-hidden="true"
             className="w-full h-full object-contain"
           />
         </div>
 
-        {/* Elemento decorativo global: Calculadora (Esquina superior derecha) */}
+        {/* Elemento decorativo global: Monedas (Esquina inferior derecha - fijo al viewport) */}
         <div 
-          className="pointer-events-none absolute top-6 right-6 w-[260px] h-[260px] opacity-90 z-0"
-          style={{ transform: 'rotate(20deg)' }}
-        >
-          <img 
-            src="/images/calculadora.png" 
-            alt="Calculadora decorativa" 
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        {/* Elemento decorativo global: Monedas (Esquina inferior derecha) */}
-        <div 
-          className="pointer-events-none absolute bottom-4 right-4 w-[270px] h-[270px] opacity-90 z-0"
+          className="pointer-events-none fixed bottom-4 right-4 w-[270px] h-[270px] opacity-90 z-0"
           style={{ transform: 'rotate(20deg)' }}
         >
           <img 
             src="/images/monedas.png" 
-            alt="Monedas decorativas" 
+            alt="" 
+            aria-hidden="true"
             className="w-full h-full object-contain"
           />
         </div>
 
-        {/* Contenido principal de la aplicación */}
-        <main className="relative z-10 flex flex-col min-h-full flex-1">
+        {/* Elemento decorativo global: Calculadora (Vértice superior derecho - fijo al viewport) */}
+        <div 
+          className="pointer-events-none fixed top-6 right-6 w-[260px] h-[260px] opacity-90 z-0"
+          style={{ transform: 'rotate(20deg)' }}
+        >
+          <img 
+            src="/images/calculadora.png" 
+            alt="" 
+            aria-hidden="true"
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        {/* Wrapper presentacional para evitar duplicar <main> */}
+        <div className="relative z-10 flex flex-col min-h-full flex-1">
           {children}
-        </main>
+        </div>
       </body>
     </html>
   );
