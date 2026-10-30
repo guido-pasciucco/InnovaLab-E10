@@ -3,12 +3,18 @@ import { ZodError } from "zod";
 import { and, eq } from "drizzle-orm";
 
 import { businesses, products } from "@/lib/db/business/table";
-import { calculations, costingSetup } from "@/lib/db/calculation/table";
+import {
+  calculations,
+  computedResults,
+  costingSetup,
+} from "@/lib/db/calculation/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
+import { businessCostLines, calcCostLines } from "@/lib/db/costs/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
 import {
+  getCalculatorCostSummaryService,
   getCalculatorDraftSetupService,
   getCalculatorSetupService,
   getDraftCalculationId,
@@ -388,5 +394,272 @@ describe("getCalculatorDraftSetupService", () => {
     await getCalculatorDraftSetupService(user.id, db);
 
     expect(await getSetupRows(user.id)).toEqual(before);
+  });
+});
+
+type DraftFixture = {
+  user: CreatedUser;
+  calculationId: string;
+  businessId: string;
+};
+
+// Creates a draft through the setup service, then resolves the business the
+// cost lines hang from. A business_cost_lines row is required until #91 makes
+// calc_cost_lines.source_business_cost_id optional.
+async function arrangeDraftWithSetup(volume: number): Promise<DraftFixture> {
+  const user = await makeUser();
+  await saveCalculatorSetupService(user.id, { ...validInput, volume }, db);
+
+  const calculationId = await getDraftCalculationId(user.id, db);
+  const [business] = await db
+    .select({ id: businesses.id })
+    .from(businesses)
+    .where(eq(businesses.ownerUserId, user.id));
+
+  if (!calculationId || !business) {
+    throw new Error("[int] draft fixture was not created");
+  }
+
+  return { user, calculationId, businessId: business.id };
+}
+
+type CostLineValues = {
+  concept: string;
+  behavior: string;
+  traceability: string;
+  amount: string;
+};
+
+async function insertCostLine(
+  fixture: DraftFixture,
+  values: CostLineValues,
+): Promise<void> {
+  const [source] = await db
+    .insert(businessCostLines)
+    .values({
+      businessId: fixture.businessId,
+      concept: values.concept,
+      behavior: values.behavior,
+      traceability: values.traceability,
+      amountPeriod: values.amount,
+    })
+    .returning({ id: businessCostLines.id });
+
+  await db.insert(calcCostLines).values({
+    calculationId: fixture.calculationId,
+    sourceBusinessCostId: source.id,
+    concept: values.concept,
+    behavior: values.behavior,
+    traceability: values.traceability,
+    amount: values.amount,
+  });
+}
+
+describe("getCalculatorCostSummaryService", () => {
+  it("returns no values when the user has no draft", async () => {
+    const user = await makeUser();
+
+    expect(await getCalculatorCostSummaryService(user.id, db)).toEqual({
+      calculationId: null,
+      totalFixed: null,
+      variableUnit: null,
+      unitCost: null,
+      volume: null,
+      currency: "ARS",
+    });
+  });
+
+  it("returns the draft and its volume but no amounts when there are no cost lines", async () => {
+    const fixture = await arrangeDraftWithSetup(24);
+
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: null,
+      variableUnit: null,
+      unitCost: null,
+      volume: 24,
+      currency: "ARS",
+    });
+  });
+
+  it("returns the engine totals as decimal strings when there are fixed and variable costs", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "indirect",
+      amount: "1000.00",
+    });
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "2400.00",
+    });
+
+    const summary = await getCalculatorCostSummaryService(fixture.user.id, db);
+
+    // totalFixed = subtotalFijo (1000.00); variableUnit = 2400 / 12 = 200.00;
+    // unitCost = (1000 + 2400) / 12 = 283.333... -> 283.33.
+    expect(summary).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "1000.00",
+      variableUnit: "200.00",
+      unitCost: "283.33",
+      volume: 12,
+      currency: "ARS",
+    });
+    expect(typeof summary.totalFixed).toBe("string");
+    expect(typeof summary.variableUnit).toBe("string");
+    expect(typeof summary.unitCost).toBe("string");
+  });
+
+  it("returns 0.00 for the variable category when only fixed lines exist", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "indirect",
+      amount: "1200.00",
+    });
+
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "1200.00",
+      variableUnit: "0.00",
+      unitCost: "100.00",
+      volume: 12,
+      currency: "ARS",
+    });
+  });
+
+  it("returns 0.00 for the fixed category when only variable lines exist", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "1200.00",
+    });
+
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "0.00",
+      variableUnit: "100.00",
+      unitCost: "100.00",
+      volume: 12,
+      currency: "ARS",
+    });
+  });
+
+  it("maps persisted fixed/direct rows to the engine's fijo/directo vocabulary", async () => {
+    const fixture = await arrangeDraftWithSetup(10);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "direct",
+      amount: "50.00",
+    });
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "30.00",
+    });
+
+    // The base stores "fixed"/"direct"; the engine only accepts "fijo"/
+    // "directo". Without the mapping the engine returns INVALID_BEHAVIOR and
+    // this call would throw instead of returning totals.
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "50.00",
+      variableUnit: "3.00",
+      unitCost: "8.00",
+      volume: 10,
+      currency: "ARS",
+    });
+  });
+
+  it("does not write computed_results or calc_cost_lines", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "240.00",
+    });
+
+    const resultsBefore = await db
+      .select()
+      .from(computedResults)
+      .where(eq(computedResults.calculationId, fixture.calculationId));
+    const linesBefore = await db
+      .select()
+      .from(calcCostLines)
+      .where(eq(calcCostLines.calculationId, fixture.calculationId));
+
+    await getCalculatorCostSummaryService(fixture.user.id, db);
+
+    expect(
+      await db
+        .select()
+        .from(computedResults)
+        .where(eq(computedResults.calculationId, fixture.calculationId)),
+    ).toEqual(resultsBefore);
+    expect(
+      await db
+        .select()
+        .from(calcCostLines)
+        .where(eq(calcCostLines.calculationId, fixture.calculationId)),
+    ).toEqual(linesBefore);
+  });
+
+  it("does not leak one user's costs into another user's summary", async () => {
+    const fixtureA = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixtureA, {
+      concept: "Harina de A",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "1200.00",
+    });
+
+    const fixtureB = await arrangeDraftWithSetup(24);
+    await insertCostLine(fixtureB, {
+      concept: "Harina de B",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "4800.00",
+    });
+
+    expect(await getCalculatorCostSummaryService(fixtureA.user.id, db)).toEqual({
+      calculationId: fixtureA.calculationId,
+      totalFixed: "0.00",
+      variableUnit: "100.00",
+      unitCost: "100.00",
+      volume: 12,
+      currency: "ARS",
+    });
+    expect(await getCalculatorCostSummaryService(fixtureB.user.id, db)).toEqual({
+      calculationId: fixtureB.calculationId,
+      totalFixed: "0.00",
+      variableUnit: "200.00",
+      unitCost: "200.00",
+      volume: 24,
+      currency: "ARS",
+    });
+  });
+
+  it("throws CALC_COST_SUMMARY_FAILED when the engine rejects a persisted line", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "banana",
+      traceability: "direct",
+      amount: "1200.00",
+    });
+
+    await expect(
+      getCalculatorCostSummaryService(fixture.user.id, db),
+    ).rejects.toMatchObject({ code: "CALC_COST_SUMMARY_FAILED" });
   });
 });
