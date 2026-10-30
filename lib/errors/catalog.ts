@@ -91,6 +91,19 @@ export const ERROR_CATALOG = {
     message: "Calculator unavailable",
     logLevel: "error",
   },
+  CALC_DRAFT_MISSING: {
+    // The user has not saved paso 1, so there is no draft to attach costs to.
+    status: 404,
+    message: "Calculator draft not found",
+    logLevel: "silent",
+  },
+  CALC_COST_LINE_NOT_FOUND: {
+    // Same code when the id is missing or belongs to another draft, so a
+    // caller cannot tell those two cases apart.
+    status: 404,
+    message: "Cost line not found",
+    logLevel: "silent",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;

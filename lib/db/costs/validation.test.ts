@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import {
+  addCalcCostLineInputSchema,
   createBusinessCostLineInputSchema,
   createCalcCostLineInputSchema,
+  listCalcCostLinesOptionsSchema,
+  updateCalcCostLineAmountInputSchema,
 } from "./validation";
 
 // DB tests cover shared-field wiring and removal of server-controlled fields
@@ -161,5 +164,79 @@ describe("createCalcCostLineInputSchema", () => {
     expect(result).not.toHaveProperty("calculationId");
     expect(result).not.toHaveProperty("createdAt");
     expect(result).not.toHaveProperty("updatedAt");
+  });
+
+  it("accepts a calculation line when the catalog source is null", () => {
+    expect(
+      createCalcCostLineInputSchema.safeParse({
+        ...validCalcCostLine,
+        sourceBusinessCostId: null,
+      }).success,
+    ).toBe(true);
+  });
+});
+
+describe("addCalcCostLineInputSchema", () => {
+  it("accepts a concept and an amount", () => {
+    expect(
+      addCalcCostLineInputSchema.parse({ concept: "Alquiler", amount: "60000.00" }),
+    ).toEqual({ concept: "Alquiler", amount: "60000.00" });
+  });
+
+  it("drops behavior, traceability and ids when the input carries them", () => {
+    const result = addCalcCostLineInputSchema.parse({
+      concept: "Alquiler",
+      amount: "60000.00",
+      behavior: "variable",
+      traceability: "indirect",
+      id: SERVER_ID,
+      sourceBusinessCostId: SERVER_ID,
+    });
+
+    expect(result).toEqual({ concept: "Alquiler", amount: "60000.00" });
+  });
+
+  it("reports the Spanish message when the amount is negative", () => {
+    expect(
+      fieldErrors(addCalcCostLineInputSchema, { concept: "Alquiler", amount: "-1" }),
+    ).toEqual({ amount: ["El importe no puede ser negativo."] });
+  });
+});
+
+describe("listCalcCostLinesOptionsSchema", () => {
+  it("accepts a fixed behavior filter", () => {
+    expect(listCalcCostLinesOptionsSchema.parse({ behavior: "fixed" })).toEqual({
+      behavior: "fixed",
+    });
+  });
+
+  it("rejects a behavior outside fixed and variable", () => {
+    expect(listCalcCostLinesOptionsSchema.safeParse({ behavior: "fijo" }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("updateCalcCostLineAmountInputSchema", () => {
+  it("accepts an amount", () => {
+    expect(updateCalcCostLineAmountInputSchema.parse({ amount: "70000.00" })).toEqual({
+      amount: "70000.00",
+    });
+  });
+
+  it("drops concept and behavior when the input carries them", () => {
+    expect(
+      updateCalcCostLineAmountInputSchema.parse({
+        amount: "70000.00",
+        concept: "Otro",
+        behavior: "variable",
+      }),
+    ).toEqual({ amount: "70000.00" });
+  });
+
+  it("reports the Spanish message when the amount is negative", () => {
+    expect(fieldErrors(updateCalcCostLineAmountInputSchema, { amount: "-1" })).toEqual({
+      amount: ["El importe no puede ser negativo."],
+    });
   });
 });
