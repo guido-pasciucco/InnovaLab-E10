@@ -97,6 +97,13 @@ export const ERROR_CATALOG = {
     message: "Calculator draft not found",
     logLevel: "silent",
   },
+  CALC_COST_LINE_NOT_FOUND: {
+    // Same code when the id is missing or belongs to another draft, so a
+    // caller cannot tell those two cases apart.
+    status: 404,
+    message: "Cost line not found",
+    logLevel: "silent",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;

@@ -6,6 +6,7 @@ import {
   createBusinessCostLineInputSchema,
   createCalcCostLineInputSchema,
   listCalcCostLinesOptionsSchema,
+  updateCalcCostLineAmountInputSchema,
 } from "./validation";
 
 // DB tests cover shared-field wiring and removal of server-controlled fields
@@ -213,5 +214,29 @@ describe("listCalcCostLinesOptionsSchema", () => {
     expect(listCalcCostLinesOptionsSchema.safeParse({ behavior: "fijo" }).success).toBe(
       false,
     );
+  });
+});
+
+describe("updateCalcCostLineAmountInputSchema", () => {
+  it("accepts an amount", () => {
+    expect(updateCalcCostLineAmountInputSchema.parse({ amount: "70000.00" })).toEqual({
+      amount: "70000.00",
+    });
+  });
+
+  it("drops concept and behavior when the input carries them", () => {
+    expect(
+      updateCalcCostLineAmountInputSchema.parse({
+        amount: "70000.00",
+        concept: "Otro",
+        behavior: "variable",
+      }),
+    ).toEqual({ amount: "70000.00" });
+  });
+
+  it("reports the Spanish message when the amount is negative", () => {
+    expect(fieldErrors(updateCalcCostLineAmountInputSchema, { amount: "-1" })).toEqual({
+      amount: ["El importe no puede ser negativo."],
+    });
   });
 });

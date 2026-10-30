@@ -5,9 +5,11 @@ import { and, asc, eq } from "drizzle-orm";
 
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { calcCostLines, type CalcCostLine } from "@/lib/db/costs/table";
+import { uuidString } from "@/lib/db/formats";
 import {
   addCalcCostLineInputSchema,
   listCalcCostLinesOptionsSchema,
+  updateCalcCostLineAmountInputSchema,
   type ListCalcCostLinesOptions,
 } from "@/lib/db/costs/validation";
 import { AppError } from "@/lib/errors/app-error";
@@ -41,6 +43,26 @@ async function requireDraftId(userId: string, db: Db): Promise<string> {
     throw new AppError("CALC_DRAFT_MISSING");
   }
   return draftId;
+}
+
+// A line id comes from the client. An id that is not a uuid, that does not
+// exist, or that sits on another user's draft all surface as the same code.
+// Postgres would otherwise reject a non-uuid with a type error and the door
+// would turn that into a 500.
+function requireLineId(lineId: string): string {
+  const parsed = uuidString.safeParse(lineId);
+  if (!parsed.success) {
+    throw new AppError("CALC_COST_LINE_NOT_FOUND");
+  }
+  return parsed.data;
+}
+
+function fixedLineOfDraft(lineId: string, draftId: string) {
+  return and(
+    eq(calcCostLines.id, lineId),
+    eq(calcCostLines.calculationId, draftId),
+    eq(calcCostLines.behavior, "fixed"),
+  );
 }
 
 export async function listCalcCostLinesService(
@@ -93,4 +115,47 @@ export async function addCalcCostLineService(
 
     return created;
   });
+}
+
+export async function updateCalcCostLineAmountService(
+  userId: string,
+  lineId: string,
+  input: unknown,
+  db: Db = getDrizzleClient(),
+): Promise<CalcCostLine> {
+  const { amount } = updateCalcCostLineAmountInputSchema.parse(input);
+  const id = requireLineId(lineId);
+  const draftId = await requireDraftId(userId, db);
+
+  const [updated] = await db
+    .update(calcCostLines)
+    .set({ amount })
+    .where(fixedLineOfDraft(id, draftId))
+    .returning();
+
+  if (!updated) {
+    throw new AppError("CALC_COST_LINE_NOT_FOUND");
+  }
+
+  return updated;
+}
+
+export async function removeCalcCostLineService(
+  userId: string,
+  lineId: string,
+  db: Db = getDrizzleClient(),
+): Promise<CalcCostLine> {
+  const id = requireLineId(lineId);
+  const draftId = await requireDraftId(userId, db);
+
+  const [removed] = await db
+    .delete(calcCostLines)
+    .where(fixedLineOfDraft(id, draftId))
+    .returning();
+
+  if (!removed) {
+    throw new AppError("CALC_COST_LINE_NOT_FOUND");
+  }
+
+  return removed;
 }

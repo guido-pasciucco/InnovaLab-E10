@@ -74,6 +74,12 @@ export const addCalcCostLineInputSchema = z.object({
   amount: amountField,
 });
 
+// Paso 2 can correct the amount of a line it already saved. The object has
+// no concept, behavior or traceability, so those columns cannot be patched.
+export const updateCalcCostLineAmountInputSchema = z.object({
+  amount: amountField,
+});
+
 export const listCalcCostLinesOptionsSchema = z.object({
   behavior: behaviorField.optional(),
 });
@@ -88,4 +94,7 @@ export type CreateBusinessCostLineInput = z.infer<
 >;
 export type CreateCalcCostLineInput = z.infer<typeof createCalcCostLineInputSchema>;
 export type AddCalcCostLineInput = z.infer<typeof addCalcCostLineInputSchema>;
+export type UpdateCalcCostLineAmountInput = z.infer<
+  typeof updateCalcCostLineAmountInputSchema
+>;
 export type ListCalcCostLinesOptions = z.infer<typeof listCalcCostLinesOptionsSchema>;

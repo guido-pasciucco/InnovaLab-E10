@@ -9,7 +9,12 @@ import { AppError } from "@/lib/errors/app-error";
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
 import { getDraftCalculationId, saveCalculatorSetupService } from "./calculator";
-import { addCalcCostLineService, listCalcCostLinesService } from "./cost";
+import {
+  addCalcCostLineService,
+  listCalcCostLinesService,
+  removeCalcCostLineService,
+  updateCalcCostLineAmountService,
+} from "./cost";
 
 // Integration tests against the local Supabase stack. One pool per file.
 // Each test creates its users and deleteUser cascades the draft and its lines.
@@ -236,5 +241,163 @@ describe("addCalcCostLineService", () => {
       .where(eq(calcCostLines.calculationId, lineA.calculationId));
     expect(storedA).toHaveLength(1);
     expect(storedA[0].concept).toBe("Alquiler");
+  });
+});
+
+const UNKNOWN_LINE_ID = "6f1c2b7e-3d4a-4f5b-9c8d-1e2f3a4b5c6d";
+
+describe("updateCalcCostLineAmountService", () => {
+  it("replaces the amount and keeps the concept and the axes", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const alquiler = await addCalcCostLineService(
+      user.id,
+      { concept: "Alquiler", amount: "60000.00" },
+      db,
+    );
+    await addCalcCostLineService(user.id, { concept: "Servicios", amount: "20000.00" }, db);
+
+    const updated = await updateCalcCostLineAmountService(
+      user.id,
+      alquiler.id,
+      { amount: "70000.00", concept: "Otro", behavior: "variable" },
+      db,
+    );
+
+    expect(updated).toMatchObject({
+      id: alquiler.id,
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "direct",
+      amount: "70000.00",
+    });
+    const listed = await listCalcCostLinesService(user.id, { behavior: "fixed" }, db);
+    expect(listed.lines.find((line) => line.concept === "Alquiler")?.amount).toBe("70000.00");
+    expect(listed.lines.find((line) => line.concept === "Servicios")?.amount).toBe("20000.00");
+    expect(listed.totalFixed).toBe("90000.00");
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the line belongs to another user", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    await saveDraft(userA.id);
+    await saveDraft(userB.id);
+    const lineA = await addCalcCostLineService(
+      userA.id,
+      { concept: "Alquiler", amount: "60000.00" },
+      db,
+    );
+
+    await expect(
+      updateCalcCostLineAmountService(userB.id, lineA.id, { amount: "1.00" }, db),
+    ).rejects.toEqual(new AppError("CALC_COST_LINE_NOT_FOUND"));
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, lineA.id));
+    expect(stored[0].amount).toBe("60000.00");
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the id does not exist", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    await addCalcCostLineService(user.id, { concept: "Alquiler", amount: "60000.00" }, db);
+
+    await expect(
+      updateCalcCostLineAmountService(user.id, UNKNOWN_LINE_ID, { amount: "1.00" }, db),
+    ).rejects.toEqual(new AppError("CALC_COST_LINE_NOT_FOUND"));
+
+    const listed = await listCalcCostLinesService(user.id, { behavior: "fixed" }, db);
+    expect(listed.lines.map((line) => line.amount)).toEqual(["60000.00"]);
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the line is variable", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const draftId = await getDraftCalculationId(user.id, db);
+    const [variable] = await db
+      .insert(calcCostLines)
+      .values({
+        calculationId: draftId!,
+        concept: "Harina",
+        behavior: "variable",
+        traceability: "direct",
+        amount: "5000.00",
+        sourceBusinessCostId: null,
+      })
+      .returning();
+
+    await expect(
+      updateCalcCostLineAmountService(user.id, variable.id, { amount: "1.00" }, db),
+    ).rejects.toEqual(new AppError("CALC_COST_LINE_NOT_FOUND"));
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, variable.id));
+    expect(stored[0].amount).toBe("5000.00");
+  });
+
+  it("rejects an invalid amount without changing the line", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const alquiler = await addCalcCostLineService(
+      user.id,
+      { concept: "Alquiler", amount: "60000.00" },
+      db,
+    );
+
+    await expect(
+      updateCalcCostLineAmountService(user.id, alquiler.id, { amount: "-1" }, db),
+    ).rejects.toBeInstanceOf(ZodError);
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, alquiler.id));
+    expect(stored[0].amount).toBe("60000.00");
+  });
+});
+
+describe("removeCalcCostLineService", () => {
+  it("removes the line and leaves totalFixed without it", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const alquiler = await addCalcCostLineService(
+      user.id,
+      { concept: "Alquiler", amount: "60000.00" },
+      db,
+    );
+    await addCalcCostLineService(user.id, { concept: "Servicios", amount: "20000.00" }, db);
+
+    await removeCalcCostLineService(user.id, alquiler.id, db);
+
+    const listed = await listCalcCostLinesService(user.id, { behavior: "fixed" }, db);
+    expect(listed.lines.map((line) => line.concept)).toEqual(["Servicios"]);
+    expect(listed.totalFixed).toBe("20000.00");
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the line belongs to another user", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    await saveDraft(userA.id);
+    await saveDraft(userB.id);
+    const lineA = await addCalcCostLineService(
+      userA.id,
+      { concept: "Alquiler", amount: "60000.00" },
+      db,
+    );
+
+    await expect(removeCalcCostLineService(userB.id, lineA.id, db)).rejects.toEqual(
+      new AppError("CALC_COST_LINE_NOT_FOUND"),
+    );
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, lineA.id));
+    expect(stored).toHaveLength(1);
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the id does not exist", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    await addCalcCostLineService(user.id, { concept: "Alquiler", amount: "60000.00" }, db);
+
+    await expect(removeCalcCostLineService(user.id, UNKNOWN_LINE_ID, db)).rejects.toEqual(
+      new AppError("CALC_COST_LINE_NOT_FOUND"),
+    );
+
+    const listed = await listCalcCostLinesService(user.id, { behavior: "fixed" }, db);
+    expect(listed.lines).toHaveLength(1);
   });
 });
