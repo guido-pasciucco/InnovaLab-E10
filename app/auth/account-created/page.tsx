@@ -9,8 +9,7 @@ export default function AccountCreatedPage() {
             className="mx-auto mb-4 h-16 w-16 text-green-600"
             strokeWidth={1.5}
           />
-        </div>
-
+        
           <h1 className="text-2xl font-bold text-gray-900">
             ¡Cuenta creada!
           </h1>
