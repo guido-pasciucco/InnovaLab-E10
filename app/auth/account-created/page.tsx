@@ -17,7 +17,7 @@ export default function AccountCreatedPage() {
           <p className="mt-3 text-sm text-gray-600">
             Tu correo fue verificado correctamente y la cuenta ya está activa.
           </p>
-        </div>
+        
 
         <Link
           href="/dashboard"
