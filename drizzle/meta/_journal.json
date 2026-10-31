@@ -43,6 +43,20 @@
       "when": 1790934808318,
       "tag": "20261002095328_costing_setup_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793453338568,
+      "tag": "20261031132858_big_blonde_phantom",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793453538470,
+      "tag": "20261031133218_calc_supply_purchases_rls",
+      "breakpoints": true
     }
   ]
 }

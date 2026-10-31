@@ -130,6 +130,8 @@ type OwnedCalculation = Owner & {
   scenarioName: string;
   calcCostLineId: string;
   calcCostLineConcept: string;
+  supplyPurchaseId: string;
+  supplyPurchaseName: string;
   resultId: string;
 };
 
@@ -183,6 +185,14 @@ async function arrangeTwoCalculations(): Promise<{ ana: OwnedCalculation; beto: 
       traceability: "direct",
       amount: "800.00",
     });
+    const supplyPurchaseName = `Harina ${owner.productName}`;
+    const supplyPurchaseId = await insertRow("calc_supply_purchases", {
+      calculation_id: calculationId,
+      name: supplyPurchaseName,
+      quantity: "25.0000",
+      unit: "kg",
+      amount: "20000.00",
+    });
     const resultId = await insertRow("computed_results", {
       calculation_id: calculationId,
       ...resultAmounts,
@@ -216,6 +226,8 @@ async function arrangeTwoCalculations(): Promise<{ ana: OwnedCalculation; beto: 
       scenarioName,
       calcCostLineId,
       calcCostLineConcept,
+      supplyPurchaseId,
+      supplyPurchaseName,
       resultId,
     };
   }
@@ -281,6 +293,7 @@ type SecondCalculation = {
   calculationId: string;
   scenarioId: string;
   calcCostLineId: string;
+  supplyPurchaseId: string;
   resultId: string;
 };
 
@@ -299,6 +312,13 @@ async function secondCalculation(owner: OwnedCalculation): Promise<SecondCalcula
     behavior: "variable",
     traceability: "direct",
     amount: "100.00",
+  });
+  const supplyPurchaseId = await insertRow("calc_supply_purchases", {
+    calculation_id: calculationId,
+    name: "Aceite",
+    quantity: "5.0000",
+    unit: "lts",
+    amount: "15000.00",
   });
   const resultId = await insertRow("computed_results", {
     calculation_id: calculationId,
@@ -324,7 +344,7 @@ async function secondCalculation(owner: OwnedCalculation): Promise<SecondCalcula
     },
     "calculation_id",
   );
-  return { calculationId, scenarioId, calcCostLineId, resultId };
+  return { calculationId, scenarioId, calcCostLineId, supplyPurchaseId, resultId };
 }
 
 function sortedIds(rows: { id: string }[] | null): string[] {
@@ -1075,6 +1095,117 @@ describe("public.calc_cost_lines", () => {
 
     expect(error?.code).toBe("42501");
     const rows = await adminRows("calc_cost_lines", "id", ana.calcCostLineId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.calculation_id).toBe(ana.calculationId);
+  });
+});
+
+describe("public.calc_supply_purchases", () => {
+  it.each(["ana", "beto"] as const)("%s only sees the purchases of their own calculation", async (name) => {
+    const owners = await arrangeTwoCalculations();
+    const owner = owners[name];
+    const client = await userClient(owner.user);
+
+    const { data, error } = await client.from("calc_supply_purchases").select("*");
+
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+    expect(data![0]).toMatchObject({ id: owner.supplyPurchaseId, name: owner.supplyPurchaseName });
+  });
+
+  it("a user cannot delete a purchase of another user's calculation", async () => {
+    const { ana, beto } = await arrangeTwoCalculations();
+    const client = await userClient(ana.user);
+
+    const { error } = await client.from("calc_supply_purchases").delete().eq("id", beto.supplyPurchaseId);
+
+    expect(error).toBeNull();
+    const { data } = await adminClient().from("calc_supply_purchases").select("id").eq("id", beto.supplyPurchaseId);
+    expect(data).toHaveLength(1);
+  });
+
+  it("a user cannot rename a purchase of another user's calculation", async () => {
+    const { ana, beto } = await arrangeTwoCalculations();
+    const client = await userClient(ana.user);
+
+    const { error } = await client
+      .from("calc_supply_purchases")
+      .update({ name: "Hacked by Ana" })
+      .eq("id", beto.supplyPurchaseId);
+
+    expect(error).toBeNull();
+    const { data } = await adminClient()
+      .from("calc_supply_purchases")
+      .select("name")
+      .eq("id", beto.supplyPurchaseId);
+    expect(data![0].name).toBe(beto.supplyPurchaseName);
+  });
+
+  it("a user cannot insert a purchase into another user's calculation", async () => {
+    const { ana, beto } = await arrangeTwoCalculations();
+    const client = await userClient(ana.user);
+
+    const { error } = await client.from("calc_supply_purchases").insert({
+      calculation_id: beto.calculationId,
+      name: "Intruso",
+      quantity: "1.0000",
+      unit: "kg",
+      amount: "1.00",
+    });
+
+    expect(error?.code).toBe("42501");
+    const rows = await adminRows("calc_supply_purchases", "calculation_id", beto.calculationId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.name).toBe(beto.supplyPurchaseName);
+  });
+
+  it("a user sees both purchases when they own a second calculation", async () => {
+    const { ana } = await arrangeTwoCalculations();
+    const extra = await secondCalculation(ana);
+    const client = await userClient(ana.user);
+
+    const { data, error } = await client.from("calc_supply_purchases").select("id");
+
+    expect(error).toBeNull();
+    expect(sortedIds(data)).toEqual([ana.supplyPurchaseId, extra.supplyPurchaseId].sort());
+  });
+
+  it("a user can rename their own purchase", async () => {
+    const { ana } = await arrangeTwoCalculations();
+    const client = await userClient(ana.user);
+
+    const { error } = await client
+      .from("calc_supply_purchases")
+      .update({ name: "Harina actualizada" })
+      .eq("id", ana.supplyPurchaseId);
+
+    expect(error).toBeNull();
+    const rows = await adminRows("calc_supply_purchases", "id", ana.supplyPurchaseId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.name).toBe("Harina actualizada");
+  });
+
+  it("a user can delete their own purchase", async () => {
+    const { ana } = await arrangeTwoCalculations();
+    const client = await userClient(ana.user);
+
+    const { error } = await client.from("calc_supply_purchases").delete().eq("id", ana.supplyPurchaseId);
+
+    expect(error).toBeNull();
+    expect(await adminRows("calc_supply_purchases", "id", ana.supplyPurchaseId)).toHaveLength(0);
+  });
+
+  it("a user cannot move their own purchase to another user's calculation", async () => {
+    const { ana, beto } = await arrangeTwoCalculations();
+    const client = await userClient(ana.user);
+
+    const { error } = await client
+      .from("calc_supply_purchases")
+      .update({ calculation_id: beto.calculationId })
+      .eq("id", ana.supplyPurchaseId);
+
+    expect(error?.code).toBe("42501");
+    const rows = await adminRows("calc_supply_purchases", "id", ana.supplyPurchaseId);
     expect(rows).toHaveLength(1);
     expect(rows[0]?.calculation_id).toBe(ana.calculationId);
   });

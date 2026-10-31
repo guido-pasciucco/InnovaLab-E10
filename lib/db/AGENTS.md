@@ -21,6 +21,7 @@ lib/db/
 ├── costs/          # business_cost_lines, calc_cost_lines
 │   ├── table.ts        # en cada dominio: tablas (pgTable) y tipos inferidos
 │   └── validation.ts   # en cada dominio: esquemas drizzle-zod (*RowSchema, *InputSchema) y tipos
+├── supplies/       # calc_supply_purchases
 ├── client.ts       # cliente Drizzle de ejecución: getDrizzleClient() sobre DATABASE_URL (server-only)
 ├── formats.ts      # formatos compartidos (uuid, dinero, cantidades, nombres, códigos)
 └── relations.ts    # relaciones de consulta entre todas las tablas
@@ -30,7 +31,7 @@ lib/db/
 
 El rol de `DATABASE_URL` es `postgres`: dueño de las tablas y con `BYPASSRLS` (verificado en local; en producción, el usuario del pooler `postgres.<project-ref>` es ese mismo rol según la documentación de Supabase). **RLS no filtra las consultas de Drizzle.** Cada consulta de servicio filtra por el `userId` de la sesión; RLS queda como segunda red para el cliente de Supabase (ver ADR 0005).
 
-Las claves foráneas entre dominios se importan de `table.ts` a `table.ts`, en el orden `profile ← business ← calculation ← costs`, sin ciclos. Una tabla nueva va en la carpeta del dominio que le corresponde y, cuando se pueda, con el mismo nombre que el contrato de `lib/schemas` que la alimenta.
+Las claves foráneas entre dominios se importan de `table.ts` a `table.ts`, en el orden `profile ← business ← calculation ← costs` y `calculation ← supplies`, sin ciclos. Una tabla nueva va en la carpeta del dominio que le corresponde y, cuando se pueda, con el mismo nombre que el contrato de `lib/schemas` que la alimenta.
 
 ## Reglas
 

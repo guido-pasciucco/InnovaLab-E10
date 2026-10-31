@@ -10,6 +10,7 @@ import {
 } from "./calculation/table";
 import { businessCostLines, calcCostLines } from "./costs/table";
 import { profiles } from "./profile/table";
+import { calcSupplyPurchases } from "./supplies/table";
 
 // ---------------------------------------------------------------------------
 // Query relations for the ERD tables, using the stable classic `fields` /
@@ -71,6 +72,7 @@ export const calculationsRelations = relations(
     costingSetup: one(costingSetup),
     pricingInputs: one(pricingInputs),
     scenarios: many(scenarios),
+    calcSupplyPurchases: many(calcSupplyPurchases),
     calcCostLines: many(calcCostLines),
     computedResults: many(computedResults),
   }),
@@ -89,6 +91,16 @@ export const pricingInputsRelations = relations(pricingInputs, ({ one }) => ({
     references: [calculations.id],
   }),
 }));
+
+export const calcSupplyPurchasesRelations = relations(
+  calcSupplyPurchases,
+  ({ one }) => ({
+    calculation: one(calculations, {
+      fields: [calcSupplyPurchases.calculationId],
+      references: [calculations.id],
+    }),
+  }),
+);
 
 export const scenariosRelations = relations(scenarios, ({ many, one }) => ({
   calculation: one(calculations, {
