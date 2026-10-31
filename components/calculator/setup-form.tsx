@@ -13,6 +13,7 @@ import {
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { buildConfirmation } from "@/components/calculator/build-confirmation";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { LiveCostCard } from "@/components/calculator/live-cost-card";
 
 type SetupFormProps = {
   defaultValues: CalculatorSetup;
@@ -82,13 +83,19 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     dispatchInTransition(submitAction)(data);
   };
 
+
+
   // The ref is read inside the submit event, not during render. Building the
   // handler here keeps react-hooks/refs from treating it as a render-time read.
+
   const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     void handleSubmit(handleSubmitAction)(event);
   };
 
   return (
+
+    <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
+
     <form
       onSubmit={handleFormSubmit}
       noValidate
@@ -106,76 +113,85 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
         </p>
       )}
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="name" className="text-sm font-medium text-gray-700">
-          Nombre del producto
-        </label>
-        <input
-          id="name"
-          disabled={isPending}
-          {...register("name")}
-          className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
-        />
-        {errors.name && (
+        {state && !state.ok && !hasServerFieldErrors && (
           <p role="alert" className="text-sm text-red-600">
-            {errors.name.message}
+            {state.message}
           </p>
         )}
-      </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="unit" className="text-sm font-medium text-gray-700">
-          Unidad
-        </label>
-        <input
-          id="unit"
+        <div className="flex flex-col gap-1">
+          <label htmlFor="name" className="text-sm font-medium text-gray-700">
+            Nombre del producto
+          </label>
+          <input
+            id="name"
+            disabled={isPending}
+            {...register("name")}
+            className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
+          />
+          {errors.name && (
+            <p role="alert" className="text-sm text-red-600">
+              {errors.name.message}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="unit" className="text-sm font-medium text-gray-700">
+            Unidad
+          </label>
+          <input
+            id="unit"
+            disabled={isPending}
+            {...register("unit")}
+            className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
+          />
+          {errors.unit && (
+            <p role="alert" className="text-sm text-red-600">
+              {errors.unit.message}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="volume" className="text-sm font-medium text-gray-700">
+            Volumen
+          </label>
+          <input
+            id="volume"
+            type="number"
+            disabled={isPending}
+            {...register("volume", { valueAsNumber: true })}
+            className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
+          />
+          {errors.volume && (
+            <p role="alert" className="text-sm text-red-600">
+              {errors.volume.message}
+            </p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">El volumen divide los costos fijos.</p>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-medium text-gray-700">Moneda</span>
+          <span className="text-sm text-gray-900">ARS</span>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-medium text-gray-700">Período</span>
+          <span className="text-sm text-gray-900">Mensual</span>
+        </div>
+
+        <button
+          type="submit"
           disabled={isPending}
-          {...register("unit")}
-          className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
-        />
-        {errors.unit && (
-          <p role="alert" className="text-sm text-red-600">
-            {errors.unit.message}
-          </p>
-        )}
-      </div>
+          className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-blue-300"
+        >
+          {isPending ? "Guardando…" : "Guardar"}
+        </button>
+      </form>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="volume" className="text-sm font-medium text-gray-700">
-          Volumen
-        </label>
-        <input
-          id="volume"
-          type="number"
-          disabled={isPending}
-          {...register("volume", { valueAsNumber: true })}
-          className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
-        />
-        {errors.volume && (
-          <p role="alert" className="text-sm text-red-600">
-            {errors.volume.message}
-          </p>
-        )}
-        <p className="mt-1 text-xs text-gray-500">El volumen divide los costos fijos.</p>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-gray-700">Moneda</span>
-        <span className="text-sm text-gray-900">ARS</span>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-gray-700">Período</span>
-        <span className="text-sm text-gray-900">Mensual</span>
-      </div>
-
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-blue-300"
-      >
-        {isPending ? "Guardando…" : "Guardar"}
-      </button>
-    </form>
+      <LiveCostCard volume={200} />
+    </div>
   );
 }
