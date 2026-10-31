@@ -29,19 +29,22 @@ export default function SignupForm() {
     register,
     handleSubmit,
     setError,
+    watch,
     formState: { errors },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
   });
+  const email = watch("email");
 
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
 
   useEffect(() => {
     if (state?.ok) {
-      router.push("/login");
+      router.push(`/signup/verificar-correo?email=${encodeURIComponent(email)}`
+    );
       router.refresh();
     }
-  }, [state, router]);
+  }, [state, router, email]);
 
   return (
     // RHF validates in the client with the same schema; only then it
