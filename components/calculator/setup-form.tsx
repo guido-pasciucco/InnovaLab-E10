@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionState, useEffect, useRef, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Path } from "react-hook-form";
@@ -21,6 +22,7 @@ type SetupFormProps = {
 
 // Fields the server may flag; module-level so the reference stays stable.
 const SERVER_FIELDS: readonly Path<CalculatorSetup>[] = ["name", "unit", "volume"];
+const SETUP_FIELDS = ["name", "unit", "volume", "currency", "period"] as const;
 
 export function SetupForm({ defaultValues }: SetupFormProps) {
   const [state, submitAction, isPending] = useActionState(
@@ -33,6 +35,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     handleSubmit,
     setError,
     reset,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<CalculatorSetup>({
     resolver: zodResolver(calculatorSetupSchema),
@@ -49,6 +52,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
 
   const isSubmittingRef = useRef(false);
   const lastProcessedStateRef = useRef<typeof state | null>(null);
+  const submittedValuesRef = useRef<CalculatorSetup | null>(null);
 
   // Libera el bloqueo de doble envío cuando la acción termina (éxito o fallo).
   useEffect(() => {
@@ -60,36 +64,56 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
   // Sincroniza el formulario con los datos confirmados por el servidor
   // después de un guardado exitoso, sin sobrescribir ediciones pendientes.
   useEffect(() => {
-    if (!hasSuccess || !state.data || isDirty) return;
+    if (!state?.ok || !state.data) return;
     if (lastProcessedStateRef.current === state) return;
     lastProcessedStateRef.current = state;
-    reset(state.data);
-  }, [hasSuccess, state, reset, isDirty]);
+    const current = getValues();
+    const submitted = submittedValuesRef.current;
+    const hasLaterEdits = submitted !== null && SETUP_FIELDS.some(
+      (field) => current[field] !== submitted[field],
+    );
+    // El resultado confirmado pasa a ser el nuevo baseline. Si hubo cambios
+    // posteriores al envío, RHF los conserva y recalcula isDirty contra él.
+    reset(state.data, { keepValues: hasLaterEdits });
+  }, [state, reset, getValues]);
 
   const handleSubmitAction = (data: CalculatorSetup) => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
+    submittedValuesRef.current = getValues();
     dispatchInTransition(submitAction)(data);
   };
+
+
+
+  // The ref is read inside the submit event, not during render. Building the
+  // handler here keeps react-hooks/refs from treating it as a render-time read.
 
   const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     void handleSubmit(handleSubmitAction)(event);
   };
 
   return (
+
     <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
 
-      <form
-        onSubmit={handleFormSubmit}
-        noValidate
-        className="mt-6 flex flex-col gap-4"
-      >
-        {hasSuccess && !isDirty && (
-          <div role="status" className="text-sm text-green-600">
-            <p>Guardado</p>
-            <p>{buildConfirmation(state.data)}</p>
-          </div>
-        )}
+    <form
+      onSubmit={handleFormSubmit}
+      noValidate
+      className="mt-6 flex flex-col gap-4"
+    >
+      {hasSuccess && !isDirty && !isPending && (
+        <div role="status" className="text-sm text-green-600">
+          <p>Guardado</p>
+          <p>{buildConfirmation(state.data)}</p>
+        </div>
+      )}
+      {state && !state.ok && !hasServerFieldErrors && (
+        <p role="alert" className="text-sm text-red-600">
+          {state.message}
+        </p>
+      )}
+
         {state && !state.ok && !hasServerFieldErrors && (
           <p role="alert" className="text-sm text-red-600">
             {state.message}

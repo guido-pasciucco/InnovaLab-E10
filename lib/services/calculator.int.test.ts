@@ -9,6 +9,7 @@ import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
 import {
+  getCalculatorDraftSetupService,
   getCalculatorSetupService,
   getDraftCalculationId,
   saveCalculatorSetupService,
@@ -64,6 +65,34 @@ async function makeUser(): Promise<CreatedUser> {
   const user = await createUser();
   users.push(user);
   return user;
+}
+
+// Snapshot of every row the setup flow owns. The read service must not change
+// any of them; comparing full rows catches updates, not just inserts/deletes.
+async function getSetupRows(userId: string) {
+  const businessRows = await db
+    .select()
+    .from(businesses)
+    .where(eq(businesses.ownerUserId, userId));
+
+  const productRows = await db
+    .select()
+    .from(products)
+    .innerJoin(businesses, eq(products.businessId, businesses.id))
+    .where(eq(businesses.ownerUserId, userId));
+
+  const calculationRows = await db
+    .select()
+    .from(calculations)
+    .where(eq(calculations.userId, userId));
+
+  const setupRows = await db
+    .select()
+    .from(costingSetup)
+    .innerJoin(calculations, eq(costingSetup.calculationId, calculations.id))
+    .where(eq(calculations.userId, userId));
+
+  return { businessRows, productRows, calculationRows, setupRows };
 }
 
 describe("saveCalculatorSetupService", () => {
@@ -225,5 +254,139 @@ describe("getCalculatorSetupService", () => {
   it("returns null for a user with no draft", async () => {
     const user = await makeUser();
     expect(await getCalculatorSetupService(user.id, db)).toBeNull();
+  });
+});
+
+describe("getCalculatorDraftSetupService", () => {
+  it("returns no draft when the user has no calculations", async () => {
+    const user = await makeUser();
+
+    expect(await getCalculatorDraftSetupService(user.id, db)).toEqual({
+      calculationId: null,
+      setup: null,
+    });
+  });
+
+  it("returns the draft id and the saved setup", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const draftId = await getDraftCalculationId(user.id, db);
+
+    expect(draftId).not.toBeNull();
+    expect(await getCalculatorDraftSetupService(user.id, db)).toEqual({
+      calculationId: draftId,
+      setup: validInput,
+    });
+  });
+
+  it("returns the edited setup on the same draft after save, edit and read", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const draftId = await getDraftCalculationId(user.id, db);
+    const updated = { ...validInput, name: "Velas XL", unit: "caja", volume: 24 };
+
+    await saveCalculatorSetupService(user.id, updated, db);
+
+    expect(await getCalculatorDraftSetupService(user.id, db)).toEqual({
+      calculationId: draftId,
+      setup: updated,
+    });
+
+    const calculationRows = await db
+      .select({ id: calculations.id })
+      .from(calculations)
+      .where(eq(calculations.userId, user.id));
+    expect(calculationRows).toHaveLength(1);
+  });
+
+  it("picks the latest draft deterministically when the user has two", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const firstDraftId = await getDraftCalculationId(user.id, db);
+    expect(firstDraftId).not.toBeNull();
+
+    const [business] = await db
+      .select({ id: businesses.id })
+      .from(businesses)
+      .where(eq(businesses.ownerUserId, user.id));
+    expect(business).toBeDefined();
+
+    const [secondProduct] = await db
+      .insert(products)
+      .values({ businessId: business.id, name: "Producto nuevo" })
+      .returning();
+    const [secondDraft] = await db
+      .insert(calculations)
+      .values({
+        userId: user.id,
+        businessId: business.id,
+        productId: secondProduct.id,
+        createdAt: new Date(Date.now() + 60_000),
+      })
+      .returning();
+    const secondSetup = {
+      unit: "kg",
+      volume: 10,
+      currency: "ARS",
+      period: "Mensual",
+    } as const;
+    await db.insert(costingSetup).values({
+      calculationId: secondDraft.id,
+      ...secondSetup,
+    });
+
+    const expected = {
+      calculationId: secondDraft.id,
+      setup: { name: "Producto nuevo", ...secondSetup },
+    };
+
+    // Two reads must agree: createdAt DESC is the tie-breaker.
+    expect(await getCalculatorDraftSetupService(user.id, db)).toEqual(expected);
+    expect(await getCalculatorDraftSetupService(user.id, db)).toEqual(expected);
+  });
+
+  it("returns the draft id but no setup when the setup row is missing", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const draftId = await getDraftCalculationId(user.id, db);
+    expect(draftId).not.toBeNull();
+
+    await db.delete(costingSetup).where(eq(costingSetup.calculationId, draftId!));
+
+    expect(await getCalculatorDraftSetupService(user.id, db)).toEqual({
+      calculationId: draftId,
+      setup: null,
+    });
+  });
+
+  it("does not leak one user's draft into another user", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+
+    await saveCalculatorSetupService(userA.id, validInput, db);
+    const draftA = await getDraftCalculationId(userA.id, db);
+
+    const bInput = { ...validInput, name: "B product", volume: 24 };
+    await saveCalculatorSetupService(userB.id, bInput, db);
+    const draftB = await getDraftCalculationId(userB.id, db);
+
+    expect(await getCalculatorDraftSetupService(userA.id, db)).toEqual({
+      calculationId: draftA,
+      setup: validInput,
+    });
+    expect(await getCalculatorDraftSetupService(userB.id, db)).toEqual({
+      calculationId: draftB,
+      setup: bInput,
+    });
+  });
+
+  it("does not write any row", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const before = await getSetupRows(user.id);
+
+    await getCalculatorDraftSetupService(user.id, db);
+
+    expect(await getSetupRows(user.id)).toEqual(before);
   });
 });
