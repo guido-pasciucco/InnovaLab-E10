@@ -13,6 +13,7 @@ import {
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { buildConfirmation } from "@/components/calculator/build-confirmation";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { useTransportAwareAction } from "@/components/forms/use-transport-aware-action";
 
 type SetupFormProps = {
   defaultValues: CalculatorSetup;
@@ -23,10 +24,8 @@ const SERVER_FIELDS: readonly Path<CalculatorSetup>[] = ["name", "unit", "volume
 const SETUP_FIELDS = ["name", "unit", "volume", "currency", "period"] as const;
 
 export function SetupForm({ defaultValues }: SetupFormProps) {
-  const [state, submitAction, isPending] = useActionState(
-    saveCalculatorSetup,
-    undefined,
-  );
+  const { action, transportError } = useTransportAwareAction(saveCalculatorSetup);
+  const [state, submitAction, isPending] = useActionState(action, undefined);
 
   const {
     register,
@@ -58,6 +57,15 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
       isSubmittingRef.current = false;
     }
   }, [isPending]);
+
+  // Un fallo de transporte deja la acción sin estado: liberá el bloqueo
+  // también acá, así el usuario puede reintentar aunque `isPending` nunca
+  // llegara a true.
+  useEffect(() => {
+    if (transportError) {
+      isSubmittingRef.current = false;
+    }
+  }, [transportError]);
 
   // Sincroniza el formulario con los datos confirmados por el servidor
   // después de un guardado exitoso, sin sobrescribir ediciones pendientes.
@@ -103,6 +111,12 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
       {state && !state.ok && !hasServerFieldErrors && (
         <p role="alert" className="text-sm text-red-600">
           {state.message}
+        </p>
+      )}
+
+      {transportError && (
+        <p role="alert" className="text-sm text-red-600">
+          {transportError}
         </p>
       )}
 
