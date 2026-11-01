@@ -24,6 +24,21 @@ Se cargan en Vercel para **Production** y **Preview**. Los valores salen de Supa
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Sí | Cliente de Supabase |
 | `DIRECT_URL` | Solo para migrar | Conexión directa (puerto 5432) que usa Drizzle para aplicar migraciones |
 
+### Sincronizar las variables desde un archivo local
+
+El CLI de Vercel **no** lee archivos `.env` por su cuenta. Para no cargar cada variable a mano en el dashboard, el repo trae un puente: un archivo `.env.deploy` (ignorado por git) y el comando `bun run deploy:env`, que sube cada variable al proyecto vinculado.
+
+```bash
+bunx vercel login
+bunx vercel link          # vincula el directorio con el proyecto
+bun run deploy:env        # sube las variables a production
+bun run deploy:env preview
+```
+
+El script valida antes de subir y no imprime valores: rechaza placeholders sin completar, direcciones locales y puertos de pooler equivocados. Se corre una vez por entorno, o cada vez que cambie una credencial.
+
+> El repo guarda **cómo** deployar; Vercel guarda **con qué**. Las credenciales nunca se commitean: el repositorio es público y GitGuardian escanea cada PR.
+
 ### `SITE_URL` no es opcional en producción
 
 En producción la app **no** confía en los headers del request para resolver su propio origen: si `SITE_URL` falta, lanza un error explícito en vez de aceptar el `Host` que llegue. Esto es intencional y está cubierto por tests.
@@ -59,8 +74,8 @@ Si la base ya está migrada —por ejemplo, la del equipo— este paso no hace f
 Deploya el árbol de trabajo tal como está en disco: lo que no esté commiteado o mergeado, también sube.
 
 ```bash
-bunx vercel          # preview
-bunx vercel --prod   # producción
+bun run deploy:preview   # preview  (bunx vercel)
+bun run deploy           # producción (bunx vercel --prod)
 ```
 
 No hay disparador automático: sin integración Git, cada deploy lo corre una persona.
