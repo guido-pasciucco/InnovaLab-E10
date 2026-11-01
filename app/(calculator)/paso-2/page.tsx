@@ -1,4 +1,5 @@
-// Placeholder for calculator step 2 page (pricing inputs go here).
+import { FixedCostsStep } from "@/components/calculator/fixed-costs-step";
+
 export default function Paso2Page() {
-  return <h1>Step 2 — TODO</h1>;
+  return <FixedCostsStep />;
 }
