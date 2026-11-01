@@ -105,7 +105,7 @@ Cada costo se describe con **tres datos independientes que el usuario responde p
 Otros campos:
 
 - `scenario_id` (opcional): si está vacío, el renglón vale para todo el cálculo; si tiene valor, solo para ese escenario (ver paso 7).
-- `source_business_cost_id` (opcional desde #91): si el renglón salió del catálogo del negocio (ver sección 4).
+- `source_business_cost_id` (opcional desde #176): si el renglón salió del catálogo del negocio (ver sección 4). Borrar el ítem del catálogo deja el enlace en null y conserva el renglón.
 - `hours`, `hourly_rate`, `allocation_pct`: reservados para cargar trabajo propio como horas × valor por hora, o para prorratear indirectos. No los usa H2.
 
 ### Paso 6 — Ana define cómo quiere ponerle precio → `pricing_inputs` (futuro)
@@ -206,7 +206,7 @@ Algunos costos son del **negocio**, no de un producto: el alquiler del taller se
 
 Cuando un renglón de un cálculo sale del catálogo, `calc_cost_lines.source_business_cost_id` apunta a él (`bc-1`). El renglón guarda **su propia copia** del concepto y el importe: si el alquiler sube en el catálogo, los cálculos viejos no cambian.
 
-> **Estado en la Fase 1:** el catálogo está **fuera de alcance** de H2. Los costos se cargan sueltos en cada cálculo, por eso #91 hace opcional `source_business_cost_id` y cambia su borrado a `set null` (borrar un ítem del catálogo no debe borrar renglones de cálculos ya hechos).
+> **Estado en la Fase 1:** el catálogo está **fuera de alcance** de H2. Los costos se cargan sueltos en cada cálculo. #176 dejó `source_business_cost_id` opcional y su borrado en `set null` (borrar un ítem del catálogo no borra renglones de cálculos ya hechos).
 
 ---
 
