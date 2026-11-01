@@ -37,6 +37,7 @@ export const signupFormSchema = signupSchema
 
 export const passwordResetRequestSchema = z.object({ email: emailField });
 
-export const resendSignupSchema = z.object({ email: emailField });
+// Email-only contract for the signup verification screen (resend + status check).
+export const verificationEmailSchema = z.object({ email: emailField });
 
 export const passwordUpdateSchema = z.object({ password: passwordField });

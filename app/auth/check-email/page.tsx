@@ -6,6 +6,7 @@ import { AuthPageShell } from "@/components/auth/auth-page-shell";
 
 import { ResendButton } from "./resend-button";
 import { SentTo } from "./sent-to";
+import { VerifiedButton } from "./verified-button";
 
 const BENEFITS = ["Varios productos", "Historial de precios", "Fichas para compartir"];
 
@@ -33,12 +34,7 @@ export default function CheckEmailPage() {
       subtitle={<SentTo />}
     >
       <div className="flex flex-col gap-3">
-        <Link
-          href="/login"
-          className="flex h-11 w-full items-center justify-center rounded-lg bg-[#168a3d] px-4 text-sm font-bold text-white shadow-[0_4px_10px_rgba(22,138,61,0.35)] transition hover:bg-[#127a35] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] lg:text-base"
-        >
-          Ya verifiqué mi correo
-        </Link>
+        <VerifiedButton />
         <ResendButton />
         <p className="text-center text-[11px] text-[#607565] lg:text-xs">Si no lo ves, revisá spam o promociones.</p>
         <Link href="/signup" className="text-center text-xs font-semibold text-[#168a3d] underline underline-offset-2 lg:text-sm">
