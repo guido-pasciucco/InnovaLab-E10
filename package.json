@@ -25,7 +25,9 @@
     "e2e:up": "bun run supabase:start && bun run db:migrate:local",
     "e2e:down": "bun run supabase:stop",
     "supabase:start": "supabase start -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
-    "supabase:stop": "supabase stop"
+    "supabase:stop": "supabase stop",
+    "deploy": "bunx vercel --prod",
+    "deploy:preview": "bunx vercel"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
