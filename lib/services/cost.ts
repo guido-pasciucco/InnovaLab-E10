@@ -29,9 +29,7 @@ export type CalcCostLineList = {
   totalFixed: string;
 };
 
-// Sum the amounts the query already returned. The behavior filter, when
-// present, decides which lines are in that set; this function does not
-// apply a second one. Decimal keeps the cent: 0.10 + 0.20 is 0.30.
+// Decimal keeps the cent: 0.10 + 0.20 is 0.30.
 function sumMoney(amounts: string[]): string {
   const total = amounts.reduce((sum, amount) => sum.plus(amount), new Decimal(0));
   return total.toFixed(MONEY_DECIMALS);
@@ -86,9 +84,19 @@ export async function listCalcCostLinesService(
     .where(and(...filters))
     .orderBy(asc(calcCostLines.createdAt), asc(calcCostLines.id));
 
+  // totalFixed is the fixed-cost subtotal. An unfiltered list still returns
+  // every line, but the total ignores variable ones so a caller that forgets
+  // the filter cannot inflate the paso 2 price. A caller that already asked
+  // for a behavior gets that subset's sum under the same field: paso 3 (#198)
+  // lists behavior "variable" and reads totalFixed as totalVariable.
+  const amounts =
+    options.behavior === undefined
+      ? lines.filter((line) => line.behavior === "fixed").map((line) => line.amount)
+      : lines.map((line) => line.amount);
+
   return {
     lines,
-    totalFixed: sumMoney(lines.map((line) => line.amount)),
+    totalFixed: sumMoney(amounts),
   };
 }
 
