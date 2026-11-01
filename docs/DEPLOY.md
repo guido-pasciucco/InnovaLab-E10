@@ -53,7 +53,7 @@ bun run deploy:preview    # preview
 
 ### `SITE_URL` es obligatoria en producción
 
-La app no confía en los headers del request para resolver su propio origen: si `SITE_URL` falta, lanza un error en vez de aceptar el host que llegue. El deploy compila bien y después devuelve 500 en todas las rutas.
+La app no confía en los headers del request para resolver su propio origen: si `SITE_URL` falta, lanza un error en vez de aceptar el host que llegue. El deploy compila y el resto del sitio anda, pero el registro y la recuperación de contraseña devuelven 500: son las dos únicas rutas que resuelven el origen.
 
 Como la URL se conoce recién después de crear el proyecto, el orden es: `vercel link` → leer el dominio en el dashboard → cargar `SITE_URL` → deployar. Si deployaste antes de saberla, el primer deploy sirve para descubrirla: corregí `SITE_URL`, volvé a correr `deploy:env` y redeployá. La variable no se aplica hasta el build siguiente.
 
