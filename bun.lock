@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "innovalab-e10",
+      "name": "numora",
       "dependencies": {
         "@hookform/resolvers": "^5.9.1",
         "@supabase/ssr": "^0.12.7",
