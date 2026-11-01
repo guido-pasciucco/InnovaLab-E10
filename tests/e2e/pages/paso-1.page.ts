@@ -14,14 +14,18 @@ export class Paso1Page {
     this.nameInput = page.getByLabel("Nombre del producto", { exact: true });
     this.unitInput = page.getByLabel("Unidad", { exact: true });
     this.volumeInput = page.getByLabel("Volumen", { exact: true });
-    this.saveButton = page.getByRole("button", { name: /^(Guardar|Guardando…)$/ });
+    this.saveButton = page.getByRole("button", {
+      name: /^(Guardar|Guardando…)$/,
+    });
     this.confirmation = page.getByRole("main").getByRole("status");
     this.fieldError = page.getByRole("main").getByRole("alert");
   }
 
   async goto(): Promise<void> {
     await this.page.goto("/paso-1");
-    await expect(this.page.getByRole("heading", { name: "Paso 1", exact: true })).toBeVisible();
+    await expect(
+      this.page.getByRole("heading", { name: "Configuración", exact: true }),
+    ).toBeVisible();
   }
 
   async fill(values: Paso1Values): Promise<void> {
@@ -55,8 +59,11 @@ export class Paso1Page {
   async waitForSaveResponse(): Promise<void> {
     const response = await this.page.waitForResponse((response) => {
       const request = response.request();
-      return new URL(response.url()).pathname === "/paso-1"
-        && request.method() === "POST" && Boolean(request.headers()["next-action"]);
+      return (
+        new URL(response.url()).pathname === "/paso-1" &&
+        request.method() === "POST" &&
+        Boolean(request.headers()["next-action"])
+      );
     });
     expect(response.ok()).toBe(true);
     // Server Actions stream their result. Wait for the form to finish its
@@ -67,7 +74,9 @@ export class Paso1Page {
   // Defensive regression: simulate a programmatic edit despite disabled UI.
   // This is not a normal user interaction while a save is pending.
   async simulatePendingNameEdit(name: string): Promise<void> {
-    await this.nameInput.evaluate((input: HTMLInputElement) => { input.disabled = false; });
+    await this.nameInput.evaluate((input: HTMLInputElement) => {
+      input.disabled = false;
+    });
     await this.nameInput.fill(name);
   }
 

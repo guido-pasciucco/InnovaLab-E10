@@ -1,13 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #EAFCF1;
+  --background: #eafcf1;
   --foreground: #171717;
+
+  /* Paleta verde de Numora */
+  --brand-green-50: #f0fdf4;
+  --brand-green-100: #dcfce7;
+  --brand-green-500: #22c55e;
+  --brand-green-600: #16a34a;
+  --brand-green-700: #15803d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-brand-green-50: var(--brand-green-50);
+  --color-brand-green-100: var(--brand-green-100);
+  --color-brand-green-500: var(--brand-green-500);
+  --color-brand-green-600: var(--brand-green-600);
+  --color-brand-green-700: var(--brand-green-700);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,4 +30,11 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.wizard-shell {
+  min-height: 100vh;
+  color: #171717;
+  color-scheme: light;
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 50%, #22c55e 100%);
 }
