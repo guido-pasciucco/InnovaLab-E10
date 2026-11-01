@@ -74,6 +74,17 @@ erDiagram
         timestamp updated_at
     }
 
+    calc_supply_purchases {
+        uuid id PK
+        uuid calculation_id FK
+        text name
+        numeric quantity
+        text unit
+        numeric amount
+        timestamp created_at
+        timestamp updated_at
+    }
+
     calc_cost_lines {
         uuid id PK
         uuid calculation_id FK
@@ -118,6 +129,7 @@ erDiagram
     calculations ||--|| pricing_inputs : "1:1 calculation_id"
 
     calculations ||--o{ scenarios : "1:N calculation_id"
+    calculations ||--o{ calc_supply_purchases : "1:N calculation_id"
     calculations ||--o{ calc_cost_lines : "1:N calculation_id"
     calculations ||--o{ computed_results : "1:N calculation_id"
 

@@ -24,6 +24,10 @@ Los costos de **un cálculo concreto** (alquiler, harina, horas de amasado…).
 El **catálogo de costos del negocio**, cargados una vez para reutilizarlos en varios cálculos. Fuera de alcance en la Fase 1.
 *"Renglones de costo del negocio".*
 
+**`calc_supply_purchases`**
+Lo que el usuario **compró para este cálculo**: nombre del insumo, cantidad, unidad de esa compra y precio pagado por esa cantidad. Harina, 25, kg, 20000: los $20.000 son el total de los 25 kg. Todavía no es un renglón de `calc_cost_lines`.
+*Purchase = compra; supply = insumo. La unidad de la compra no es `costing_setup.unit`, que es la unidad en la que se vende el producto.*
+
 **`calculation` (cálculo)**
 Una vez que el usuario costea un producto: una "hoja de presupuesto" con fecha. Un producto puede tener muchos.
 *Se separa del producto para poder tener historial y alternativas sin pisar datos.*
@@ -70,7 +74,7 @@ El valor del tiempo que el emprendedor pone él mismo, marcado con `true` en su 
 > **No existe `category`.** El modelo confirmado el 2026-10-17 (ver #76) tiene tres datos independientes (`behavior`, `traceability`, `is_own_labor`) y ningún enum de cuatro categorías ni `categoryToAxes`. Cómo agrupa la UI las filas es una decisión abierta del dueño de la historia (ver #75).
 
 **`amount` vs `amount_period`**
-`amount`: importe del renglón en el cálculo. `amount_period`: importe del catálogo, expresado por período (ej. por mes).
+`amount`: importe del renglón en el cálculo. `amount_period`: importe del catálogo, expresado por período (ej. por mes). En `calc_supply_purchases`, `amount` es el precio pagado por la cantidad comprada (25 kg de harina, $20.000), no el precio por kilo ni el costo de una unidad vendida.
 
 **`allocation_pct`**
 Porcentaje de un costo indirecto que se le asigna a este producto.

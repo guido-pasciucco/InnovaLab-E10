@@ -9,11 +9,12 @@ Este documento explica **por qué** la base tiene las tablas que tiene, siguiend
 ## 1. Mapa general
 
 ```
-profiles ──< businesses ──< products ──< calculations ─┬── costing_setup      (1 a 1)
- (quién)      (negocio)     (qué vende)  (un costeo)   ├── pricing_inputs     (1 a 1)
-                  │                                     ├──< scenarios        (1 a N)
-                  │                                     ├──< calc_cost_lines  (1 a N)
-                  │                                     └──< computed_results (1 a N)
+profiles ──< businesses ──< products ──< calculations ─┬── costing_setup          (1 a 1)
+ (quién)      (negocio)     (qué vende)  (un costeo)   ├── pricing_inputs         (1 a 1)
+                  │                                     ├──< scenarios            (1 a N)
+                  │                                     ├──< calc_supply_purchases (1 a N)
+                  │                                     ├──< calc_cost_lines      (1 a N)
+                  │                                     └──< computed_results     (1 a N)
                   └──< business_cost_lines  (catálogo de costos del negocio)
 ```
 
@@ -78,6 +79,18 @@ En marzo Ana consiguió un cliente nuevo y calcula para 300 cajas. **El volumen 
 Es **1 a 1** con el cálculo: su clave primaria es el propio `calculation_id`, así que una hoja tiene como mucho una cabecera.
 
 **¿Por qué es una tabla aparte y no columnas de `calculations`?** Porque no nacen al mismo tiempo: el cálculo existe desde que se empieza, y el setup recién cuando el usuario **confirma** el paso 1. Que la fila exista o no responde directamente "¿ya confirmó las condiciones?", sin columnas a medio llenar.
+
+### Compras de insumos → `calc_supply_purchases`
+
+Lo que Ana **pagó por una compra** de este cálculo: nombre del insumo, cantidad, unidad de esa compra y precio de esa cantidad entera.
+
+| calculation_id | name | quantity | unit | amount |
+|---|---|---|---|---|
+| c-2 | Harina | 25.0000 | kg | 20000.00 |
+
+Esos $20.000 son el total de los 25 kg. No son el precio por kilo ni el costo de una caja de alfajores. La unidad `kg` es la de la compra: el alfajor se sigue vendiendo por `caja de 6`, que vive en `costing_setup.unit`.
+
+La fila cuelga del cálculo (`calculation_id`, borrado en cascada). No apunta al catálogo `business_cost_lines`. Todavía **no es un renglón de `calc_cost_lines`**: no guarda `behavior`, `traceability` ni `scenario_id`. La receta, más adelante, convierte esta compra en un elemento de costo variable.
 
 ### Paso 5 — Ana carga sus costos → `calc_cost_lines` (historia H2)
 
@@ -219,6 +232,7 @@ Cuando un renglón de un cálculo sale del catálogo, `calc_cost_lines.source_bu
 | `products` | ✔ | ✔ | varios productos |
 | `calculations` | ✔ (un borrador) | ✔ | historial, varios cálculos |
 | `costing_setup` | ✔ | | |
+| `calc_supply_purchases` | | | compras del cálculo, antes de la receta |
 | `calc_cost_lines` | | ✔ | horas × valor, prorrateo |
 | `business_cost_lines` | | | catálogo reutilizable |
 | `pricing_inputs` | | | precio y margen |
@@ -234,6 +248,9 @@ CÁLCULO c-2 · Alfajores · marzo · borrador          ← calculations
 ────────────────────────────────────────────
 Condiciones: caja de 6 · 300 por mes · ARS          ← costing_setup     (H1)
 ────────────────────────────────────────────
+Compras:                                             ← calc_supply_purchases
+  Harina · 25 kg · 20000
+────────────────────────────────────────────
 Costos:                                              ← calc_cost_lines   (H2)
   [Fijos]          alquiler del taller ... 150000
   [Variables]      harina ................. 30000
@@ -247,7 +264,7 @@ Resultado: costo unitario 1200 · equilibrio 262 cajas← computed_results  (fut
 ## Referencias
 
 - Glosario de términos y nombres: [03 — Definiciones](./03-definiciones.md)
-- Esquema: `lib/db/profile/table.ts`, `lib/db/business/table.ts`, `lib/db/calculation/table.ts`, `lib/db/costs/table.ts`
+- Esquema: `lib/db/profile/table.ts`, `lib/db/business/table.ts`, `lib/db/calculation/table.ts`, `lib/db/costs/table.ts`, `lib/db/supplies/table.ts`
 - Diagrama: `erd-calculadora-inteligente.mmd`
 - Decisión de persistencia: [ADR 02](../decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)
 - Conceptos de costos: [04 — Definición conceptual](./04-definicion-conceptual-calculadora-costos-emprendedores.md)
