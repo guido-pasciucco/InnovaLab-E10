@@ -5,6 +5,7 @@ import {
   loginSchema,
   passwordResetRequestSchema,
   passwordUpdateSchema,
+  resendSignupSchema,
   signupSchema,
 } from "@/lib/schemas/auth/auth";
 import { AppError } from "@/lib/errors/app-error";
@@ -118,6 +119,29 @@ export async function getSessionUserService(
 
   // Expose only public fields, never the full Supabase user.
   return { id: data.user.id, email: data.user.email };
+}
+
+// Sends the signup confirmation email again. Rate limits and outages are
+// reported (the user needs to know to wait or retry); any other rejection
+// (unknown or already confirmed address) is logged and answered with success
+// so the screen cannot be used to probe which emails have an account.
+export async function resendSignupConfirmationService(
+  client: SupabaseClient,
+  input: unknown,
+  // Where the email link lands for the PKCE code exchange.
+  emailRedirectTo: string,
+): Promise<Record<string, never>> {
+  const { email } = resendSignupSchema.parse(input);
+
+  const { error } = await client.auth.resend({ type: "signup", email, options: { emailRedirectTo } });
+
+  if (error) {
+    const code = classifyInfrastructureFailure(error);
+    if (code) throw new AppError(code, undefined, { cause: error });
+    console.warn("[AUTH_RESEND_REJECTED] Signup confirmation not resent", error);
+  }
+
+  return {};
 }
 
 export async function requestPasswordResetService(

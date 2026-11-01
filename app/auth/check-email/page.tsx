@@ -1,32 +1,50 @@
 import Link from "next/link";
+import { Mail } from "lucide-react";
+
+import { AuthHeroPanel } from "@/components/auth/auth-hero-panel";
+import { AuthPageShell } from "@/components/auth/auth-page-shell";
+
+import { ResendButton } from "./resend-button";
+import { SentTo } from "./sent-to";
+
+const BENEFITS = ["Varios productos", "Historial de precios", "Fichas para compartir"];
 
 export default function CheckEmailPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#EAFCF1] px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Revisá tu correo
-          </h1>
-
-          <p className="mt-3 text-sm text-gray-600">
-            Te enviamos un enlace de verificación. Abrí tu correo y hacé clic
-            en el enlace para activar tu cuenta.
-          </p>
-        </div>
-
-        <div className="rounded-lg bg-[#D3F5E1] p-4 text-sm text-gray-700">
-          Si no encontrás el correo, revisá la carpeta de spam o correo no
-          deseado.
-        </div>
-
+    <AuthPageShell
+      hero={
+        <AuthHeroPanel
+          brand="Calculadora de Costos"
+          badge="Paso previo: acceso"
+          title="Guardá tus cálculos y retomalos cuando quieras"
+          description="Creá tu cuenta gratis para tener tus productos, precios y escenarios siempre a mano."
+          benefits={BENEFITS}
+          benefitsLabel="Beneficios de crear una cuenta"
+          footnote="Herramienta de apoyo. No reemplaza asesoramiento contable o impositivo."
+        />
+      }
+      centered
+      icon={
+        <span className="grid size-16 place-items-center rounded-full border-2 border-[#3ad85c] bg-white text-[#168a3d] shadow-[0_0_18px_rgba(58,216,92,0.55)]">
+          <Mail aria-hidden="true" className="size-6" strokeWidth={1.5} />
+        </span>
+      }
+      title="Revisá tu correo"
+      subtitle={<SentTo />}
+    >
+      <div className="flex flex-col gap-3">
         <Link
           href="/login"
-          className="mt-6 block w-full rounded-lg bg-[#BDEBCF] py-3 text-center font-medium text-gray-900"
+          className="flex h-11 w-full items-center justify-center rounded-lg bg-[#168a3d] px-4 text-sm font-bold text-white shadow-[0_4px_10px_rgba(22,138,61,0.35)] transition hover:bg-[#127a35] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] lg:text-base"
         >
-          Volver al inicio de sesión
+          Ya verifiqué mi correo
+        </Link>
+        <ResendButton />
+        <p className="text-center text-[11px] text-[#607565] lg:text-xs">Si no lo ves, revisá spam o promociones.</p>
+        <Link href="/signup" className="text-center text-xs font-semibold text-[#168a3d] underline underline-offset-2 lg:text-sm">
+          Cambiar correo
         </Link>
       </div>
-    </main>
+    </AuthPageShell>
   );
 }

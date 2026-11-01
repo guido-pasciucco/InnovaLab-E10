@@ -8,6 +8,7 @@ import {
   loginService,
   logoutService,
   requestPasswordResetService,
+  resendSignupConfirmationService,
   signupService,
   updatePasswordService,
 } from "./auth";
@@ -155,6 +156,55 @@ describe("getSessionUserService", () => {
   it("throws UNAUTHORIZED when Supabase returns an error", async () => {
     const client = authClient({ getUser: async () => ({ data: { user: null }, error: { message: "jwt" } }) });
     await expect(getSessionUserService(client)).rejects.toEqual(new AppError("UNAUTHORIZED"));
+  });
+});
+
+describe("resendSignupConfirmationService", () => {
+  const REDIRECT_TO = "http://127.0.0.1:3000/auth/confirm?next=/auth/account-created";
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("resends the signup email with the given redirect", async () => {
+    const client = authClient({ resend: async () => ({ error: null }) });
+    await expect(resendSignupConfirmationService(client, { email: "a@b.com" }, REDIRECT_TO)).resolves.toEqual({});
+    expect(client.auth.resend).toHaveBeenCalledWith({
+      type: "signup",
+      email: "a@b.com",
+      options: { emailRedirectTo: REDIRECT_TO },
+    });
+  });
+
+  it("throws AUTH_RATE_LIMITED when Supabase limits the sends", async () => {
+    const client = authClient({
+      resend: async () => ({ error: { message: "Rate limit", code: "over_email_send_rate_limit", status: 429 } }),
+    });
+    await expect(resendSignupConfirmationService(client, { email: "a@b.com" }, REDIRECT_TO)).rejects.toMatchObject({
+      code: "AUTH_RATE_LIMITED",
+    });
+  });
+
+  it("throws AUTH_UNAVAILABLE when Supabase is down", async () => {
+    const client = authClient({ resend: async () => ({ error: { message: "Service unavailable", status: 503 } }) });
+    await expect(resendSignupConfirmationService(client, { email: "a@b.com" }, REDIRECT_TO)).rejects.toMatchObject({
+      code: "AUTH_UNAVAILABLE",
+    });
+  });
+
+  it("resolves when Supabase rejects the address, to prevent account enumeration", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const client = authClient({ resend: async () => ({ error: { message: "not found", status: 400 } }) });
+    await expect(resendSignupConfirmationService(client, { email: "a@b.com" }, REDIRECT_TO)).resolves.toEqual({});
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("a@b.com");
+  });
+
+  it("throws a ZodError for an invalid email without calling Supabase", async () => {
+    const client = authClient({ resend: async () => ({ error: null }) });
+    await expect(resendSignupConfirmationService(client, { email: "nope" }, REDIRECT_TO)).rejects.toMatchObject({
+      name: "ZodError",
+    });
+    expect(client.auth.resend).not.toHaveBeenCalled();
   });
 });
 

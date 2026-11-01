@@ -68,6 +68,13 @@ describe("GET /auth/confirm", () => {
     );
   });
 
+  it("sends a failed signup confirmation back to /login with the error code", async () => {
+    confirmAuthLinkService.mockRejectedValue(new AppError("AUTH_LINK_INVALID"));
+    await expect(
+      redirectTarget("http://localhost:3000/auth/confirm?code=bad&next=/auth/account-created"),
+    ).resolves.toBe("/login?error=AUTH_LINK_INVALID");
+  });
+
   it("lets Next.js control-flow errors through", async () => {
     const bailout = Object.assign(new Error("Dynamic server usage"), { digest: "DYNAMIC_SERVER_USAGE" });
     confirmAuthLinkService.mockRejectedValue(bailout);
