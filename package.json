@@ -1,5 +1,5 @@
 {
-  "name": "innovalab-e10",
+  "name": "numora",
   "version": "0.1.0",
   "private": true,
   "packageManager": "bun@1.4.2",
@@ -25,7 +25,10 @@
     "e2e:up": "bun run supabase:start && bun run db:migrate:local",
     "e2e:down": "bun run supabase:stop",
     "supabase:start": "supabase start -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
-    "supabase:stop": "supabase stop"
+    "supabase:stop": "supabase stop",
+    "deploy": "bunx vercel --prod",
+    "deploy:preview": "bunx vercel",
+    "deploy:env": "bun scripts/deploy/env-sync.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
