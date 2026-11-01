@@ -91,6 +91,13 @@ export const ERROR_CATALOG = {
     message: "Calculator unavailable",
     logLevel: "error",
   },
+  CALC_COST_SUMMARY_FAILED: {
+    // The pure engine rejected the persisted lines (invalid behavior,
+    // traceability, amount or volume): a server-side data problem, not input.
+    status: 500,
+    message: "Could not compute the cost summary",
+    logLevel: "error",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;
