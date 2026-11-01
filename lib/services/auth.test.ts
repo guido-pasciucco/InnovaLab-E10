@@ -79,49 +79,50 @@ function authClient(auth: Record<string, () => Promise<unknown>>) {
 }
 
 describe("signupService", () => {
+  const REDIRECT_TO = "http://127.0.0.1:3000/login";
   const input = { email: "a@b.com", password: FAKE_PASSWORD, displayName: " Ana " };
 
   it("signs up with a trimmed display name", async () => {
     const client = authClient({ signUp: async () => ({ error: null }) });
-    await expect(signupService(client, input)).resolves.toEqual({});
+    await expect(signupService(client, input, REDIRECT_TO)).resolves.toEqual({});
     expect(client.auth.signUp).toHaveBeenCalledWith({
       email: "a@b.com",
       password: FAKE_PASSWORD,
-      options: { data: { display_name: "Ana" } },
+      options: { data: { display_name: "Ana" }, emailRedirectTo: REDIRECT_TO },
     });
   });
 
   it("throws a ZodError for invalid input", async () => {
     const client = authClient({ signUp: async () => ({ error: null }) });
-    await expect(signupService(client, { email: "a@b.com" })).rejects.toMatchObject({ name: "ZodError" });
+    await expect(signupService(client, { email: "a@b.com" }, REDIRECT_TO)).rejects.toMatchObject({ name: "ZodError" });
   });
 
   it("throws AUTH_SIGNUP_FAILED without revealing why", async () => {
     const client = authClient({
       signUp: async () => ({ error: { message: "User already registered", code: "user_already_exists", status: 422 } }),
     });
-    await expect(signupService(client, input)).rejects.toEqual(new AppError("AUTH_SIGNUP_FAILED"));
+    await expect(signupService(client, input, REDIRECT_TO)).rejects.toEqual(new AppError("AUTH_SIGNUP_FAILED"));
   });
 
   it("throws AUTH_RATE_LIMITED when too many confirmation emails were sent", async () => {
     const client = authClient({
       signUp: async () => ({ error: { message: "Rate limit", code: "over_email_send_rate_limit", status: 429 } }),
     });
-    await expect(signupService(client, input)).rejects.toMatchObject({ code: "AUTH_RATE_LIMITED" });
+    await expect(signupService(client, input, REDIRECT_TO)).rejects.toMatchObject({ code: "AUTH_RATE_LIMITED" });
   });
 
   it("throws AUTH_UNAVAILABLE when Supabase is down", async () => {
     const client = authClient({ signUp: async () => ({ error: { message: "Service unavailable", status: 503 } }) });
-    await expect(signupService(client, input)).rejects.toMatchObject({ code: "AUTH_UNAVAILABLE" });
+    await expect(signupService(client, input, REDIRECT_TO)).rejects.toMatchObject({ code: "AUTH_UNAVAILABLE" });
   });
 
   it("sends no display name instead of an empty string when the display name is blank", async () => {
     const client = authClient({ signUp: async () => ({ error: null }) });
-    await signupService(client, { email: "a@b.com", password: FAKE_PASSWORD, displayName: "  " });
+    await signupService(client, { email: "a@b.com", password: FAKE_PASSWORD, displayName: "  " }, REDIRECT_TO);
     expect(client.auth.signUp).toHaveBeenCalledWith({
       email: "a@b.com",
       password: FAKE_PASSWORD,
-      options: { data: { display_name: undefined } },
+      options: { data: { display_name: undefined }, emailRedirectTo: REDIRECT_TO },
     });
   });
 });
