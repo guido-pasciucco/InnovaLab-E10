@@ -4,6 +4,7 @@ import { AppError } from "@/lib/errors/app-error";
 import { fakerES as faker } from "@faker-js/faker";
 import {
   confirmAuthLinkService,
+  getEmailVerificationStatusService,
   getSessionUserService,
   loginService,
   logoutService,
@@ -205,6 +206,97 @@ describe("resendSignupConfirmationService", () => {
       name: "ZodError",
     });
     expect(client.auth.resend).not.toHaveBeenCalled();
+  });
+});
+
+describe("getEmailVerificationStatusService", () => {
+  it("confirms a verified session whose email matches", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: { email: "a@b.com", email_confirmed_at: "2026-10-31T12:00:00Z" } },
+        error: null,
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "A@B.com" })).resolves.toEqual({
+      confirmed: true,
+    });
+  });
+
+  it("falls back to the legacy confirmed_at field", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: { email: "a@b.com", confirmed_at: "2026-10-31T12:00:00Z" } },
+        error: null,
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).resolves.toEqual({
+      confirmed: true,
+    });
+  });
+
+  it("does not confirm when the email is not verified yet", async () => {
+    const client = authClient({
+      getUser: async () => ({ data: { user: { email: "a@b.com" } }, error: null }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).resolves.toEqual({
+      confirmed: false,
+    });
+  });
+
+  it("does not confirm a session for a different email", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: { email: "other@b.com", email_confirmed_at: "2026-10-31T12:00:00Z" } },
+        error: null,
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).resolves.toEqual({
+      confirmed: false,
+    });
+  });
+
+  it("returns not confirmed when there is no session", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: null },
+        // No status: the session-missing special case must win over the
+        // generic "no status means outage" classification.
+        error: { message: "Auth session missing!", name: "AuthSessionMissingError" },
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).resolves.toEqual({
+      confirmed: false,
+    });
+  });
+
+  it("throws AUTH_UNAVAILABLE when the session cannot be read because Supabase is down", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: null },
+        error: { message: "Bad gateway", status: 502 },
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).rejects.toMatchObject({
+      code: "AUTH_UNAVAILABLE",
+    });
+  });
+
+  it("throws a ZodError for an invalid email without calling Supabase", async () => {
+    const client = authClient({ getUser: async () => ({ data: { user: null }, error: null }) });
+    await expect(getEmailVerificationStatusService(client, { email: "nope" })).rejects.toMatchObject({
+      name: "ZodError",
+    });
+    expect(client.auth.getUser).not.toHaveBeenCalled();
+  });
+
+  it("lets unexpected failures bubble up untouched", async () => {
+    const boom = new Error("network");
+    const client = authClient({
+      getUser: async () => {
+        throw boom;
+      },
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).rejects.toBe(boom);
   });
 });
 

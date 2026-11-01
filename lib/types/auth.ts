@@ -10,6 +10,9 @@ export type SignupState = ServiceResult<Record<string, never>> | undefined;
 // Resend-confirmation form state for useActionState.
 export type ResendSignupState = ServiceResult<Record<string, never>> | undefined;
 
+// Verification screen: re-read the session to check the email.
+export type EmailVerificationState = ServiceResult<{ confirmed: boolean }> | undefined;
+
 // Password reset request form state for useActionState.
 // Success is always generic to prevent account enumeration.
 export type PasswordResetState = ServiceResult<Record<string, never>> | undefined;

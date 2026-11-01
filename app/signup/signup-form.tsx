@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Path } from "react-hook-form";
 import { z } from "zod";
 
-import { SIGNUP_EMAIL_KEY } from "@/app/auth/check-email/signup-email";
+import { SIGNUP_EMAIL_KEY, readSignupEmail } from "@/app/auth/check-email/signup-email";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { PasswordInput } from "@/components/forms/password-input";
 import { TextField } from "@/components/forms/text-field";
@@ -57,8 +57,15 @@ export default function SignupForm() {
   const [showPreviewErrors, setShowPreviewErrors] = useState(false);
   const { action, transportError } = useTransportAwareAction(signup);
   const [state, submitAction, pending] = useActionState(action, initialState);
-  const { register, handleSubmit, setError, clearErrors, formState: { errors } } = useForm<SignupFormValues>({ resolver: zodResolver(signupFormSchema) });
+  const { register, handleSubmit, setError, setValue, clearErrors, formState: { errors } } = useForm<SignupFormValues>({ resolver: zodResolver(signupFormSchema) });
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
+
+  // "Change email" on the verification screen comes back here: prefill the
+  // address it was sent to (kept in sessionStorage, never in the URL).
+  useEffect(() => {
+    const previousEmail = readSignupEmail();
+    if (previousEmail) setValue("email", previousEmail);
+  }, [setValue]);
 
   // Account created: the next step is verifying the email, so continue to the
   // "check your email" screen instead of staying on the form.
