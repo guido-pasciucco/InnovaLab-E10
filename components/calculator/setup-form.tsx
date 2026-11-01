@@ -68,9 +68,9 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     lastProcessedStateRef.current = state;
     const current = getValues();
     const submitted = submittedValuesRef.current;
-    const hasLaterEdits = submitted !== null && SETUP_FIELDS.some(
-      (field) => current[field] !== submitted[field],
-    );
+    const hasLaterEdits =
+      submitted !== null &&
+      SETUP_FIELDS.some((field) => current[field] !== submitted[field]);
     // El resultado confirmado pasa a ser el nuevo baseline. Si hubo cambios
     // posteriores al envío, RHF los conserva y recalcula isDirty contra él.
     reset(state.data, { keepValues: hasLaterEdits });
@@ -83,36 +83,25 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     dispatchInTransition(submitAction)(data);
   };
 
-
-
   // The ref is read inside the submit event, not during render. Building the
   // handler here keeps react-hooks/refs from treating it as a render-time read.
-
   const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     void handleSubmit(handleSubmitAction)(event);
   };
 
   return (
-
-    <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
-
-    <form
-      onSubmit={handleFormSubmit}
-      noValidate
-      className="mt-6 flex flex-col gap-4"
-    >
-      {hasSuccess && !isDirty && !isPending && (
-        <div role="status" className="text-sm text-green-600">
-          <p>Guardado</p>
-          <p>{buildConfirmation(state.data)}</p>
-        </div>
-      )}
-      {state && !state.ok && !hasServerFieldErrors && (
-        <p role="alert" className="text-sm text-red-600">
-          {state.message}
-        </p>
-      )}
-
+    <div className="mt-6 flex flex-col gap-6">
+      <form
+        onSubmit={handleFormSubmit}
+        noValidate
+        className="flex flex-col gap-4"
+      >
+        {hasSuccess && !isDirty && !isPending && (
+          <div role="status" className="text-sm text-green-600">
+            <p>Guardado</p>
+            <p>{buildConfirmation(state.data)}</p>
+          </div>
+        )}
         {state && !state.ok && !hasServerFieldErrors && (
           <p role="alert" className="text-sm text-red-600">
             {state.message}
@@ -169,7 +158,9 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
               {errors.volume.message}
             </p>
           )}
-          <p className="mt-1 text-xs text-gray-500">El volumen divide los costos fijos.</p>
+          <p className="mt-1 text-xs text-gray-500">
+            El volumen divide los costos fijos.
+          </p>
         </div>
 
         <div className="flex flex-col gap-1">

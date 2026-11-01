@@ -5,7 +5,7 @@ import { SetupForm } from "@/components/calculator/setup-form";
 import type { CalculatorSetup } from "@/lib/schemas/calculator-setup/calculator-setup";
 
 export default async function Paso1Page() {
-const user = await requireUser();
+  const user = await requireUser();
 
   const setup = await getCalculatorSetupService(user.id);
 
