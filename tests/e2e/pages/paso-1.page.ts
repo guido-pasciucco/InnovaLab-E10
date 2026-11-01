@@ -11,17 +11,17 @@ export class Paso1Page {
   readonly fieldError: Locator;
 
   constructor(private readonly page: Page) {
-    this.nameInput = page.getByLabel("Nombre del producto", { exact: true });
-    this.unitInput = page.getByLabel("Unidad", { exact: true });
-    this.volumeInput = page.getByLabel("Volumen", { exact: true });
-    this.saveButton = page.getByRole("button", { name: /^(Guardar|Guardando…)$/ });
+    this.nameInput = page.getByLabel("Producto o servicio", { exact: true });
+    this.unitInput = page.getByLabel("Unidad de venta", { exact: true });
+    this.volumeInput = page.getByLabel("Volumen estimado", { exact: true });
+    this.saveButton = page.getByRole("button", { name: /^(Siguiente|Guardando…)$/ });
     this.confirmation = page.getByRole("main").getByRole("status");
     this.fieldError = page.getByRole("main").getByRole("alert");
   }
 
   async goto(): Promise<void> {
     await this.page.goto("/paso-1");
-    await expect(this.page.getByRole("heading", { name: "Paso 1", exact: true })).toBeVisible();
+    await expect(this.page.getByRole("heading", { name: "Configuración", exact: true })).toBeVisible();
   }
 
   async fill(values: Paso1Values): Promise<void> {
