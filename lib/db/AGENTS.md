@@ -42,7 +42,7 @@ Las claves foráneas entre dominios se importan de `table.ts` a `table.ts`, en e
 6. Timestamps con `defaultNow()` y `updatedAt` con `$onUpdate`. `computed_at` sin valor por defecto (fila pendiente hasta finalizar el cálculo).
 7. Reglas de negocio desde `lib/schemas`: los refinamientos de drizzle-zod reutilizan los `*Field` del `fields.ts` de cada contrato (ver `lib/schemas/AGENTS.md`). No se definen reglas ni mensajes nuevos en `<dominio>/validation.ts`.
 8. Nombres de columna iguales a las claves del contrato del formulario y sin prefijos que repitan el nombre de la tabla (`costing_setup.unit`, no `costing_unit`). Así guardar no requiere renombrar campos.
-9. RLS está habilitado con políticas de propietario (`drizzle/20260928101613_enable_rls.sql`), pero no reemplaza el filtro por dueño en los servicios.
+9. Pendientes de decisión: `cascade` en `source_business_cost_id` (borra snapshots si se elimina plantilla) y en `scenario_id` (elimina en lugar de desvincular). Se decide en la migración H0.2 (#91), junto con volver anulable `source_business_cost_id`. RLS ya está habilitado con políticas de propietario (`drizzle/20260928101613_enable_rls.sql`), pero no reemplaza el filtro por dueño en los servicios.
 
 ## Flujo
 
