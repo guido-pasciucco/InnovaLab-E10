@@ -26,36 +26,76 @@ test("wrong credentials show an error and keep the user on /login", async ({ pag
   await expect(page).toHaveURL("/login");
 });
 
-test("the password visibility toggle is keyboard accessible", async ({ page, loginPage }) => {
+test("the password visibility toggle works with Enter and Space", async ({ page, loginPage }) => {
   // Arrange
   await loginPage.goto();
   await loginPage.passwordInput.fill("secreto-de-prueba");
-
-  // Act
   await loginPage.passwordToggle.focus();
-  await page.keyboard.press("Enter");
 
-  // Assert
+  // Act: Enter shows the password.
+  await page.keyboard.press("Enter");
   await expect(loginPage.passwordInput).toHaveAttribute("type", "text");
   await expect(loginPage.passwordToggle).toHaveAttribute("aria-label", "Ocultar contraseña");
 
-  // Act: the same control hides it again.
-  await page.keyboard.press("Enter");
+  // Act: Space hides it again.
+  await page.keyboard.press("Space");
   await expect(loginPage.passwordInput).toHaveAttribute("type", "password");
   await expect(loginPage.passwordToggle).toHaveAttribute("aria-label", "Mostrar contraseña");
 });
 
-test("the secondary links navigate to recovery and signup", async ({ page, loginPage }) => {
+test("a transport failure shows a connection banner that clears when the user edits a field", async ({
+  page,
+  loginPage,
+}) => {
+  // Arrange: the Server Action request never reaches the server.
+  await page.route("**/login", async (route) => {
+    const request = route.request();
+    if (request.method() === "POST" && request.headers()["next-action"]) {
+      await route.abort("failed");
+      return;
+    }
+    await route.continue();
+  });
+  await loginPage.goto();
+
+  try {
+    // Act
+    await loginPage.logIn({ email: "alguien@example.com", password: "secreto-de-prueba" });
+
+    // Assert
+    await expect(loginPage.errorAlert).toContainText("Revisá tu conexión");
+    await expect(page).toHaveURL("/login");
+
+    // Act: editing a field dismisses the stale banner.
+    await loginPage.emailInput.fill("otro@example.com");
+    await expect(loginPage.errorAlert).toHaveCount(0);
+  } finally {
+    // A test timeout may already have closed the context and its routes.
+    if (!page.isClosed()) {
+      await page.unrouteAll({ behavior: "wait" });
+    }
+  }
+});
+
+test("the forgot-password link navigates to recovery", async ({ page, loginPage }) => {
   // Arrange
   await loginPage.goto();
 
-  // Act: forgot password.
+  // Act
   await loginPage.forgotPasswordLink.click();
-  await expect(page).toHaveURL("/reset-password");
 
-  // Act: create account (back to the login screen first).
-  await page.goto("/login");
+  // Assert
+  await expect(page).toHaveURL("/reset-password");
+});
+
+test("the signup link navigates to account creation", async ({ page, loginPage }) => {
+  // Arrange
+  await loginPage.goto();
+
+  // Act
   await loginPage.signupLink.click();
+
+  // Assert
   await expect(page).toHaveURL("/signup");
 });
 

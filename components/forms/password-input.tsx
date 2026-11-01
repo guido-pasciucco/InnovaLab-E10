@@ -3,7 +3,10 @@
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { useState } from "react";
 
-type PasswordInputProps = ComponentPropsWithRef<"input"> & {
+import { FieldError, FieldLabel, LeadingIcon, fieldInputClassName } from "./text-field";
+
+type PasswordInputProps = Omit<ComponentPropsWithRef<"input">, "type" | "className"> & {
+  id: string;
   label: string;
   error?: string;
   hint?: string;
@@ -31,7 +34,6 @@ export function PasswordInput({
   hint,
   icon,
   id,
-  autoComplete,
   disabled,
   ...props
 }: PasswordInputProps) {
@@ -42,27 +44,17 @@ export function PasswordInput({
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs font-medium text-[#31503a] lg:text-sm">
-        {label}
-      </label>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <div className="relative">
-        {icon && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 flex w-10 items-center justify-center text-[#6a806f]"
-          >
-            {icon}
-          </span>
-        )}
+        {icon && <LeadingIcon>{icon}</LeadingIcon>}
         <input
           {...props}
           id={id}
           type={show ? "text" : "password"}
-          autoComplete={autoComplete}
           disabled={disabled}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy || undefined}
-          className={`h-10 w-full rounded-md border bg-white ${icon ? "pl-10" : "pl-3"} pr-10 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${error ? "border-red-500" : "border-[#b7c9bb]"}`}
+          className={fieldInputClassName(Boolean(error), `${icon ? "pl-10" : "pl-3"} pr-10`)}
         />
         <button
           type="button"
@@ -80,11 +72,7 @@ export function PasswordInput({
           {hint}
         </p>
       )}
-      {error && (
-        <p id={errorId} role="alert" className="text-xs text-red-600 lg:text-sm">
-          {error}
-        </p>
-      )}
+      {error && <FieldError id={errorId}>{error}</FieldError>}
     </div>
   );
 }

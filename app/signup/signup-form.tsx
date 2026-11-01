@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { PasswordInput } from "@/components/forms/password-input";
+import { TextField } from "@/components/forms/text-field";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { useTransportAwareAction } from "@/components/forms/use-transport-aware-action";
 import { signupFormSchema } from "@/lib/schemas/auth/auth";
@@ -132,17 +133,8 @@ export default function SignupForm() {
       onSubmit={handleSubmit(({ displayName, email, password }) => dispatchInTransition(submitAction)({ displayName, email, password }))}
       className="flex flex-col gap-3 lg:gap-3"
     >
-      <div className="flex flex-col gap-1">
-        <label htmlFor="displayName" className="text-xs font-medium text-[#31503a] lg:text-sm">Nombre y apellido</label>
-        <input {...register("displayName")} id="displayName" type="text" autoComplete="name" placeholder="Tu nombre y apellido" disabled={pending} aria-invalid={errors.displayName ? true : undefined} aria-describedby={errors.displayName ? "displayName-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${errors.displayName ? "border-red-500" : "border-[#b7c9bb]"}`} />
-        {errors.displayName && <p id="displayName-error" role="alert" className="text-xs text-red-600 lg:text-sm">{errors.displayName.message}</p>}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-xs font-medium text-[#31503a] lg:text-sm">Correo electrónico</label>
-        <input {...register("email")} id="email" type="email" autoComplete="email" placeholder="nombre@correo.com" disabled={pending} aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? "email-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${errors.email ? "border-red-500" : "border-[#b7c9bb]"}`} />
-        {errors.email && <p id="email-error" role="alert" className="text-xs text-red-600 lg:text-sm">{errors.email.message}</p>}
-      </div>
+      <TextField {...register("displayName")} id="displayName" type="text" label="Nombre y apellido" autoComplete="name" placeholder="Tu nombre y apellido" error={errors.displayName?.message} disabled={pending} />
+      <TextField {...register("email")} id="email" type="email" label="Correo electrónico" autoComplete="email" placeholder="nombre@correo.com" error={errors.email?.message} disabled={pending} />
 
       <PasswordInput {...register("password")} id="password" label="Contraseña" autoComplete="new-password" hint="Mínimo 8 caracteres." error={errors.password?.message} disabled={pending} />
       <PasswordInput {...register("confirmPassword")} id="confirmPassword" label="Confirmar contraseña" autoComplete="new-password" error={errors.confirmPassword?.message} disabled={pending} />

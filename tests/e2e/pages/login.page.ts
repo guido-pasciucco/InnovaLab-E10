@@ -16,13 +16,13 @@ export class LoginPage {
     this.passwordInput = page.getByLabel("Contraseña", { exact: true });
     // Matches both states: "Mostrar contraseña" and "Ocultar contraseña".
     this.passwordToggle = page.getByRole("button", { name: /(mostrar|ocultar) contraseña/i });
-    this.submitButton = page.getByRole("button", { name: "Ingresar" });
+    this.submitButton = page.getByRole("button", { name: "Ingresar", exact: true });
     this.forgotPasswordLink = page.getByRole("link", { name: "¿Olvidaste tu contraseña?" });
     this.continueWithoutAccountLink = page.getByRole("link", { name: "Continuar sin cuenta" });
-    this.signupLink = page.getByRole("link", { name: "Crear cuenta" });
-    // Scoped to <main>: Next also renders an empty role=alert route
-    // announcer outside it, which would make a page-wide query ambiguous.
-    this.errorAlert = page.getByRole("main").getByRole("alert");
+    this.signupLink = page.getByRole("link", { name: "Crear cuenta", exact: true });
+    // The form-level banner only: per-field errors are alerts too, but their
+    // ids end in "-error"; Next's empty route announcer lives outside <main>.
+    this.errorAlert = page.locator('main form [role="alert"]:not([id$="-error"])');
   }
 
   async goto(): Promise<void> {

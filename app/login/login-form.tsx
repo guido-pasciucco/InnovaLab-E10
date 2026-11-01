@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { PasswordInput } from "@/components/forms/password-input";
+import { TextField } from "@/components/forms/text-field";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { useTransportAwareAction } from "@/components/forms/use-transport-aware-action";
 import { loginSchema } from "@/lib/schemas/auth/auth";
@@ -24,12 +25,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 // Fields the server may flag; module-level so the reference stays stable.
 const SERVER_FIELDS: readonly Path<LoginFormValues>[] = ["email", "password"];
-
-function inputClassName(hasError: boolean): string {
-  return `h-10 w-full rounded-md border bg-white pl-10 pr-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${
-    hasError ? "border-red-500" : "border-[#b7c9bb]"
-  }`;
-}
 
 function MailIcon() {
   return (
@@ -83,7 +78,7 @@ function ErrorBanner({ message }: { message: string }) {
 
 export default function LoginForm() {
   const router = useRouter();
-  const { action, transportError } = useTransportAwareAction(login);
+  const { action, transportError, clearTransportError } = useTransportAwareAction(login);
   const [state, submitAction, pending] = useActionState(action, initialState);
   const {
     register,
@@ -111,7 +106,16 @@ export default function LoginForm() {
   return (
     // RHF valida en el cliente con el mismo schema; solo si pasa,
     // despacha a la action (envuelta en transición por el helper).
-    <form onSubmit={handleSubmit(dispatchInTransition(submitAction))} className="flex flex-col gap-3">
+    // Editing a field or retrying clears a stale transport banner, so it does
+    // not outlive a client-side validation failure.
+    <form
+      onChange={clearTransportError}
+      onSubmit={(event) => {
+        clearTransportError();
+        return handleSubmit(dispatchInTransition(submitAction))(event);
+      }}
+      className="flex flex-col gap-3"
+    >
       {generalError && <ErrorBanner message={generalError} />}
 
       {state?.ok && (
@@ -119,39 +123,24 @@ export default function LoginForm() {
           role="status"
           className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700 lg:text-sm"
         >
-          Sesión iniciada correctamente. Redirigiendo…
+          Sesión iniciada correctamente. Redirigiendo…{" "}
+          <Link href="/" className="font-semibold underline underline-offset-2">
+            Continuar
+          </Link>
         </p>
       )}
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-xs font-medium text-[#31503a] lg:text-sm">
-          Correo electrónico
-        </label>
-        <div className="relative">
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 flex w-10 items-center justify-center text-[#6a806f]"
-          >
-            <MailIcon />
-          </span>
-          <input
-            {...register("email")}
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="nombre@correo.com"
-            disabled={pending}
-            aria-invalid={errors.email ? true : undefined}
-            aria-describedby={errors.email ? "email-error" : undefined}
-            className={inputClassName(Boolean(errors.email))}
-          />
-        </div>
-        {errors.email && (
-          <p id="email-error" role="alert" className="text-xs text-red-600 lg:text-sm">
-            {errors.email.message}
-          </p>
-        )}
-      </div>
+      <TextField
+        {...register("email")}
+        id="email"
+        type="email"
+        label="Correo electrónico"
+        autoComplete="email"
+        placeholder="nombre@correo.com"
+        icon={<MailIcon />}
+        error={errors.email?.message}
+        disabled={pending}
+      />
 
       <PasswordInput
         {...register("password")}
@@ -193,10 +182,10 @@ export default function LoginForm() {
         {!pending && <ArrowIcon />}
       </button>
 
-      <div className="flex items-center gap-3 text-[11px] font-medium text-[#6a806f] lg:text-sm">
-        <span aria-hidden="true" className="h-px flex-1 bg-[#d7e5d9]" />
+      <div aria-hidden="true" className="flex items-center gap-3 text-[11px] font-medium text-[#6a806f] lg:text-sm">
+        <span className="h-px flex-1 bg-[#d7e5d9]" />
         <span>o</span>
-        <span aria-hidden="true" className="h-px flex-1 bg-[#d7e5d9]" />
+        <span className="h-px flex-1 bg-[#d7e5d9]" />
       </div>
 
       <Link

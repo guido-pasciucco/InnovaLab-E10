@@ -1,4 +1,5 @@
 import { AuthHeroPanel } from "@/components/auth/auth-hero-panel";
+import { AuthPageShell } from "@/components/auth/auth-page-shell";
 
 import SignupForm from "./signup-form";
 
@@ -6,8 +7,8 @@ const BENEFITS = ["Valores productivos", "Historial de precios", "Planes para co
 
 export default function SignupPage() {
   return (
-    <main className="min-h-screen overflow-hidden px-4 py-6 text-[#12321e] sm:px-8 sm:py-10">
-      <div className="mx-auto grid min-h-[calc(100vh-3rem)] sm:min-h-[calc(100vh-5rem)] w-full max-w-[64rem] items-center gap-8 lg:grid-cols-[minmax(0,1fr)_25.25rem] lg:gap-10">
+    <AuthPageShell
+      hero={
         <AuthHeroPanel
           badge="Paso previo: acceso"
           title="Guardá tus cálculos y retomalos cuando quieras"
@@ -15,15 +16,11 @@ export default function SignupPage() {
           benefits={BENEFITS}
           benefitsLabel="Beneficios de crear una cuenta"
         />
-
-        <section className="w-full rounded-2xl border border-white/80 bg-white/95 p-5 shadow-[0_16px_36px_rgba(24,105,52,0.15)] sm:p-6 lg:p-7">
-          <h2 className="text-xl font-bold tracking-tight text-[#12321e] lg:text-[24px]">Crear cuenta</h2>
-          <p className="mt-1 text-xs text-[#5c7563] lg:text-base">Es gratis y te lleva un minuto.</p>
-          <div className="mt-4">
-            <SignupForm />
-          </div>
-        </section>
-      </div>
-    </main>
+      }
+      title="Crear cuenta"
+      subtitle="Es gratis y te lleva un minuto."
+    >
+      <SignupForm />
+    </AuthPageShell>
   );
 }
