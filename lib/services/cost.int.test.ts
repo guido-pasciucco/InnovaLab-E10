@@ -2,8 +2,9 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { ZodError } from "zod";
 
+import { businesses } from "@/lib/db/business/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
-import { calcCostLines } from "@/lib/db/costs/table";
+import { businessCostLines, calcCostLines } from "@/lib/db/costs/table";
 import { AppError } from "@/lib/errors/app-error";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
@@ -170,6 +171,46 @@ describe("listCalcCostLinesService", () => {
     expect(result.lines.map((line) => line.concept)).toEqual(["Alquiler"]);
     expect(result.totalFixed).toBe("60000.00");
   });
+
+  it("sums only fixed lines when the list is unfiltered", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const draftId = await getDraftCalculationId(user.id, db);
+    await db.insert(calcCostLines).values({
+      calculationId: draftId!,
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "5000.00",
+      sourceBusinessCostId: null,
+    });
+    await addCalcCostLineService(user.id, { concept: "Alquiler", amount: "60000.00" }, db);
+
+    const result = await listCalcCostLinesService(user.id, {}, db);
+
+    expect(result.lines.map((line) => line.concept).sort()).toEqual(["Alquiler", "Harina"]);
+    expect(result.totalFixed).toBe("60000.00");
+  });
+
+  it("sums the requested variable lines when the behavior filter is variable", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const draftId = await getDraftCalculationId(user.id, db);
+    await db.insert(calcCostLines).values({
+      calculationId: draftId!,
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "5000.00",
+      sourceBusinessCostId: null,
+    });
+    await addCalcCostLineService(user.id, { concept: "Alquiler", amount: "60000.00" }, db);
+
+    const result = await listCalcCostLinesService(user.id, { behavior: "variable" }, db);
+
+    expect(result.lines.map((line) => line.concept)).toEqual(["Harina"]);
+    expect(result.totalFixed).toBe("5000.00");
+  });
 });
 
 describe("addCalcCostLineService", () => {
@@ -247,6 +288,28 @@ describe("addCalcCostLineService", () => {
 const UNKNOWN_LINE_ID = "6f1c2b7e-3d4a-4f5b-9c8d-1e2f3a4b5c6d";
 
 describe("updateCalcCostLineAmountService", () => {
+  it("throws CALC_DRAFT_MISSING when the user has no draft", async () => {
+    const user = await makeUser();
+
+    await expect(
+      updateCalcCostLineAmountService(user.id, crypto.randomUUID(), { amount: "1.00" }, db),
+    ).rejects.toEqual(new AppError("CALC_DRAFT_MISSING"));
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the line id is not a uuid", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    await addCalcCostLineService(user.id, { concept: "Alquiler", amount: "60000.00" }, db);
+
+    await expect(
+      updateCalcCostLineAmountService(user.id, "abc", { amount: "1.00" }, db),
+    ).rejects.toEqual(new AppError("CALC_COST_LINE_NOT_FOUND"));
+
+    const listed = await listCalcCostLinesService(user.id, { behavior: "fixed" }, db);
+    expect(listed.lines).toHaveLength(1);
+    expect(listed.lines[0].amount).toBe("60000.00");
+  });
+
   it("replaces the amount and keeps the concept and the axes", async () => {
     const user = await makeUser();
     await saveDraft(user.id);
@@ -352,6 +415,28 @@ describe("updateCalcCostLineAmountService", () => {
 });
 
 describe("removeCalcCostLineService", () => {
+  it("throws CALC_DRAFT_MISSING when the user has no draft", async () => {
+    const user = await makeUser();
+
+    await expect(removeCalcCostLineService(user.id, crypto.randomUUID(), db)).rejects.toEqual(
+      new AppError("CALC_DRAFT_MISSING"),
+    );
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the line id is not a uuid", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    await addCalcCostLineService(user.id, { concept: "Alquiler", amount: "60000.00" }, db);
+
+    await expect(removeCalcCostLineService(user.id, "abc", db)).rejects.toEqual(
+      new AppError("CALC_COST_LINE_NOT_FOUND"),
+    );
+
+    const listed = await listCalcCostLinesService(user.id, { behavior: "fixed" }, db);
+    expect(listed.lines).toHaveLength(1);
+    expect(listed.lines[0].amount).toBe("60000.00");
+  });
+
   it("removes the line and leaves totalFixed without it", async () => {
     const user = await makeUser();
     await saveDraft(user.id);
@@ -399,5 +484,46 @@ describe("removeCalcCostLineService", () => {
 
     const listed = await listCalcCostLinesService(user.id, { behavior: "fixed" }, db);
     expect(listed.lines).toHaveLength(1);
+  });
+});
+
+describe("catalog link on delete", () => {
+  it("keeps the calculation line and clears sourceBusinessCostId when the catalog row is deleted", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const created = await addCalcCostLineService(
+      user.id,
+      { concept: "Alquiler", amount: "60000.00" },
+      db,
+    );
+    const [business] = await db
+      .select()
+      .from(businesses)
+      .where(eq(businesses.ownerUserId, user.id));
+    if (!business) {
+      throw new Error("draft setup did not create a business");
+    }
+    const [catalog] = await db
+      .insert(businessCostLines)
+      .values({
+        businessId: business.id,
+        concept: "Alquiler del taller",
+        behavior: "fixed",
+        traceability: "indirect",
+        amountPeriod: "150000.00",
+      })
+      .returning();
+    await db
+      .update(calcCostLines)
+      .set({ sourceBusinessCostId: catalog.id })
+      .where(eq(calcCostLines.id, created.id));
+
+    await db.delete(businessCostLines).where(eq(businessCostLines.id, catalog.id));
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, created.id));
+    expect(stored).toHaveLength(1);
+    expect(stored[0].sourceBusinessCostId).toBeNull();
+    expect(stored[0].concept).toBe("Alquiler");
+    expect(stored[0].amount).toBe("60000.00");
   });
 });
