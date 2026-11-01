@@ -22,29 +22,32 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 // Fields the server may flag; module-level so the reference stays stable.
 const SERVER_FIELDS: readonly Path<SignupFormValues>[] = ["displayName", "email", "password"];
 
-export default function SignupForm() {
+type SignupFormProps = {
+  defaultEmail?: string;
+};
+
+export default function SignupForm({ defaultEmail }: SignupFormProps) {
   const router = useRouter();
   const [state, submitAction, pending] = useActionState(signup, initialState);
   const {
     register,
     handleSubmit,
     setError,
-    watch,
+    getValues,
     formState: { errors },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
+    defaultValues: { email: defaultEmail ?? "" },
   });
-  const email = watch("email");
 
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
 
   useEffect(() => {
     if (state?.ok) {
-      router.push(`/signup/verificar-correo?email=${encodeURIComponent(email)}`
-    );
+      router.push(`/signup/verificar-correo?email=${encodeURIComponent(getValues("email"))}`);
       router.refresh();
     }
-  }, [state, router, email]);
+  }, [state, router, getValues]);
 
   return (
     // RHF validates in the client with the same schema; only then it
@@ -112,12 +115,6 @@ export default function SignupForm() {
       {state && !state.ok && !hasServerFieldErrors && (
         <p role="alert" className="text-sm text-red-600">
           {state.message}
-        </p>
-      )}
-
-      {state?.ok && (
-        <p role="status" className="text-sm text-green-600">
-          Account created. Please check your email if confirmation is required.
         </p>
       )}
 

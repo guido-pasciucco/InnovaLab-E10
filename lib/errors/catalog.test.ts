@@ -27,5 +27,6 @@ describe("ERROR_CATALOG", () => {
     expect(ERROR_CATALOG.AUTH_SIGNUP_FAILED).toMatchObject({ status: 400 });
     expect(ERROR_CATALOG.AUTH_SIGNOUT_FAILED).toMatchObject({ status: 500 });
     expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 422 });
+    expect(ERROR_CATALOG.AUTH_EMAIL_RESEND_FAILED).toMatchObject({ status: 400 });
   });
 });

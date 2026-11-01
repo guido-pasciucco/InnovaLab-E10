@@ -26,7 +26,7 @@ export default function RootLayout({
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased overflow-x-clip`}>
       <body 
         suppressHydrationWarning
-        className="relative min-h-full flex flex-col bg-gradient-to-br from-[#EAFCF1] via-[#D3F5E1] to-[#BDEBCF] text-slate-800"
+        className="relative min-h-full flex flex-col overflow-x-clip bg-gradient-to-br from-[#EAFCF1] via-[#D3F5E1] to-[#BDEBCF] text-slate-800"
       >
         {/* Capas de luces difuminadas de Figma */}
         <div className="pointer-events-none absolute -top-20 -right-20 w-[420px] h-[420px] rounded-full bg-[#39FF14]/30 blur-[110px]" />

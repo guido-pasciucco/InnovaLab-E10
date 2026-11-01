@@ -8,6 +8,7 @@ test("signup, confirm the email through Mailpit, log in and reach the dashboard"
   page,
   cleanup,
   signupPage,
+  verifyEmailPage,
   loginPage,
   dashboardPage,
 }) => {
@@ -15,10 +16,27 @@ test("signup, confirm the email through Mailpit, log in and reach the dashboard"
   const user = buildUser({ displayName: "E2E Signup" });
   cleanup.trackUserEmail(user.email);
 
-  // Act: sign up (the form pushes to /login on success) and confirm.
+  // Act: sign up and land on the "Revisá tu correo" screen with the email.
   await signupPage.goto();
   await signupPage.signUp(user);
-  await expect(page).toHaveURL("/login");
+  await expect(page).toHaveURL(/\/signup\/verificar-correo\?email=/);
+  await expect(verifyEmailPage.heading).toBeVisible();
+  await expect(verifyEmailPage.emailText(user.email)).toBeVisible();
+  await expect(verifyEmailPage.resendButton).toBeVisible();
+  await expect(verifyEmailPage.changeEmailLink).toBeVisible();
+
+  // "Ya verifiqué" must not claim success without a confirmed session.
+  await verifyEmailPage.checkButton.click();
+  await expect(verifyEmailPage.status).toContainText("Todavía no figura confirmado");
+
+  // "Cambiar correo" returns to signup with the address prefilled.
+  await verifyEmailPage.changeEmailLink.click();
+  await expect(page).toHaveURL(/\/signup\?email=/);
+  await expect(signupPage.emailInput).toHaveValue(user.email);
+
+  // Back to the verification screen to continue with the email link.
+  await page.goBack();
+  await expect(page).toHaveURL(/\/signup\/verificar-correo\?email=/);
 
   // Email confirmations are ON (supabase/config.toml). With PKCE, GoTrue
   // verifies the email on /auth/v1/verify and redirects to the site with a

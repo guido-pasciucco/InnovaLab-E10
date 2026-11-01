@@ -13,3 +13,9 @@ export type PasswordResetState = ServiceResult<Record<string, never>> | undefine
 
 // Password update form state for useActionState.
 export type PasswordUpdateState = ServiceResult<Record<string, never>> | undefined;
+
+// Signup verification screen: resend the confirmation email.
+export type ResendVerificationState = ServiceResult<Record<string, never>> | undefined;
+
+// Signup verification screen: re-read the session to check the email.
+export type EmailVerificationState = ServiceResult<{ confirmed: boolean }> | undefined;

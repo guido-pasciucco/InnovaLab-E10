@@ -6,6 +6,7 @@ import { LoginPage } from "./pages/login.page";
 import { ResetPasswordPage } from "./pages/reset-password.page";
 import { SignupPage } from "./pages/signup.page";
 import { UpdatePasswordPage } from "./pages/update-password.page";
+import { VerifyEmailPage } from "./pages/verify-email.page";
 
 // Every spec imports `test` and `expect` from here.
 //
@@ -29,6 +30,7 @@ type Fixtures = {
   authedPage: Page;
   loginPage: LoginPage;
   signupPage: SignupPage;
+  verifyEmailPage: VerifyEmailPage;
   dashboardPage: DashboardPage;
   resetPasswordPage: ResetPasswordPage;
   updatePasswordPage: UpdatePasswordPage;
@@ -74,6 +76,7 @@ export const test = base.extend<Fixtures>({
 
   loginPage: async ({ page }, provide) => provide(new LoginPage(page)),
   signupPage: async ({ page }, provide) => provide(new SignupPage(page)),
+  verifyEmailPage: async ({ page }, provide) => provide(new VerifyEmailPage(page)),
   dashboardPage: async ({ page }, provide) => provide(new DashboardPage(page)),
   resetPasswordPage: async ({ page }, provide) => provide(new ResetPasswordPage(page)),
   updatePasswordPage: async ({ page }, provide) => provide(new UpdatePasswordPage(page)),

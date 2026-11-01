@@ -84,6 +84,13 @@ export const ERROR_CATALOG = {
     message: "Could not update password",
     logLevel: "warn",
   },
+  AUTH_EMAIL_RESEND_FAILED: {
+    // Supabase rejected the resend (already confirmed, expired signup...).
+    // Rate limits keep their own code so the screen can explain them.
+    status: 400,
+    message: "Could not resend the verification email",
+    logLevel: "warn",
+  },
 
   // Calculator
   CALC_UNAVAILABLE: {

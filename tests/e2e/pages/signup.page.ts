@@ -17,7 +17,7 @@ export class SignupPage {
     await this.page.goto("/signup");
   }
 
-  // On success the form pushes to /login.
+  // On success the form pushes to /signup/verificar-correo.
   async signUp(user: { displayName: string; email: string; password: string }): Promise<void> {
     await this.nameInput.fill(user.displayName);
     await this.emailInput.fill(user.email);
