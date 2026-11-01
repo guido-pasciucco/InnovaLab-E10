@@ -69,14 +69,19 @@ export async function loginService(
 export async function signupService(
   client: SupabaseClient,
   input: unknown,
+  // Where the confirmation email link lands once GoTrue verifies it.
+  emailRedirectTo: string,
 ): Promise<Record<string, never>> {
   const { email, password, displayName } = signupSchema.parse(input);
 
   const { error } = await client.auth.signUp({
     email,
     password,
-    // Empty name ("" after trim) means no display name at all.
-    options: { data: { display_name: displayName || undefined } },
+    options: {
+      // Empty name ("" after trim) means no display name at all.
+      data: { display_name: displayName || undefined },
+      emailRedirectTo,
+    },
   });
 
   if (error) {
