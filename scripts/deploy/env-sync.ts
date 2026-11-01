@@ -67,7 +67,10 @@ function main(): void {
   }
 
   if (!existsSync(ENV_FILE)) {
-    console.error(`Falta ${ENV_FILE}. Copiá la estructura de .env.example y completá los valores.`);
+    console.error(
+      `Falta ${ENV_FILE}. Copiá la plantilla y completá los valores:\n` +
+        "  cp .env.deploy.example .env.deploy",
+    );
     process.exit(1);
   }
 

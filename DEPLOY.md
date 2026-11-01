@@ -29,9 +29,10 @@ Se cargan en Vercel para **Production** y **Preview**. Los valores salen de Supa
 El CLI de Vercel **no** lee archivos `.env` por su cuenta. Para no cargar cada variable a mano en el dashboard, el repo trae un puente: un archivo `.env.deploy` (ignorado por git) y el comando `bun run deploy:env`, que sube cada variable al proyecto vinculado.
 
 ```bash
+cp .env.deploy.example .env.deploy   # completá los valores en .env.deploy
 bunx vercel login
-bunx vercel link          # vincula el directorio con el proyecto
-bun run deploy:env        # sube las variables a production
+bunx vercel link                     # vincula el directorio con el proyecto
+bun run deploy:env                   # sube las variables a production
 bun run deploy:env preview
 ```
 
