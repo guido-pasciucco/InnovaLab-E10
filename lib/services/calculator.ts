@@ -1,9 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getSessionUserService } from "./auth";
-
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { businesses, products } from "@/lib/db/business/table";
 import { calculations, costingSetup } from "@/lib/db/calculation/table";
@@ -12,6 +10,9 @@ import {
   type SaveCalculatorSetupInput,
 } from "@/lib/db/calculation/validation";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
+import type { CalculatorDraftSetup } from "@/lib/types/calculator";
+
+import { getSessionUserService } from "./auth";
 
 // Calculator setup persistence (ADR 0005: the draft lives server-side only).
 // Input is validated with the server gate from lib/db (saveCalculatorSetupInputSchema),
@@ -49,6 +50,9 @@ export async function getDraftCalculationId(
     .select({ id: calculations.id })
     .from(calculations)
     .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
+    // #123 will make the draft unique. Until then, the order keeps every
+    // read/write on the same row even if duplicates already exist.
+    .orderBy(desc(calculations.createdAt), desc(calculations.id))
     .limit(1);
   return row?.id ?? null;
 }
@@ -69,6 +73,7 @@ export async function saveCalculatorSetupService(
       .select({ id: calculations.id, productId: calculations.productId })
       .from(calculations)
       .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
+      .orderBy(desc(calculations.createdAt), desc(calculations.id))
       .limit(1);
 
     let calculationId: string;
@@ -133,7 +138,67 @@ export async function getCalculatorSetupService(
     .innerJoin(calculations, eq(costingSetup.calculationId, calculations.id))
     .innerJoin(products, eq(calculations.productId, products.id))
     .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
+    .orderBy(desc(calculations.createdAt), desc(calculations.id))
     .limit(1);
 
   return row ? saveCalculatorSetupInputSchema.parse(row) : null;
+}
+
+/**
+ * Read model for the step 1 form: the draft the user is editing and its
+ * persisted setup. It never writes.
+ *
+ * Null semantics:
+ * - no draft: `calculationId` and `setup` are null.
+ * - draft without a `costing_setup` row: `calculationId` is returned so the
+ *   form can still save to that draft, and `setup` is null.
+ * - draft with setup: both values are returned.
+ */
+export async function getCalculatorDraftSetupService(
+  client: SupabaseClient,
+  database?: Db,
+): Promise<CalculatorDraftSetup> {
+  const { id: userId } = await getSessionUserService(client);
+  const db = database ?? getDrizzleClient();
+  const [draft] = await db
+    .select({
+      calculationId: calculations.id,
+      name: products.name,
+      unit: costingSetup.unit,
+      volume: costingSetup.volume,
+      currency: costingSetup.currency,
+      period: costingSetup.period,
+    })
+    .from(calculations)
+    .innerJoin(products, eq(calculations.productId, products.id))
+    .leftJoin(costingSetup, eq(costingSetup.calculationId, calculations.id))
+    .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
+    // #123 owns the unique-draft fix; ordering here keeps this read
+    // deterministic even before that migration lands.
+    .orderBy(desc(calculations.createdAt), desc(calculations.id))
+    .limit(1);
+
+  if (!draft) {
+    return { calculationId: null, setup: null };
+  }
+
+  if (
+    draft.unit === null ||
+    draft.volume === null ||
+    draft.currency === null ||
+    draft.period === null
+  ) {
+    return { calculationId: draft.calculationId, setup: null };
+  }
+
+  return {
+    calculationId: draft.calculationId,
+    setup: saveCalculatorSetupInputSchema.parse({
+      name: draft.name,
+      unit: draft.unit,
+      volume: draft.volume,
+      currency: draft.currency,
+      period: draft.period,
+    }),
+  };
 }

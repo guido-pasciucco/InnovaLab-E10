@@ -22,6 +22,19 @@ export const signupSchema = z.object({
     .optional(),
 });
 
+// Client-side contract of the signup form (the screen's exact shape).
+// Extends the signup contract with the password confirmation, which only
+// exists in the browser: it reuses passwordField (one rule, one message)
+// and never reaches the service — the form strips it before dispatching
+// the action, so `signupSchema` stays the payload contract of the server.
+export const signupFormSchema = signupSchema
+  .extend({ confirmPassword: passwordField })
+  .refine((values) => values.password === values.confirmPassword, {
+    error: "Las contraseñas no coinciden.",
+    // The mismatch is reported under the confirmation field, where it is fixed.
+    path: ["confirmPassword"],
+  });
+
 export const passwordResetRequestSchema = z.object({ email: emailField });
 
 export const passwordUpdateSchema = z.object({ password: passwordField });

@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
 import {
+  getCalculatorDraftSetupService,
   getCalculatorSetupService,
   getDraftCalculationId,
   saveCalculatorSetupService,
@@ -11,6 +12,7 @@ import {
 const operations = [
   ["saveCalculatorSetupService", (client: SupabaseClient, db?: Db) => saveCalculatorSetupService(client, {}, db)],
   ["getCalculatorSetupService", (client: SupabaseClient, db?: Db) => getCalculatorSetupService(client, db)],
+  ["getCalculatorDraftSetupService", (client: SupabaseClient, db?: Db) => getCalculatorDraftSetupService(client, db)],
   ["getDraftCalculationId", (client: SupabaseClient, db?: Db) => getDraftCalculationId(client, db)],
 ] as const;
 
