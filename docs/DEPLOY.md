@@ -10,7 +10,7 @@ cp .env.deploy.example .env.deploy
 
 Editá `.env.deploy` con:
 
-- `SITE_URL`: la URL pública del proyecto en Vercel.
+- `SITE_URL`: la URL pública del proyecto. Se conoce después de vincularlo: está en el dashboard del proyecto, en Settings → Domains. Si el nombre ya estaba tomado, Vercel le agrega un sufijo y esa es la que va.
 - `DATABASE_URL`: connection string del transaction pooler (puerto 6543).
 - `DIRECT_URL`: connection string del session pooler (puerto 5432). Opcional para deployar.
 - `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: los del proyecto de Supabase.
@@ -55,7 +55,7 @@ bun run deploy:preview    # preview
 
 La app no confía en los headers del request para resolver su propio origen: si `SITE_URL` falta, lanza un error en vez de aceptar el host que llegue. El deploy compila bien y después devuelve 500 en todas las rutas.
 
-Como la URL de Vercel se conoce recién después de crear el proyecto, el orden obligatorio es: `vercel link` → cargar `SITE_URL` → deployar.
+Como la URL se conoce recién después de crear el proyecto, el orden es: `vercel link` → leer el dominio en el dashboard → cargar `SITE_URL` → deployar. Si deployaste antes de saberla, el primer deploy sirve para descubrirla: corregí `SITE_URL`, volvé a correr `deploy:env` y redeployá. La variable no se aplica hasta el build siguiente.
 
 ### El build no aplica migraciones
 
@@ -82,6 +82,10 @@ El repositorio es público y cada PR pasa por un escáner de secretos. El repo g
 ### Los previews pueden escribir en la base real
 
 Si `DATABASE_URL` apunta a la base del equipo, cualquier preview escribe ahí. Si eso no es aceptable, los previews necesitan su propia base o no se deployan.
+
+### `.gitignore` no filtra el contexto de build
+
+El CLI sube el directorio completo y solo respeta `.vercelignore`. Un archivo local que no esté ahí puede abortar el deploy aunque git lo esté ignorando: un socket, un archivo bloqueado o una carpeta de estado de herramientas.
 
 ### Quién es dueño del proyecto de Vercel
 
