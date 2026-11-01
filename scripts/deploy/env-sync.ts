@@ -1,5 +1,7 @@
 import { spawnSync } from "node:child_process";
+import { lookup } from "node:dns/promises";
 import { existsSync, readFileSync } from "node:fs";
+import { connect } from "node:net";
 
 /**
  * Sube las variables de `.env.deploy` al proyecto de Vercel vinculado.
@@ -10,6 +12,9 @@ import { existsSync, readFileSync } from "node:fs";
  * Uso:
  *   bun scripts/deploy/env-sync.ts              # production
  *   bun scripts/deploy/env-sync.ts preview      # preview
+ *
+ * Antes de subir valida cada valor: placeholders, direcciones locales, puertos
+ * de pooler, y que los hosts de base existan y acepten conexiones.
  *
  * Nunca imprime valores: solo nombres y resultado.
  */
@@ -58,7 +63,67 @@ function describeProblem(key: string, value: string): string | null {
   return null;
 }
 
-function main(): void {
+const SUPABASE_POOLER = "pooler.supabase.com";
+const SUPABASE_DIRECT = /^db\.[a-z0-9]+\.supabase\.co$/;
+
+/**
+ * Supabase tiene dos hosts distintos y no intercambiables: el pooler
+ * (`<region>.pooler.supabase.com`) y la conexión directa
+ * (`db.<ref>.supabase.co`). Un host inventado con el puerto correcto pasa
+ * cualquier chequeo de puerto y falla recién al conectar.
+ */
+function checkSupabaseHost(key: string, hostname: string): string | null {
+  const isPooler = hostname.endsWith(`.${SUPABASE_POOLER}`);
+  const isDirect = SUPABASE_DIRECT.test(hostname);
+
+  if (key === "DATABASE_URL" && !isPooler) {
+    return `el host "${hostname}" no es un pooler de Supabase (esperado: <region>.${SUPABASE_POOLER})`;
+  }
+  if (key === "DIRECT_URL" && !isPooler && !isDirect) {
+    return `el host "${hostname}" no es de Supabase (esperado: <region>.${SUPABASE_POOLER} o db.<ref>.supabase.co)`;
+  }
+  return null;
+}
+
+/** Comprueba que el host exista y acepte conexiones en ese puerto. */
+async function checkReachable(hostname: string, port: number): Promise<string | null> {
+  try {
+    await lookup(hostname);
+  } catch {
+    return `el host "${hostname}" no resuelve por DNS: revisá la región del pooler`;
+  }
+
+  return new Promise((resolve) => {
+    const socket = connect({ host: hostname, port });
+    const finish = (problem: string | null) => {
+      socket.destroy();
+      resolve(problem);
+    };
+
+    socket.setTimeout(8000);
+    socket.once("connect", () => finish(null));
+    socket.once("timeout", () => finish(`"${hostname}:${port}" no responde (timeout)`));
+    socket.once("error", (error: NodeJS.ErrnoException) =>
+      finish(`"${hostname}:${port}" no acepta conexiones (${error.code ?? error.message})`),
+    );
+  });
+}
+
+async function checkConnectionUrl(key: string, value: string): Promise<string | null> {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return "no es una URL válida";
+  }
+
+  const hostProblem = checkSupabaseHost(key, url.hostname);
+  if (hostProblem) return hostProblem;
+
+  return checkReachable(url.hostname, url.port ? Number(url.port) : 5432);
+}
+
+async function main(): Promise<void> {
   const environment = process.argv[2] ?? "production";
 
   if (!["production", "preview", "development"].includes(environment)) {
@@ -93,8 +158,20 @@ function main(): void {
       continue;
     }
     const problem = describeProblem(key, value);
-    if (problem) problems.push(`${key}: ${problem}`);
-    else entries.push({ key, value });
+    if (problem) {
+      problems.push(`${key}: ${problem}`);
+      continue;
+    }
+
+    if (key === "DATABASE_URL" || key === "DIRECT_URL") {
+      const hostProblem = await checkConnectionUrl(key, value);
+      if (hostProblem) {
+        problems.push(`${key}: ${hostProblem}`);
+        continue;
+      }
+    }
+
+    entries.push({ key, value });
   }
 
   if (problems.length > 0) {
@@ -132,4 +209,4 @@ function main(): void {
   console.log("Ya podés deployar con:  bun run deploy");
 }
 
-main();
+await main();
