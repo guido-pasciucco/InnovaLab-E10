@@ -187,7 +187,7 @@ async function main(): Promise<void> {
     const result = spawnSync(
       "bunx",
       ["vercel", "env", "add", key, environment, "--force", "--yes"],
-      { input: `${value}\n`, encoding: "utf8" },
+      { input: `${value}\n`, encoding: "utf8", timeout: 120_000 },
     );
 
     if (result.status === 0) {
@@ -196,7 +196,10 @@ async function main(): Promise<void> {
     }
 
     failures++;
-    const detail = (result.stderr || result.stdout || "").trim().split("\n")[0];
+    const detail =
+      result.error?.message ??
+      (result.signal ? `abortado por ${result.signal} (timeout)` : undefined) ??
+      (result.stderr || result.stdout || "").trim().split("\n")[0];
     console.log(`  ✗ ${key}${detail ? ` — ${detail}` : ""}`);
   }
 
