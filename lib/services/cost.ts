@@ -167,3 +167,104 @@ export async function removeCalcCostLineService(
 
   return removed;
 }
+
+// Variable-cost lines of the calculator draft (paso 3, #198).
+// The public input is the same { concept, amount }. These functions write and
+// match behavior "variable", so a fixed line cannot be corrected or removed
+// from this step. totalVariable sums the loaded amounts, the same role as
+// totalFixed; it is not a per-unit cost.
+
+export type VariableCalcCostLineList = {
+  lines: CalcCostLine[];
+  totalVariable: string;
+};
+
+function variableLineOfDraft(lineId: string, draftId: string) {
+  return and(
+    eq(calcCostLines.id, lineId),
+    eq(calcCostLines.calculationId, draftId),
+    eq(calcCostLines.behavior, "variable"),
+  );
+}
+
+export async function listVariableCalcCostLinesService(
+  userId: string,
+  db: Db = getDrizzleClient(),
+): Promise<VariableCalcCostLineList> {
+  // listCalcCostLinesService names every filtered sum totalFixed. This step
+  // publishes that sum as totalVariable.
+  const listed = await listCalcCostLinesService(userId, { behavior: "variable" }, db);
+
+  return {
+    lines: listed.lines,
+    totalVariable: listed.totalFixed,
+  };
+}
+
+export async function addVariableCalcCostLineService(
+  userId: string,
+  input: unknown,
+  db: Db = getDrizzleClient(),
+): Promise<CalcCostLine> {
+  const line = addCalcCostLineInputSchema.parse(input);
+  const draftId = await requireDraftId(userId, db);
+
+  return db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(calcCostLines)
+      .values({
+        calculationId: draftId,
+        concept: line.concept,
+        amount: line.amount,
+        behavior: "variable",
+        traceability: "direct",
+        sourceBusinessCostId: null,
+      })
+      .returning();
+
+    return created;
+  });
+}
+
+export async function updateVariableCalcCostLineAmountService(
+  userId: string,
+  lineId: string,
+  input: unknown,
+  db: Db = getDrizzleClient(),
+): Promise<CalcCostLine> {
+  const { amount } = updateCalcCostLineAmountInputSchema.parse(input);
+  const id = requireLineId(lineId);
+  const draftId = await requireDraftId(userId, db);
+
+  const [updated] = await db
+    .update(calcCostLines)
+    .set({ amount })
+    .where(variableLineOfDraft(id, draftId))
+    .returning();
+
+  if (!updated) {
+    throw new AppError("CALC_COST_LINE_NOT_FOUND");
+  }
+
+  return updated;
+}
+
+export async function removeVariableCalcCostLineService(
+  userId: string,
+  lineId: string,
+  db: Db = getDrizzleClient(),
+): Promise<CalcCostLine> {
+  const id = requireLineId(lineId);
+  const draftId = await requireDraftId(userId, db);
+
+  const [removed] = await db
+    .delete(calcCostLines)
+    .where(variableLineOfDraft(id, draftId))
+    .returning();
+
+  if (!removed) {
+    throw new AppError("CALC_COST_LINE_NOT_FOUND");
+  }
+
+  return removed;
+}
