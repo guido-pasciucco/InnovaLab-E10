@@ -7,6 +7,9 @@ export type LoginState = ServiceResult<Record<string, never>> | undefined;
 // Signup form state for useActionState.
 export type SignupState = ServiceResult<Record<string, never>> | undefined;
 
+// Resend-confirmation form state for useActionState.
+export type ResendSignupState = ServiceResult<Record<string, never>> | undefined;
+
 // Password reset request form state for useActionState.
 // Success is always generic to prevent account enumeration.
 export type PasswordResetState = ServiceResult<Record<string, never>> | undefined;

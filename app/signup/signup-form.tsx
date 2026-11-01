@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState, type RefObject } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Path } from "react-hook-form";
 import { z } from "zod";
 
+import { SIGNUP_EMAIL_KEY } from "@/app/auth/check-email/signup-email";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { PasswordInput } from "@/components/forms/password-input";
 import { TextField } from "@/components/forms/text-field";
@@ -50,67 +52,19 @@ function parsePreviewMessages(): Partial<Record<PreviewField, string>> {
 
 const PREVIEW_FIELD_MESSAGES = SHOW_ERROR_PREVIEW ? parsePreviewMessages() : {};
 
-function SignupSuccessDialog({ returnFocusRef }: { returnFocusRef: RefObject<HTMLAnchorElement | null> }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [open, setOpen] = useState(true);
-
-  const closeDialog = () => {
-    dialogRef.current?.close();
-    setOpen(false);
-    requestAnimationFrame(() => returnFocusRef.current?.focus());
-  };
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog || dialog.open) return;
-    dialog.showModal();
-    dialog.querySelector<HTMLAnchorElement>("[data-dialog-primary-action]")?.focus();
-  }, []);
-
-  if (!open) return null;
-
-  return (
-    <dialog
-      ref={dialogRef}
-      aria-labelledby="signup-success-title"
-      aria-describedby="signup-success-body"
-      onCancel={(event) => {
-        event.preventDefault();
-        closeDialog();
-      }}
-      onKeyDown={(event) => {
-        if (event.key !== "Tab") return;
-        const focusable = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
-        const first = focusable.at(0);
-        const last = focusable.at(-1);
-        if (!first || !last) return;
-
-        if ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
-          event.preventDefault();
-          (event.shiftKey ? last : first).focus();
-        }
-      }}
-      className="w-[min(100%-2rem,23rem)] rounded-2xl border border-[#d6eadb] bg-white p-6 text-[#17351f] shadow-2xl backdrop:bg-[#12321e]/35 focus:outline-none"
-    >
-      <h2 id="signup-success-title" className="text-xl font-bold">¡Cuenta creada!</h2>
-      <p id="signup-success-body" className="mt-3 text-sm leading-relaxed text-[#496352]">
-        Revisá tu correo y seguí el enlace de verificación para activar tu cuenta.
-      </p>
-      <p className="mt-2 text-xs text-[#657a6b]">Todavía tenés que verificar el correo antes de iniciar sesión.</p>
-      <Link href="/login" data-dialog-primary-action className="mt-5 flex h-10 items-center justify-center rounded-md bg-[#31df4f] px-4 text-sm font-bold text-[#103b1c] hover:bg-[#24ca42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d]">
-        Ir a iniciar sesión
-      </Link>
-    </dialog>
-  );
-}
-
 export default function SignupForm() {
-  const loginLinkRef = useRef<HTMLAnchorElement>(null);
+  const router = useRouter();
   const [showPreviewErrors, setShowPreviewErrors] = useState(false);
   const { action, transportError } = useTransportAwareAction(signup);
   const [state, submitAction, pending] = useActionState(action, initialState);
   const { register, handleSubmit, setError, clearErrors, formState: { errors } } = useForm<SignupFormValues>({ resolver: zodResolver(signupFormSchema) });
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
+
+  // Account created: the next step is verifying the email, so continue to the
+  // "check your email" screen instead of staying on the form.
+  useEffect(() => {
+    if (state?.ok) router.push("/auth/check-email");
+  }, [state, router]);
 
   // Shows/hides the dev-only error preview by writing through RHF's own
   // mechanisms (setError/clearErrors), so the messages render exactly like
@@ -130,7 +84,11 @@ export default function SignupForm() {
 
   return (
     <form
-      onSubmit={handleSubmit(({ displayName, email, password }) => dispatchInTransition(submitAction)({ displayName, email, password }))}
+      onSubmit={handleSubmit(({ displayName, email, password }) => {
+        // Remembered only so the next screen can say where the link was sent.
+        try { sessionStorage.setItem(SIGNUP_EMAIL_KEY, email); } catch {}
+        return dispatchInTransition(submitAction)({ displayName, email, password });
+      })}
       className="flex flex-col gap-3 lg:gap-3"
     >
       <TextField {...register("displayName")} id="displayName" type="text" label="Nombre y apellido" autoComplete="name" placeholder="Tu nombre y apellido" error={errors.displayName?.message} disabled={pending} />
@@ -146,8 +104,7 @@ export default function SignupForm() {
       <button type="submit" disabled={pending || Boolean(state?.ok)} className="mt-1 h-10 w-full rounded-md bg-[#31df4f] px-4 text-sm font-bold text-[#103b1c] shadow-[0_4px_10px_rgba(37,213,73,0.35)] transition hover:bg-[#24ca42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] disabled:cursor-not-allowed disabled:bg-[#b5eebe] lg:h-[44px] lg:text-base">
         {pending ? "Creando cuenta…" : "Crear cuenta"}
       </button>
-      <p className="text-center text-xs text-[#607565] lg:text-sm">¿Ya tenés cuenta? <Link ref={loginLinkRef} href="/login" className="font-semibold text-[#168a3d] underline-offset-2 hover:underline">Iniciar sesión</Link></p>
-      {state?.ok && <SignupSuccessDialog returnFocusRef={loginLinkRef} />}
+      <p className="text-center text-xs text-[#607565] lg:text-sm">¿Ya tenés cuenta? <Link href="/login" className="font-semibold text-[#168a3d] underline-offset-2 hover:underline">Iniciar sesión</Link></p>
 
       {SHOW_ERROR_PREVIEW && (
         <button

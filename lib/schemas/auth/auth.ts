@@ -37,4 +37,6 @@ export const signupFormSchema = signupSchema
 
 export const passwordResetRequestSchema = z.object({ email: emailField });
 
+export const resendSignupSchema = z.object({ email: emailField });
+
 export const passwordUpdateSchema = z.object({ password: passwordField });
