@@ -41,6 +41,12 @@ export default async function Paso1Page() {
 }
 ```
 
+## Clientes de sesi?n y cookies
+
+En `lib/supabase/rsc.ts`, `createRscSupabaseClient()` es de lectura: no intenta escribir cookies durante el render. El proxy conserva la renovaci?n y el reenv?o de cookies a la p?gina y al navegador.
+
+Las Server Actions y los Route Handlers que cambian autenticaci?n usan `createWritableSupabaseClient()`. Sus escrituras son obligatorias, incluidas las del verificador PKCE; un fallo se propaga a la puerta existente y nunca se informa como ?xito. El error de persistencia se sanitiza antes de llegar al SDK o al logger para excluir valores de cookies; el control de flujo de Next se relanza intacto. No usar el cliente de lectura para login, logout o recuperaci?n.
+
 ## Errores comunes
 
 - **Olvidar el `import "server-only"`.** Sin esa línea no hay protección: el módulo parece de servidor pero nada impide importarlo desde el cliente.

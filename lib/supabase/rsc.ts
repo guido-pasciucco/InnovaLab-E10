@@ -2,15 +2,23 @@ import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { unstable_rethrow } from "next/navigation";
+import { CookiePersistenceError } from "@/lib/errors/cookie-persistence-error";
+import { attachLogoutOutcome, createLogoutOutcomeTracker } from "@/lib/supabase/logout-outcome";
 
-// Factory for Server Components / Server Actions / Route Handlers that
-// read the session. Uses next/headers cookies() which is read-only in
-// Server Components — setAll is wrapped in try/catch so that the
-// proxy-owned refresh can still write cookies when possible (Server
-// Actions) without crashing RSC renders. This follows the official
-// Supabase SSR pattern for Server Components: getAll from cookieStore,
-// setAll best-effort with swallowed error.
-export async function createRscSupabaseClient() {
+// RSC reads cannot persist cookies. The proxy owns session renewal and
+// forwards refreshed cookies to both the rendered request and the browser.
+export function createRscSupabaseClient() {
+  return createSessionClient(false);
+}
+
+// Actions and Route Handlers must persist auth changes (including PKCE).
+// Never use the read-only client for a mutation.
+export function createWritableSupabaseClient() {
+  return createSessionClient(true);
+}
+
+async function createSessionClient(writable: boolean) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
@@ -19,20 +27,28 @@ export async function createRscSupabaseClient() {
   }
 
   const cookieStore = await cookies();
+  const logoutOutcome = writable ? createLogoutOutcomeTracker() : undefined;
 
-  return createServerClient(supabaseUrl, supabaseKey, {
+  const client = createServerClient(supabaseUrl, supabaseKey, {
+    global: logoutOutcome ? { fetch: logoutOutcome.fetch } : undefined,
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {
+        if (!writable) return;
         try {
           for (const { name, value, options } of cookiesToSet) {
             cookieStore.set(name, value, options);
           }
-        } catch {
-          // Server Components cannot set cookies — the proxy handles refresh.
-          // Swallow the error as recommended by Supabase SSR docs for RSC.
+        } catch (error) {
+          unstable_rethrow(error);
+          // Auth SDK subscribers can log a thrown error before the door sees
+          // it. Do not forward arbitrary cookie errors or causes containing tokens.
+          throw new CookiePersistenceError();
         }
       },
     },
   });
+
+  if (logoutOutcome) attachLogoutOutcome(client, logoutOutcome.getOutcome);
+  return client;
 }

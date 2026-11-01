@@ -9,6 +9,8 @@ import {
 } from "@/lib/schemas/auth/auth";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CATALOG, type ErrorCode } from "@/lib/errors/catalog";
+import { isCookiePersistenceError } from "@/lib/errors/cookie-persistence-error";
+import { getLogoutOutcome, type RemoteLogoutOutcome } from "@/lib/supabase/logout-outcome";
 
 // Auth services throw on failure; the doors (handleRouteErrors /
 // handleActionErrors) translate errors. Input is raw and unvalidated:
@@ -90,14 +92,29 @@ export async function signupService(
 
 export async function logoutService(
   client: SupabaseClient,
-): Promise<Record<string, never>> {
-  const { error } = await client.auth.signOut();
+): Promise<{ remote: RemoteLogoutOutcome; cookiesPersisted: boolean }> {
+  let error: SupabaseAuthFailure | null;
+
+  try {
+    ({ error } = await client.auth.signOut());
+  } catch (caught) {
+    // A storage failure says nothing by itself about the preceding provider
+    // request. The writable client records only that request's HTTP outcome.
+    if (isCookiePersistenceError(caught)) {
+      return { remote: getLogoutOutcome(client) ?? "indeterminate", cookiesPersisted: false };
+    }
+    throw caught;
+  }
 
   if (error) {
+    if (isCookiePersistenceError(error)) {
+      return { remote: getLogoutOutcome(client) ?? "indeterminate", cookiesPersisted: false };
+    }
+    if (getLogoutOutcome(client) === "failed") return { remote: "failed", cookiesPersisted: true };
     throw new AppError("AUTH_SIGNOUT_FAILED");
   }
 
-  return {};
+  return { remote: "confirmed", cookiesPersisted: true };
 }
 
 export type SessionUser = { id: string; email: string | undefined };
