@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { and, desc, eq } from "drizzle-orm";
 
 import { businesses, products } from "@/lib/db/business/table";
@@ -11,10 +12,12 @@ import {
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import type { CalculatorDraftSetup } from "@/lib/types/calculator";
 
+import { getSessionUserService } from "./auth";
+
 // Calculator setup persistence (ADR 0005: the draft lives server-side only).
 // Input is validated with the server gate from lib/db (saveCalculatorSetupInputSchema),
 // never with the client form contract.
-// Owner scoping: every query and write filters by the caller's userId.
+// Owner scoping: every query and write filters by the authenticated session userId.
 // The service throws (ZodError, AppError); doors translate. No try/catch.
 
 // postgres-js transactions expose the same query API as the db client.
@@ -38,9 +41,11 @@ async function getOrCreateDefaultBusiness(tx: Tx, userId: string) {
 }
 
 export async function getDraftCalculationId(
-  userId: string,
-  db: Db,
+  client: SupabaseClient,
+  database?: Db,
 ): Promise<string | null> {
+  const { id: userId } = await getSessionUserService(client);
+  const db = database ?? getDrizzleClient();
   const [row] = await db
     .select({ id: calculations.id })
     .from(calculations)
@@ -53,10 +58,12 @@ export async function getDraftCalculationId(
 }
 
 export async function saveCalculatorSetupService(
-  userId: string,
+  client: SupabaseClient,
   input: unknown,
-  db: Db = getDrizzleClient(),
+  database?: Db,
 ): Promise<SaveCalculatorSetupInput> {
+  const { id: userId } = await getSessionUserService(client);
+  const db = database ?? getDrizzleClient();
   const setup = saveCalculatorSetupInputSchema.parse(input);
 
   return db.transaction(async (tx) => {
@@ -114,9 +121,11 @@ export async function saveCalculatorSetupService(
 }
 
 export async function getCalculatorSetupService(
-  userId: string,
-  db: Db = getDrizzleClient(),
+  client: SupabaseClient,
+  database?: Db,
 ): Promise<SaveCalculatorSetupInput | null> {
+  const { id: userId } = await getSessionUserService(client);
+  const db = database ?? getDrizzleClient();
   const [row] = await db
     .select({
       name: products.name,
@@ -146,9 +155,11 @@ export async function getCalculatorSetupService(
  * - draft with setup: both values are returned.
  */
 export async function getCalculatorDraftSetupService(
-  userId: string,
-  db: Db = getDrizzleClient(),
+  client: SupabaseClient,
+  database?: Db,
 ): Promise<CalculatorDraftSetup> {
+  const { id: userId } = await getSessionUserService(client);
+  const db = database ?? getDrizzleClient();
   const [draft] = await db
     .select({
       calculationId: calculations.id,

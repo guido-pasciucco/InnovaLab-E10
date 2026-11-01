@@ -1,11 +1,12 @@
 "use server";
 
+import { createRscSupabaseClient } from "@/lib/supabase/rsc";
 import { requireUser } from "@/lib/auth/require-user";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
 import { saveCalculatorSetupService } from "@/lib/services/calculator";
 
 export const saveCalculatorSetup = handleActionErrors(async (_prev, data) => {
-  const user = await requireUser();
+  await requireUser();
 
-  return saveCalculatorSetupService(user.id, data);
+  return saveCalculatorSetupService(await createRscSupabaseClient(), data);
 }, "CALC_UNAVAILABLE");

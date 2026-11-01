@@ -40,7 +40,7 @@ export default async function DashboardPage() {
           </p>
           <pre className="mt-3 overflow-x-auto rounded bg-white p-3 text-xs text-gray-800">
             {`// Drizzle: filter by owner_user_id from validated session
-// RLS additionally enforces auth.uid() = owner_user_id as safety net
+// The privileged Drizzle role bypasses RLS; enforce owner scoping in services
 await db.select().from(profiles)
   .where(eq(profiles.owner_user_id, user.id));`}
           </pre>

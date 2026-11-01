@@ -1,3 +1,4 @@
+import { createRscSupabaseClient } from "@/lib/supabase/rsc";
 import { requireUser } from "@/lib/auth/require-user";
 import { getCalculatorSetupService } from "@/lib/services/calculator";
 
@@ -5,9 +6,9 @@ import { SetupForm } from "@/components/calculator/setup-form";
 import type { CalculatorSetup } from "@/lib/schemas/calculator-setup/calculator-setup";
 
 export default async function Paso1Page() {
-  const user = await requireUser();
+  await requireUser();
 
-  const setup = await getCalculatorSetupService(user.id);
+  const setup = await getCalculatorSetupService(await createRscSupabaseClient());
 
   const defaultValues: CalculatorSetup = setup
     ? {
