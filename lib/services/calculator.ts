@@ -113,28 +113,6 @@ export async function saveCalculatorSetupService(
   });
 }
 
-export async function getCalculatorSetupService(
-  userId: string,
-  db: Db = getDrizzleClient(),
-): Promise<SaveCalculatorSetupInput | null> {
-  const [row] = await db
-    .select({
-      name: products.name,
-      unit: costingSetup.unit,
-      volume: costingSetup.volume,
-      currency: costingSetup.currency,
-      period: costingSetup.period,
-    })
-    .from(costingSetup)
-    .innerJoin(calculations, eq(costingSetup.calculationId, calculations.id))
-    .innerJoin(products, eq(calculations.productId, products.id))
-    .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
-    .orderBy(desc(calculations.createdAt), desc(calculations.id))
-    .limit(1);
-
-  return row ? saveCalculatorSetupInputSchema.parse(row) : null;
-}
-
 /**
  * Read model for the step 1 form: the draft the user is editing and its
  * persisted setup. It never writes.
