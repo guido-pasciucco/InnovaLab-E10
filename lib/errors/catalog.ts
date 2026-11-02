@@ -68,10 +68,15 @@ export const ERROR_CATALOG = {
     logLevel: "warn",
   },
   AUTH_SIGNUP_FAILED: {
-    // Generic on purpose: never reveal whether the email already exists.
     status: 400,
     message: "Could not create account",
     logLevel: "warn",
+  },
+  AUTH_EMAIL_TAKEN: {
+    // Deliberately reveals that the email has an account, for a clearer signup UX.
+    status: 409,
+    message: "Este email ya está registrado. Probá iniciando sesión",
+    logLevel: "silent",
   },
   AUTH_SIGNOUT_FAILED: {
     status: 500,

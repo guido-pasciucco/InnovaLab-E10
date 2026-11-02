@@ -86,9 +86,11 @@ export async function signupService(
   });
 
   if (error) {
-    // Generic on purpose: never reveal whether the email already exists.
-    // Rate limits and outages are not about the account, so they surface.
-    throw toAuthAppError(error, "AUTH_SIGNUP_FAILED");
+    // An existing email gets its own code so the user can go sign in. This
+    // reveals that the account exists (account enumeration) by product choice.
+    throw toAuthAppError(error, "AUTH_SIGNUP_FAILED", {
+      user_already_exists: "AUTH_EMAIL_TAKEN",
+    });
   }
 
   return {};

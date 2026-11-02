@@ -99,9 +99,16 @@ describe("signupService", () => {
     await expect(signupService(client, { email: "a@b.com" }, REDIRECT_TO)).rejects.toMatchObject({ name: "ZodError" });
   });
 
-  it("throws AUTH_SIGNUP_FAILED without revealing why", async () => {
+  it("throws AUTH_EMAIL_TAKEN when the email already has an account", async () => {
     const client = authClient({
       signUp: async () => ({ error: { message: "User already registered", code: "user_already_exists", status: 422 } }),
+    });
+    await expect(signupService(client, input, REDIRECT_TO)).rejects.toMatchObject({ code: "AUTH_EMAIL_TAKEN" });
+  });
+
+  it("throws AUTH_SIGNUP_FAILED for any other rejection", async () => {
+    const client = authClient({
+      signUp: async () => ({ error: { message: "Weak password", code: "weak_password", status: 422 } }),
     });
     await expect(signupService(client, input, REDIRECT_TO)).rejects.toEqual(new AppError("AUTH_SIGNUP_FAILED"));
   });
