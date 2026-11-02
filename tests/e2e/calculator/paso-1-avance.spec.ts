@@ -50,7 +50,7 @@ test("going back to edit step 1 keeps the progress and lands on step 2 again", a
   await setup.goto();
   await setup.saveAndContinue(saved);
 
-  await authedPage.getByRole("link", { name: "Volver al paso 1" }).click();
+  await authedPage.getByRole("link", { name: "Ir al paso 1" }).click();
   await expect(authedPage).toHaveURL(/\/paso-1$/);
   await expect(headerStep(authedPage, 1)).toBeVisible();
   await setup.expectValues(saved);
