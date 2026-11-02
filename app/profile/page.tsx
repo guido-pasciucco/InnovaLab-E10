@@ -9,37 +9,37 @@ export default async function ProfilePage() {
   const user = await requireUser();
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
-      <div className="w-full max-w-2xl rounded-lg bg-white p-8 shadow-md">
-        <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-        <p className="mt-2 text-sm text-gray-600">
+    <main className="flex min-h-screen flex-col items-center bg-surface-tint px-4 py-12">
+      <div className="w-full max-w-2xl rounded-lg bg-surface p-8 shadow-md">
+        <h1 className="text-2xl font-bold text-fg">Profile</h1>
+        <p className="mt-2 text-sm text-fg-muted">
           Data for this page is fetched server-side. The browser never imports the Supabase
           client — it only talks to our own server.
         </p>
 
-        <div className="mt-6 rounded-md border border-gray-200 p-4">
-          <h2 className="text-sm font-semibold text-gray-700">Identity (from auth.users)</h2>
+        <div className="mt-6 rounded-md border border-border-default p-4">
+          <h2 className="text-sm font-semibold text-fg-muted">Identity (from auth.users)</h2>
           <dl className="mt-2 space-y-2 text-sm">
             <div>
-              <dt className="font-medium text-gray-600">User ID</dt>
-              <dd className="mt-1 font-mono break-all text-gray-900">{user.id}</dd>
-              <p className="mt-1 text-xs text-gray-500">
+              <dt className="font-medium text-fg-muted">User ID</dt>
+              <dd className="mt-1 font-mono break-all text-fg">{user.id}</dd>
+              <p className="mt-1 text-xs text-fg-muted">
                 This is the primary key in <code>auth.users</code>. Application tables reference
                 it as <code>owner_user_id uuid references auth.users(id)</code>.
               </p>
             </div>
             {user.email && (
               <div>
-                <dt className="font-medium text-gray-600">Email</dt>
-                <dd className="mt-1 text-gray-900">{user.email}</dd>
+                <dt className="font-medium text-fg-muted">Email</dt>
+                <dd className="mt-1 text-fg">{user.email}</dd>
               </div>
             )}
           </dl>
         </div>
 
-        <div className="mt-6 rounded-md border border-amber-100 bg-amber-50 p-4">
-          <h2 className="text-sm font-semibold text-amber-900">Drizzle linkage pattern (no migration in this demo)</h2>
-          <pre className="mt-2 overflow-x-auto rounded bg-white p-3 text-xs text-gray-800">
+        <div className="mt-6 rounded-md border border-warning/20 bg-warning-subtle p-4">
+          <h2 className="text-sm font-semibold text-warning">Drizzle linkage pattern (no migration in this demo)</h2>
+          <pre className="mt-2 overflow-x-auto rounded bg-surface p-3 text-xs text-fg">
             {`// Never: where owner_user_id = body.userId  (client-controlled)
 // Always: derive userId from validated session
 const { data: { user } } = await supabase.auth.getUser();
@@ -60,13 +60,13 @@ const rows = await db
         <div className="mt-6 flex gap-3">
           <Link
             href="/dashboard"
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-md border border-border-control px-4 py-2 text-sm font-medium text-fg-muted hover:bg-surface-tint"
           >
             Back to dashboard
           </Link>
           <Link
             href="/login"
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            className="rounded-md bg-action-primary px-4 py-2 text-sm font-medium text-on-action-primary hover:bg-action-primary-hover"
           >
             Sign in as another user
           </Link>

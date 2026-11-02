@@ -38,7 +38,7 @@ export default function ResetPasswordForm() {
     // dispatches to the action (wrapped in a transition by the helper).
     <form onSubmit={handleSubmit(dispatchInTransition(submitAction))} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium text-gray-700">
+        <label htmlFor="email" className="text-sm font-medium text-fg-muted">
           Email
         </label>
         <input
@@ -47,23 +47,23 @@ export default function ResetPasswordForm() {
           type="email"
           autoComplete="email"
           disabled={pending}
-          className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
+          className="rounded-md border border-border-control px-3 py-2 text-fg disabled:bg-surface-tint"
         />
         {errors.email && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-danger">
             {errors.email.message}
           </p>
         )}
       </div>
 
       {state && !state.ok && !hasServerFieldErrors && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger">
           {state.message}
         </p>
       )}
 
       {state?.ok && (
-        <p role="status" className="text-sm text-green-600">
+        <p role="status" className="text-sm text-success">
           If an account exists for that email, a reset link has been sent.
         </p>
       )}
@@ -71,7 +71,7 @@ export default function ResetPasswordForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-blue-300"
+        className="rounded-md bg-action-primary px-4 py-2 font-medium text-on-action-primary hover:bg-action-primary-hover disabled:bg-action-disabled disabled:text-fg-disabled"
       >
         {pending ? "Sending..." : "Send reset link"}
       </button>

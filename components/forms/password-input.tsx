@@ -62,13 +62,13 @@ export function PasswordInput({
           aria-pressed={show}
           aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
           disabled={disabled}
-          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-[#6a806f] hover:text-[#174425] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#3ad85c]"
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-accent-glow"
         >
           <EyeIcon visible={show} />
         </button>
       </div>
       {hint && (
-        <p id={hintId} className="text-[10px] text-[#6a806f] lg:text-[13px]">
+        <p id={hintId} className="text-[10px] text-fg-muted lg:text-[13px]">
           {hint}
         </p>
       )}

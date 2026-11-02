@@ -34,13 +34,13 @@ export function VerifiedButton() {
         type="button"
         disabled={!email || pending || confirmed}
         onClick={() => email && dispatchInTransition(submitAction)({ email })}
-        className="flex h-11 w-full items-center justify-center rounded-lg bg-[#168a3d] px-4 text-sm font-bold text-white shadow-[0_4px_10px_rgba(22,138,61,0.35)] transition hover:bg-[#127a35] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] disabled:cursor-not-allowed disabled:opacity-60 lg:text-base"
+        className="flex h-11 w-full items-center justify-center rounded-lg bg-action-primary px-4 text-sm font-bold text-on-action-primary shadow-[0_4px_10px_rgba(22,138,61,0.35)] transition hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60 lg:text-base"
       >
         {pending ? "Verificando…" : "Ya verifiqué mi correo"}
       </button>
-      {notConfirmed && <p role="status" className="text-center text-xs text-[#31503a]">Todavía no figura confirmado. Abrí el enlace del correo y volvé a intentar.</p>}
-      {state && !state.ok && <p role="alert" className="text-center text-xs text-red-600">{state.message}</p>}
-      {transportError && <p role="alert" className="text-center text-xs text-red-600">{transportError}</p>}
+      {notConfirmed && <p role="status" className="text-center text-xs text-fg-muted">Todavía no figura confirmado. Abrí el enlace del correo y volvé a intentar.</p>}
+      {state && !state.ok && <p role="alert" className="text-center text-xs text-danger">{state.message}</p>}
+      {transportError && <p role="alert" className="text-center text-xs text-danger">{transportError}</p>}
     </>
   );
 }
