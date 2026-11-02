@@ -61,6 +61,8 @@ Como la URL se conoce recién después de crear el proyecto, el orden es: `verce
 
 Vercel corre `next build` y nada más. Si `DATABASE_URL` apunta a una base sin migrar, la app levanta y falla en la primera consulta.
 
+`bun run deploy` ya corre `bun run deploy:migrate` antes de subir (lee `DIRECT_URL` de `.env.deploy`), así que las migraciones pendientes se aplican en cada deploy a producción. `deploy:preview` no migra. Si deployás por otra vía (push con Git conectado, dashboard), migrá a mano.
+
 Para migrar usá la conexión del puerto 5432 (session pooler o directa), nunca el pooler de transacciones del 6543: le asigna una conexión distinta a cada sentencia y rompe las migraciones de varios pasos.
 
 ```bash

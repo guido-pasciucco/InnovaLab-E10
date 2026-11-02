@@ -26,7 +26,8 @@
     "e2e:down": "bun run supabase:stop",
     "supabase:start": "supabase start -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "supabase:stop": "supabase stop",
-    "deploy": "bunx vercel --prod",
+    "deploy": "bun run deploy:migrate && bunx vercel --prod",
+    "deploy:migrate": "bun --env-file=.env.deploy x drizzle-kit migrate",
     "deploy:preview": "bunx vercel",
     "deploy:env": "bun scripts/deploy/env-sync.ts"
   },
