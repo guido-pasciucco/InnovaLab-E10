@@ -1,27 +1,17 @@
 import type { ReactNode } from "react";
-import { WizardHeader } from "./wizard-header";
-import { WizardProgress } from "./wizard-progress";
+import { WizardChrome } from "./wizard-chrome";
 
 type WizardShellProps = {
   children: ReactNode;
-  currentStep: number;
-  completedSteps: number[];
+  // Furthest step the user may open, read from the server by the layout.
+  furthestStep: number;
 };
 
-export function WizardShell({
-  children,
-  currentStep,
-  completedSteps,
-}: WizardShellProps) {
+export function WizardShell({ children, furthestStep }: WizardShellProps) {
   return (
     <main className="wizard-shell relative z-10 min-h-screen">
       <div className="mx-auto max-w-7xl space-y-4 px-6 py-5">
-        <WizardHeader currentStep={currentStep} />
-
-        <WizardProgress
-          currentStep={currentStep}
-          completedSteps={completedSteps}
-        />
+        <WizardChrome furthestStep={furthestStep} />
 
         {/* Each step brings its own columns (form card + live cost card) as
             direct grid items, and renders its own StepHeader inside its card. */}
