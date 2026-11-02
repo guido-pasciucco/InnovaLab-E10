@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { STEP_HREFS, TOTAL_STEPS, stepFromPathname } from "./wizard-steps";
+import {
+  STEP_HREFS,
+  TOTAL_STEPS,
+  resumeHref,
+  stepFromPathname,
+} from "./wizard-steps";
 
 describe("stepFromPathname", () => {
   it.each([
@@ -25,5 +30,25 @@ describe("STEP_HREFS", () => {
     for (let step = 1; step <= TOTAL_STEPS; step++) {
       expect(STEP_HREFS[step]).toBe(`/paso-${step}`);
     }
+  });
+});
+
+describe("resumeHref", () => {
+  it.each([
+    [1, "/paso-1"],
+    [2, "/paso-2"],
+    [7, "/paso-7"],
+  ])("sends furthest step %i to %s", (step, href) => {
+    expect(resumeHref(step)).toBe(href);
+  });
+
+  it.each([
+    [0, "/paso-1"],
+    [-3, "/paso-1"],
+    [Number.NaN, "/paso-1"],
+    [8, "/paso-7"],
+    [2.9, "/paso-2"],
+  ])("clamps %s to a real step (%s)", (step, href) => {
+    expect(resumeHref(step)).toBe(href);
   });
 });

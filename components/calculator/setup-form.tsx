@@ -20,7 +20,7 @@ import {
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { StepHeader } from "@/components/calculator/wizard/step-header";
-import { LiveCostCard } from "@/components/calculator/live-cost-card";
+import { useReportTypedVolume } from "@/components/calculator/wizard/typed-volume";
 import { FormGrid } from "@/components/ui/form-grid";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
@@ -68,13 +68,15 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     defaultValues,
   });
 
-  // The live card mirrors the volume being typed; an empty or invalid value
+  // The shell's live card mirrors the volume being typed; an empty or invalid value
   // (NaN from valueAsNumber) shows "—" instead of a made-up number.
   const watchedVolume = useWatch({ control, name: "volume" });
   const liveVolume =
     Number.isFinite(watchedVolume) && watchedVolume > 0
       ? watchedVolume
       : undefined;
+
+  useReportTypedVolume(liveVolume);
 
   const [selectedSector, setSelectedSector] = useState<string>(SECTORS[0]);
   const [kind, setKind] = useState("Producto");
@@ -217,8 +219,6 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
           </PrimaryButton>
         </form>
       </section>
-
-      <LiveCostCard volume={liveVolume} />
     </>
   );
 }

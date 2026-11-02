@@ -1,4 +1,4 @@
-import { formatARS } from "@/lib/money/format";
+import { formatARSCompact } from "@/lib/money/format";
 
 type LiveCostCardProps = {
   unitCost?: string;
@@ -12,7 +12,7 @@ function displayMoney(value?: string) {
     return "—";
   }
 
-  const formatted = formatARS(value);
+  const formatted = formatARSCompact(value);
   return formatted === "" ? "—" : formatted;
 }
 

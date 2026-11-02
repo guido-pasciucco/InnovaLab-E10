@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+import { unstable_rethrow } from "next/navigation";
 
+import { getOptionalUser } from "@/lib/auth/optional-user";
+import { getCalculatorProgressService } from "@/lib/services/calculator";
+import { resumeHref } from "@/components/calculator/wizard/wizard-steps";
 import { BreakEvenSection } from "@/components/home/break-even-section";
 import { FaqSection } from "@/components/home/faq-section";
 import { FinalCta } from "@/components/home/final-cta";
@@ -17,13 +21,35 @@ export const metadata: Metadata = {
     "Calculá el costo real de tus productos, conocé tu margen y encontrá tu punto de equilibrio en pocos pasos.",
 };
 
-// Server Component: the landing is static and renders without client-side JavaScript.
-export default function HomePage() {
+const CALCULATOR_START_HREF = "/paso-1";
+
+// A signed-in user resumes at the furthest step saved in the database; anyone
+// else, or anyone whose progress cannot be read, starts at the first step.
+// The home must never break because of the calculator.
+async function getCalculatorStartHref(): Promise<string> {
+  const user = await getOptionalUser();
+  if (!user) return CALCULATOR_START_HREF;
+
+  try {
+    const { currentStep } = await getCalculatorProgressService(user.id);
+    return resumeHref(currentStep);
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error("[home] calculator progress failed", err);
+    return CALCULATOR_START_HREF;
+  }
+}
+
+// Server Component: reads the session only to pick where the main calls to
+// action go, so it renders on demand.
+export default async function HomePage() {
+  const startHref = await getCalculatorStartHref();
+
   return (
     <>
-      <SiteHeader />
+      <SiteHeader startHref={startHref} />
       <main className="relative min-h-screen overflow-x-clip bg-surface-tint font-sans text-fg">
-        <Hero />
+        <Hero startHref={startHref} />
         <StepsSection />
         <BreakEvenSection />
         <ScenariosSection />
