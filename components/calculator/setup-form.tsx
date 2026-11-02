@@ -21,6 +21,8 @@ import { useServerFieldErrors } from "@/components/forms/use-server-field-errors
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { StepHeader } from "@/components/calculator/wizard/step-header";
 import { LiveCostCard } from "@/components/calculator/live-cost-card";
+import { toLiveCostCardValues } from "@/components/calculator/live-cost-card-values";
+import type { CalculatorCostSummary } from "@/lib/types/calculator";
 import { FormGrid } from "@/components/ui/form-grid";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
@@ -28,6 +30,8 @@ import { TextField } from "@/components/ui/text-field";
 
 type SetupFormProps = {
   defaultValues: CalculatorSetup;
+  // Persisted totals for the live card; null when they could not be read.
+  costSummary: CalculatorCostSummary | null;
 };
 
 // Fields the server may flag; module-level so the reference stays stable.
@@ -50,7 +54,7 @@ const SECTORS = [
 // Moneda and Período are fixed by the schema; their selects are read-only.
 const noop = () => {};
 
-export function SetupForm({ defaultValues }: SetupFormProps) {
+export function SetupForm({ defaultValues, costSummary }: SetupFormProps) {
   const router = useRouter();
   const [state, submitAction, isPending] = useActionState(
     saveCalculatorSetup,
@@ -218,7 +222,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
         </form>
       </section>
 
-      <LiveCostCard volume={liveVolume} />
+      <LiveCostCard {...toLiveCostCardValues(costSummary, liveVolume)} />
     </>
   );
 }

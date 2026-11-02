@@ -455,6 +455,22 @@ describe("getCalculatorCostSummaryService", () => {
     });
   });
 
+  it("returns only the draft id when the draft has no costing_setup", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await db
+      .delete(costingSetup)
+      .where(eq(costingSetup.calculationId, fixture.calculationId));
+
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: null,
+      variableUnit: null,
+      unitCost: null,
+      volume: null,
+      currency: "ARS",
+    });
+  });
+
   it("returns the draft and its volume but no amounts when there are no cost lines", async () => {
     const fixture = await arrangeDraftWithSetup(24);
 
