@@ -1,25 +1,26 @@
 "use client";
 
-import { useId, useState, type Ref } from "react";
+import { useId, useState, useTransition, type FocusEvent, type Ref } from "react";
 
+import {
+  addFixedCostLine,
+  updateFixedCostAmount,
+} from "@/app/(calculator)/paso-2/actions";
+import { conceptField } from "@/lib/schemas/costs/fields";
 import { formatARS, parseAmountInput } from "@/lib/money/format";
 
-// Hand-written on purpose: calcCostLineSchema (lib/schemas/costs) models a
-// persisted line (`concept`, `behavior`, `traceability`, `isOwnLabor`), while
-// this is a draft row of one step, labelled `name`, whose dimensions are fixed
-// by calculateFixedSubtotal. `id` is temporary: the server owns ids once #176
-// persists the rows (lib/AGENTS.md, rule 6).
-export type FixedCostRow = {
+// What the table shows of a saved line. The server owns the id and the amount.
+export type FixedCostLine = {
   id: string;
-  name: string;
+  concept: string;
   amount: string;
 };
 
-export type FixedCostRowPatch = Partial<Omit<FixedCostRow, "id">>;
-
 type FixedCostRowItemProps = {
-  row: FixedCostRow;
-  onChange: (patch: FixedCostRowPatch) => void;
+  // null: a new row the user is still filling in.
+  line: FixedCostLine | null;
+  // A new row saved: the table closes it and the server's line replaces it.
+  onSaved?: () => void;
   conceptRef?: Ref<HTMLInputElement>;
 };
 
@@ -27,69 +28,122 @@ const INPUT_BASE =
   "w-full min-w-0 rounded-md border border-transparent bg-transparent px-2 py-2 text-base text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-brand-green-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600";
 const AMOUNT_INPUT_CLASS = `${INPUT_BASE} text-right font-medium tabular-nums`;
 
+const SAVE_FAILED = "No pudimos guardar el costo. Probá de nuevo.";
+
+// The message conceptField gives for the text, or null when it is valid.
+function firstIssue(concept: string): string | null {
+  const result = conceptField.safeParse(concept);
+  return result.success ? null : (result.error.issues[0]?.message ?? null);
+}
+
 function displayAmount(amount: string): string {
   return formatARS(amount) || amount;
 }
 
-// The row owns what is being typed in the amount field (`draft`) and whether
-// the user already left it (`touched`). The parent only ever receives a valid
-// amount, or "" while the text is empty or invalid, so a stale amount can never
-// keep counting in the subtotal.
+// The row keeps what the user is typing and saves it when focus leaves the
+// row, so a half-typed line (concept first, amount next) is never saved early.
+// A saved line keeps its concept as plain text: the service can only change
+// the amount. Failed saves keep the typed text and can be retried by leaving
+// the row again.
 export function FixedCostRowItem({
-  row,
-  onChange,
+  line,
+  onSaved,
   conceptRef,
 }: FixedCostRowItemProps) {
   const id = useId();
   const conceptId = `${id}-concept`;
   const amountId = `${id}-amount`;
-  const errorId = `${amountId}-error`;
+  const amountErrorId = `${amountId}-error`;
+  const conceptErrorId = `${conceptId}-error`;
 
+  const [concept, setConcept] = useState("");
   // null: nothing is being edited, so the field shows the stored amount.
   const [draft, setDraft] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  const amountText = draft ?? displayAmount(row.amount);
-  const { issue } = parseAmountInput(amountText);
-  // Empty is not an error: a new row starts blank and is simply left out.
-  const amountError = touched && amountText.trim() !== "" ? issue : null;
-
-  const handleFocus = () => {
-    // Edit the plain number, not the currency text left by the last blur.
-    setDraft((current) => current ?? row.amount);
-  };
+  const isNew = line === null;
+  const amountText = draft ?? (line ? displayAmount(line.amount) : "");
+  const { amount: parsedAmount, issue } = parseAmountInput(amountText);
+  const conceptIssue = touched && isNew ? firstIssue(concept) : null;
+  // Empty is no error on a saved line or a blank new one; it is on a new row
+  // that already has a concept and was left without an amount.
+  const amountError =
+    touched && (amountText.trim() !== "" || (isNew && concept.trim() !== ""))
+      ? issue
+      : null;
 
   const handleChange = (value: string) => {
     setDraft(value);
+    setDirty(true);
     setTouched(false);
-    onChange({ amount: parseAmountInput(value).amount ?? "" });
+    setSaveError(null);
   };
 
-  const handleBlur = () => {
-    setTouched(true);
+  const save = (amount: string) => {
+    startTransition(async () => {
+      const result = isNew
+        ? await addFixedCostLine({ concept, amount })
+        : await updateFixedCostAmount(line.id, { amount });
 
-    // A valid draft is done: show the stored amount, formatted, from here on.
-    if (draft !== null && parseAmountInput(draft).amount !== null) {
-      setDraft(null);
-    }
+      if (!result.ok) {
+        setSaveError(SAVE_FAILED);
+        return;
+      }
+
+      setDirty(false);
+      setDraft(formatARS(amount) || amount);
+      onSaved?.();
+    });
+  };
+
+  const handleRowBlur = (event: FocusEvent<HTMLLIElement>) => {
+    // Moving between the fields of this row is not leaving it.
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+    if (isPending) return;
+    if (isNew ? concept.trim() === "" && amountText.trim() === "" : !dirty) return;
+
+    setTouched(true);
+    if (firstIssue(concept) !== null && isNew) return;
+    if (parsedAmount === null) return;
+
+    save(parsedAmount);
   };
 
   return (
-    <li className="border-b border-gray-200 py-1 last:border-b-0">
+    <li
+      onBlur={handleRowBlur}
+      aria-busy={isPending || undefined}
+      className="border-b border-gray-200 py-1 last:border-b-0"
+    >
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,9rem)] items-start gap-2 sm:gap-3">
         <div className="min-w-0">
-          <label htmlFor={conceptId} className="sr-only">
-            Concepto
-          </label>
-          <input
-            ref={conceptRef}
-            id={conceptId}
-            value={row.name}
-            onChange={(event) => onChange({ name: event.target.value })}
-            placeholder="Concepto"
-            autoComplete="off"
-            className={INPUT_BASE}
-          />
+          {isNew ? (
+            <>
+              <label htmlFor={conceptId} className="sr-only">
+                Concepto
+              </label>
+              <input
+                ref={conceptRef}
+                id={conceptId}
+                value={concept}
+                onChange={(event) => {
+                  setConcept(event.target.value);
+                  setTouched(false);
+                  setSaveError(null);
+                }}
+                placeholder="Concepto"
+                autoComplete="off"
+                aria-invalid={conceptIssue ? true : undefined}
+                aria-describedby={conceptIssue ? conceptErrorId : undefined}
+                className={INPUT_BASE}
+              />
+            </>
+          ) : (
+            <p className="px-2 py-2 text-base text-gray-900">{line.concept}</p>
+          )}
         </div>
 
         <div className="min-w-0">
@@ -100,23 +154,32 @@ export function FixedCostRowItem({
             id={amountId}
             value={amountText}
             onChange={(event) => handleChange(event.target.value)}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
             inputMode="decimal"
             autoComplete="off"
             placeholder="$ 0,00"
             aria-invalid={amountError ? true : undefined}
-            aria-describedby={amountError ? errorId : undefined}
+            aria-describedby={amountError ? amountErrorId : undefined}
             className={AMOUNT_INPUT_CLASS}
           />
         </div>
       </div>
 
+      {conceptIssue && (
+        <p id={conceptErrorId} role="alert" className="mt-1 text-sm text-red-600">
+          {conceptIssue}
+        </p>
+      )}
       {amountError && (
-        <p id={errorId} role="alert" className="mt-1 text-sm text-red-600">
+        <p id={amountErrorId} role="alert" className="mt-1 text-sm text-red-600">
           {amountError}
+        </p>
+      )}
+      {saveError && (
+        <p role="alert" className="mt-1 text-sm text-red-600">
+          {saveError}
         </p>
       )}
     </li>
   );
 }
+

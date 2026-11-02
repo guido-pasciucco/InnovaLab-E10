@@ -1,95 +1,59 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 
-import type { FixedSubtotalResult } from "@/lib/calc/fixed-subtotal";
 import { formatARS } from "@/lib/money/format";
 import {
   FixedCostRowItem,
-  type FixedCostRow,
-  type FixedCostRowPatch,
+  type FixedCostLine,
 } from "@/components/calculator/fixed-cost-row-item";
 
-export type { FixedCostRow, FixedCostRowPatch };
-
 type FixedCostsTableProps = {
-  rows: readonly FixedCostRow[];
-  subtotal: FixedSubtotalResult;
-  onChangeRow: (id: string, patch: FixedCostRowPatch) => void;
-  onAddRow: () => void;
+  lines: readonly FixedCostLine[];
+  // The server's sum of the lines, as a decimal string.
+  totalFixed: string;
 };
-
-function displaySubtotal(subtotal: FixedSubtotalResult): string {
-  if (!subtotal.ok || subtotal.subtotal === null) {
-    return "—";
-  }
-
-  return formatARS(subtotal.subtotal) || "—";
-}
 
 // The wizard shell (#170) forces a light colour scheme, so the table keeps
 // dark text in both modes instead of flipping to light-on-light `dark:` styles.
-export function FixedCostsTable({
-  rows,
-  subtotal,
-  onChangeRow,
-  onAddRow,
-}: FixedCostsTableProps) {
-  const conceptInputs = useRef(new Map<string, HTMLInputElement>());
-  const knownRowIds = useRef<ReadonlySet<string>>(
-    new Set(rows.map((row) => row.id)),
-  );
-  const pendingFocus = useRef(false);
+export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
+  // At most one new row is open at a time; saving it hands it over to the
+  // server's list.
+  const [adding, setAdding] = useState(false);
+  const newConceptInput = useRef<HTMLInputElement | null>(null);
 
-  // onAddRow may update the rows synchronously or after a request. Focusing
-  // from the new list (instead of from the click) covers both cases. The
-  // request ends with the first change of the rows, whether or not it added
-  // one, so a later unrelated row can never steal the focus.
-  useEffect(() => {
-    const previousIds = knownRowIds.current;
-    knownRowIds.current = new Set(rows.map((row) => row.id));
+  // Nothing to add up yet: a dash reads better than a zero total.
+  const subtotalText =
+    lines.length === 0 ? "—" : formatARS(totalFixed) || "—";
 
-    if (!pendingFocus.current) {
-      return;
-    }
-    pendingFocus.current = false;
-
-    const added = rows.filter((row) => !previousIds.has(row.id)).at(-1);
-    if (added !== undefined) {
-      conceptInputs.current.get(added.id)?.focus();
-    }
-  }, [rows]);
-
-  useEffect(() => {
-    return () => {
-      pendingFocus.current = false;
-    };
+  // Stable on purpose: React calls a ref callback again whenever its identity
+  // changes, and the focus must only move when the new row mounts.
+  const setNewConceptInput = useCallback((input: HTMLInputElement | null) => {
+    newConceptInput.current = input;
+    input?.focus();
   }, []);
 
   const handleAddRow = () => {
-    pendingFocus.current = true;
-    onAddRow();
+    if (adding) {
+      newConceptInput.current?.focus();
+      return;
+    }
+    setAdding(true);
   };
-
-  const subtotalText = displaySubtotal(subtotal);
 
   return (
     <div className="flex flex-col gap-5">
       <ul aria-label="Costos fijos del mes" className="flex flex-col">
-        {rows.map((row) => (
-          <FixedCostRowItem
-            key={row.id}
-            row={row}
-            onChange={(patch) => onChangeRow(row.id, patch)}
-            conceptRef={(input) => {
-              if (input) {
-                conceptInputs.current.set(row.id, input);
-              } else {
-                conceptInputs.current.delete(row.id);
-              }
-            }}
-          />
+        {lines.map((line) => (
+          <FixedCostRowItem key={line.id} line={line} />
         ))}
+        {adding && (
+          <FixedCostRowItem
+            line={null}
+            onSaved={() => setAdding(false)}
+            conceptRef={setNewConceptInput}
+          />
+        )}
       </ul>
 
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-y border-gray-200 py-4">
@@ -104,12 +68,6 @@ export function FixedCostsTable({
           {subtotalText}
         </span>
       </div>
-
-      {!subtotal.ok && (
-        <p role="alert" className="text-sm text-red-600">
-          No pudimos calcular el subtotal. Revisá los importes.
-        </p>
-      )}
 
       <button
         type="button"
