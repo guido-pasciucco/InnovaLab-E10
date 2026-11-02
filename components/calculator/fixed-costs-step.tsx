@@ -2,6 +2,7 @@ import { LiveCostCard } from "@/components/calculator/live-cost-card";
 import { FixedCostsTable } from "@/components/calculator/fixed-costs-table";
 import type { FixedCostLine } from "@/components/calculator/fixed-cost-row-item";
 import { StepHeader } from "@/components/calculator/wizard/step-header";
+import { StepNav } from "@/components/calculator/wizard/step-nav";
 
 type FixedCostsStepProps = {
   lines: readonly FixedCostLine[];
@@ -23,6 +24,8 @@ export function FixedCostsStep({ lines, totalFixed }: FixedCostsStepProps) {
         <div className="mt-4">
           <FixedCostsTable lines={lines} totalFixed={totalFixed} />
         </div>
+
+        <StepNav previous="/paso-1" next="/paso-3" />
       </section>
 
       <LiveCostCard fixedCosts={lines.length === 0 ? undefined : totalFixed} />
