@@ -19,6 +19,7 @@ import {
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { buildConfirmation } from "@/components/calculator/build-confirmation";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { StepHeader } from "@/components/calculator/wizard/step-header";
 import { LiveCostCard } from "@/components/calculator/live-cost-card";
 import { FormGrid } from "@/components/ui/form-grid";
 import { PrimaryButton } from "@/components/ui/primary-button";
@@ -128,11 +129,17 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
 
   return (
     <>
-      <section className="rounded-[32px] bg-white/80 p-6 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-8">
+      <section className="rounded-[32px] bg-white/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+        <StepHeader
+          currentStep={1}
+          title="Configuración"
+          description="Contanos qué vendés para empezar el cálculo."
+        />
+
         <form
           onSubmit={handleFormSubmit}
           noValidate
-          className="flex flex-col gap-3"
+          className="mt-4 flex flex-col gap-3"
         >
           {hasSuccess && !isDirty && !isPending && (
             <div role="status" className="text-sm text-green-600">
@@ -164,7 +171,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
                   type="button"
                   aria-pressed={sector === selectedSector}
                   onClick={() => setSelectedSector(sector)}
-                  className="min-h-10 rounded-full border-2 border-gray-400 bg-white px-4 text-sm font-semibold text-gray-900 aria-pressed:border-[#3ad85c] aria-pressed:bg-[#d9f7e3] aria-pressed:text-[#136831] aria-pressed:ring-2 aria-pressed:ring-[#3ad85c]/40"
+                  className="min-h-9 rounded-full border-2 border-gray-400 bg-white px-4 text-sm font-semibold text-gray-900 aria-pressed:border-[#3ad85c] aria-pressed:bg-[#d9f7e3] aria-pressed:text-[#136831] aria-pressed:ring-2 aria-pressed:ring-[#3ad85c]/40"
                 >
                   {sector}
                 </button>

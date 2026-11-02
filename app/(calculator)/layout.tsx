@@ -7,12 +7,7 @@ type CalculatorLayoutProps = {
 
 export default function CalculatorLayout({ children }: CalculatorLayoutProps) {
   return (
-    <WizardShell
-      currentStep={1}
-      completedSteps={[]}
-      title="Configuración"
-      description="Contanos qué vendés para empezar el cálculo."
-    >
+    <WizardShell currentStep={1} completedSteps={[]}>
       {children}
     </WizardShell>
   );
