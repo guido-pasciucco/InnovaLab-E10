@@ -1,6 +1,43 @@
-import { StepPlaceholder } from "@/components/calculator/wizard/step-placeholder";
+import { redirect } from "next/navigation";
 
-// Navigation-only placeholder: replaced by the real step, with its own guard.
-export default function Paso3Page() {
-  return <StepPlaceholder step={3} />;
+import { requireUser } from "@/lib/auth/require-user";
+import { AppError } from "@/lib/errors/app-error";
+import { getCalculatorProgressService } from "@/lib/services/calculator";
+import {
+  listVariableCalcCostLinesService,
+  type VariableCalcCostLineList,
+} from "@/lib/services/cost";
+import { VariableCostsStep } from "@/components/calculator/variable-costs-step";
+
+async function listVariableCosts(userId: string): Promise<VariableCalcCostLineList> {
+  try {
+    return await listVariableCalcCostLinesService(userId);
+  } catch (err) {
+    // The progress says step 3 is open, so a missing draft means the user has
+    // to save step 1 again before there is anything to attach costs to.
+    if (err instanceof AppError && err.code === "CALC_DRAFT_MISSING") {
+      redirect("/paso-1");
+    }
+    throw err;
+  }
+}
+
+export default async function Paso3Page() {
+  const user = await requireUser();
+  const { currentStep } = await getCalculatorProgressService(user.id);
+
+  // Not reachable yet: send the user to the furthest step they may open.
+  if (currentStep < 3) redirect(`/paso-${currentStep}`);
+
+  const { lines, totalVariable } = await listVariableCosts(user.id);
+
+  // Only what the table shows crosses to the client: no timestamps, no
+  // server-owned dimensions. The live card is the shell's: the layout reads
+  // fixed total, variable per unit and volume from the persisted summary.
+  return (
+    <VariableCostsStep
+      lines={lines.map(({ id, concept, amount }) => ({ id, concept, amount }))}
+      totalVariable={totalVariable}
+    />
+  );
 }

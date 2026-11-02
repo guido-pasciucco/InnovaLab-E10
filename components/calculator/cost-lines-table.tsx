@@ -4,19 +4,31 @@ import { useCallback, useRef, useState } from "react";
 
 import { formatARSCompact } from "@/lib/money/format";
 import {
-  FixedCostRowItem,
-  type FixedCostLine,
-} from "@/components/calculator/fixed-cost-row-item";
+  CostLineRowItem,
+  type CostLine,
+  type CostLineActions,
+} from "@/components/calculator/cost-line-row-item";
 
-type FixedCostsTableProps = {
-  lines: readonly FixedCostLine[];
+type CostLinesTableProps = {
+  lines: readonly CostLine[];
   // The server's sum of the lines, as a decimal string.
-  totalFixed: string;
+  total: string;
+  actions: CostLineActions;
+  // Names the list for screen readers, e.g. "Costos fijos del mes".
+  listLabel: string;
+  // Caption of the sum under the list, e.g. "Subtotal fijos".
+  subtotalLabel: string;
 };
 
 // The wizard shell (#170) forces a light colour scheme, so the table keeps
 // dark text in both modes instead of flipping to light-on-light `dark:` styles.
-export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
+export function CostLinesTable({
+  lines,
+  total,
+  actions,
+  listLabel,
+  subtotalLabel,
+}: CostLinesTableProps) {
   // At most one new row is open at a time; saving it hands it over to the
   // server's list.
   const [adding, setAdding] = useState(false);
@@ -32,7 +44,7 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
 
   // Nothing to add up yet: a dash reads better than a zero total.
   const subtotalText =
-    lines.length === 0 ? "—" : formatARSCompact(totalFixed) || "—";
+    lines.length === 0 ? "—" : formatARSCompact(total) || "—";
 
   // Stable on purpose: React calls a ref callback again whenever its identity
   // changes, and the focus must only move when the new row mounts.
@@ -60,12 +72,18 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <ul aria-label="Costos fijos del mes" className="flex flex-col">
+      <ul aria-label={listLabel} className="flex flex-col">
         {lines.map((line) => (
-          <FixedCostRowItem key={line.id} line={line} onRemoved={focusAddButton} />
+          <CostLineRowItem
+            key={line.id}
+            actions={actions}
+            line={line}
+            onRemoved={focusAddButton}
+          />
         ))}
         {adding && (
-          <FixedCostRowItem
+          <CostLineRowItem
+            actions={actions}
             line={null}
             onSaved={setSavedId}
             onRemoved={handleDiscardNewRow}
@@ -76,10 +94,10 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
 
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-y border-border-default py-4">
         <span className="text-sm font-semibold text-fg">
-          Subtotal fijos
+          {subtotalLabel}
         </span>
         <span
-          aria-label={`Subtotal fijos ${subtotalText}`}
+          aria-label={`${subtotalLabel} ${subtotalText}`}
           aria-live="polite"
           className="text-3xl font-bold text-brand-green-600"
         >
