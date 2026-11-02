@@ -50,8 +50,8 @@ export function HeroChart() {
 
       <defs>
         <linearGradient id="hero-chart-area" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0B6B4F" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#0B6B4F" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--color-action-primary)" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="var(--color-action-primary)" stopOpacity="0" />
         </linearGradient>
       </defs>
 
@@ -62,7 +62,7 @@ export function HeroChart() {
             y1={y(tick)}
             x2={WIDTH - PADDING.right}
             y2={y(tick)}
-            stroke="#E4EEE8"
+            stroke="var(--color-border-default)"
             strokeWidth="1"
           />
           <text
@@ -71,7 +71,7 @@ export function HeroChart() {
             textAnchor="end"
             fontSize="10"
             fontWeight="500"
-            fill="#7A8D84"
+            fill="var(--color-fg-muted)"
           >
             {tick === 0 ? "$0" : shortAmount(tick)}
           </text>
@@ -82,7 +82,7 @@ export function HeroChart() {
       <path
         d={linePath(currentPrice)}
         fill="none"
-        stroke="#C4544A"
+        stroke="var(--color-danger)"
         strokeWidth="2"
         strokeDasharray="6 6"
         strokeLinecap="round"
@@ -90,7 +90,7 @@ export function HeroChart() {
       <path
         d={linePath(suggestedPrice)}
         fill="none"
-        stroke="#0B6B4F"
+        stroke="var(--color-action-primary)"
         strokeWidth="2.6"
         strokeLinecap="round"
       />
@@ -101,8 +101,8 @@ export function HeroChart() {
           cx={x(index)}
           cy={y(value)}
           r="3.2"
-          fill="#FFFFFF"
-          stroke="#0B6B4F"
+          fill="var(--color-surface)"
+          stroke="var(--color-action-primary)"
           strokeWidth="2"
         />
       ))}
@@ -112,12 +112,12 @@ export function HeroChart() {
         y1={y(currentPrice[3])}
         x2={calloutX}
         y2={y(0)}
-        stroke="#C4544A"
+        stroke="var(--color-danger)"
         strokeWidth="1"
         strokeDasharray="3 4"
         opacity="0.45"
       />
-      <circle cx={calloutX} cy={y(currentPrice[3])} r="4" fill="#C4544A" stroke="#FFFFFF" strokeWidth="2" />
+      <circle cx={calloutX} cy={y(currentPrice[3])} r="4" fill="var(--color-danger)" stroke="var(--color-surface)" strokeWidth="2" />
 
       <g>
         <rect
@@ -126,10 +126,10 @@ export function HeroChart() {
           width="116"
           height="38"
           rx="9"
-          fill="#FFFFFF"
-          stroke="#E4EEE8"
+          fill="var(--color-surface)"
+          stroke="var(--color-border-default)"
         />
-        <text x={calloutX} y={calloutY + 15} textAnchor="middle" fontSize="9" fill="#7A8D84">
+        <text x={calloutX} y={calloutY + 15} textAnchor="middle" fontSize="9" fill="var(--color-fg-muted)">
           Precio actual
         </text>
         <text
@@ -138,7 +138,7 @@ export function HeroChart() {
           textAnchor="middle"
           fontSize="11"
           fontWeight="700"
-          fill="#122B22"
+          fill="var(--color-fg)"
         >
           $40.200 acum.
         </text>
@@ -152,7 +152,7 @@ export function HeroChart() {
           textAnchor="middle"
           fontSize="10"
           fontWeight="500"
-          fill="#7A8D84"
+          fill="var(--color-fg-muted)"
         >
           {label}
         </text>

@@ -7,16 +7,16 @@ type BrandMarkProps = {
 };
 
 export function BrandMark({ tone = "dark" }: BrandMarkProps) {
-  const title = tone === "light" ? "text-white" : "text-[#122B22]";
-  const tagline = tone === "light" ? "text-[#A9C9BA]" : "text-[#5B6F65]";
+  const title = tone === "light" ? "text-on-action-primary" : "text-fg";
+  const tagline = tone === "light" ? "text-on-brand-muted" : "text-fg-muted";
 
   return (
     <Link
       href="/"
       aria-label="Calculadora de Costos, ir al inicio"
-      className="inline-flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0B6B4F]"
+      className="inline-flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0B6B4F] text-white shadow-md shadow-[#0B6B4F]/20">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-action-primary text-on-action-primary shadow-md shadow-action-primary/20">
         <CalculatorIcon className="h-5 w-5" />
       </span>
       <span className="flex flex-col leading-none">

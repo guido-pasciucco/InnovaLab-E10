@@ -40,6 +40,9 @@ Fuente de los valores oficiales: captura de la sección Fundamentos → COLOR de
 | --page-gradient-via | #D3F5E1 | Propuesta interna | Parada intermedia del degradado de página |
 | --page-gradient-to | #BDEBCF | Propuesta interna | Parada final del degradado de página |
 | --page-glow | #39FF14 | Propuesta interna | Resplandor decorativo del layout |
+| --text-on-brand | #C9E6D8 | Propuesta interna | Texto de cuerpo sobre superficies oscuras de marca (9.27:1 sobre --brand-tile, 12.97:1 sobre --text-primary) |
+| --text-on-brand-muted | #A9C9BA | Propuesta interna | Texto secundario sobre superficies oscuras de marca (6.90:1 y 9.65:1; reemplaza #8FB6A5, 5.52:1, para usar un solo valor) |
+| --text-on-brand-accent | #A7F3D0 | Propuesta interna | Etiquetas e iconos de acento sobre superficies oscuras de marca (9.61:1 y 13.45:1) |
 
 La parada inicial del degradado de página reutiliza --background (#eafcf1). Los nombres --color-* de @theme inline exponen las utilidades Tailwind equivalentes: por ejemplo, bg-action-primary, text-fg y border-border-control. El color oficial de línea permanece como --border-default; no se reemplaza ni se modifica.
 

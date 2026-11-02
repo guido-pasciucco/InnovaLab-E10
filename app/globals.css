@@ -53,6 +53,15 @@
   --page-glow: #39FF14;
 
   /*
+   * Texto sobre superficies oscuras de marca (--brand-tile #0A3D22 y --text-primary
+   * #0B1F10). Contrastes sobre --brand-tile: on-brand 9.27:1, muted 6.90:1,
+   * accent 9.61:1; sobre --text-primary: 12.97:1, 9.65:1 y 13.45:1.
+   */
+  --text-on-brand: #C9E6D8;
+  --text-on-brand-muted: #A9C9BA;
+  --text-on-brand-accent: #A7F3D0;
+
+  /*
    * Contrato reservado por #170 / PR #212. Sus valores se preservan tal como
    * fueron propuestos allí y no definen las acciones semánticas de Figma.
    */
@@ -108,6 +117,9 @@
   --color-page-gradient-via: var(--page-gradient-via);
   --color-page-gradient-to: var(--page-gradient-to);
   --color-page-glow: var(--page-glow);
+  --color-on-brand: var(--text-on-brand);
+  --color-on-brand-muted: var(--text-on-brand-muted);
+  --color-on-brand-accent: var(--text-on-brand-accent);
   --color-brand-green-50: var(--brand-green-50);
   --color-brand-green-100: var(--brand-green-100);
   --color-brand-green-500: var(--brand-green-500);
