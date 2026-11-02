@@ -80,6 +80,12 @@ export const updateCalcCostLineAmountInputSchema = z.object({
   amount: amountField,
 });
 
+// A saved line can also be renamed. Same rule as the concept of a new line;
+// the object has no amount, behavior or traceability, so those cannot be patched.
+export const updateCalcCostLineConceptInputSchema = z.object({
+  concept: conceptField,
+});
+
 export const listCalcCostLinesOptionsSchema = z.object({
   behavior: behaviorField.optional(),
 });
@@ -96,5 +102,8 @@ export type CreateCalcCostLineInput = z.infer<typeof createCalcCostLineInputSche
 export type AddCalcCostLineInput = z.infer<typeof addCalcCostLineInputSchema>;
 export type UpdateCalcCostLineAmountInput = z.infer<
   typeof updateCalcCostLineAmountInputSchema
+>;
+export type UpdateCalcCostLineConceptInput = z.infer<
+  typeof updateCalcCostLineConceptInputSchema
 >;
 export type ListCalcCostLinesOptions = z.infer<typeof listCalcCostLinesOptionsSchema>;

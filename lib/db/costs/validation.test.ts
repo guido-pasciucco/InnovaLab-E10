@@ -7,6 +7,7 @@ import {
   createCalcCostLineInputSchema,
   listCalcCostLinesOptionsSchema,
   updateCalcCostLineAmountInputSchema,
+  updateCalcCostLineConceptInputSchema,
 } from "./validation";
 
 // DB tests cover shared-field wiring and removal of server-controlled fields
@@ -237,6 +238,38 @@ describe("updateCalcCostLineAmountInputSchema", () => {
   it("reports the Spanish message when the amount is negative", () => {
     expect(fieldErrors(updateCalcCostLineAmountInputSchema, { amount: "-1" })).toEqual({
       amount: ["El importe no puede ser negativo."],
+    });
+  });
+});
+
+describe("updateCalcCostLineConceptInputSchema", () => {
+  it("accepts a concept and trims it", () => {
+    expect(updateCalcCostLineConceptInputSchema.parse({ concept: "  Alquiler  " })).toEqual({
+      concept: "Alquiler",
+    });
+  });
+
+  it("drops amount and behavior when the input carries them", () => {
+    expect(
+      updateCalcCostLineConceptInputSchema.parse({
+        concept: "Alquiler",
+        amount: "1.00",
+        behavior: "variable",
+      }),
+    ).toEqual({ concept: "Alquiler" });
+  });
+
+  it("reports the Spanish message when the concept is empty", () => {
+    expect(fieldErrors(updateCalcCostLineConceptInputSchema, { concept: "   " })).toEqual({
+      concept: ["Escribí el concepto del costo."],
+    });
+  });
+
+  it("reports the Spanish message when the concept is too long", () => {
+    expect(
+      fieldErrors(updateCalcCostLineConceptInputSchema, { concept: "a".repeat(201) }),
+    ).toEqual({
+      concept: ["El concepto del costo debe tener como máximo 200 caracteres."],
     });
   });
 });
