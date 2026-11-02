@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
+
+import { getOptionalUser } from "@/lib/auth/optional-user";
+import { getCalculatorProgressService } from "@/lib/services/calculator";
+import { resumeHref } from "@/components/calculator/wizard/wizard-steps";
 
 export const metadata: Metadata = {
   title: "Inicio",
@@ -27,18 +32,38 @@ const features: readonly Feature[] = [
 
 const CALCULATOR_START_HREF = "/paso-1";
 
-// Server Component: static content, no client JS needed.
-export default function HomePage() {
+// A signed-in user resumes at the furthest step saved in the database; anyone
+// else, or anyone whose progress cannot be read, starts at the first step.
+// The home must never break because of the calculator.
+async function getCalculatorStartHref(): Promise<string> {
+  const user = await getOptionalUser();
+  if (!user) return CALCULATOR_START_HREF;
+
+  try {
+    const { currentStep } = await getCalculatorProgressService(user.id);
+    return resumeHref(currentStep);
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error("[home] calculator progress failed", err);
+    return CALCULATOR_START_HREF;
+  }
+}
+
+// Server Component: reads the session only to pick where "Empezar cálculo"
+// goes, so it renders on demand.
+export default async function HomePage() {
+  const startHref = await getCalculatorStartHref();
+
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-16 px-6 py-16">
-      <Hero />
+      <Hero startHref={startHref} />
       <FeatureList features={features} />
       <AccountLinks />
     </main>
   );
 }
 
-function Hero() {
+function Hero({ startHref }: { startHref: string }) {
   return (
     <section aria-labelledby="hero-title" className="flex flex-col gap-6 text-center sm:text-left">
       <h1 id="hero-title" className="text-4xl font-semibold tracking-tight">
@@ -49,7 +74,7 @@ function Hero() {
       </p>
       <div>
         <Link
-          href={CALCULATOR_START_HREF}
+          href={startHref}
           className="inline-block rounded-md bg-zinc-900 px-5 py-3 font-medium text-white hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
         >
           Empezar cálculo
