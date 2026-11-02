@@ -1,5 +1,6 @@
 import {
   addVariableCostLine,
+  continueToStep4,
   removeVariableCostLine,
   renameVariableCostLine,
   updateVariableCostAmount,
@@ -45,7 +46,7 @@ export function VariableCostsStep({ lines, totalVariable }: VariableCostsStepPro
         />
       </div>
 
-      <StepNav previous="/paso-2" next="/paso-4" />
+      <StepNav previous="/paso-2" nextAction={continueToStep4} />
     </section>
   );
 }

@@ -49,7 +49,6 @@ export function FixedCostsStep({ lines, totalFixed }: FixedCostsStepProps) {
 
         <StepNav
           previous="/paso-1"
-          next="/paso-3"
           nextAction={continueToVariableCosts}
         />
       </section>

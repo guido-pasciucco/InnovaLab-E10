@@ -1,12 +1,14 @@
 import Link from "next/link";
 
+// "Siguiente" is either a link (`next`) or a form submit that runs a Server
+// Action (`nextAction`): the step saves its progress, then the action
+// redirects. Never both.
 type StepNavProps = {
   previous?: string;
-  next?: string;
-  // Server Action run by "Siguiente" instead of following `next`: the step
-  // saves its progress, then the action redirects.
-  nextAction?: () => Promise<void>;
-};
+} & (
+  | { next?: string; nextAction?: never }
+  | { next?: never; nextAction: () => Promise<void> }
+);
 
 const BASE =
   "inline-flex min-h-11 w-full items-center justify-center rounded-[14px] px-4 py-2 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:w-auto sm:min-w-36";
