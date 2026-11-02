@@ -7,6 +7,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Path } from "react-hook-form";
@@ -17,8 +18,8 @@ import {
   type CalculatorSetup,
 } from "@/lib/schemas/calculator-setup/calculator-setup";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
-import { buildConfirmation } from "@/components/calculator/build-confirmation";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { StepHeader } from "@/components/calculator/wizard/step-header";
 import { LiveCostCard } from "@/components/calculator/live-cost-card";
 import { FormGrid } from "@/components/ui/form-grid";
 import { PrimaryButton } from "@/components/ui/primary-button";
@@ -35,7 +36,8 @@ const SERVER_FIELDS: readonly Path<CalculatorSetup>[] = [
   "unit",
   "volume",
 ];
-const SETUP_FIELDS = ["name", "unit", "volume", "currency", "period"] as const;
+// Saving the setup unlocks and opens step 2.
+const NEXT_STEP_HREF = "/paso-2";
 
 // Visual only: the sector chips and "Tipo" are not part of the saved setup.
 const SECTORS = [
@@ -49,6 +51,7 @@ const SECTORS = [
 const noop = () => {};
 
 export function SetupForm({ defaultValues }: SetupFormProps) {
+  const router = useRouter();
   const [state, submitAction, isPending] = useActionState(
     saveCalculatorSetup,
     undefined,
@@ -59,9 +62,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     control,
     handleSubmit,
     setError,
-    reset,
-    getValues,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<CalculatorSetup>({
     resolver: zodResolver(calculatorSetupSchema),
     defaultValues,
@@ -84,11 +85,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     SERVER_FIELDS,
   );
 
-  const hasSuccess = state?.ok && state.data;
-
   const isSubmittingRef = useRef(false);
-  const lastProcessedStateRef = useRef<typeof state | null>(null);
-  const submittedValuesRef = useRef<CalculatorSetup | null>(null);
 
   // Libera el bloqueo de doble envío cuando la acción termina (éxito o fallo).
   useEffect(() => {
@@ -97,26 +94,15 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     }
   }, [isPending]);
 
-  // Sincroniza el formulario con los datos confirmados por el servidor
-  // después de un guardado exitoso, sin sobrescribir ediciones pendientes.
+  // "Siguiente": once the server confirms the save, move on to the next step.
+  // A failed save keeps the user here with the error shown below.
   useEffect(() => {
-    if (!state?.ok || !state.data) return;
-    if (lastProcessedStateRef.current === state) return;
-    lastProcessedStateRef.current = state;
-    const current = getValues();
-    const submitted = submittedValuesRef.current;
-    const hasLaterEdits =
-      submitted !== null &&
-      SETUP_FIELDS.some((field) => current[field] !== submitted[field]);
-    // El resultado confirmado pasa a ser el nuevo baseline. Si hubo cambios
-    // posteriores al envío, RHF los conserva y recalcula isDirty contra él.
-    reset(state.data, { keepValues: hasLaterEdits });
-  }, [state, reset, getValues]);
+    if (state?.ok) router.push(NEXT_STEP_HREF);
+  }, [state, router]);
 
   const handleSubmitAction = (data: CalculatorSetup) => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    submittedValuesRef.current = getValues();
     dispatchInTransition(submitAction)(data);
   };
 
@@ -128,28 +114,18 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
 
   return (
     <>
-      <section className="rounded-[32px] bg-white/80 p-6 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-8">
-        <span className="inline-block rounded-full border border-[#86e0a3] bg-[#d9f7e3] px-4 py-1 text-sm font-semibold uppercase text-[#136831]">
-          Paso 1 de 7
-        </span>
-        <h1 className="mt-4 text-3xl font-bold text-[#0a2a1a] sm:text-4xl">
-          Configuración
-        </h1>
-        <p className="mt-2 text-base text-gray-600">
-          Contanos qué vendés para empezar el cálculo.
-        </p>
+      <section className="rounded-[32px] bg-white/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+        <StepHeader
+          currentStep={1}
+          title="Configuración"
+          description="Contanos qué vendés para empezar el cálculo."
+        />
 
         <form
           onSubmit={handleFormSubmit}
           noValidate
-          className="mt-5 flex flex-col gap-3"
+          className="mt-4 flex flex-col gap-3"
         >
-          {hasSuccess && !isDirty && !isPending && (
-            <div role="status" className="text-sm text-green-600">
-              <p>Guardado</p>
-              <p>{buildConfirmation(state.data)}</p>
-            </div>
-          )}
           {state && !state.ok && !hasServerFieldErrors && (
             <p role="alert" className="text-sm text-red-600">
               {state.message}
@@ -174,7 +150,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
                   type="button"
                   aria-pressed={sector === selectedSector}
                   onClick={() => setSelectedSector(sector)}
-                  className="min-h-10 rounded-full border-2 border-gray-400 bg-white px-4 text-sm font-semibold text-gray-900 aria-pressed:border-[#3ad85c] aria-pressed:bg-[#d9f7e3] aria-pressed:text-[#136831] aria-pressed:ring-2 aria-pressed:ring-[#3ad85c]/40"
+                  className="min-h-9 rounded-full border-2 border-gray-400 bg-white px-4 text-sm font-semibold text-gray-900 aria-pressed:border-[#3ad85c] aria-pressed:bg-[#d9f7e3] aria-pressed:text-[#136831] aria-pressed:ring-2 aria-pressed:ring-[#3ad85c]/40"
                 >
                   {sector}
                 </button>

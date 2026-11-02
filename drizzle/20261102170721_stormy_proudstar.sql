@@ -1,0 +1,1 @@
+ALTER TABLE "calculations" ADD COLUMN "current_step" integer DEFAULT 1 NOT NULL;

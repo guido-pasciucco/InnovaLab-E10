@@ -39,15 +39,15 @@
    * Contrato reservado por #170 / PR #212. Sus valores se preservan tal como
    * fueron propuestos allí y no definen las acciones semánticas de Figma.
    */
-  --brand-green-50: #F0FDF4;
-  --brand-green-100: #DCFCE7;
-  --brand-green-500: #22C55E;
-  --brand-green-600: #16A34A;
-  --brand-green-700: #15803D;
+  --brand-green-50: #f0fdf4;
+  --brand-green-100: #dcfce7;
+  --brand-green-500: #22c55e;
+  --brand-green-600: #16a34a;
+  --brand-green-700: #15803d;
 
-  /* Compatibilidad para consumidores existentes. */
-  --background: var(--surface-canvas);
-  --foreground: var(--text-primary);
+  /* Compatibilidad temporal con los colores globales vigentes de main. */
+  --background: #eafcf1;
+  --foreground: #171717;
 }
 
 @theme inline {
@@ -82,7 +82,6 @@
   --color-warning: var(--status-warning);
   --color-warning-subtle: var(--surface-warning);
   --color-focus: var(--focus-ring);
-
   --color-brand-green-50: var(--brand-green-50);
   --color-brand-green-100: var(--brand-green-100);
   --color-brand-green-500: var(--brand-green-500);
@@ -97,4 +96,10 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.wizard-shell {
+  min-height: 100vh;
+  color: #171717;
+  color-scheme: light;
 }

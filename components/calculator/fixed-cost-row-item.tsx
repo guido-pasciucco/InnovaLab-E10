@@ -1,0 +1,270 @@
+"use client";
+
+import {
+  useId,
+  useRef,
+  useState,
+  useTransition,
+  type FocusEvent,
+  type Ref,
+} from "react";
+
+import {
+  addFixedCostLine,
+  removeFixedCostLine,
+  renameFixedCostLine,
+  updateFixedCostAmount,
+} from "@/app/(calculator)/paso-2/actions";
+import { FixedCostDeleteButton } from "@/components/calculator/fixed-cost-delete-button";
+import { conceptField } from "@/lib/schemas/costs/fields";
+import { formatARS, parseAmountInput } from "@/lib/money/format";
+
+// What the table shows of a saved line. The server owns the id and the amount.
+export type FixedCostLine = {
+  id: string;
+  concept: string;
+  amount: string;
+};
+
+type FixedCostRowItemProps = {
+  // null: a new row the user is still filling in.
+  line: FixedCostLine | null;
+  // A new row saved: the table closes it and the server's line replaces it.
+  onSaved?: () => void;
+  // The row is gone: a saved line deleted on the server, or a new row discarded.
+  onRemoved?: () => void;
+  conceptRef?: Ref<HTMLInputElement>;
+};
+
+const INPUT_BASE =
+  "w-full min-w-0 rounded-md border border-transparent bg-transparent px-2 py-2 text-base text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-brand-green-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600";
+const AMOUNT_INPUT_CLASS = `${INPUT_BASE} text-right font-medium tabular-nums`;
+
+const SAVE_FAILED = "No pudimos guardar el costo. Probá de nuevo.";
+const DELETE_FAILED = "No pudimos eliminar el costo. Probá de nuevo.";
+
+// The message conceptField gives for the text, or null when it is valid.
+function firstIssue(concept: string): string | null {
+  const result = conceptField.safeParse(concept);
+  return result.success ? null : (result.error.issues[0]?.message ?? null);
+}
+
+function displayAmount(amount: string): string {
+  return formatARS(amount) || amount;
+}
+
+// The row keeps what the user is typing and saves it when focus leaves the
+// row, so a half-typed line (concept first, amount next) is never saved early.
+// A saved line saves only the fields that changed and are valid, one action
+// each: if one fails the other stays applied. Failed saves keep the typed text
+// and can be retried by leaving the row again.
+export function FixedCostRowItem({
+  line,
+  onSaved,
+  onRemoved,
+  conceptRef,
+}: FixedCostRowItemProps) {
+  const id = useId();
+  const conceptId = `${id}-concept`;
+  const amountId = `${id}-amount`;
+  const amountErrorId = `${amountId}-error`;
+  const conceptErrorId = `${conceptId}-error`;
+
+  // null: nothing is being edited, so the field shows the stored value.
+  const [conceptDraft, setConceptDraft] = useState<string | null>(null);
+  const [amountDraft, setAmountDraft] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
+  const [conceptDirty, setConceptDirty] = useState(false);
+  const [amountDirty, setAmountDirty] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  // Set once the row is deleted or discarded: the focus that leaves it then
+  // must not save an edit to a row that no longer exists.
+  const gone = useRef(false);
+
+  const isNew = line === null;
+  const conceptText = conceptDraft ?? line?.concept ?? "";
+  const amountText = amountDraft ?? (line ? displayAmount(line.amount) : "");
+  const { amount: parsedAmount, issue } = parseAmountInput(amountText);
+  const conceptIssue = touched ? firstIssue(conceptText) : null;
+  // Empty is no error on a saved line or a blank new one; it is on a new row
+  // that already has a concept and was left without an amount.
+  const amountError =
+    touched && (amountText.trim() !== "" || (isNew && conceptText.trim() !== ""))
+      ? issue
+      : null;
+
+  const handleConceptChange = (value: string) => {
+    setConceptDraft(value);
+    setConceptDirty(true);
+    setTouched(false);
+    setSaveError(null);
+  };
+
+  const handleAmountChange = (value: string) => {
+    setAmountDraft(value);
+    setAmountDirty(true);
+    setTouched(false);
+    setSaveError(null);
+  };
+
+  const saveNew = (concept: string, amount: string) => {
+    startTransition(async () => {
+      const result = await addFixedCostLine({ concept, amount });
+
+      if (!result.ok) {
+        setSaveError(SAVE_FAILED);
+        return;
+      }
+
+      onSaved?.();
+    });
+  };
+
+  // null: that field is not saved, either unchanged or still invalid.
+  const saveChanges = (
+    saved: FixedCostLine,
+    concept: string | null,
+    amount: string | null,
+  ) => {
+    startTransition(async () => {
+      let failed = false;
+
+      if (concept !== null) {
+        const result = await renameFixedCostLine(saved.id, { concept });
+        if (result.ok) {
+          setConceptDirty(false);
+          setConceptDraft(concept);
+        } else {
+          failed = true;
+        }
+      }
+
+      if (amount !== null) {
+        const result = await updateFixedCostAmount(saved.id, { amount });
+        if (result.ok) {
+          setAmountDirty(false);
+          setAmountDraft(displayAmount(amount));
+        } else {
+          failed = true;
+        }
+      }
+
+      if (failed) setSaveError(SAVE_FAILED);
+    });
+  };
+
+  const handleRowBlur = (event: FocusEvent<HTMLLIElement>) => {
+    // Moving between the fields of this row is not leaving it.
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+    if (isPending || gone.current) return;
+
+    const conceptValid = firstIssue(conceptText) === null;
+
+    if (line === null) {
+      if (conceptText.trim() === "" && amountText.trim() === "") return;
+      setTouched(true);
+      if (conceptValid && parsedAmount !== null) {
+        saveNew(conceptText.trim(), parsedAmount);
+      }
+      return;
+    }
+
+    if (!conceptDirty && !amountDirty) return;
+    setTouched(true);
+
+    const concept = conceptDirty && conceptValid ? conceptText.trim() : null;
+    const amount = amountDirty ? parsedAmount : null;
+    if (concept === null && amount === null) return;
+
+    saveChanges(line, concept, amount);
+  };
+
+  const handleRemove = () => {
+    if (isPending) return;
+
+    if (line === null) {
+      gone.current = true;
+      onRemoved?.();
+      return;
+    }
+
+    setSaveError(null);
+    startTransition(async () => {
+      const result = await removeFixedCostLine(line.id);
+
+      if (!result.ok) {
+        setSaveError(DELETE_FAILED);
+        return;
+      }
+
+      gone.current = true;
+      onRemoved?.();
+    });
+  };
+
+  return (
+    <li
+      onBlur={handleRowBlur}
+      aria-busy={isPending || undefined}
+      className="border-b border-gray-200 py-1 last:border-b-0"
+    >
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-start gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_2.75rem] sm:gap-3">
+        <div className="min-w-0">
+          <label htmlFor={conceptId} className="sr-only">
+            Concepto
+          </label>
+          <input
+            ref={conceptRef}
+            id={conceptId}
+            value={conceptText}
+            onChange={(event) => handleConceptChange(event.target.value)}
+            placeholder="Concepto"
+            autoComplete="off"
+            aria-invalid={conceptIssue ? true : undefined}
+            aria-describedby={conceptIssue ? conceptErrorId : undefined}
+            className={INPUT_BASE}
+          />
+        </div>
+
+        <div className="min-w-0">
+          <label htmlFor={amountId} className="sr-only">
+            Importe
+          </label>
+          <input
+            id={amountId}
+            value={amountText}
+            onChange={(event) => handleAmountChange(event.target.value)}
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="$ 0,00"
+            aria-invalid={amountError ? true : undefined}
+            aria-describedby={amountError ? amountErrorId : undefined}
+            className={AMOUNT_INPUT_CLASS}
+          />
+        </div>
+
+        <FixedCostDeleteButton
+          label={line ? `Eliminar ${line.concept}` : "Eliminar fila"}
+          onClick={handleRemove}
+        />
+      </div>
+
+      {conceptIssue && (
+        <p id={conceptErrorId} role="alert" className="mt-1 text-sm text-red-600">
+          {conceptIssue}
+        </p>
+      )}
+      {amountError && (
+        <p id={amountErrorId} role="alert" className="mt-1 text-sm text-red-600">
+          {amountError}
+        </p>
+      )}
+      {saveError && (
+        <p role="alert" className="mt-1 text-sm text-red-600">
+          {saveError}
+        </p>
+      )}
+    </li>
+  );
+}

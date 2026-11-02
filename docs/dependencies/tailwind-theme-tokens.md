@@ -36,7 +36,7 @@ Los nombres --color-* de @theme inline exponen las utilidades Tailwind equivalen
 
 ## Compatibilidad de fondo y texto
 
---background conserva su nombre para los consumidores existentes, pero ahora referencia --surface-canvas (#D8F5E3). --foreground también conserva compatibilidad y ahora referencia --text-primary (#0B1F10). Los nuevos componentes deben preferir los nombres semánticos y no depender de esos alias heredados.
+--background y --foreground conservan los valores globales vigentes de main (#eafcf1 y #171717, respectivamente). Esta decisión evita cambiar el canvas y el texto general antes de la migración visual completa. Los nuevos componentes deben preferir los nombres semánticos y no depender de esos alias heredados.
 
 ## Accesibilidad
 
@@ -67,12 +67,12 @@ Se preserva el contrato --brand-green-{50,100,500,600,700} y su mapeo --color-br
 | --brand-green-600 | #16A34A |
 | --brand-green-700 | #15803D |
 
-Estos valores no se usan como fuente de las nuevas acciones semánticas. En particular, la acción primaria oficial de Figma es #15803D, mientras que #212 reserva ese valor como brand-green-700.
+El contrato de #212 ya está integrado en main. Estos valores no se usan como fuente de las nuevas acciones semánticas. En particular, la acción primaria oficial de Figma es #15803D, mientras que #212 reserva ese valor como brand-green-700.
 
 ## Alcance de la fase 1
 
 La fase 1 tokeniza PrimaryButton, TextField y SelectField. Mantiene tamaños, radios, espaciados, semántica ARIA y lógica funcional. No activa --color-*: initial ni migra páginas, Auth, Calculator, gradientes, sombras o variantes dark:.
 
-En la base de esta fase, paso 1 conserva GREEN_TOKENS como override local de los tokens de marca para coordinar con #212 y #215. No se modifica ese bloque. PrimaryButton pasa a usar la acción oficial #15803D en vez del override local #17803d; es una diferencia visual deliberada y documentada para alinear el componente compartido con Figma. La integración posterior con main debe conservar la resolución que elimina ese override junto con el wizard.
+El contrato del wizard integrado en main conserva los tokens de marca de #212. PrimaryButton usa la acción oficial #15803D y mantiene la altura mínima de 44 px definida por ese contrato. Esta diferencia visual deliberada alinea el componente compartido con Figma sin cambiar la estructura ni la navegación del wizard.
 
 La fase 2 migrará las superficies restantes y decidirá cuándo activar --color-*: initial, después de integrar o reconciliar los PR que todavía modifican esas superficies.

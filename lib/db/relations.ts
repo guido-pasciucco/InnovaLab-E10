@@ -109,6 +109,7 @@ export const calcCostLinesRelations = relations(calcCostLines, ({ one }) => ({
     fields: [calcCostLines.scenarioId],
     references: [scenarios.id],
   }),
+  // Optional: paso 2 inserts the line without a catalog row (#176).
   sourceBusinessCostLine: one(businessCostLines, {
     fields: [calcCostLines.sourceBusinessCostId],
     references: [businessCostLines.id],

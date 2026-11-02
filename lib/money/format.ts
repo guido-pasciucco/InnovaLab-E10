@@ -1,6 +1,7 @@
 // ---------------------------------------------------------------------------
-// Argentine amount parsing (#94). Pure: no I/O, no Date, no user-facing
-// messages.
+// Argentine amount parsing (#94). Pure: no I/O, no Date. parseARS carries no
+// user-facing message; parseAmountInput (below) borrows them from amountField
+// instead of writing its own.
 //
 // Amounts travel through the system as plain decimal strings, never as
 // numbers: `numeric` columns arrive as strings (see lib/db/formats.ts) and the
@@ -12,6 +13,8 @@
 // person reads, "$ 1.234,50".
 // ---------------------------------------------------------------------------
 
+import { amountField } from "@/lib/schemas/costs/fields";
+
 // Whitespace anywhere, including the non-breaking spaces that arrive with
 // pasted text: `1 000 000` and `$ 1.234,50` are amounts written with grouping
 // spaces, so the space carries no meaning between digits and is removed
@@ -21,19 +24,63 @@
 const NOISE = /\s/g;
 const LEADING_CURRENCY = /^\$/;
 
+// The two shapes are built from the fraction they accept, so the strict parser
+// (one to two decimals) and the lenient one behind parseAmountInput (any number
+// of decimals, so the schema can say "hasta 2 decimales") cannot drift apart.
+//
 // Dot groups of exactly three digits: `1.500`, `1.234.567`. Demanding a full
 // group is what makes a dot unambiguous: a dot followed by one or two digits
 // cannot match here, so `1.5` and `1234.50` fall through to the plain form
 // below and are read as decimals, while `1.2345` matches neither and is
 // rejected instead of being guessed.
-const ARGENTINE_THOUSANDS = /^(\d{1,3}(?:\.\d{3})+)(?:,(\d{1,2}))?$/;
+function thousandsPattern(fraction: string): RegExp {
+  return new RegExp(`^(\\d{1,3}(?:\\.\\d{3})+)(?:,(${fraction}))?$`);
+}
+const ARGENTINE_THOUSANDS = thousandsPattern("\\d{1,2}");
+const LENIENT_THOUSANDS = thousandsPattern("\\d+");
 
 // No thousands separator: plain digits with an optional fraction of one or two
 // digits. Comma and dot mean the same thing here — the decimal mark — so the
 // separator is discarded and the output always uses a dot. One to two digits is
 // the cap, which is where `12,345` and `1,234.50` are rejected. The two patterns
 // cannot both match the same input, so the order between them is not a rule.
-const PLAIN = /^(\d+)(?:[.,](\d{1,2}))?$/;
+function plainPattern(fraction: string): RegExp {
+  return new RegExp(`^(\\d+)(?:[.,](${fraction}))?$`);
+}
+const PLAIN = plainPattern("\\d{1,2}");
+const LENIENT_PLAIN = plainPattern("\\d+");
+
+function stripNoise(input: string): string {
+  return input.replace(NOISE, "").replace(LEADING_CURRENCY, "");
+}
+
+// Shared by parseARS and the lenient reader: only the patterns differ.
+function normalise(
+  cleaned: string,
+  thousandsShape: RegExp,
+  plainShape: RegExp,
+): string | null {
+  // An empty amount is rejected rather than defaulted, and a leading minus is
+  // rejected because a negative amount is never valid. Both are listed as
+  // separate rows in the contract table, so loosening the patterns below to
+  // accept a sign would silently change what this function guarantees.
+  if (cleaned === "" || cleaned.startsWith("-")) {
+    return null;
+  }
+
+  const thousands = thousandsShape.exec(cleaned);
+  if (thousands) {
+    const integer = thousands[1].replace(/\./g, "");
+    return thousands[2] === undefined ? integer : `${integer}.${thousands[2]}`;
+  }
+
+  const plain = plainShape.exec(cleaned);
+  if (!plain) {
+    return null;
+  }
+
+  return plain[2] === undefined ? plain[1] : `${plain[1]}.${plain[2]}`;
+}
 
 /**
  * Normalises an amount written the way Argentines write it into a plain
@@ -48,28 +95,39 @@ const PLAIN = /^(\d+)(?:[.,](\d{1,2}))?$/;
  * written once and shown by both RHF and the service (lib/schemas/AGENTS.md).
  */
 export function parseARS(input: string): string | null {
-  const cleaned = input.replace(NOISE, "").replace(LEADING_CURRENCY, "");
+  return normalise(stripNoise(input), ARGENTINE_THOUSANDS, PLAIN);
+}
 
-  // An empty amount is rejected rather than defaulted, and a leading minus is
-  // rejected because a negative amount is never valid. Both are listed as
-  // separate rows in the contract table, so loosening the patterns below to
-  // accept a sign would silently change what this function guarantees.
-  if (cleaned === "" || cleaned.startsWith("-")) {
-    return null;
+export type AmountInput =
+  | { amount: string; issue: null }
+  | { amount: null; issue: string };
+
+/**
+ * Reads an amount a person is typing: the decimal string when it is a valid
+ * amount, or the Spanish message that says what is wrong with it.
+ *
+ * parseARS answers "is this an Argentine amount?" with a bare null. A field
+ * needs the reason, so this reads the text with the same shapes but without the
+ * two-decimal cap ("1234,567" becomes "1234.567") and lets amountField, the
+ * single owner of the cost-amount rules, accept it or explain why not.
+ * Anything it cannot read as a number is handed over as typed, so letters and
+ * negatives get amountField's own message.
+ */
+export function parseAmountInput(input: string): AmountInput {
+  const cleaned = stripNoise(input);
+  // The sign is read apart so a negative typed with a comma still gets the
+  // negative message instead of "not a number".
+  const sign = cleaned.startsWith("-") ? "-" : "";
+  const unsigned = cleaned.slice(sign.length);
+  const candidate =
+    sign + (normalise(unsigned, LENIENT_THOUSANDS, LENIENT_PLAIN) ?? unsigned);
+
+  const result = amountField.safeParse(candidate);
+  if (result.success) {
+    return { amount: result.data, issue: null };
   }
 
-  const thousands = ARGENTINE_THOUSANDS.exec(cleaned);
-  if (thousands) {
-    const integer = thousands[1].replace(/\./g, "");
-    return thousands[2] === undefined ? integer : `${integer}.${thousands[2]}`;
-  }
-
-  const plain = PLAIN.exec(cleaned);
-  if (!plain) {
-    return null;
-  }
-
-  return plain[2] === undefined ? plain[1] : `${plain[1]}.${plain[2]}`;
+  return { amount: null, issue: result.error.issues[0]?.message ?? "El importe no es válido." };
 }
 
 // ---------------------------------------------------------------------------
