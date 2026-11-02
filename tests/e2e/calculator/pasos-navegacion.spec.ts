@@ -37,3 +37,17 @@ test("Siguiente walks from step 2 to the results and Anterior walks back", async
     authedPage.getByRole("heading", { name: "Costos fijos del mes", exact: true }),
   ).toBeVisible();
 });
+
+test("the step navigator links only to steps up to the saved progress", async ({ authedPage }) => {
+  // beforeEach saved step 1, so the furthest step is 2 and the user is on it.
+  const nav = authedPage.getByRole("navigation", { name: "Progreso de la calculadora" });
+
+  await expect(nav.getByRole("link", { name: "Ir al paso 1" })).toBeVisible();
+  for (const step of [3, 4, 5, 6, 7]) {
+    await expect(nav.getByRole("link", { name: `Ir al paso ${step}` })).toHaveCount(0);
+    await expect(nav.getByLabel(`Paso ${step} bloqueado`)).toHaveAttribute("aria-disabled", "true");
+  }
+
+  await nav.getByRole("link", { name: "Ir al paso 1" }).click();
+  await expect(authedPage).toHaveURL(/\/paso-1$/);
+});
