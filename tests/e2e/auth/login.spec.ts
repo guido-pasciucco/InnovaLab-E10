@@ -7,10 +7,8 @@ test("a confirmed user logs in and gets a session", async ({ page, user, loginPa
   // Act
   await loginPage.logIn(user);
 
-  // Assert: the form pushes to "/" and the session cookie set by the Server
-  // Action lets the protected page render.
-  await expect(page).toHaveURL("/");
-  await page.goto("/dashboard");
+  // Assert: the form pushes to "/dashboard", so the session cookie set by the
+  // Server Action lets the protected page render.
   await expect(page).toHaveURL("/dashboard");
 });
 
