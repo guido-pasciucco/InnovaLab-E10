@@ -21,6 +21,7 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
   // server's list.
   const [adding, setAdding] = useState(false);
   const newConceptInput = useRef<HTMLInputElement | null>(null);
+  const addButton = useRef<HTMLButtonElement | null>(null);
 
   // Nothing to add up yet: a dash reads better than a zero total.
   const subtotalText =
@@ -41,16 +42,26 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
     setAdding(true);
   };
 
+  // A deleted row takes its focus with it: the add button is the stable spot
+  // that keeps keyboard and screen-reader users in the table.
+  const focusAddButton = () => addButton.current?.focus();
+
+  const handleDiscardNewRow = () => {
+    setAdding(false);
+    focusAddButton();
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <ul aria-label="Costos fijos del mes" className="flex flex-col">
         {lines.map((line) => (
-          <FixedCostRowItem key={line.id} line={line} />
+          <FixedCostRowItem key={line.id} line={line} onRemoved={focusAddButton} />
         ))}
         {adding && (
           <FixedCostRowItem
             line={null}
             onSaved={() => setAdding(false)}
+            onRemoved={handleDiscardNewRow}
             conceptRef={setNewConceptInput}
           />
         )}
@@ -70,6 +81,7 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
       </div>
 
       <button
+        ref={addButton}
         type="button"
         onClick={handleAddRow}
         className="min-h-[54px] w-full rounded-[14px] border border-brand-green-500 bg-brand-green-50 px-4 py-3 text-base font-semibold text-brand-green-700 transition-colors hover:bg-brand-green-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600"

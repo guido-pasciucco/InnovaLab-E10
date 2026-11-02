@@ -1,11 +1,21 @@
 "use client";
 
-import { useId, useState, useTransition, type FocusEvent, type Ref } from "react";
+import {
+  useId,
+  useRef,
+  useState,
+  useTransition,
+  type FocusEvent,
+  type Ref,
+} from "react";
 
 import {
   addFixedCostLine,
+  removeFixedCostLine,
+  renameFixedCostLine,
   updateFixedCostAmount,
 } from "@/app/(calculator)/paso-2/actions";
+import { FixedCostDeleteButton } from "@/components/calculator/fixed-cost-delete-button";
 import { conceptField } from "@/lib/schemas/costs/fields";
 import { formatARS, parseAmountInput } from "@/lib/money/format";
 
@@ -21,6 +31,8 @@ type FixedCostRowItemProps = {
   line: FixedCostLine | null;
   // A new row saved: the table closes it and the server's line replaces it.
   onSaved?: () => void;
+  // The row is gone: a saved line deleted on the server, or a new row discarded.
+  onRemoved?: () => void;
   conceptRef?: Ref<HTMLInputElement>;
 };
 
@@ -29,6 +41,7 @@ const INPUT_BASE =
 const AMOUNT_INPUT_CLASS = `${INPUT_BASE} text-right font-medium tabular-nums`;
 
 const SAVE_FAILED = "No pudimos guardar el costo. Probá de nuevo.";
+const DELETE_FAILED = "No pudimos eliminar el costo. Probá de nuevo.";
 
 // The message conceptField gives for the text, or null when it is valid.
 function firstIssue(concept: string): string | null {
@@ -42,12 +55,13 @@ function displayAmount(amount: string): string {
 
 // The row keeps what the user is typing and saves it when focus leaves the
 // row, so a half-typed line (concept first, amount next) is never saved early.
-// A saved line keeps its concept as plain text: the service can only change
-// the amount. Failed saves keep the typed text and can be retried by leaving
-// the row again.
+// A saved line saves only the fields that changed and are valid, one action
+// each: if one fails the other stays applied. Failed saves keep the typed text
+// and can be retried by leaving the row again.
 export function FixedCostRowItem({
   line,
   onSaved,
+  onRemoved,
   conceptRef,
 }: FixedCostRowItemProps) {
   const id = useId();
@@ -56,60 +70,137 @@ export function FixedCostRowItem({
   const amountErrorId = `${amountId}-error`;
   const conceptErrorId = `${conceptId}-error`;
 
-  const [concept, setConcept] = useState("");
-  // null: nothing is being edited, so the field shows the stored amount.
-  const [draft, setDraft] = useState<string | null>(null);
+  // null: nothing is being edited, so the field shows the stored value.
+  const [conceptDraft, setConceptDraft] = useState<string | null>(null);
+  const [amountDraft, setAmountDraft] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const [conceptDirty, setConceptDirty] = useState(false);
+  const [amountDirty, setAmountDirty] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  // Set once the row is deleted or discarded: the focus that leaves it then
+  // must not save an edit to a row that no longer exists.
+  const gone = useRef(false);
 
   const isNew = line === null;
-  const amountText = draft ?? (line ? displayAmount(line.amount) : "");
+  const conceptText = conceptDraft ?? line?.concept ?? "";
+  const amountText = amountDraft ?? (line ? displayAmount(line.amount) : "");
   const { amount: parsedAmount, issue } = parseAmountInput(amountText);
-  const conceptIssue = touched && isNew ? firstIssue(concept) : null;
+  const conceptIssue = touched ? firstIssue(conceptText) : null;
   // Empty is no error on a saved line or a blank new one; it is on a new row
   // that already has a concept and was left without an amount.
   const amountError =
-    touched && (amountText.trim() !== "" || (isNew && concept.trim() !== ""))
+    touched && (amountText.trim() !== "" || (isNew && conceptText.trim() !== ""))
       ? issue
       : null;
 
-  const handleChange = (value: string) => {
-    setDraft(value);
-    setDirty(true);
+  const handleConceptChange = (value: string) => {
+    setConceptDraft(value);
+    setConceptDirty(true);
     setTouched(false);
     setSaveError(null);
   };
 
-  const save = (amount: string) => {
+  const handleAmountChange = (value: string) => {
+    setAmountDraft(value);
+    setAmountDirty(true);
+    setTouched(false);
+    setSaveError(null);
+  };
+
+  const saveNew = (concept: string, amount: string) => {
     startTransition(async () => {
-      const result = isNew
-        ? await addFixedCostLine({ concept, amount })
-        : await updateFixedCostAmount(line.id, { amount });
+      const result = await addFixedCostLine({ concept, amount });
 
       if (!result.ok) {
         setSaveError(SAVE_FAILED);
         return;
       }
 
-      setDirty(false);
-      setDraft(formatARS(amount) || amount);
       onSaved?.();
+    });
+  };
+
+  // null: that field is not saved, either unchanged or still invalid.
+  const saveChanges = (
+    saved: FixedCostLine,
+    concept: string | null,
+    amount: string | null,
+  ) => {
+    startTransition(async () => {
+      let failed = false;
+
+      if (concept !== null) {
+        const result = await renameFixedCostLine(saved.id, { concept });
+        if (result.ok) {
+          setConceptDirty(false);
+          setConceptDraft(concept);
+        } else {
+          failed = true;
+        }
+      }
+
+      if (amount !== null) {
+        const result = await updateFixedCostAmount(saved.id, { amount });
+        if (result.ok) {
+          setAmountDirty(false);
+          setAmountDraft(displayAmount(amount));
+        } else {
+          failed = true;
+        }
+      }
+
+      if (failed) setSaveError(SAVE_FAILED);
     });
   };
 
   const handleRowBlur = (event: FocusEvent<HTMLLIElement>) => {
     // Moving between the fields of this row is not leaving it.
     if (event.currentTarget.contains(event.relatedTarget)) return;
-    if (isPending) return;
-    if (isNew ? concept.trim() === "" && amountText.trim() === "" : !dirty) return;
+    if (isPending || gone.current) return;
 
+    const conceptValid = firstIssue(conceptText) === null;
+
+    if (line === null) {
+      if (conceptText.trim() === "" && amountText.trim() === "") return;
+      setTouched(true);
+      if (conceptValid && parsedAmount !== null) {
+        saveNew(conceptText.trim(), parsedAmount);
+      }
+      return;
+    }
+
+    if (!conceptDirty && !amountDirty) return;
     setTouched(true);
-    if (firstIssue(concept) !== null && isNew) return;
-    if (parsedAmount === null) return;
 
-    save(parsedAmount);
+    const concept = conceptDirty && conceptValid ? conceptText.trim() : null;
+    const amount = amountDirty ? parsedAmount : null;
+    if (concept === null && amount === null) return;
+
+    saveChanges(line, concept, amount);
+  };
+
+  const handleRemove = () => {
+    if (isPending) return;
+
+    if (line === null) {
+      gone.current = true;
+      onRemoved?.();
+      return;
+    }
+
+    setSaveError(null);
+    startTransition(async () => {
+      const result = await removeFixedCostLine(line.id);
+
+      if (!result.ok) {
+        setSaveError(DELETE_FAILED);
+        return;
+      }
+
+      gone.current = true;
+      onRemoved?.();
+    });
   };
 
   return (
@@ -118,32 +209,22 @@ export function FixedCostRowItem({
       aria-busy={isPending || undefined}
       className="border-b border-gray-200 py-1 last:border-b-0"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,9rem)] items-start gap-2 sm:gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-start gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_2.75rem] sm:gap-3">
         <div className="min-w-0">
-          {isNew ? (
-            <>
-              <label htmlFor={conceptId} className="sr-only">
-                Concepto
-              </label>
-              <input
-                ref={conceptRef}
-                id={conceptId}
-                value={concept}
-                onChange={(event) => {
-                  setConcept(event.target.value);
-                  setTouched(false);
-                  setSaveError(null);
-                }}
-                placeholder="Concepto"
-                autoComplete="off"
-                aria-invalid={conceptIssue ? true : undefined}
-                aria-describedby={conceptIssue ? conceptErrorId : undefined}
-                className={INPUT_BASE}
-              />
-            </>
-          ) : (
-            <p className="px-2 py-2 text-base text-gray-900">{line.concept}</p>
-          )}
+          <label htmlFor={conceptId} className="sr-only">
+            Concepto
+          </label>
+          <input
+            ref={conceptRef}
+            id={conceptId}
+            value={conceptText}
+            onChange={(event) => handleConceptChange(event.target.value)}
+            placeholder="Concepto"
+            autoComplete="off"
+            aria-invalid={conceptIssue ? true : undefined}
+            aria-describedby={conceptIssue ? conceptErrorId : undefined}
+            className={INPUT_BASE}
+          />
         </div>
 
         <div className="min-w-0">
@@ -153,7 +234,7 @@ export function FixedCostRowItem({
           <input
             id={amountId}
             value={amountText}
-            onChange={(event) => handleChange(event.target.value)}
+            onChange={(event) => handleAmountChange(event.target.value)}
             inputMode="decimal"
             autoComplete="off"
             placeholder="$ 0,00"
@@ -162,6 +243,11 @@ export function FixedCostRowItem({
             className={AMOUNT_INPUT_CLASS}
           />
         </div>
+
+        <FixedCostDeleteButton
+          label={line ? `Eliminar ${line.concept}` : "Eliminar fila"}
+          onClick={handleRemove}
+        />
       </div>
 
       {conceptIssue && (
@@ -182,4 +268,3 @@ export function FixedCostRowItem({
     </li>
   );
 }
-
