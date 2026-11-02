@@ -1,9 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth/require-user";
+import { AppError } from "@/lib/errors/app-error";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
+import { advanceCalculatorProgressService } from "@/lib/services/calculator";
 import {
   addCalcCostLineService,
   removeCalcCostLineService,
@@ -61,3 +64,21 @@ export const removeFixedCostLine = handleActionErrors(async (lineId: string) => 
 
   return { id: line.id };
 }, "CALC_UNAVAILABLE");
+
+// "Siguiente": unlocks step 3 and goes there. No minimum of cost lines is
+// required. redirect() throws, so it stays outside any try/catch.
+export async function continueToVariableCosts(): Promise<void> {
+  const user = await requireUser();
+
+  try {
+    await advanceCalculatorProgressService(user.id, 3);
+  } catch (err) {
+    if (err instanceof AppError && err.code === "CALC_DRAFT_MISSING") {
+      redirect("/paso-1");
+    }
+    throw err;
+  }
+
+  revalidateCalculator();
+  redirect("/paso-3");
+}

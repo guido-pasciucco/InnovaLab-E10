@@ -3,6 +3,9 @@ import Link from "next/link";
 type StepNavProps = {
   previous?: string;
   next?: string;
+  // Server Action run by "Siguiente" instead of following `next`: the step
+  // saves its progress, then the action redirects.
+  nextAction?: () => Promise<void>;
 };
 
 const BASE =
@@ -12,9 +15,10 @@ const PREVIOUS = `${BASE} text-brand-green-700 hover:bg-brand-green-50`;
 
 const NEXT = `${BASE} sm:flex-1 bg-action-primary text-on-action-primary hover:bg-action-primary-hover`;
 
-// Links, not buttons: moving between steps is navigation. The missing side is
+// Links, not buttons: moving between steps is navigation, except when the
+// step must save progress first (`nextAction`, a form submit). The missing side is
 // left out, so the first and last screens show a single button.
-export function StepNav({ previous, next }: StepNavProps) {
+export function StepNav({ previous, next, nextAction }: StepNavProps) {
   return (
     <nav
       aria-label="Navegación entre pasos"
@@ -27,10 +31,18 @@ export function StepNav({ previous, next }: StepNavProps) {
       ) : (
         <span />
       )}
-      {next && (
-        <Link href={next} className={NEXT}>
-          Siguiente
-        </Link>
+      {nextAction ? (
+        <form action={nextAction} className="contents">
+          <button type="submit" className={NEXT}>
+            Siguiente
+          </button>
+        </form>
+      ) : (
+        next && (
+          <Link href={next} className={NEXT}>
+            Siguiente
+          </Link>
+        )
       )}
     </nav>
   );
