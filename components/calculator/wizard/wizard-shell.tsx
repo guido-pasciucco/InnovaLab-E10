@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { WizardHeader } from "./wizard-header";
 import { WizardProgress } from "./wizard-progress";
 import { StepHeader } from "./step-header";
-import { PlaceholderArt } from "./placeholder-art";
 
 type WizardShellProps = {
   children: ReactNode;
@@ -29,24 +28,18 @@ export function WizardShell({
           completedSteps={completedSteps}
         />
 
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-          <section className="space-y-8">
+        {/* The step content brings its own columns: the form card and the
+            live cost card are direct grid items, so the step header spans both. */}
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[2fr_1fr]">
+          <div className="lg:col-span-2">
             <StepHeader
               currentStep={currentStep}
               title={title}
               description={description}
             />
+          </div>
 
-            {children}
-          </section>
-
-          <aside
-            aria-label="Costo unitario en vivo"
-            data-testid="wizard-aside"
-            className="hidden lg:block"
-          >
-            <PlaceholderArt />
-          </aside>
+          {children}
         </div>
       </div>
     </main>
