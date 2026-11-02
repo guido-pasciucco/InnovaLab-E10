@@ -1,10 +1,10 @@
 import "server-only";
 
 import Decimal from "decimal.js";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { calculateCostTotals, type CostLine } from "@/lib/calc/calculateCostTotals";
-import { businesses, products } from "@/lib/db/business/table";
+import { products } from "@/lib/db/business/table";
 import { calculations, costingSetup } from "@/lib/db/calculation/table";
 import {
   saveCalculatorSetupInputSchema,
@@ -18,6 +18,8 @@ import type {
   CalculatorDraftSetup,
 } from "@/lib/types/calculator";
 
+import { getOrCreateDefaultBusiness, resolveActiveCalculation } from "./calculations";
+
 // Calculator setup persistence (ADR 0005: the draft lives server-side only).
 // Input is validated with the server gate from lib/db (saveCalculatorSetupInputSchema),
 // never with the client form contract.
@@ -28,39 +30,12 @@ import type {
 const SETUP_STEP = 1;
 const LAST_STEP = 7;
 
-// postgres-js transactions expose the same query API as the db client.
-type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
-
-// First owned business wins; created with a sensible default on first save.
-async function getOrCreateDefaultBusiness(tx: Tx, userId: string) {
-  const [existing] = await tx
-    .select()
-    .from(businesses)
-    .where(eq(businesses.ownerUserId, userId))
-    .limit(1);
-
-  if (existing) return existing;
-
-  const [created] = await tx
-    .insert(businesses)
-    .values({ name: "Mi negocio", ownerUserId: userId })
-    .returning();
-  return created;
-}
-
+// The calculation the wizard targets (see resolveActiveCalculation).
 export async function getDraftCalculationId(
   userId: string,
   db: Db,
 ): Promise<string | null> {
-  const [row] = await db
-    .select({ id: calculations.id })
-    .from(calculations)
-    .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
-    // #123 will make the draft unique. Until then, the order keeps every
-    // read/write on the same row even if duplicates already exist.
-    .orderBy(desc(calculations.createdAt), desc(calculations.id))
-    .limit(1);
-  return row?.id ?? null;
+  return (await resolveActiveCalculation(userId, db))?.id ?? null;
 }
 
 export async function saveCalculatorSetupService(
@@ -73,12 +48,7 @@ export async function saveCalculatorSetupService(
   return db.transaction(async (tx) => {
     const business = await getOrCreateDefaultBusiness(tx, userId);
 
-    const [draft] = await tx
-      .select({ id: calculations.id, productId: calculations.productId })
-      .from(calculations)
-      .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
-      .orderBy(desc(calculations.createdAt), desc(calculations.id))
-      .limit(1);
+    const draft = await resolveActiveCalculation(userId, tx);
 
     let calculationId: string;
 
@@ -150,6 +120,11 @@ export async function getCalculatorDraftSetupService(
   userId: string,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorDraftSetup> {
+  const active = await resolveActiveCalculation(userId, db);
+  if (!active) {
+    return { calculationId: null, setup: null };
+  }
+
   const [draft] = await db
     .select({
       calculationId: calculations.id,
@@ -162,10 +137,7 @@ export async function getCalculatorDraftSetupService(
     .from(calculations)
     .innerJoin(products, eq(calculations.productId, products.id))
     .leftJoin(costingSetup, eq(costingSetup.calculationId, calculations.id))
-    .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
-    // #123 owns the unique-draft fix; ordering here keeps this read
-    // deterministic even before that migration lands.
-    .orderBy(desc(calculations.createdAt), desc(calculations.id))
+    .where(and(eq(calculations.id, active.id), eq(calculations.userId, userId)))
     .limit(1);
 
   if (!draft) {
@@ -312,12 +284,7 @@ export async function getCalculatorProgressService(
   userId: string,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorProgress> {
-  const [draft] = await db
-    .select({ currentStep: calculations.currentStep })
-    .from(calculations)
-    .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
-    .orderBy(desc(calculations.createdAt), desc(calculations.id))
-    .limit(1);
+  const active = await resolveActiveCalculation(userId, db);
 
-  return { currentStep: draft?.currentStep ?? 1 };
+  return { currentStep: active?.currentStep ?? 1 };
 }

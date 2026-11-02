@@ -49,7 +49,7 @@ export type ActiveCalculation = {
  */
 export async function resolveActiveCalculation(
   userId: string,
-  db: Db = getDrizzleClient(),
+  db: Db | Tx = getDrizzleClient(),
 ): Promise<ActiveCalculation | null> {
   const [row] = await db
     .select({

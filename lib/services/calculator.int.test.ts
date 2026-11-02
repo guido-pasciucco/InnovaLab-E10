@@ -13,6 +13,7 @@ import { businessCostLines, calcCostLines } from "@/lib/db/costs/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
+import { createCalculationService, setActiveCalculationService } from "./calculations";
 import {
   getCalculatorCostSummaryService,
   getCalculatorDraftSetupService,
@@ -688,6 +689,28 @@ describe("wizard progress (calculations.current_step)", () => {
     await saveCalculatorSetupService(user.id, { ...validInput, volume: 60 }, db);
 
     expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 4 });
+  });
+
+  it("editing the active calculation X leaves a newer draft Z untouched", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const xId = await getDraftCalculationId(user.id, db);
+    await db.update(calculations).set({ currentStep: 5 }).where(eq(calculations.id, xId!));
+    const { calculationId: zId } = await createCalculationService(user.id, db);
+    await setActiveCalculationService(user.id, xId!, db);
+
+    await saveCalculatorSetupService(user.id, { ...validInput, name: "Editado" }, db);
+
+    expect(await getDraftCalculationId(user.id, db)).toBe(xId);
+    expect(await getCalculatorDraftSetupService(user.id, db)).toMatchObject({
+      calculationId: xId,
+      setup: { name: "Editado" },
+    });
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 5 });
+    const [z] = await db.select().from(calculations).where(eq(calculations.id, zId));
+    expect(z.currentStep).toBe(1);
+    const zSetup = await db.select().from(costingSetup).where(eq(costingSetup.calculationId, zId));
+    expect(zSetup).toHaveLength(0);
   });
 
   it("progress is private to each user", async () => {
