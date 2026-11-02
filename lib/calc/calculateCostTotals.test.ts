@@ -10,11 +10,28 @@ import { calculateCostTotals, type CostLine } from "./calculateCostTotals";
 
 function line(overrides: Partial<CostLine> & Pick<CostLine, "id" | "amount">): CostLine {
   return {
-    behavior: "fijo",
-    traceability: "directo",
+    behavior: "fixed",
+    traceability: "direct",
     isOwnLabor: false,
     ...overrides,
   };
+}
+
+// Out-of-set and non-canonical strings still arrive at runtime (legacy rows,
+// case, surrounding spaces). The cast lets those cases test the check.
+function rawLine(overrides: {
+  id: string;
+  amount: string;
+  behavior?: string;
+  traceability?: string;
+  isOwnLabor?: boolean;
+}): CostLine {
+  return {
+    behavior: "fixed",
+    traceability: "direct",
+    isOwnLabor: false,
+    ...overrides,
+  } as unknown as CostLine;
 }
 
 describe("calculateCostTotals", () => {
@@ -24,32 +41,32 @@ describe("calculateCostTotals", () => {
       lines: [
         line({
           id: "rent",
-          behavior: "fijo",
-          traceability: "indirecto",
+          behavior: "fixed",
+          traceability: "indirect",
           amount: "300000.00",
         }),
         line({
           id: "internet",
-          behavior: "fijo",
-          traceability: "indirecto",
+          behavior: "fixed",
+          traceability: "indirect",
           amount: "30000.00",
         }),
         line({
           id: "flour",
           behavior: "variable",
-          traceability: "directo",
+          traceability: "direct",
           amount: "500000.00",
         }),
         line({
           id: "gas",
           behavior: "variable",
-          traceability: "directo",
+          traceability: "direct",
           amount: "100000.00",
         }),
         line({
           id: "kneading",
           behavior: "variable",
-          traceability: "directo",
+          traceability: "direct",
           isOwnLabor: true,
           amount: "80000.00",
         }),
@@ -71,11 +88,63 @@ describe("calculateCostTotals", () => {
     });
   });
 
-  it("sums both lines when the same cost sits in fijo and variable under different ids", () => {
+  it("accepts a fixed + direct line in the shape the database stores", () => {
+    const result = calculateCostTotals({
+      volume: 10,
+      lines: [
+        line({
+          id: "rent",
+          behavior: "fixed",
+          traceability: "direct",
+          amount: "100.00",
+        }),
+      ],
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      subtotalFijo: "100.00",
+      subtotalVariable: "0.00",
+      subtotalTrabajoPropio: "0.00",
+      subtotalIndirecto: "0.00",
+      totalPeriodo: "100.00",
+      unitarioPorDocena: "10.00",
+      volume: 10,
+      lineCount: 1,
+    });
+  });
+
+  it("adds a variable + indirect line to the indirect subtotal", () => {
+    const result = calculateCostTotals({
+      volume: 4,
+      lines: [
+        line({
+          id: "power",
+          behavior: "variable",
+          traceability: "indirect",
+          amount: "40.00",
+        }),
+      ],
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      subtotalFijo: "0.00",
+      subtotalVariable: "40.00",
+      subtotalTrabajoPropio: "0.00",
+      subtotalIndirecto: "40.00",
+      totalPeriodo: "40.00",
+      unitarioPorDocena: "10.00",
+      volume: 4,
+      lineCount: 1,
+    });
+  });
+
+  it("sums both lines when the same cost sits in fixed and variable under different ids", () => {
     const input = {
       volume: 5,
       lines: [
-        line({ id: "flour-stock", behavior: "fijo", amount: "10.00" }),
+        line({ id: "flour-stock", behavior: "fixed", amount: "10.00" }),
         line({ id: "flour-batch", behavior: "variable", amount: "25.00" }),
       ],
     };
@@ -100,7 +169,7 @@ describe("calculateCostTotals", () => {
       volume: 10,
       lines: [
         line({ id: "rent", amount: "10.00" }),
-        line({ id: "rent", amount: "nope", behavior: "banana" }),
+        rawLine({ id: "rent", amount: "nope", behavior: "banana" }),
       ],
     };
 
@@ -113,7 +182,7 @@ describe("calculateCostTotals", () => {
     });
   });
 
-  it("returns zero fixed and a variable total when no line is fijo", () => {
+  it("returns zero fixed and a variable total when no line is fixed", () => {
     const input = {
       volume: 1000,
       lines: [line({ id: "flour", behavior: "variable", amount: "250000.00" })],
@@ -134,11 +203,11 @@ describe("calculateCostTotals", () => {
     });
   });
 
-  it("keeps the fixed subtotal at zero when every fijo amount is zero", () => {
+  it("keeps the fixed subtotal at zero when every fixed amount is zero", () => {
     const input = {
       volume: 1000,
       lines: [
-        line({ id: "rent", behavior: "fijo", amount: "0.00" }),
+        line({ id: "rent", behavior: "fixed", amount: "0.00" }),
         line({ id: "flour", behavior: "variable", amount: "250000.00" }),
       ],
     };
@@ -154,13 +223,13 @@ describe("calculateCostTotals", () => {
     });
   });
 
-  it("adds Fijo, FIJO and fijo to subtotalFijo when the labels differ only by case and space", () => {
+  it("adds Fixed, FIXED and fixed to subtotalFijo when the labels differ only by case and space", () => {
     const input = {
       volume: 10,
       lines: [
-        line({ id: "a", behavior: "Fijo", amount: "10.00" }),
-        line({ id: "b", behavior: "FIJO ", amount: "20.00" }),
-        line({ id: "c", behavior: "fijo", amount: "30.00" }),
+        rawLine({ id: "a", behavior: "Fixed", amount: "10.00" }),
+        rawLine({ id: "b", behavior: "FIXED ", amount: "20.00" }),
+        rawLine({ id: "c", behavior: "fixed", amount: "30.00" }),
       ],
     };
 
@@ -178,8 +247,8 @@ describe("calculateCostTotals", () => {
     const input = {
       volume: 2,
       lines: [
-        line({ id: "a", traceability: "INDIRECTO", amount: "10.00" }),
-        line({ id: "b", traceability: " indirecto ", amount: "5.50" }),
+        rawLine({ id: "a", traceability: "INDIRECT", amount: "10.00" }),
+        rawLine({ id: "b", traceability: " INDIRECT ", amount: "5.50" }),
       ],
     };
 
@@ -193,12 +262,12 @@ describe("calculateCostTotals", () => {
     });
   });
 
-  it.each(["fixed", "semi-fijo", ""])(
+  it.each(["semi-fijo", ""])(
     "returns INVALID_BEHAVIOR when behavior is %j",
     (behavior) => {
       const result = calculateCostTotals({
         volume: 10,
-        lines: [line({ id: "rent", behavior, amount: "10.00" })],
+        lines: [rawLine({ id: "rent", behavior, amount: "10.00" })],
       });
 
       expect(result).toEqual({
@@ -209,12 +278,12 @@ describe("calculateCostTotals", () => {
     },
   );
 
-  it.each(["trabajo-propio", " Trabajo-Propio ", "direct", "indirect"])(
+  it.each(["trabajo-propio", " Trabajo-Propio ", "directo"])(
     "returns INVALID_TRACEABILITY when traceability is %j",
     (traceability) => {
       const result = calculateCostTotals({
         volume: 10,
-        lines: [line({ id: "hours", traceability, amount: "10.00" })],
+        lines: [rawLine({ id: "hours", traceability, amount: "10.00" })],
       });
 
       expect(result).toEqual({
@@ -232,14 +301,14 @@ describe("calculateCostTotals", () => {
         line({
           id: "kneading",
           behavior: "variable",
-          traceability: "directo",
+          traceability: "direct",
           isOwnLabor: true,
           amount: "80.00",
         }),
         line({
           id: "rent",
-          behavior: "fijo",
-          traceability: "indirecto",
+          behavior: "fixed",
+          traceability: "indirect",
           amount: "20.00",
         }),
       ],
@@ -260,14 +329,14 @@ describe("calculateCostTotals", () => {
     });
   });
 
-  it("keeps totalPeriodo equal to fijo plus variable when a line is both indirect and own labor", () => {
+  it("keeps totalPeriodo equal to fixed plus variable when a line is both indirect and own labor", () => {
     const input = {
       volume: 4,
       lines: [
         line({
           id: "workshop",
-          behavior: "fijo",
-          traceability: "indirecto",
+          behavior: "fixed",
+          traceability: "indirect",
           isOwnLabor: true,
           amount: "40.00",
         }),
@@ -353,7 +422,7 @@ describe("calculateCostTotals", () => {
     const result = calculateCostTotals({
       volume: 1,
       lines: [
-        line({ id: "rent", behavior: "fijo", amount: "1.004" }),
+        line({ id: "rent", behavior: "fixed", amount: "1.004" }),
         line({ id: "flour", behavior: "variable", amount: "1.004" }),
       ],
     });

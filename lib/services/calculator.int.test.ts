@@ -16,7 +16,7 @@ import { loadTestEnv } from "../../tests/support/test-env";
 import {
   getCalculatorCostSummaryService,
   getCalculatorDraftSetupService,
-  getCalculatorSetupService,
+  getCalculatorProgressService,
   getDraftCalculationId,
   saveCalculatorSetupService,
 } from "./calculator";
@@ -194,7 +194,7 @@ describe("saveCalculatorSetupService", () => {
     ).rejects.toBeInstanceOf(ZodError);
 
     expect(await getDraftCalculationId(user.id, db)).toBeNull();
-    expect(await getCalculatorSetupService(user.id, db)).toBeNull();
+    expect((await getCalculatorDraftSetupService(user.id, db)).setup).toBeNull();
     const businessRows = await db
       .select()
       .from(businesses)
@@ -230,7 +230,7 @@ describe("saveCalculatorSetupService", () => {
     const draftIdA = await getDraftCalculationId(userA.id, db);
 
     // B sees nothing of A's setup.
-    expect(await getCalculatorSetupService(userB.id, db)).toBeNull();
+    expect((await getCalculatorDraftSetupService(userB.id, db)).setup).toBeNull();
     expect(await getDraftCalculationId(userB.id, db)).toBeNull();
 
     // B saving creates B's own rows and leaves A untouched.
@@ -238,28 +238,14 @@ describe("saveCalculatorSetupService", () => {
     await saveCalculatorSetupService(userB.id, bInput, db);
 
     expect(await getDraftCalculationId(userA.id, db)).toBe(draftIdA);
-    expect(await getCalculatorSetupService(userA.id, db)).toEqual(validInput);
-    expect(await getCalculatorSetupService(userB.id, db)).toEqual(bInput);
+    expect((await getCalculatorDraftSetupService(userA.id, db)).setup).toEqual(validInput);
+    expect((await getCalculatorDraftSetupService(userB.id, db)).setup).toEqual(bInput);
 
     const aBusinesses = await db
       .select()
       .from(businesses)
       .where(eq(businesses.ownerUserId, userA.id));
     expect(aBusinesses).toHaveLength(1);
-  });
-});
-
-describe("getCalculatorSetupService", () => {
-  it("returns exactly what was saved", async () => {
-    const user = await makeUser();
-    await saveCalculatorSetupService(user.id, validInput, db);
-
-    expect(await getCalculatorSetupService(user.id, db)).toEqual(validInput);
-  });
-
-  it("returns null for a user with no draft", async () => {
-    const user = await makeUser();
-    expect(await getCalculatorSetupService(user.id, db)).toBeNull();
   });
 });
 
@@ -552,7 +538,7 @@ describe("getCalculatorCostSummaryService", () => {
     });
   });
 
-  it("maps persisted fixed/direct rows to the engine's fijo/directo vocabulary", async () => {
+  it("accepts the persisted fixed/direct vocabulary as stored", async () => {
     const fixture = await arrangeDraftWithSetup(10);
     await insertCostLine(fixture, {
       concept: "Alquiler",
@@ -567,9 +553,8 @@ describe("getCalculatorCostSummaryService", () => {
       amount: "30.00",
     });
 
-    // The base stores "fixed"/"direct"; the engine only accepts "fijo"/
-    // "directo". Without the mapping the engine returns INVALID_BEHAVIOR and
-    // this call would throw instead of returning totals.
+    // The base stores "fixed"/"direct" and the engine accepts that vocabulary
+    // as-is (2f28426), so the rows reach it with no translation.
     expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
       calculationId: fixture.calculationId,
       totalFixed: "50.00",
@@ -661,5 +646,49 @@ describe("getCalculatorCostSummaryService", () => {
     await expect(
       getCalculatorCostSummaryService(fixture.user.id, db),
     ).rejects.toMatchObject({ code: "CALC_COST_SUMMARY_FAILED" });
+  });
+});
+
+describe("wizard progress (calculations.current_step)", () => {
+  it("a user without a draft only has step 1", async () => {
+    const user = await makeUser();
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 1 });
+  });
+
+  it("the first save unlocks step 2", async () => {
+    const user = await makeUser();
+
+    await saveCalculatorSetupService(user.id, validInput, db);
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 2 });
+  });
+
+  it("saving step 1 again never lowers a more advanced step", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    await db.update(calculations).set({ currentStep: 4 }).where(eq(calculations.userId, user.id));
+
+    await saveCalculatorSetupService(user.id, { ...validInput, volume: 60 }, db);
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 4 });
+  });
+
+  it("progress is private to each user", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    await saveCalculatorSetupService(userA.id, validInput, db);
+
+    expect(await getCalculatorProgressService(userB.id, db)).toEqual({ currentStep: 1 });
+  });
+
+  it("the read does not write any row", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const before = await getSetupRows(user.id);
+
+    await getCalculatorProgressService(user.id, db);
+
+    expect(await getSetupRows(user.id)).toEqual(before);
   });
 });

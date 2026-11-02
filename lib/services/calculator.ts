@@ -1,7 +1,7 @@
 import "server-only";
 
 import Decimal from "decimal.js";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import { calculateCostTotals, type CostLine } from "@/lib/calc/calculateCostTotals";
 import { businesses, products } from "@/lib/db/business/table";
@@ -23,6 +23,10 @@ import type {
 // never with the client form contract.
 // Owner scoping: every query and write filters by the caller's userId.
 // The service throws (ZodError, AppError); doors translate. No try/catch.
+
+// Wizard progress: the setup is step 1, and saving it unlocks step 2.
+const SETUP_STEP = 1;
+const LAST_STEP = 7;
 
 // postgres-js transactions expose the same query API as the db client.
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -83,6 +87,13 @@ export async function saveCalculatorSetupService(
         .update(products)
         .set({ name: setup.name })
         .where(and(eq(products.id, draft.productId), eq(products.businessId, business.id)));
+      // Editing an earlier step again never lowers the progress already made.
+      await tx
+        .update(calculations)
+        .set({
+          currentStep: sql`least(${LAST_STEP}, greatest(${calculations.currentStep}, ${SETUP_STEP + 1}))`,
+        })
+        .where(and(eq(calculations.id, draft.id), eq(calculations.userId, userId)));
       calculationId = draft.id;
     } else {
       const [product] = await tx
@@ -91,7 +102,12 @@ export async function saveCalculatorSetupService(
         .returning();
       const [calculation] = await tx
         .insert(calculations)
-        .values({ userId, businessId: business.id, productId: product.id })
+        .values({
+          userId,
+          businessId: business.id,
+          productId: product.id,
+          currentStep: SETUP_STEP + 1,
+        })
         .returning();
       calculationId = calculation.id;
     }
@@ -118,28 +134,6 @@ export async function saveCalculatorSetupService(
 
     return setup;
   });
-}
-
-export async function getCalculatorSetupService(
-  userId: string,
-  db: Db = getDrizzleClient(),
-): Promise<SaveCalculatorSetupInput | null> {
-  const [row] = await db
-    .select({
-      name: products.name,
-      unit: costingSetup.unit,
-      volume: costingSetup.volume,
-      currency: costingSetup.currency,
-      period: costingSetup.period,
-    })
-    .from(costingSetup)
-    .innerJoin(calculations, eq(costingSetup.calculationId, calculations.id))
-    .innerJoin(products, eq(calculations.productId, products.id))
-    .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
-    .orderBy(desc(calculations.createdAt), desc(calculations.id))
-    .limit(1);
-
-  return row ? saveCalculatorSetupInputSchema.parse(row) : null;
 }
 
 /**
@@ -198,22 +192,6 @@ export async function getCalculatorDraftSetupService(
     }),
   };
 }
-
-// The database persists the cost dimensions as `fixed | variable` and
-// `direct | indirect` (lib/schemas/costs/fields.ts), while the pure engine
-// speaks `fijo | variable` and `directo | indirecto`. The translation lives
-// here, at the application boundary; the persisted vocabulary never changes.
-// Unknown values pass through untouched so the engine rejects them instead of
-// the service silently coercing bad data.
-const ENGINE_BEHAVIOR: Record<string, string> = {
-  fixed: "fijo",
-  variable: "variable",
-};
-
-const ENGINE_TRACEABILITY: Record<string, string> = {
-  direct: "directo",
-  indirect: "indirecto",
-};
 
 function emptyCostSummary(
   calculationId: string | null,
@@ -290,8 +268,10 @@ export async function getCalculatorCostSummaryService(
   // unitCost, because own labor already enters the total through its behavior.
   const lines: CostLine[] = rows.map((row) => ({
     id: row.id,
-    behavior: ENGINE_BEHAVIOR[row.behavior] ?? row.behavior,
-    traceability: ENGINE_TRACEABILITY[row.traceability] ?? row.traceability,
+    // The columns are plain text; the engine validates them at runtime and
+    // rejects unknown values, so the cast only bridges the static type.
+    behavior: row.behavior as CostLine["behavior"],
+    traceability: row.traceability as CostLine["traceability"],
     isOwnLabor: false,
     amount: row.amount,
   }));
@@ -317,4 +297,27 @@ export async function getCalculatorCostSummaryService(
     volume: totals.volume,
     currency: "ARS",
   };
+}
+
+export type CalculatorProgress = {
+  // Furthest wizard step the user may open (1..7).
+  currentStep: number;
+};
+
+/**
+ * Read model for the wizard chrome and the step guards. A user without a draft
+ * has only step 1 available. It never writes.
+ */
+export async function getCalculatorProgressService(
+  userId: string,
+  db: Db = getDrizzleClient(),
+): Promise<CalculatorProgress> {
+  const [draft] = await db
+    .select({ currentStep: calculations.currentStep })
+    .from(calculations)
+    .where(and(eq(calculations.userId, userId), eq(calculations.status, "draft")))
+    .orderBy(desc(calculations.createdAt), desc(calculations.id))
+    .limit(1);
+
+  return { currentStep: draft?.currentStep ?? 1 };
 }

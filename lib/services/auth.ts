@@ -6,6 +6,7 @@ import {
   passwordResetRequestSchema,
   passwordUpdateSchema,
   signupSchema,
+  verificationEmailSchema,
 } from "@/lib/schemas/auth/auth";
 import { AppError } from "@/lib/errors/app-error";
 import { ERROR_CATALOG, type ErrorCode } from "@/lib/errors/catalog";
@@ -69,14 +70,19 @@ export async function loginService(
 export async function signupService(
   client: SupabaseClient,
   input: unknown,
+  // Where the confirmation email link lands once GoTrue verifies it.
+  emailRedirectTo: string,
 ): Promise<Record<string, never>> {
   const { email, password, displayName } = signupSchema.parse(input);
 
   const { error } = await client.auth.signUp({
     email,
     password,
-    // Empty name ("" after trim) means no display name at all.
-    options: { data: { display_name: displayName || undefined } },
+    options: {
+      // Empty name ("" after trim) means no display name at all.
+      data: { display_name: displayName || undefined },
+      emailRedirectTo,
+    },
   });
 
   if (error) {
@@ -113,6 +119,68 @@ export async function getSessionUserService(
 
   // Expose only public fields, never the full Supabase user.
   return { id: data.user.id, email: data.user.email };
+}
+
+// Sends the signup confirmation email again. Rate limits and outages are
+// reported (the user needs to know to wait or retry); any other rejection
+// (unknown or already confirmed address) is logged and answered with success
+// so the screen cannot be used to probe which emails have an account.
+export async function resendSignupConfirmationService(
+  client: SupabaseClient,
+  input: unknown,
+  // Where the email link lands for the PKCE code exchange.
+  emailRedirectTo: string,
+): Promise<Record<string, never>> {
+  const { email } = verificationEmailSchema.parse(input);
+
+  const { error } = await client.auth.resend({ type: "signup", email, options: { emailRedirectTo } });
+
+  if (error) {
+    const code = classifyInfrastructureFailure(error);
+    if (code) throw new AppError(code, undefined, { cause: error });
+    console.warn("[AUTH_RESEND_REJECTED] Signup confirmation not resent", error);
+  }
+
+  return {};
+}
+
+export type EmailVerificationStatus = { confirmed: boolean };
+
+// Re-reads the session to answer "did the email actually get confirmed?".
+// No session is the normal case right after signup (the link may be opened
+// in another tab), so it means "not confirmed yet", never success.
+// A session whose email does not match the one being verified also counts
+// as not confirmed: the screen must never claim a verification that did
+// not happen for the shown address.
+export async function getEmailVerificationStatusService(
+  client: SupabaseClient,
+  input: unknown,
+): Promise<EmailVerificationStatus> {
+  const { email } = verificationEmailSchema.parse(input);
+
+  const { data, error } = await client.auth.getUser();
+
+  if (error) {
+    // Missing/expired session is expected here, not an outage: the user
+    // may have confirmed the email in another browser.
+    if (
+      error.name === "AuthSessionMissingError" ||
+      error.code === "session_not_found" ||
+      error.code === "session_expired"
+    ) {
+      return { confirmed: false };
+    }
+    const code = classifyInfrastructureFailure(error);
+    if (code) throw new AppError(code, undefined, { cause: error });
+    return { confirmed: false };
+  }
+
+  if (!data.user) return { confirmed: false };
+
+  const confirmedAt = data.user.email_confirmed_at ?? data.user.confirmed_at;
+  const sameEmail = data.user.email?.trim().toLowerCase() === email.trim().toLowerCase();
+
+  return { confirmed: Boolean(confirmedAt) && sameEmail };
 }
 
 export async function requestPasswordResetService(

@@ -1,5 +1,12 @@
 import Decimal from "decimal.js";
 
+import {
+  COST_BEHAVIORS,
+  COST_TRACEABILITIES,
+  type CostBehavior,
+  type CostTraceability,
+} from "@/lib/schemas/costs/fields";
+
 // Pure period totals for #111. Each snapshot line is counted once, by its id,
 // into the behavior bucket that owns the period total:
 //
@@ -7,7 +14,7 @@ import Decimal from "decimal.js";
 //   unitarioPorDocena = totalPeriodo / volume
 //
 // `volume` is dozens produced. Dozens sold are not an input, so they cannot
-// change the divisor. `subtotalIndirecto` (traceability indirecto) and
+// change the divisor. `subtotalIndirecto` (traceability indirect) and
 // `subtotalTrabajoPropio` (isOwnLabor) are cross-cuts: the same amount is
 // already inside the total through its behavior, and adding the cross-cut
 // again would bill that line twice.
@@ -21,17 +28,12 @@ const FINAL_MONEY_DECIMALS = 2;
 const FINAL_MONEY_ROUNDING = Decimal.ROUND_HALF_UP;
 const ZERO_MONEY = "0.00";
 
-const BEHAVIOR_FIJO = "fijo";
-const BEHAVIOR_VARIABLE = "variable";
-const TRACEABILITY_DIRECTO = "directo";
-const TRACEABILITY_INDIRECTO = "indirecto";
-
 export type MoneyString = string;
 
 export type CostLine = {
   id: string;
-  behavior: string;
-  traceability: string;
+  behavior: CostBehavior;
+  traceability: CostTraceability;
   isOwnLabor: boolean;
   amount: string;
 };
@@ -134,15 +136,12 @@ export function calculateCostTotals(input: CostTotalsInput): CostTotalsResult {
     }
 
     const behavior = norm(line.behavior);
-    if (behavior !== BEHAVIOR_FIJO && behavior !== BEHAVIOR_VARIABLE) {
+    if (!(COST_BEHAVIORS as readonly string[]).includes(behavior)) {
       return failure("INVALID_BEHAVIOR", line.id);
     }
 
     const traceability = norm(line.traceability);
-    if (
-      traceability !== TRACEABILITY_DIRECTO &&
-      traceability !== TRACEABILITY_INDIRECTO
-    ) {
+    if (!(COST_TRACEABILITIES as readonly string[]).includes(traceability)) {
       return failure("INVALID_TRACEABILITY", line.id);
     }
 
@@ -153,7 +152,7 @@ export function calculateCostTotals(input: CostTotalsInput): CostTotalsResult {
 
     seen.add(line.id);
 
-    if (behavior === BEHAVIOR_FIJO) {
+    if (behavior === "fixed") {
       fijo = fijo.plus(amount);
     } else {
       variable = variable.plus(amount);
@@ -163,7 +162,7 @@ export function calculateCostTotals(input: CostTotalsInput): CostTotalsResult {
       trabajoPropio = trabajoPropio.plus(amount);
     }
 
-    if (traceability === TRACEABILITY_INDIRECTO) {
+    if (traceability === "indirect") {
       indirecto = indirecto.plus(amount);
     }
   }

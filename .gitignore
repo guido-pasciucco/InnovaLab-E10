@@ -48,6 +48,7 @@ yarn-error.log*
 .env*
 !.env.example
 !.env.test.example
+!.env.deploy.example
 # .env.test holds the local e2e stack values; keep it out of git.
 .env.test
 
@@ -61,5 +62,6 @@ next-env.d.ts
 .vscode
 # Local AI runtime state
 .atl/
+.codegraph/
 
 odd/
