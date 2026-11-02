@@ -48,7 +48,7 @@ export default async function HomePage() {
   return (
     <>
       <SiteHeader startHref={startHref} />
-      <main className="relative min-h-screen overflow-x-clip bg-[#F7FBF8] font-sans text-[#122B22]">
+      <main className="relative min-h-screen overflow-x-clip bg-surface-tint font-sans text-fg">
         <Hero startHref={startHref} />
         <StepsSection />
         <BreakEvenSection />

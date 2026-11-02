@@ -57,7 +57,7 @@ function ErrorBanner({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 lg:text-sm"
+      className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger-subtle px-3 py-2 text-xs text-danger lg:text-sm"
     >
       <svg
         aria-hidden="true"
@@ -121,7 +121,7 @@ export default function LoginForm() {
       {state?.ok && (
         <p
           role="status"
-          className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700 lg:text-sm"
+          className="rounded-md border border-success/30 bg-success-subtle px-3 py-2 text-xs text-success lg:text-sm"
         >
           Sesión iniciada correctamente. Redirigiendo…{" "}
           <Link href="/" className="font-semibold underline underline-offset-2">
@@ -155,19 +155,19 @@ export default function LoginForm() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <label
           htmlFor="remember"
-          className="flex items-center gap-2 text-xs font-medium text-[#31503a] lg:text-sm"
+          className="flex items-center gap-2 text-xs font-medium text-fg-muted lg:text-sm"
         >
           <input
             id="remember"
             name="remember"
             type="checkbox"
-            className="size-4 rounded border-[#b7c9bb] accent-[#168a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d]"
+            className="size-4 rounded border-border-control accent-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           />
           Recordarme
         </label>
         <Link
           href="/reset-password"
-          className="text-xs font-semibold text-[#168a3d] underline-offset-2 hover:underline lg:text-sm"
+          className="text-xs font-semibold text-link underline-offset-2 hover:underline lg:text-sm"
         >
           ¿Olvidaste tu contraseña?
         </Link>
@@ -176,28 +176,28 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending || Boolean(state?.ok)}
-        className="mt-1 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#0a7a12] px-4 text-sm font-bold text-white shadow-[0_4px_10px_rgba(10,122,18,0.3)] transition hover:bg-[#08620f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a7a12] disabled:cursor-not-allowed disabled:bg-[#9cc9a0] lg:h-[44px] lg:text-base"
+        className="mt-1 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-action-primary px-4 text-sm font-bold text-on-action-primary shadow-[0_4px_10px_rgba(10,122,18,0.3)] transition hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-action-disabled disabled:text-fg-disabled lg:h-[44px] lg:text-base"
       >
         {pending ? "Ingresando…" : "Ingresar"}
         {!pending && <ArrowIcon />}
       </button>
 
-      <div aria-hidden="true" className="flex items-center gap-3 text-[11px] font-medium text-[#6a806f] lg:text-sm">
-        <span className="h-px flex-1 bg-[#d7e5d9]" />
+      <div aria-hidden="true" className="flex items-center gap-3 text-[11px] font-medium text-fg-muted lg:text-sm">
+        <span className="h-px flex-1 bg-border-default" />
         <span>o</span>
-        <span className="h-px flex-1 bg-[#d7e5d9]" />
+        <span className="h-px flex-1 bg-border-default" />
       </div>
 
       <Link
         href="/"
-        className="flex h-10 w-full items-center justify-center rounded-md border border-[#b7c9bb] bg-white px-4 text-sm font-semibold text-[#31503a] transition hover:border-[#3ad85c] hover:text-[#174425] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] lg:h-[42px] lg:text-base"
+        className="flex h-10 w-full items-center justify-center rounded-md border border-border-default bg-action-tonal px-4 text-sm font-semibold text-on-action-tonal transition hover:border-accent-glow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus lg:h-[42px] lg:text-base"
       >
         Continuar sin cuenta
       </Link>
 
-      <p className="text-center text-xs text-[#607565] lg:text-sm">
+      <p className="text-center text-xs text-fg-muted lg:text-sm">
         ¿No tenés cuenta?{" "}
-        <Link href="/signup" className="font-semibold text-[#168a3d] underline-offset-2 hover:underline">
+        <Link href="/signup" className="font-semibold text-link underline-offset-2 hover:underline">
           Crear cuenta
         </Link>
       </p>

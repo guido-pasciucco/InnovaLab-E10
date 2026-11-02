@@ -19,7 +19,7 @@ export function FixedCostDeleteButton({
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
-      className="flex size-11 items-center justify-center rounded-md text-gray-500 transition-colors disabled:pointer-events-none disabled:opacity-40 hover:bg-red-50 hover:text-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600"
+      className="flex size-11 items-center justify-center rounded-md text-fg-muted transition-colors disabled:pointer-events-none disabled:opacity-40 hover:bg-danger-subtle hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <Trash2 aria-hidden="true" className="size-5" />
     </button>

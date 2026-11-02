@@ -67,8 +67,8 @@ export function BreakEvenPreviewChart() {
 
       <defs>
         <linearGradient id="break-even-profit" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0B6B4F" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#0B6B4F" stopOpacity="0.04" />
+          <stop offset="0%" stopColor="var(--color-action-primary)" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="var(--color-action-primary)" stopOpacity="0.04" />
         </linearGradient>
       </defs>
 
@@ -79,7 +79,7 @@ export function BreakEvenPreviewChart() {
             y1={y(tick)}
             x2={WIDTH - PADDING.right}
             y2={y(tick)}
-            stroke="#E4EEE8"
+            stroke="var(--color-border-default)"
             strokeWidth="1"
           />
           <text
@@ -88,7 +88,7 @@ export function BreakEvenPreviewChart() {
             textAnchor="end"
             fontSize="10"
             fontWeight="500"
-            fill="#7A8D84"
+            fill="var(--color-fg-muted)"
           >
             {moneyLabel(tick)}
           </text>
@@ -102,7 +102,7 @@ export function BreakEvenPreviewChart() {
         y1={y(FIXED_COSTS)}
         x2={x(MAX_UNITS)}
         y2={y(FIXED_COSTS)}
-        stroke="#B98A3D"
+        stroke="var(--color-warning)"
         strokeWidth="1.6"
         strokeDasharray="5 5"
       />
@@ -112,7 +112,7 @@ export function BreakEvenPreviewChart() {
         y1={y(revenue(0))}
         x2={x(MAX_UNITS)}
         y2={y(revenue(MAX_UNITS))}
-        stroke="#0B6B4F"
+        stroke="var(--color-action-primary)"
         strokeWidth="2.6"
         strokeLinecap="round"
       />
@@ -121,7 +121,7 @@ export function BreakEvenPreviewChart() {
         y1={y(totalCost(0))}
         x2={x(MAX_UNITS)}
         y2={y(totalCost(MAX_UNITS))}
-        stroke="#486055"
+        stroke="var(--color-fg-muted)"
         strokeWidth="2.2"
         strokeLinecap="round"
       />
@@ -131,7 +131,7 @@ export function BreakEvenPreviewChart() {
         y1={y(BREAK_EVEN_VALUE)}
         x2={x(BREAK_EVEN_UNITS)}
         y2={y(0)}
-        stroke="#0B6B4F"
+        stroke="var(--color-action-primary)"
         strokeWidth="1"
         strokeDasharray="3 4"
         opacity="0.5"
@@ -140,8 +140,8 @@ export function BreakEvenPreviewChart() {
         cx={x(BREAK_EVEN_UNITS)}
         cy={y(BREAK_EVEN_VALUE)}
         r="4.5"
-        fill="#0B6B4F"
-        stroke="#FFFFFF"
+        fill="var(--color-action-primary)"
+        stroke="var(--color-surface)"
         strokeWidth="2"
       />
 
@@ -152,14 +152,14 @@ export function BreakEvenPreviewChart() {
           width="152"
           height="38"
           rx="9"
-          fill="#FFFFFF"
-          stroke="#DCEBE2"
+          fill="var(--color-surface)"
+          stroke="var(--color-border-default)"
         />
         <text
           x={x(BREAK_EVEN_UNITS) + 20}
           y={y(BREAK_EVEN_VALUE) - 33}
           fontSize="9"
-          fill="#7A8D84"
+          fill="var(--color-fg-muted)"
         >
           Punto de equilibrio
         </text>
@@ -168,7 +168,7 @@ export function BreakEvenPreviewChart() {
           y={y(BREAK_EVEN_VALUE) - 19}
           fontSize="11"
           fontWeight="700"
-          fill="#122B22"
+          fill="var(--color-fg)"
         >
           47 unidades
         </text>
@@ -182,7 +182,7 @@ export function BreakEvenPreviewChart() {
           textAnchor="middle"
           fontSize="10"
           fontWeight="500"
-          fill="#7A8D84"
+          fill="var(--color-fg-muted)"
         >
           {tick === MAX_UNITS ? "100 u." : tick}
         </text>

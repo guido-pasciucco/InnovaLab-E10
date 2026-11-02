@@ -22,10 +22,7 @@ export function TextField({
 
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <label
-        htmlFor={inputId}
-        className="text-base font-semibold text-gray-900"
-      >
+      <label htmlFor={inputId} className="text-base font-semibold text-fg">
         {label}
       </label>
       <input
@@ -37,10 +34,10 @@ export function TextField({
             .filter(Boolean)
             .join(" ") || undefined
         }
-        className={`min-h-11 w-full rounded-[10px] border border-gray-400 bg-white px-4 py-2 text-base text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-green-600,var(--color-blue-600))] aria-invalid:border-red-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 ${className}`}
+        className={`min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-4 py-2 text-base text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-invalid:border-danger disabled:cursor-not-allowed disabled:bg-surface-disabled disabled:text-fg-disabled ${className}`}
       />
       {error && (
-        <p id={errorId} role="alert" className="text-sm text-red-600">
+        <p id={errorId} role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}

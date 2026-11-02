@@ -34,21 +34,21 @@ const helpLinks: readonly FooterLink[] = [
 function FooterColumn({ title, links }: FooterColumnProps) {
   return (
     <div>
-      <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-[#8FB6A5]">{title}</h2>
+      <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-on-brand-muted">{title}</h2>
       <ul className="mt-4 space-y-3 text-sm">
         {links.map((link) => (
           <li key={link.href}>
             {link.href.startsWith("#") ? (
               <a
                 href={link.href}
-                className="rounded-md text-[#D7E9E0] transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="rounded-md text-on-brand transition-colors hover:text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
               >
                 {link.label}
               </a>
             ) : (
               <Link
                 href={link.href}
-                className="rounded-md text-[#D7E9E0] transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="rounded-md text-on-brand transition-colors hover:text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
               >
                 {link.label}
               </Link>
@@ -62,12 +62,12 @@ function FooterColumn({ title, links }: FooterColumnProps) {
 
 export function SiteFooter() {
   return (
-    <footer className="bg-[#08291F] font-sans text-[#D7E9E0]">
+    <footer className="bg-fg font-sans text-on-brand">
       <div className={`${container} py-14`}>
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
           <div className="max-w-sm">
             <BrandMark tone="light" />
-            <p className="mt-5 text-sm leading-6 text-[#A9C9BA]">
+            <p className="mt-5 text-sm leading-6 text-on-brand-muted">
               La herramienta que te ayuda a poner precios con información real, entender tu margen y
               saber cuándo tu negocio empieza a ganar.
             </p>
@@ -78,7 +78,7 @@ export function SiteFooter() {
           <FooterColumn title="Ayuda" links={helpLinks} />
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-[#8FB6A5] sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-3 border-t border-surface/10 pt-6 text-xs text-on-brand-muted sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 Calculadora de Costos. Todos los derechos reservados.</p>
           <p>Hecho para emprendedores.</p>
         </div>

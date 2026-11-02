@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       subtitle="Ingresá para guardar y retomar tus cálculos."
     >
       {linkError && (
-        <p role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-center text-sm text-red-700">
+        <p role="alert" className="mb-4 rounded-md bg-danger-subtle p-3 text-center text-sm text-danger">
           {linkError}
         </p>
       )}

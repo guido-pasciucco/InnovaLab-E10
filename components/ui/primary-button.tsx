@@ -2,7 +2,6 @@ import type { ComponentPropsWithRef } from "react";
 
 export type PrimaryButtonProps = ComponentPropsWithRef<"button">;
 
-// #170 owns the green tokens. Until they exist, retain the current blue palette.
 export function PrimaryButton({
   type = "button",
   className = "",
@@ -12,7 +11,7 @@ export function PrimaryButton({
     <button
       {...props}
       type={type}
-      className={`min-h-11 w-full rounded-[14px] bg-[var(--brand-green-600,var(--color-blue-600))] px-4 py-2 text-base font-semibold text-white hover:bg-[var(--brand-green-700,var(--color-blue-700))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-green-600,var(--color-blue-600))] disabled:cursor-not-allowed disabled:bg-[var(--brand-green-100,var(--color-blue-300))] ${className}`}
+      className={`min-h-11 w-full rounded-[14px] bg-action-primary px-4 py-2 text-base font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-action-disabled disabled:text-fg-disabled ${className}`}
     />
   );
 }

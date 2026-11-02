@@ -116,7 +116,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
 
   return (
     <>
-      <section className="rounded-[32px] bg-white/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+      <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
         <StepHeader
           currentStep={1}
           title="Configuración"
@@ -129,7 +129,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
           className="mt-4 flex flex-col gap-3"
         >
           {state && !state.ok && !hasServerFieldErrors && (
-            <p role="alert" className="text-sm text-red-600">
+            <p role="alert" className="text-sm text-danger">
               {state.message}
             </p>
           )}
@@ -137,7 +137,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
           <div className="flex flex-col gap-2">
             <p
               id="sector-label"
-              className="text-base font-semibold text-gray-900"
+              className="text-base font-semibold text-fg"
             >
               Empezá con un ejemplo por rubro
             </p>
@@ -152,7 +152,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
                   type="button"
                   aria-pressed={sector === selectedSector}
                   onClick={() => setSelectedSector(sector)}
-                  className="min-h-9 rounded-full border-2 border-gray-400 bg-white px-4 text-sm font-semibold text-gray-900 aria-pressed:border-[#3ad85c] aria-pressed:bg-[#d9f7e3] aria-pressed:text-[#136831] aria-pressed:ring-2 aria-pressed:ring-[#3ad85c]/40"
+                  className="min-h-9 rounded-full border-2 border-border-control bg-surface px-4 text-sm font-semibold text-fg aria-pressed:border-accent-glow aria-pressed:bg-action-tonal aria-pressed:text-on-action-tonal aria-pressed:ring-2 aria-pressed:ring-accent-glow/40"
                 >
                   {sector}
                 </button>
@@ -185,7 +185,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
               value="ARS"
               disabled
               onChange={noop}
-              className="appearance-none disabled:bg-white! disabled:text-gray-900!"
+              className="appearance-none disabled:bg-surface! disabled:text-fg!"
             >
               <option value="ARS">ARS</option>
             </SelectField>
@@ -194,7 +194,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
               value="Mensual"
               disabled
               onChange={noop}
-              className="appearance-none disabled:bg-white! disabled:text-gray-900!"
+              className="appearance-none disabled:bg-surface! disabled:text-fg!"
             >
               <option value="Mensual">Mensual</option>
             </SelectField>

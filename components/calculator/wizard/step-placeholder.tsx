@@ -9,7 +9,7 @@ type StepPlaceholderProps = {
 // that renders it with the real step.
 export function StepPlaceholder({ step }: StepPlaceholderProps) {
   return (
-    <section className="rounded-[32px] bg-white/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+    <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
       <StepHeader
         currentStep={step}
         title={`Paso ${step}`}

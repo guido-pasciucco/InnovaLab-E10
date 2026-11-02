@@ -22,18 +22,18 @@ export default function GlobalError({
             Error crítico de la aplicación
           </h2>
 
-          <p className="text-gray-600">
+          <p className="text-fg-muted">
             Se produjo un error inesperado.
           </p>
           {error.digest && (
-            <p className="text-gray-600">
+            <p className="text-fg-muted">
               Digest: {error.digest}
             </p>
           )}
 
           <button
             onClick={() => retry()}
-            className="rounded bg-black px-4 py-2 text-white"
+            className="rounded bg-action-primary px-4 py-2 text-on-action-primary"
           >
             Reintentar
           </button>

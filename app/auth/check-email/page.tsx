@@ -26,7 +26,7 @@ export default function CheckEmailPage() {
       }
       centered
       icon={
-        <span className="grid size-16 place-items-center rounded-full border-2 border-[#3ad85c] bg-white text-[#168a3d] shadow-[0_0_18px_rgba(58,216,92,0.55)]">
+        <span className="grid size-16 place-items-center rounded-full border-2 border-accent-glow bg-surface text-link shadow-[0_0_18px_rgba(58,216,92,0.55)]">
           <Mail aria-hidden="true" className="size-6" strokeWidth={1.5} />
         </span>
       }
@@ -36,8 +36,8 @@ export default function CheckEmailPage() {
       <div className="flex flex-col gap-3">
         <VerifiedButton />
         <ResendButton />
-        <p className="text-center text-[11px] text-[#607565] lg:text-xs">Si no lo ves, revisá spam o promociones.</p>
-        <Link href="/signup" className="text-center text-xs font-semibold text-[#168a3d] underline underline-offset-2 lg:text-sm">
+        <p className="text-center text-[11px] text-fg-muted lg:text-xs">Si no lo ves, revisá spam o promociones.</p>
+        <Link href="/signup" className="text-center text-xs font-semibold text-link underline underline-offset-2 lg:text-sm">
           Cambiar correo
         </Link>
       </div>

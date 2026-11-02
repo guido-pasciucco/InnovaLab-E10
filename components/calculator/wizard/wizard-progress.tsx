@@ -24,7 +24,7 @@ export function WizardProgress({
           const bar = (
             <span
               className={`block h-1.5 rounded-full ${
-                isComplete || isCurrent ? "bg-brand-green-600" : "bg-white"
+                isComplete || isCurrent ? "bg-brand-green-600" : "bg-surface"
               }`}
             />
           );

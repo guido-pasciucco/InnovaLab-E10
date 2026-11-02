@@ -9,5 +9,5 @@ import { noopSubscribe, readSignupEmail } from "./signup-email";
 export function SentTo() {
   const email = useSyncExternalStore(noopSubscribe, readSignupEmail, () => null);
 
-  return <>Te enviamos un enlace a {email ? <strong className="font-semibold text-[#31503a]">{email}</strong> : "tu correo"} para activar tu cuenta.</>;
+  return <>Te enviamos un enlace a {email ? <strong className="font-semibold text-fg-muted">{email}</strong> : "tu correo"} para activar tu cuenta.</>;
 }

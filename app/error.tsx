@@ -21,14 +21,14 @@ export default function Error({
         Ha ocurrido un error
       </h2>
 
-      <p className="text-gray-600">
+      <p className="text-fg-muted">
         Algo salió mal. Inténtalo de nuevo.
       </p>
 
       <button
         type="button"
         onClick={() => retry()}
-        className= "rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        className= "rounded bg-action-primary px-4 py-2 font-medium text-on-action-primary hover:bg-action-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
       >
         Reintentar
       </button>

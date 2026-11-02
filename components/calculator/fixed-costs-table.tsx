@@ -74,8 +74,8 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
         )}
       </ul>
 
-      <div className="flex flex-wrap items-baseline justify-between gap-2 border-y border-gray-200 py-4">
-        <span className="text-sm font-semibold text-gray-900">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-y border-border-default py-4">
+        <span className="text-sm font-semibold text-fg">
           Subtotal fijos
         </span>
         <span

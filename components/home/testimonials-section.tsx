@@ -16,7 +16,7 @@ const testimonials: readonly Testimonial[] = [
     name: "Lucía Fernández",
     business: "Indumentaria",
     initials: "LF",
-    avatarClass: "bg-[#DFF3E8] text-[#0B6B4F]",
+    avatarClass: "bg-action-tonal text-link",
   },
   {
     quote:
@@ -24,7 +24,7 @@ const testimonials: readonly Testimonial[] = [
     name: "Martín Ríos",
     business: "Panadería",
     initials: "MR",
-    avatarClass: "bg-[#FDF0D8] text-[#8A5B12]",
+    avatarClass: "bg-warning-subtle text-warning",
   },
   {
     quote:
@@ -32,7 +32,7 @@ const testimonials: readonly Testimonial[] = [
     name: "Carolina Benítez",
     business: "Cerámica",
     initials: "CB",
-    avatarClass: "bg-[#E7E9FB] text-[#3D478C]",
+    avatarClass: "bg-action-tonal text-on-action-tonal",
   },
 ];
 
@@ -47,7 +47,7 @@ export function TestimonialsSection() {
         <div className="mx-auto max-w-3xl text-center">
           <p className={eyebrow}>Testimonios · Ejemplo ilustrativo</p>
           <h2 id="testimonials-title" className={sectionTitle}>
-            Pensado para <span className="text-[#0B6B4F]">emprendedores</span> como vos
+            Pensado para <span className="text-link">emprendedores</span> como vos
           </h2>
           <p className={sectionLead}>
             Así imaginamos que decidirían con datos quienes dejen de poner precios a ojo. Estos
@@ -59,17 +59,17 @@ export function TestimonialsSection() {
           {testimonials.map((testimonial) => (
             <figure
               key={testimonial.name}
-              className="flex flex-col rounded-2xl border border-[#E0EEE6] bg-white p-6 shadow-sm"
+              className="flex flex-col rounded-2xl border border-border-default bg-surface p-6 shadow-sm"
             >
-              <div className="flex gap-0.5 text-[#D99A00]" aria-label="5 de 5 estrellas">
+              <div className="flex gap-0.5 text-warning" aria-label="5 de 5 estrellas">
                 {Array.from({ length: 5 }, (_, index) => (
                   <StarIcon key={index} className="h-4 w-4" />
                 ))}
               </div>
-              <blockquote className="mt-4 flex-1 text-sm leading-7 text-[#486055]">
+              <blockquote className="mt-4 flex-1 text-sm leading-7 text-fg-muted">
                 “{testimonial.quote}”
               </blockquote>
-              <figcaption className="mt-6 flex items-center gap-3 border-t border-[#E4EEE8] pt-5">
+              <figcaption className="mt-6 flex items-center gap-3 border-t border-border-default pt-5">
                 <span
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${testimonial.avatarClass}`}
                   aria-hidden="true"
@@ -77,8 +77,8 @@ export function TestimonialsSection() {
                   {testimonial.initials}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-[#122B22]">{testimonial.name}</p>
-                  <p className="mt-0.5 text-xs text-[#6C8077]">{testimonial.business}</p>
+                  <p className="text-sm font-semibold text-fg">{testimonial.name}</p>
+                  <p className="mt-0.5 text-xs text-fg-muted">{testimonial.business}</p>
                 </div>
               </figcaption>
             </figure>

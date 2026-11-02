@@ -38,7 +38,7 @@ type FixedCostRowItemProps = {
 };
 
 const INPUT_BASE =
-  "w-full min-w-0 rounded-md border border-transparent bg-transparent px-2 py-2 text-base text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-brand-green-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600";
+  "w-full min-w-0 rounded-md border border-transparent bg-transparent px-2 py-2 text-base text-fg transition-colors placeholder:text-placeholder hover:border-border-control focus:border-brand-green-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600";
 const AMOUNT_INPUT_CLASS = `${INPUT_BASE} text-right font-medium tabular-nums`;
 
 const SAVE_FAILED = "No pudimos guardar el costo. Probá de nuevo.";
@@ -214,7 +214,7 @@ export function FixedCostRowItem({
     <li
       onBlur={handleRowBlur}
       aria-busy={busy || undefined}
-      className={`border-b border-gray-200 py-1 transition-opacity duration-200 last:border-b-0 ${busy ? "opacity-60" : ""}`}
+      className={`border-b border-border-default py-1 transition-opacity duration-200 last:border-b-0 ${busy ? "opacity-60" : ""}`}
     >
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-start gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_2.75rem] sm:gap-3">
         <div className="min-w-0">
@@ -261,17 +261,17 @@ export function FixedCostRowItem({
       </div>
 
       {conceptIssue && (
-        <p id={conceptErrorId} role="alert" className="mt-1 text-sm text-red-600">
+        <p id={conceptErrorId} role="alert" className="mt-1 text-sm text-danger">
           {conceptIssue}
         </p>
       )}
       {amountError && (
-        <p id={amountErrorId} role="alert" className="mt-1 text-sm text-red-600">
+        <p id={amountErrorId} role="alert" className="mt-1 text-sm text-danger">
           {amountError}
         </p>
       )}
       {saveError && (
-        <p role="alert" className="mt-1 text-sm text-red-600">
+        <p role="alert" className="mt-1 text-sm text-danger">
           {saveError}
         </p>
       )}

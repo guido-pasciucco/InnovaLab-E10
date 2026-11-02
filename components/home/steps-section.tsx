@@ -76,14 +76,14 @@ export function StepsSection() {
     <section
       id="como-funciona"
       aria-labelledby="steps-title"
-      className="scroll-mt-36 border-y border-[#E3EFE8] bg-white py-16 sm:py-20"
+      className="scroll-mt-36 border-y border-border-default bg-surface py-16 sm:py-20"
     >
       <div className={container}>
         <div className="max-w-3xl">
           <p className={eyebrow}>El recorrido</p>
           <h2 id="steps-title" className={sectionTitle}>
             Al iniciar sesión, accedés al recorrido guiado en{" "}
-            <span className="text-[#0B6B4F]">7 pasos</span>
+            <span className="text-link">7 pasos</span>
           </h2>
           <p className={sectionLead}>
             Avanzás sabiendo dónde estás, qué te falta y cómo impacta cada cambio que hacés.
@@ -96,8 +96,8 @@ export function StepsSection() {
               key={step.number}
               className={`relative flex flex-col rounded-2xl border p-5 ${
                 step.featured
-                  ? "border-[#0B3D2E] bg-[#0B3D2E] text-white shadow-xl shadow-[#0B3D2E]/20"
-                  : "border-[#E0EEE6] bg-[#FBFDFC]"
+                  ? "border-brand-tile bg-brand-tile text-on-action-primary shadow-xl shadow-brand-tile/20"
+                  : "border-border-default bg-surface-tint"
               } ${step.wide ? "sm:col-span-2 lg:col-span-3" : ""}`}
             >
               <div
@@ -112,26 +112,26 @@ export function StepsSection() {
                     <span
                       className={`flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold ${
                         step.featured
-                          ? "bg-white/10 text-[#A7F3D0]"
-                          : "bg-[#EAF7F0] text-[#0B6B4F]"
+                          ? "bg-surface/10 text-on-brand-accent"
+                          : "bg-action-tonal text-link"
                       }`}
                     >
                       {step.number}
                     </span>
                     <step.icon
-                      className={`h-5 w-5 ${step.featured ? "text-[#A7F3D0]" : "text-[#0B6B4F]"}`}
+                      className={`h-5 w-5 ${step.featured ? "text-on-brand-accent" : "text-link"}`}
                     />
                   </div>
                   <h3
                     className={`mt-4 text-base font-semibold tracking-[-0.01em] ${
-                      step.featured ? "text-white" : "text-[#122B22]"
+                      step.featured ? "text-on-action-primary" : "text-fg"
                     }`}
                   >
                     {step.title}
                   </h3>
                   <p
                     className={`mt-2 text-sm leading-6 ${
-                      step.featured ? "text-[#C9E6D8]" : "text-[#5B6F65]"
+                      step.featured ? "text-on-brand" : "text-fg-muted"
                     }`}
                   >
                     {step.description}
@@ -141,7 +141,7 @@ export function StepsSection() {
                 {step.featured ? (
                   <Link
                     href="/paso-1"
-                    className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#A7F3D0] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-on-brand-accent hover:text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
                   >
                     Ver cómo funciona
                     <ArrowRightIcon className="h-4 w-4" />

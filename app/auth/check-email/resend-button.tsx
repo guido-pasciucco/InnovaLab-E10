@@ -36,13 +36,13 @@ export function ResendButton() {
           setCooldown(COOLDOWN_SECONDS);
           dispatchInTransition(submitAction)({ email });
         }}
-        className="h-11 w-full rounded-lg border border-[#9fd9b0] bg-[#e4f5e9] px-4 text-sm font-bold text-[#136831] transition hover:bg-[#d6f0de] disabled:cursor-not-allowed disabled:opacity-60 lg:text-base"
+        className="h-11 w-full rounded-lg border border-border-default bg-action-tonal px-4 text-sm font-bold text-on-action-tonal transition hover:bg-border-default disabled:cursor-not-allowed disabled:opacity-60 lg:text-base"
       >
         {pending ? "Enviando…" : cooldown > 0 ? `Reenviar correo (${cooldown}s)` : "Reenviar correo"}
       </button>
-      {state?.ok && <p role="status" className="text-center text-xs text-[#31503a]">Te lo reenviamos. Revisá tu bandeja de entrada.</p>}
-      {state && !state.ok && <p role="alert" className="text-center text-xs text-red-600">{state.message}</p>}
-      {transportError && <p role="alert" className="text-center text-xs text-red-600">{transportError}</p>}
+      {state?.ok && <p role="status" className="text-center text-xs text-fg-muted">Te lo reenviamos. Revisá tu bandeja de entrada.</p>}
+      {state && !state.ok && <p role="alert" className="text-center text-xs text-danger">{state.message}</p>}
+      {transportError && <p role="alert" className="text-center text-xs text-danger">{transportError}</p>}
     </>
   );
 }

@@ -104,23 +104,23 @@ export default function SignupForm() {
       <PasswordInput {...register("password")} id="password" label="Contraseña" autoComplete="new-password" hint="Mínimo 8 caracteres." error={errors.password?.message} disabled={pending} />
       <PasswordInput {...register("confirmPassword")} id="confirmPassword" label="Confirmar contraseña" autoComplete="new-password" error={errors.confirmPassword?.message} disabled={pending} />
 
-      <p className="rounded-md border border-[#d7e5d9] bg-[#f8fcf8] px-3 py-2 text-[11px] leading-relaxed text-[#607565] lg:text-sm"><span className="font-semibold text-[#31503a]">Términos y condiciones:</span> Documentación pendiente. No se exigen todavía.</p>
-      {state && !state.ok && !hasServerFieldErrors && <p role="alert" className="text-xs text-red-600">{state.message}</p>}
-      {transportError && <p role="alert" className="text-xs text-red-600">{transportError}</p>}
+      <p className="rounded-md border border-border-default bg-surface-tint px-3 py-2 text-[11px] leading-relaxed text-fg-muted lg:text-sm"><span className="font-semibold text-fg-muted">Términos y condiciones:</span> Documentación pendiente. No se exigen todavía.</p>
+      {state && !state.ok && !hasServerFieldErrors && <p role="alert" className="text-xs text-danger">{state.message}</p>}
+      {transportError && <p role="alert" className="text-xs text-danger">{transportError}</p>}
 
-      <button type="submit" disabled={pending || Boolean(state?.ok)} className="mt-1 h-10 w-full rounded-md bg-[#31df4f] px-4 text-sm font-bold text-[#103b1c] shadow-[0_4px_10px_rgba(37,213,73,0.35)] transition hover:bg-[#24ca42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] disabled:cursor-not-allowed disabled:bg-[#b5eebe] lg:h-[44px] lg:text-base">
+      <button type="submit" disabled={pending || Boolean(state?.ok)} className="mt-1 h-10 w-full rounded-md bg-action-primary px-4 text-sm font-bold text-on-action-primary shadow-[0_4px_10px_rgba(37,213,73,0.35)] transition hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-action-disabled disabled:text-fg-disabled lg:h-[44px] lg:text-base">
         {pending ? "Creando cuenta…" : "Crear cuenta"}
       </button>
-      <p className="text-center text-xs text-[#607565] lg:text-sm">¿Ya tenés cuenta? <Link href="/login" className="font-semibold text-[#168a3d] underline-offset-2 hover:underline">Iniciar sesión</Link></p>
+      <p className="text-center text-xs text-fg-muted lg:text-sm">¿Ya tenés cuenta? <Link href="/login" className="font-semibold text-link underline-offset-2 hover:underline">Iniciar sesión</Link></p>
 
       {SHOW_ERROR_PREVIEW && (
         <button
           type="button"
           onClick={() => setShowPreviewErrors((visible) => !visible)}
           aria-pressed={showPreviewErrors}
-          className="fixed bottom-3 left-3 z-40 flex items-center gap-1.5 rounded-full border border-[#d6eadb] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#31503a] shadow-md transition hover:border-[#3ad85c] sm:left-auto sm:right-3"
+          className="fixed bottom-3 left-3 z-40 flex items-center gap-1.5 rounded-full border border-border-default bg-surface px-3 py-1.5 text-[11px] font-semibold text-fg-muted shadow-md transition hover:border-accent-glow sm:left-auto sm:right-3"
         >
-          <span aria-hidden="true" className={`size-2 rounded-full ${showPreviewErrors ? "bg-red-500" : "bg-[#3ad85c]"}`} />
+          <span aria-hidden="true" className={`size-2 rounded-full ${showPreviewErrors ? "bg-danger" : "bg-accent-glow"}`} />
           {showPreviewErrors ? "Ocultar errores (demo)" : "Mostrar errores (demo)"}
         </button>
       )}

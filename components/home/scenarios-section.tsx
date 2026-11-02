@@ -61,22 +61,22 @@ const scenarioStyles: Record<
   { icon: string; badge: string; note: string; card: string }
 > = {
   neutral: {
-    icon: "bg-[#EAF7F0] text-[#0B6B4F]",
-    badge: "bg-[#F2F7F4] text-[#486055]",
-    note: "bg-[#F7FBF8] text-[#5B6F65]",
-    card: "border-[#E0EEE6] bg-white shadow-sm",
+    icon: "bg-action-tonal text-link",
+    badge: "bg-surface-tint text-fg-muted",
+    note: "bg-surface-tint text-fg-muted",
+    card: "border-border-default bg-surface shadow-sm",
   },
   warning: {
-    icon: "bg-[#FBEDEA] text-[#B24A3F]",
-    badge: "bg-[#FBEDEA] text-[#B24A3F]",
-    note: "bg-[#FBEDEA] text-[#8C3A31]",
-    card: "border-[#F0D6D1] bg-white shadow-sm",
+    icon: "bg-danger-subtle text-danger",
+    badge: "bg-danger-subtle text-danger",
+    note: "bg-danger-subtle text-danger",
+    card: "border-danger/25 bg-surface shadow-sm",
   },
   positive: {
-    icon: "bg-[#EAF7F0] text-[#0B6B4F]",
-    badge: "bg-[#EAF7F0] text-[#0B6B4F]",
-    note: "bg-[#EAF7F0] text-[#0B6B4F]",
-    card: "border-[#0B6B4F] bg-white shadow-xl shadow-[#0B6B4F]/10 lg:-translate-y-1",
+    icon: "bg-action-tonal text-link",
+    badge: "bg-action-tonal text-link",
+    note: "bg-action-tonal text-link",
+    card: "border-action-primary bg-surface shadow-xl shadow-action-primary/10 lg:-translate-y-1",
   },
 };
 
@@ -85,7 +85,7 @@ export function ScenariosSection() {
     <section
       id="escenarios"
       aria-labelledby="scenarios-title"
-      className="scroll-mt-36 border-y border-[#E3EFE8] bg-white py-16 sm:py-20"
+      className="scroll-mt-36 border-y border-border-default bg-surface py-16 sm:py-20"
     >
       <div className={container}>
         <div className="mx-auto max-w-3xl text-center">
@@ -108,7 +108,7 @@ export function ScenariosSection() {
                 className={`relative flex flex-col rounded-2xl border p-6 ${styles.card}`}
               >
                 {scenario.tone === "positive" ? (
-                  <span className="absolute -top-3 left-6 rounded-full bg-[#0B6B4F] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                  <span className="absolute -top-3 left-6 rounded-full bg-action-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-on-action-primary">
                     Recomendado
                   </span>
                 ) : null}
@@ -126,15 +126,15 @@ export function ScenariosSection() {
                   </span>
                 </div>
 
-                <h3 className="mt-4 text-lg font-semibold tracking-[-0.01em] text-[#122B22]">
+                <h3 className="mt-4 text-lg font-semibold tracking-[-0.01em] text-fg">
                   {scenario.name}
                 </h3>
 
-                <dl className="mt-5 flex-1 space-y-3 border-t border-[#E4EEE8] pt-4">
+                <dl className="mt-5 flex-1 space-y-3 border-t border-border-default pt-4">
                   {scenario.rows.map((row) => (
                     <div key={row.label} className="flex items-center justify-between gap-4">
-                      <dt className="text-xs text-[#6C8077]">{row.label}</dt>
-                      <dd className="text-sm font-semibold text-[#122B22]">{row.value}</dd>
+                      <dt className="text-xs text-fg-muted">{row.label}</dt>
+                      <dd className="text-sm font-semibold text-fg">{row.value}</dd>
                     </div>
                   ))}
                 </dl>
