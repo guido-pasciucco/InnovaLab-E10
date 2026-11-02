@@ -45,12 +45,13 @@ export function TestimonialsSection() {
     >
       <div className={container}>
         <div className="mx-auto max-w-3xl text-center">
-          <p className={eyebrow}>Testimonios</p>
+          <p className={eyebrow}>Testimonios · Ejemplo ilustrativo</p>
           <h2 id="testimonials-title" className={sectionTitle}>
-            Modelado probado en <span className="text-[#0B6B4F]">rubros reales</span> de emprendedores
+            Pensado para <span className="text-[#0B6B4F]">emprendedores</span> como vos
           </h2>
           <p className={sectionLead}>
-            Emprendedores que ya dejaron de poner precios a ojo y empezaron a decidir con datos.
+            Así imaginamos que decidirían con datos quienes dejen de poner precios a ojo. Estos
+            testimonios son de ejemplo y se reemplazarán por opiniones reales.
           </p>
         </div>
 

@@ -42,10 +42,10 @@ export function HeroChart() {
       aria-labelledby="hero-chart-title hero-chart-description"
       className="h-auto w-full"
     >
-      <title id="hero-chart-title">Ganancia acumulada con el precio actual y con el precio sugerido</title>
+      <title id="hero-chart-title">Margen acumulado con el precio actual y con el precio sugerido</title>
       <desc id="hero-chart-description">
-        Con el precio actual de $21.400, la ganancia acumulada a junio es de $60.300. Con el precio
-        sugerido de $24.900, la ganancia acumulada a junio es de $690.300.
+        Con el precio actual de $21.400, el margen acumulado a junio es de $60.300. Con el precio
+        sugerido de $24.900, el margen acumulado a junio es de $690.300.
       </desc>
 
       <defs>

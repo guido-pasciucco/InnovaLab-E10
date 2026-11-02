@@ -37,8 +37,8 @@ function moneyLabel(value: number) {
   }
 
   if (value >= 1_000_000) {
-    const millions = value / 1_000_000;
-    return `$${millions.toFixed(millions % 1 === 0 ? 0 : 1).replace(".", ",")} M`;
+    const millions = Math.round((value / 1_000_000) * 100) / 100;
+    return `$${String(millions).replace(".", ",")} M`;
   }
 
   return `$${Math.round(value / 1000)} mil`;

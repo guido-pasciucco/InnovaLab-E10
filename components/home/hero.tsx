@@ -47,7 +47,7 @@ export function Hero() {
           </h1>
 
           <p className="mt-6 max-w-xl text-base leading-7 text-[#5B6F65] sm:text-lg sm:leading-8">
-            Calculá el costo real de tus productos en 3 simples pasos, conocé tu margen de un vistazo
+            Calculá el costo real de tus productos con un recorrido guiado, conocé tu margen de un vistazo
             y definí el precio correcto para tu negocio. Sin planillas de Excel ni fórmulas.
           </p>
 
@@ -57,7 +57,7 @@ export function Hero() {
               <ArrowRightIcon className="h-4 w-4" />
             </Link>
             <a href="#como-funciona" className={secondaryButton}>
-              Conocer el modelo
+              Ver cómo funciona
             </a>
           </div>
 
@@ -108,7 +108,7 @@ function HeroPanel() {
 
         <div className="mt-5 rounded-2xl border border-[#E4EEE8] bg-[#FBFDFC] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-semibold text-[#122B22]">Ganancia acumulada</p>
+            <p className="text-xs font-semibold text-[#122B22]">Margen acumulado</p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[#6C8077]">
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-0 w-4 border-t-2 border-dashed border-[#C4544A]" />
