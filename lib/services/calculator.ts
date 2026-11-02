@@ -2,6 +2,7 @@ import "server-only";
 
 import Decimal from "decimal.js";
 import { and, desc, eq, sql } from "drizzle-orm";
+import { z } from "zod";
 
 import { calculateCostTotals, type CostLine } from "@/lib/calc/calculateCostTotals";
 import { businesses, products } from "@/lib/db/business/table";
@@ -27,6 +28,9 @@ import type {
 // Wizard progress: the setup is step 1, and saving it unlocks step 2.
 const SETUP_STEP = 1;
 const LAST_STEP = 7;
+
+// Only steps 2..7 are ever requested: step 1 is where a draft starts.
+const advanceStepSchema = z.number().int().min(SETUP_STEP + 1).max(LAST_STEP);
 
 // postgres-js transactions expose the same query API as the db client.
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -303,6 +307,35 @@ export type CalculatorProgress = {
   // Furthest wizard step the user may open (1..7).
   currentStep: number;
 };
+
+/**
+ * Unlocks `toStep` on the user's draft. The progress only moves forward and is
+ * capped at the last step: asking for a step already reached changes nothing.
+ *
+ * @throws ZodError when `toStep` is not an integer between 2 and 7.
+ * @throws AppError CALC_DRAFT_MISSING when the user has no draft.
+ */
+export async function advanceCalculatorProgressService(
+  userId: string,
+  toStep: number,
+  db: Db = getDrizzleClient(),
+): Promise<{ currentStep: number }> {
+  const step = advanceStepSchema.parse(toStep);
+  const draftId = await getDraftCalculationId(userId, db);
+  if (draftId === null) {
+    throw new AppError("CALC_DRAFT_MISSING");
+  }
+
+  const [updated] = await db
+    .update(calculations)
+    .set({
+      currentStep: sql`least(${LAST_STEP}, greatest(${calculations.currentStep}, ${step}))`,
+    })
+    .where(and(eq(calculations.id, draftId), eq(calculations.userId, userId)))
+    .returning({ currentStep: calculations.currentStep });
+
+  return { currentStep: updated.currentStep };
+}
 
 /**
  * Read model for the wizard chrome and the step guards. A user without a draft
