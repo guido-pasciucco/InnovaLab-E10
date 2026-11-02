@@ -1,6 +1,6 @@
 {
   "id": "a65b5ad7-1271-4036-8133-178ceda10cb7",
-  "prevId": "0fc902c4-c53c-40e2-8c9a-005b19234d18",
+  "prevId": "820fcce9-1e33-4db3-8dfb-ccde0b02bb8e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -172,13 +172,6 @@
           "notNull": true,
           "default": "'draft'"
         },
-        "current_step": {
-          "name": "current_step",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
         "schema_version": {
           "name": "schema_version",
           "type": "integer",
@@ -199,6 +192,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "current_step": {
+          "name": "current_step",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {},
@@ -676,7 +676,7 @@
           "name": "source_business_cost_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "concept": {
           "name": "concept",
@@ -773,7 +773,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

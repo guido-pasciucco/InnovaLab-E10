@@ -53,7 +53,7 @@ Opción A, con estas nueve reglas:
 2. **La calculadora requiere sesión.** Toda página de `app/(calculator)/` llama a `requireUser()` (`lib/auth/require-user.ts`). El id de usuario sale **siempre de la sesión** (`requireUser()` / `getSessionUserService`), **nunca** del input del cliente. Los servicios reciben `userId` como parámetro.
 3. **Se guarda al "Confirmar" de cada paso**, no en cada tecla. El feedback rápido se da con `useActionState` (pendiente → "Guardando…", ok → "Guardado") y con `useOptimistic` para editar y eliminar filas de costo.
 4. **Un borrador por usuario** (`calculations.status = 'draft'`). H1 deja fuera "varias fichas". Como `calculations` exige `business_id` y `product_id`, cada usuario tiene un **negocio implícito por defecto**, creado en el primer guardado.
-5. **El catálogo reutilizable `business_cost_lines` sigue fuera de alcance.** Por eso `calc_cost_lines.source_business_cost_id` tiene que pasar a ser anulable (migración en H0.2, #91).
+5. **El catálogo reutilizable `business_cost_lines` sigue fuera de alcance.** `calc_cost_lines.source_business_cost_id` es anulable y, al borrar la fila de catálogo, el enlace queda en null (`ON DELETE SET NULL`), decidido en #176.
 6. **La identidad de una fila es su `id` de la base (uuid).** `lineKey` y `createCostLineKey()` desaparecen. La regla 6 de `lib/AGENTS.md` ("`id`, dueño y timestamps los pone el servidor") vuelve a valer sin excepciones.
 7. **Los servicios filtran por dueño.** Cada consulta de servicio filtra por el `userId` de la sesión, directo o vía `calculations.user_id`. RLS queda como segunda red, no como la única (ver "Rol de `DATABASE_URL` y RLS").
 8. **Plata como string decimal.** Los importes viajan y se guardan como string decimal (`numeric(12,2)`, `moneyString` en `lib/db/formats.ts`). La conversión a `decimal.js` se hace en el borde (regla 3 de `lib/AGENTS.md`). Nunca `Number`.
@@ -104,7 +104,7 @@ Las reglas puras (schemas, cálculo) siguen con tests unitarios sin base.
 
 - **Tickets reescritos** sobre la persistencia en servidor: #70, #71, #76, #77, #78, #80 y #81.
 - **Tickets cerrados por superados:** #79 y #82.
-- **Migración H0.2 (#91):** `calc_cost_lines.source_business_cost_id` pasa a anulable, se define cómo se guarda la categoría del costo y se decide la regla de cascada (`source_business_cost_id`, `scenario_id`).
+- **Migración H0.2 (#91):** queda pendiente cómo se guarda la categoría del costo y la regla de cascada de `scenario_id`. `source_business_cost_id` anulable con `ON DELETE SET NULL` ya quedó decidido en #176.
 - **Riesgo conocido para #91:** `categoryToAxes` (PR #83) mapea `variable` y `own_labor` a los mismos ejes (`behavior: "variable"`, `traceability: "direct"`). La traducción pierde información: al leer la fila no se puede saber cuál de las dos categorías eligió el usuario. Cómo se guarda la categoría lo decide #91.
 - **Queda sin objeto:**
   - `lib/store/` como capa de persistencia del cálculo. Si vuelve a hacer falta estado de cliente, es estado de interfaz, no persistencia.
