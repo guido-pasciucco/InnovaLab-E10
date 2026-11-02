@@ -15,7 +15,7 @@ const stats = [
   { value: "0 fórmulas", label: "financieras complejas" },
 ] as const;
 
-export function Hero() {
+export function Hero({ startHref }: { startHref: string }) {
   return (
     <section aria-labelledby="hero-title" className="relative overflow-hidden">
       <div
@@ -52,7 +52,7 @@ export function Hero() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/paso-1" className={primaryButton}>
+            <Link href={startHref} className={primaryButton}>
               Calcular mis costos
               <ArrowRightIcon className="h-4 w-4" />
             </Link>

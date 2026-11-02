@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { formatARS } from "@/lib/money/format";
+import { formatARSCompact } from "@/lib/money/format";
 import {
   FixedCostRowItem,
   type FixedCostLine,
@@ -20,12 +20,19 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
   // At most one new row is open at a time; saving it hands it over to the
   // server's list.
   const [adding, setAdding] = useState(false);
+  // The id the server gave the row just saved. The row stays on screen, locked,
+  // until `lines` brings that line, so the swap never leaves a gap.
+  const [savedId, setSavedId] = useState<string | null>(null);
+  if (savedId !== null && lines.some((line) => line.id === savedId)) {
+    setSavedId(null);
+    setAdding(false);
+  }
   const newConceptInput = useRef<HTMLInputElement | null>(null);
   const addButton = useRef<HTMLButtonElement | null>(null);
 
   // Nothing to add up yet: a dash reads better than a zero total.
   const subtotalText =
-    lines.length === 0 ? "—" : formatARS(totalFixed) || "—";
+    lines.length === 0 ? "—" : formatARSCompact(totalFixed) || "—";
 
   // Stable on purpose: React calls a ref callback again whenever its identity
   // changes, and the focus must only move when the new row mounts.
@@ -60,7 +67,7 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
         {adding && (
           <FixedCostRowItem
             line={null}
-            onSaved={() => setAdding(false)}
+            onSaved={setSavedId}
             onRemoved={handleDiscardNewRow}
             conceptRef={setNewConceptInput}
           />

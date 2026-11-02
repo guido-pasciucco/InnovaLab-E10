@@ -17,7 +17,7 @@ import {
 } from "@/app/(calculator)/paso-2/actions";
 import { FixedCostDeleteButton } from "@/components/calculator/fixed-cost-delete-button";
 import { conceptField } from "@/lib/schemas/costs/fields";
-import { formatARS, parseAmountInput } from "@/lib/money/format";
+import { formatARSCompact, parseAmountInput } from "@/lib/money/format";
 
 // What the table shows of a saved line. The server owns the id and the amount.
 export type FixedCostLine = {
@@ -29,8 +29,9 @@ export type FixedCostLine = {
 type FixedCostRowItemProps = {
   // null: a new row the user is still filling in.
   line: FixedCostLine | null;
-  // A new row saved: the table closes it and the server's line replaces it.
-  onSaved?: () => void;
+  // A new row saved: it stays on screen, locked, until the server's list
+  // brings the saved line (the table swaps them), so it never blinks out.
+  onSaved?: (id: string) => void;
   // The row is gone: a saved line deleted on the server, or a new row discarded.
   onRemoved?: () => void;
   conceptRef?: Ref<HTMLInputElement>;
@@ -50,7 +51,7 @@ function firstIssue(concept: string): string | null {
 }
 
 function displayAmount(amount: string): string {
-  return formatARS(amount) || amount;
+  return formatARSCompact(amount) || amount;
 }
 
 // The row keeps what the user is typing and saves it when focus leaves the
@@ -78,6 +79,8 @@ export function FixedCostRowItem({
   const [amountDirty, setAmountDirty] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  // A new row the server accepted, still waiting for the refreshed list.
+  const [saved, setSaved] = useState(false);
   // Set once the row is deleted or discarded: the focus that leaves it then
   // must not save an edit to a row that no longer exists.
   const gone = useRef(false);
@@ -85,6 +88,7 @@ export function FixedCostRowItem({
   const isNew = line === null;
   const conceptText = conceptDraft ?? line?.concept ?? "";
   const amountText = amountDraft ?? (line ? displayAmount(line.amount) : "");
+  const busy = isPending || saved;
   const { amount: parsedAmount, issue } = parseAmountInput(amountText);
   const conceptIssue = touched ? firstIssue(conceptText) : null;
   // Empty is no error on a saved line or a blank new one; it is on a new row
@@ -117,7 +121,10 @@ export function FixedCostRowItem({
         return;
       }
 
-      onSaved?.();
+      // Show the amount the way the saved line will, so the text does not jump.
+      setAmountDraft(displayAmount(amount));
+      setSaved(true);
+      onSaved?.(result.data.id);
     });
   };
 
@@ -157,7 +164,7 @@ export function FixedCostRowItem({
   const handleRowBlur = (event: FocusEvent<HTMLLIElement>) => {
     // Moving between the fields of this row is not leaving it.
     if (event.currentTarget.contains(event.relatedTarget)) return;
-    if (isPending || gone.current) return;
+    if (busy || gone.current) return;
 
     const conceptValid = firstIssue(conceptText) === null;
 
@@ -181,7 +188,7 @@ export function FixedCostRowItem({
   };
 
   const handleRemove = () => {
-    if (isPending) return;
+    if (busy) return;
 
     if (line === null) {
       gone.current = true;
@@ -206,8 +213,8 @@ export function FixedCostRowItem({
   return (
     <li
       onBlur={handleRowBlur}
-      aria-busy={isPending || undefined}
-      className="border-b border-gray-200 py-1 last:border-b-0"
+      aria-busy={busy || undefined}
+      className={`border-b border-gray-200 py-1 transition-opacity duration-200 last:border-b-0 ${busy ? "opacity-60" : ""}`}
     >
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-start gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_2.75rem] sm:gap-3">
         <div className="min-w-0">
@@ -220,6 +227,7 @@ export function FixedCostRowItem({
             value={conceptText}
             onChange={(event) => handleConceptChange(event.target.value)}
             placeholder="Concepto"
+            readOnly={saved}
             autoComplete="off"
             aria-invalid={conceptIssue ? true : undefined}
             aria-describedby={conceptIssue ? conceptErrorId : undefined}
@@ -237,7 +245,8 @@ export function FixedCostRowItem({
             onChange={(event) => handleAmountChange(event.target.value)}
             inputMode="decimal"
             autoComplete="off"
-            placeholder="$ 0,00"
+            placeholder="$0"
+            readOnly={saved}
             aria-invalid={amountError ? true : undefined}
             aria-describedby={amountError ? amountErrorId : undefined}
             className={AMOUNT_INPUT_CLASS}
@@ -247,6 +256,7 @@ export function FixedCostRowItem({
         <FixedCostDeleteButton
           label={line ? `Eliminar ${line.concept}` : "Eliminar fila"}
           onClick={handleRemove}
+          disabled={busy}
         />
       </div>
 

@@ -11,7 +11,7 @@ const navigation = [
   { href: "#faq", label: "FAQ" },
 ] as const;
 
-export function SiteHeader() {
+export function SiteHeader({ startHref }: { startHref: string }) {
   return (
     <header className="sticky top-0 z-40 border-b border-[#DCEBE2] bg-[#F7FBF8]/95 font-sans backdrop-blur">
       <div className={`${container} flex items-center justify-between gap-4 py-4`}>
@@ -36,7 +36,7 @@ export function SiteHeader() {
           >
             Iniciar sesión
           </Link>
-          <Link href="/paso-1" className={`${primaryButtonSmall} shrink-0`}>
+          <Link href={startHref} className={`${primaryButtonSmall} shrink-0`}>
             <span className="hidden sm:inline">Calcular mis costos</span>
             <span className="sm:hidden">Calcular</span>
             <ArrowRightIcon className="h-4 w-4" />

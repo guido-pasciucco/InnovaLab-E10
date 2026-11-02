@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatARS, parseAmountInput, parseARS } from "./format";
+import { formatARS, formatARSCompact, parseAmountInput, parseARS } from "./format";
 
 // The contract table in #94, row by row: 12 accepted shapes and 8 rejected
 // ones. The rejects carry as much weight as the accepts — parseARS must not
@@ -257,5 +257,26 @@ describe("parseAmountInput", () => {
     expect(parseAmountInput("12345678901").issue).toBe(
       "El importe es demasiado grande.",
     );
+  });
+});
+
+describe("formatARSCompact", () => {
+  it.each([
+    ["60000", "$60.000"],
+    ["60000.00", "$60.000"],
+    ["1500.50", "$1.500,50"],
+    ["1234.5", "$1.234,50"],
+    ["0", "$0"],
+    ["0.00", "$0"],
+    ["0.05", "$0,05"],
+    ["1234567", "$1.234.567"],
+    ["-1234.50", "$-1.234,50"],
+  ])("renders %s as %s", (stored, shown) => {
+    expect(formatARSCompact(stored)).toBe(shown);
+  });
+
+  it("returns an empty string for something that is not a stored decimal", () => {
+    expect(formatARSCompact("abc")).toBe("");
+    expect(formatARSCompact("")).toBe("");
   });
 });
