@@ -46,9 +46,12 @@ export const calcCostLines = pgTable("calc_cost_lines", {
   scenarioId: uuid("scenario_id").references(() => scenarios.id, {
     onDelete: "cascade",
   }),
-  sourceBusinessCostId: uuid("source_business_cost_id")
-    .notNull()
-    .references(() => businessCostLines.id, { onDelete: "cascade" }),
+  // Nullable: a wizard line (paso 2) is not copied from the business catalog.
+  // Deleting the catalog row clears the link and keeps the snapshot (#176, #180).
+  sourceBusinessCostId: uuid("source_business_cost_id").references(
+    () => businessCostLines.id,
+    { onDelete: "set null" },
+  ),
   concept: text("concept").notNull(),
   behavior: text("behavior").notNull(),
   traceability: text("traceability").notNull(),
