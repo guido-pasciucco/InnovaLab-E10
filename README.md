@@ -1,4 +1,4 @@
-# 🧮 InnovaLab E10 — Budget Calculator
+# 🧮 Numora — Budget Calculator
 
 MVP de la Fase 1 de una calculadora inteligente para **costos, precios y análisis de punto de equilibrio** (`Costos / Precios / Punto de Equilibrio`).
 
@@ -231,21 +231,21 @@ No hay `docker-compose.yml` en el repo: el CLI de Supabase (`supabase`, devDepen
 - **Primera vez:** descarga las imágenes (~1–1.5 GB, tarda unos minutos), crea los contenedores y un volumen para los datos de Postgres, y aplica todas las migraciones.
 - **Las veces siguientes:** las imágenes ya están, arranca en segundos y la base conserva los datos; solo se aplican las migraciones nuevas, si las hay.
 
-El script levanta solo lo que usan los tests y excluye el resto con `-x` (studio, realtime, storage, edge-runtime, etc.). Quedan 5 contenedores, llamados `supabase_<servicio>_innovalab-e10`:
+El script levanta solo lo que usan los tests y excluye el resto con `-x` (studio, realtime, storage, edge-runtime, etc.). Quedan 5 contenedores, llamados `supabase_<servicio>_numora`:
 
 | Contenedor | Servicio | Puerto local |
 | --- | --- | --- |
-| `supabase_db_innovalab-e10` | Postgres (tablas de la app y schema `auth`) | `54322` |
-| `supabase_kong_innovalab-e10` | API gateway: la URL única de Supabase | `54321` |
-| `supabase_auth_innovalab-e10` | GoTrue: signup, login, reset, mails | detrás de kong (`/auth/v1`) |
-| `supabase_rest_innovalab-e10` | PostgREST: las tablas como API REST | detrás de kong (`/rest/v1`) |
-| `supabase_inbucket_innovalab-e10` | Mailpit: atrapa los mails de auth | `54324` (UI web) |
+| `supabase_db_numora` | Postgres (tablas de la app y schema `auth`) | `54322` |
+| `supabase_kong_numora` | API gateway: la URL única de Supabase | `54321` |
+| `supabase_auth_numora` | GoTrue: signup, login, reset, mails | detrás de kong (`/auth/v1`) |
+| `supabase_rest_numora` | PostgREST: las tablas como API REST | detrás de kong (`/rest/v1`) |
+| `supabase_inbucket_numora` | Mailpit: atrapa los mails de auth | `54324` (UI web) |
 
 Comandos útiles:
 
 ```bash
 bunx supabase status                  # URLs, ports and keys of the running stack
-docker ps --filter name=innovalab-e10  # the project's containers
+docker ps --filter name=numora  # the project's containers
 bun run supabase:stop                 # stops the containers, KEEPS the db data
 bunx supabase stop --no-backup        # stops them and DELETES the db volume
 bun run db:reset:local                # empties the db and re-applies drizzle migrations

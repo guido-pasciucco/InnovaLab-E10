@@ -76,6 +76,15 @@ export const amountField = z
 // These were free text in #146, with a TODO to close them here. Now that they
 // are enums the messages can honestly say "elegí", because the field really
 // does restrict the answer.
+//
+// Single owner of the closed vocabulary. The calc engine imports these lists
+// instead of restating them. The field schemas below keep their own literals.
+export const COST_BEHAVIORS = ["fixed", "variable"] as const;
+export type CostBehavior = (typeof COST_BEHAVIORS)[number];
+
+export const COST_TRACEABILITIES = ["direct", "indirect"] as const;
+export type CostTraceability = (typeof COST_TRACEABILITIES)[number];
+
 export const behaviorField = z.enum(["fixed", "variable"], {
   error: "Elegí cómo se comporta el costo: fijo o variable.",
 });

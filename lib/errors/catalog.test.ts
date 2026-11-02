@@ -39,6 +39,7 @@ describe("ERROR_CATALOG", () => {
     expect(ERROR_CATALOG.AUTH_EMAIL_NOT_CONFIRMED).toMatchObject({ status: 403 });
     expect(ERROR_CATALOG.AUTH_SESSION_MISSING).toMatchObject({ status: 401 });
     expect(ERROR_CATALOG.AUTH_SIGNUP_FAILED).toMatchObject({ status: 400 });
+    expect(ERROR_CATALOG.AUTH_EMAIL_TAKEN).toMatchObject({ status: 409 });
     expect(ERROR_CATALOG.AUTH_SIGNOUT_FAILED).toMatchObject({ status: 500 });
     expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 422 });
   });

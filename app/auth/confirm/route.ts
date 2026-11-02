@@ -7,12 +7,14 @@ import { safeNextPath } from "@/lib/safe-next-path";
 import { createRscSupabaseClient } from "@/lib/supabase/rsc";
 
 const DEFAULT_NEXT = "/update-password";
+const SIGNUP_NEXT = "/auth/account-created";
 
-// Landing route of auth email links (password reset). Exchanges the link
+// Landing route of auth email links (signup confirmation and password reset). Exchanges the link
 // params for a session, which the cookies() adapter writes onto this
 // response, then continues to `next`. `next` is sanitized so the link can
-// never bounce the user to another site. On failure the user goes back to
-// /reset-password, which reads the error code to explain what happened.
+// never bounce the user to another site. On failure the user goes back to the
+// screen that matches the flow (/login for signup, /reset-password otherwise),
+// which reads the error code to explain what happened.
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const next = safeNextPath(searchParams.get("next"), DEFAULT_NEXT);
@@ -31,6 +33,6 @@ export async function GET(request: NextRequest) {
   }
 
   // redirect() throws, so it stays outside the try.
-  if (failure) redirect(`/reset-password?error=${failure}`);
+  if (failure) redirect(`${next === SIGNUP_NEXT ? "/login" : "/reset-password"}?error=${failure}`);
   redirect(next);
 }

@@ -10,6 +10,7 @@ import {
   addCalcCostLineInputSchema,
   listCalcCostLinesOptionsSchema,
   updateCalcCostLineAmountInputSchema,
+  updateCalcCostLineConceptInputSchema,
   type ListCalcCostLinesOptions,
 } from "@/lib/db/costs/validation";
 import { AppError } from "@/lib/errors/app-error";
@@ -138,6 +139,29 @@ export async function updateCalcCostLineAmountService(
   const [updated] = await db
     .update(calcCostLines)
     .set({ amount })
+    .where(fixedLineOfDraft(id, draftId))
+    .returning();
+
+  if (!updated) {
+    throw new AppError("CALC_COST_LINE_NOT_FOUND");
+  }
+
+  return updated;
+}
+
+export async function updateCalcCostLineConceptService(
+  userId: string,
+  lineId: string,
+  input: unknown,
+  db: Db = getDrizzleClient(),
+): Promise<CalcCostLine> {
+  const { concept } = updateCalcCostLineConceptInputSchema.parse(input);
+  const id = requireLineId(lineId);
+  const draftId = await requireDraftId(userId, db);
+
+  const [updated] = await db
+    .update(calcCostLines)
+    .set({ concept })
     .where(fixedLineOfDraft(id, draftId))
     .returning();
 

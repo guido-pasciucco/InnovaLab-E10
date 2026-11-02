@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatARS, parseARS } from "./format";
+import { formatARS, formatARSCompact, parseAmountInput, parseARS } from "./format";
 
 // The contract table in #94, row by row: 12 accepted shapes and 8 rejected
 // ones. The rejects carry as much weight as the accepts — parseARS must not
@@ -191,5 +191,92 @@ describe("formatARS — round trip", () => {
 
     expect(parsed).not.toBeNull();
     expect(formatARS(parsed!)).toBe(expected);
+  });
+});
+
+describe("parseAmountInput", () => {
+  it.each([
+    ["1500", "1500"],
+    ["1.500", "1500"],
+    ["1.234.567,89", "1234567.89"],
+    ["1234,5", "1234.5"],
+    ["1234.50", "1234.50"],
+    ["$ 1.234,50", "1234.50"],
+    ["  1500  ", "1500"],
+    ["0", "0"],
+  ])("returns the amount for %j", (input, amount) => {
+    expect(parseAmountInput(input)).toEqual({ amount, issue: null });
+  });
+
+  it.each(["1500", "1.500", "1234,5", "1234.50", "$ 1.234,50", "0,50"])(
+    "agrees with parseARS when %j is a valid amount",
+    (input) => {
+      expect(parseAmountInput(input).amount).toBe(parseARS(input));
+    },
+  );
+
+  it("reports the required message when the input is empty", () => {
+    expect(parseAmountInput("")).toEqual({
+      amount: null,
+      issue: "El importe es obligatorio.",
+    });
+  });
+
+  it("reports the required message when the input is only spaces", () => {
+    expect(parseAmountInput("   ").issue).toBe("El importe es obligatorio.");
+  });
+
+  it.each(["abc", "12a", "$$5", "1,", "1..5", "1,234.567"])(
+    "reports the not-a-number message for %j",
+    (input) => {
+      expect(parseAmountInput(input)).toEqual({
+        amount: null,
+        issue: "El importe debe ser un número.",
+      });
+    },
+  );
+
+  it.each(["-5", "-0,50", "-1.500,50"])("reports the negative message for %j", (input) => {
+    expect(parseAmountInput(input)).toEqual({
+      amount: null,
+      issue: "El importe no puede ser negativo.",
+    });
+  });
+
+  it.each(["1234,567", "12,345", "1.2345", "1.500,123"])(
+    "reports the decimals message for %j",
+    (input) => {
+      expect(parseAmountInput(input)).toEqual({
+        amount: null,
+        issue: "El importe debe tener hasta 2 decimales.",
+      });
+    },
+  );
+
+  it("reports the size message when the integer part has more than 10 digits", () => {
+    expect(parseAmountInput("12345678901").issue).toBe(
+      "El importe es demasiado grande.",
+    );
+  });
+});
+
+describe("formatARSCompact", () => {
+  it.each([
+    ["60000", "$60.000"],
+    ["60000.00", "$60.000"],
+    ["1500.50", "$1.500,50"],
+    ["1234.5", "$1.234,50"],
+    ["0", "$0"],
+    ["0.00", "$0"],
+    ["0.05", "$0,05"],
+    ["1234567", "$1.234.567"],
+    ["-1234.50", "$-1.234,50"],
+  ])("renders %s as %s", (stored, shown) => {
+    expect(formatARSCompact(stored)).toBe(shown);
+  });
+
+  it("returns an empty string for something that is not a stored decimal", () => {
+    expect(formatARSCompact("abc")).toBe("");
+    expect(formatARSCompact("")).toBe("");
   });
 });
