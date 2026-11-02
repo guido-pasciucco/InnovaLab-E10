@@ -43,6 +43,13 @@
       "when": 1790934808318,
       "tag": "20261002095328_costing_setup_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793639241575,
+      "tag": "20261102170721_stormy_proudstar",
+      "breakpoints": true
     }
   ]
 }

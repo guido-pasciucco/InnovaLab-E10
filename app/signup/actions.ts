@@ -15,9 +15,11 @@ import z from "zod";
 // Client-side RHF validation is UX only; the service revalidates.
 // The confirmation link origin is resolved on the server (SITE_URL), so dev
 // and e2e each get their own port instead of the shared Supabase site_url.
+// The link lands on /auth/confirm, which exchanges the PKCE code for a
+// session and continues to the "account created" screen.
 export const signup = handleActionErrors(
   async (_prevState: SignupState, data: z.infer<typeof signupSchema>) => {
-    const emailRedirectTo = `${getSiteOrigin(await headers())}/login`;
+    const emailRedirectTo = `${getSiteOrigin(await headers())}/auth/confirm?next=/auth/account-created`;
     return signupService(await createRscSupabaseClient(), data, emailRedirectTo);
   },
   "AUTH_UNAVAILABLE",

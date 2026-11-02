@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState, type ComponentPropsWithRef, type RefObject } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Path } from "react-hook-form";
 import { z } from "zod";
 
+import { SIGNUP_EMAIL_KEY, readSignupEmail } from "@/app/auth/check-email/signup-email";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { PasswordInput } from "@/components/forms/password-input";
+import { TextField } from "@/components/forms/text-field";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { useTransportAwareAction } from "@/components/forms/use-transport-aware-action";
 import { signupFormSchema } from "@/lib/schemas/auth/auth";
@@ -15,7 +19,6 @@ import type { SignupState } from "@/lib/types/auth";
 import { signup } from "./actions";
 
 type SignupFormValues = z.infer<typeof signupFormSchema>;
-type PasswordInputProps = ComponentPropsWithRef<"input"> & { label: string; error?: string; hint?: string };
 
 const initialState: SignupState = undefined;
 const SERVER_FIELDS: readonly Path<SignupFormValues>[] = ["displayName", "email", "password"];
@@ -49,119 +52,26 @@ function parsePreviewMessages(): Partial<Record<PreviewField, string>> {
 
 const PREVIEW_FIELD_MESSAGES = SHOW_ERROR_PREVIEW ? parsePreviewMessages() : {};
 
-function EyeIcon({ visible }: { visible: boolean }) {
-  return visible ? (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
-      <path d="m3 3 18 18" />
-      <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
-      <path d="M9.9 4.2A10.7 10.7 0 0 1 12 4c5.5 0 9.4 5.1 9.9 7.8a12.3 12.3 0 0 1-3.1 4.9M6.6 6.6C4.6 8.2 2.5 10.6 2.1 11.8 2.6 14.5 6.5 19.6 12 19.6c.8 0 1.6-.1 2.3-.3" />
-    </svg>
-  ) : (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4">
-      <path d="M2.1 12S5.7 5.5 12 5.5 21.9 12 21.9 12 18.3 18.5 12 18.5 2.1 12 2.1 12Z" />
-      <circle cx="12" cy="12" r="2.8" />
-    </svg>
-  );
-}
-
-function PasswordInput({ label, error, hint, id, autoComplete, disabled, ...props }: PasswordInputProps) {
-  const [show, setShow] = useState(false);
-  const errorId = `${id}-error`;
-  const hintId = `${id}-hint`;
-  const describedBy = [hint ? hintId : undefined, error ? errorId : undefined].filter(Boolean).join(" ");
-
-  return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs font-medium text-[#31503a] lg:text-sm">{label}</label>
-      <div className="relative">
-        <input
-          {...props}
-          id={id}
-          type={show ? "text" : "password"}
-          autoComplete={autoComplete}
-          disabled={disabled}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy || undefined}
-          className={`h-10 w-full rounded-md border bg-white px-3 pr-10 text-sm text-[#17351f] outline-none transition focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${error ? "border-red-500" : "border-[#b7c9bb]"}`}
-        />
-        <button
-          type="button"
-          onClick={() => setShow((visible) => !visible)}
-          aria-pressed={show}
-          aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
-          disabled={disabled}
-          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-[#6a806f] hover:text-[#174425] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#3ad85c]"
-        >
-          <EyeIcon visible={show} />
-        </button>
-      </div>
-      {hint && <p id={hintId} className="text-[10px] text-[#6a806f] lg:text-[13px]">{hint}</p>}
-      {error && <p id={errorId} role="alert" className="text-xs text-red-600 lg:text-sm">{error}</p>}
-    </div>
-  );
-}
-
-function SignupSuccessDialog({ returnFocusRef }: { returnFocusRef: RefObject<HTMLAnchorElement | null> }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [open, setOpen] = useState(true);
-
-  const closeDialog = () => {
-    dialogRef.current?.close();
-    setOpen(false);
-    requestAnimationFrame(() => returnFocusRef.current?.focus());
-  };
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog || dialog.open) return;
-    dialog.showModal();
-    dialog.querySelector<HTMLAnchorElement>("[data-dialog-primary-action]")?.focus();
-  }, []);
-
-  if (!open) return null;
-
-  return (
-    <dialog
-      ref={dialogRef}
-      aria-labelledby="signup-success-title"
-      aria-describedby="signup-success-body"
-      onCancel={(event) => {
-        event.preventDefault();
-        closeDialog();
-      }}
-      onKeyDown={(event) => {
-        if (event.key !== "Tab") return;
-        const focusable = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
-        const first = focusable.at(0);
-        const last = focusable.at(-1);
-        if (!first || !last) return;
-
-        if ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
-          event.preventDefault();
-          (event.shiftKey ? last : first).focus();
-        }
-      }}
-      className="w-[min(100%-2rem,23rem)] rounded-2xl border border-[#d6eadb] bg-white p-6 text-[#17351f] shadow-2xl backdrop:bg-[#12321e]/35 focus:outline-none"
-    >
-      <h2 id="signup-success-title" className="text-xl font-bold">¡Cuenta creada!</h2>
-      <p id="signup-success-body" className="mt-3 text-sm leading-relaxed text-[#496352]">
-        Revisá tu correo y seguí el enlace de verificación para activar tu cuenta.
-      </p>
-      <p className="mt-2 text-xs text-[#657a6b]">Todavía tenés que verificar el correo antes de iniciar sesión.</p>
-      <Link href="/login" data-dialog-primary-action className="mt-5 flex h-10 items-center justify-center rounded-md bg-[#31df4f] px-4 text-sm font-bold text-[#103b1c] hover:bg-[#24ca42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d]">
-        Ir a iniciar sesión
-      </Link>
-    </dialog>
-  );
-}
-
 export default function SignupForm() {
-  const loginLinkRef = useRef<HTMLAnchorElement>(null);
+  const router = useRouter();
   const [showPreviewErrors, setShowPreviewErrors] = useState(false);
   const { action, transportError } = useTransportAwareAction(signup);
   const [state, submitAction, pending] = useActionState(action, initialState);
-  const { register, handleSubmit, setError, clearErrors, formState: { errors } } = useForm<SignupFormValues>({ resolver: zodResolver(signupFormSchema) });
+  const { register, handleSubmit, setError, setValue, clearErrors, formState: { errors } } = useForm<SignupFormValues>({ resolver: zodResolver(signupFormSchema) });
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
+
+  // "Change email" on the verification screen comes back here: prefill the
+  // address it was sent to (kept in sessionStorage, never in the URL).
+  useEffect(() => {
+    const previousEmail = readSignupEmail();
+    if (previousEmail) setValue("email", previousEmail);
+  }, [setValue]);
+
+  // Account created: the next step is verifying the email, so continue to the
+  // "check your email" screen instead of staying on the form.
+  useEffect(() => {
+    if (state?.ok) router.push("/auth/check-email");
+  }, [state, router]);
 
   // Shows/hides the dev-only error preview by writing through RHF's own
   // mechanisms (setError/clearErrors), so the messages render exactly like
@@ -181,20 +91,15 @@ export default function SignupForm() {
 
   return (
     <form
-      onSubmit={handleSubmit(({ displayName, email, password }) => dispatchInTransition(submitAction)({ displayName, email, password }))}
+      onSubmit={handleSubmit(({ displayName, email, password }) => {
+        // Remembered only so the next screen can say where the link was sent.
+        try { sessionStorage.setItem(SIGNUP_EMAIL_KEY, email); } catch {}
+        return dispatchInTransition(submitAction)({ displayName, email, password });
+      })}
       className="flex flex-col gap-3 lg:gap-3"
     >
-      <div className="flex flex-col gap-1">
-        <label htmlFor="displayName" className="text-xs font-medium text-[#31503a] lg:text-sm">Nombre y apellido</label>
-        <input {...register("displayName")} id="displayName" type="text" autoComplete="name" placeholder="Tu nombre y apellido" disabled={pending} aria-invalid={errors.displayName ? true : undefined} aria-describedby={errors.displayName ? "displayName-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${errors.displayName ? "border-red-500" : "border-[#b7c9bb]"}`} />
-        {errors.displayName && <p id="displayName-error" role="alert" className="text-xs text-red-600 lg:text-sm">{errors.displayName.message}</p>}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-xs font-medium text-[#31503a] lg:text-sm">Correo electrónico</label>
-        <input {...register("email")} id="email" type="email" autoComplete="email" placeholder="nombre@correo.com" disabled={pending} aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? "email-error" : undefined} className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-[#17351f] outline-none transition placeholder:text-[#9ba9a0] focus-visible:ring-2 focus-visible:ring-[#3ad85c] disabled:cursor-not-allowed disabled:bg-slate-100 lg:h-[42px] lg:text-base ${errors.email ? "border-red-500" : "border-[#b7c9bb]"}`} />
-        {errors.email && <p id="email-error" role="alert" className="text-xs text-red-600 lg:text-sm">{errors.email.message}</p>}
-      </div>
+      <TextField {...register("displayName")} id="displayName" type="text" label="Nombre y apellido" autoComplete="name" placeholder="Tu nombre y apellido" error={errors.displayName?.message} disabled={pending} />
+      <TextField {...register("email")} id="email" type="email" label="Correo electrónico" autoComplete="email" placeholder="nombre@correo.com" error={errors.email?.message} disabled={pending} />
 
       <PasswordInput {...register("password")} id="password" label="Contraseña" autoComplete="new-password" hint="Mínimo 8 caracteres." error={errors.password?.message} disabled={pending} />
       <PasswordInput {...register("confirmPassword")} id="confirmPassword" label="Confirmar contraseña" autoComplete="new-password" error={errors.confirmPassword?.message} disabled={pending} />
@@ -206,8 +111,7 @@ export default function SignupForm() {
       <button type="submit" disabled={pending || Boolean(state?.ok)} className="mt-1 h-10 w-full rounded-md bg-[#31df4f] px-4 text-sm font-bold text-[#103b1c] shadow-[0_4px_10px_rgba(37,213,73,0.35)] transition hover:bg-[#24ca42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#168a3d] disabled:cursor-not-allowed disabled:bg-[#b5eebe] lg:h-[44px] lg:text-base">
         {pending ? "Creando cuenta…" : "Crear cuenta"}
       </button>
-      <p className="text-center text-xs text-[#607565] lg:text-sm">¿Ya tenés cuenta? <Link ref={loginLinkRef} href="/login" className="font-semibold text-[#168a3d] underline-offset-2 hover:underline">Iniciar sesión</Link></p>
-      {state?.ok && <SignupSuccessDialog returnFocusRef={loginLinkRef} />}
+      <p className="text-center text-xs text-[#607565] lg:text-sm">¿Ya tenés cuenta? <Link href="/login" className="font-semibold text-[#168a3d] underline-offset-2 hover:underline">Iniciar sesión</Link></p>
 
       {SHOW_ERROR_PREVIEW && (
         <button
