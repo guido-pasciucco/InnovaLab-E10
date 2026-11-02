@@ -1,13 +1,87 @@
 @import "tailwindcss";
 
 :root {
-  --background: #EAFCF1;
-  --foreground: #171717;
+  /*
+   * Valores oficiales de Figma. Las variables fuente no generan utilidades
+   * por sí mismas; los nombres semánticos se exponen abajo con @theme inline.
+   */
+  --surface-canvas: #D8F5E3;
+  --surface-raised: #FFFFFF;
+  --surface-tint: #F1FFF5;
+  --border-default: #BFE3CB;
+  --text-primary: #0B1F10;
+  --text-muted: #4D6354;
+  --text-on-action: #06130A;
+  --action-primary: #15803D;
+  --action-primary-hover: #166534;
+  --action-primary-pressed: #14532D;
+  --action-tonal: #E1F5E7;
+  --status-success: #0B7A43;
+  --status-danger: #B3202F;
+  --surface-disabled: #E6EDE7;
+
+  /*
+   * Propuestas internas de accesibilidad. --text-disabled se ajusta desde
+   * #617568 para alcanzar 4.66:1 sobre --surface-disabled.
+   */
+  --focus-ring: #168A46;
+  --surface-danger: #FCE8EB;
+  --status-warning: #A45C12;
+  --surface-warning: #FFF2DA;
+  --surface-success: #E1F5E7;
+  --text-disabled: #5A6D5E;
+
+  /*
+   * Contrato reservado por #170 / PR #212. Sus valores se preservan tal como
+   * fueron propuestos allí y no definen las acciones semánticas de Figma.
+   */
+  --brand-green-50: #F0FDF4;
+  --brand-green-100: #DCFCE7;
+  --brand-green-500: #22C55E;
+  --brand-green-600: #16A34A;
+  --brand-green-700: #15803D;
+
+  /* Compatibilidad para consumidores existentes. */
+  --background: var(--surface-canvas);
+  --foreground: var(--text-primary);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-canvas: var(--surface-canvas);
+  --color-surface: var(--surface-raised);
+  --color-surface-tint: var(--surface-tint);
+  --color-surface-disabled: var(--surface-disabled);
+  --color-border-default: var(--border-default);
+
+  --color-fg: var(--text-primary);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-disabled: var(--text-disabled);
+  --color-on-action: var(--text-on-action);
+  --color-on-action-primary: var(--surface-raised);
+
+  --color-action-primary: var(--action-primary);
+  --color-action-primary-hover: var(--action-primary-hover);
+  --color-action-primary-pressed: var(--action-primary-pressed);
+  --color-action-tonal: var(--action-tonal);
+  --color-action-disabled: var(--surface-disabled);
+
+  --color-success: var(--status-success);
+  --color-success-subtle: var(--surface-success);
+  --color-danger: var(--status-danger);
+  --color-danger-subtle: var(--surface-danger);
+  --color-warning: var(--status-warning);
+  --color-warning-subtle: var(--surface-warning);
+  --color-focus: var(--focus-ring);
+
+  --color-brand-green-50: var(--brand-green-50);
+  --color-brand-green-100: var(--brand-green-100);
+  --color-brand-green-500: var(--brand-green-500);
+  --color-brand-green-600: var(--brand-green-600);
+  --color-brand-green-700: var(--brand-green-700);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
