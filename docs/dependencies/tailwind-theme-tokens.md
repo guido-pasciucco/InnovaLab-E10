@@ -31,8 +31,17 @@ Fuente de los valores oficiales: captura de la sección Fundamentos → COLOR de
 | --surface-warning | #FFF2DA | Propuesta interna | Fondo de advertencia |
 | --surface-success | #E1F5E7 | Propuesta interna | Fondo de éxito |
 | --text-disabled | #5A6D5E | Propuesta interna ajustada | Texto deshabilitado |
+| --text-link | #127A35 | Propuesta interna ajustada | Enlaces y acentos de texto verdes (5.44:1 sobre blanco, 4.69:1 sobre canvas; #168A3D de la maqueta daba 4.43:1 y 3.82:1) |
+| --text-link-hover | #166534 | Propuesta interna | Hover de enlaces (alias de --action-primary-hover, 7.13:1 sobre blanco) |
+| --accent-glow | #3AD85C | Propuesta interna | Acento decorativo: borde/anillo de foco secundario, hover de bordes y viñetas. Solo decorativo (1.88:1 sobre blanco) |
+| --brand-tile | #0A3D22 | Propuesta interna | Fondo del logo |
+| --brand-glyph | #39E05A | Propuesta interna | Glifo del logo sobre --brand-tile (7.03:1) |
+| --brand-surface | #1A5C3A | Propuesta interna | Superficie oscura de marca (tarjeta de costo en vivo) |
+| --page-gradient-via | #D3F5E1 | Propuesta interna | Parada intermedia del degradado de página |
+| --page-gradient-to | #BDEBCF | Propuesta interna | Parada final del degradado de página |
+| --page-glow | #39FF14 | Propuesta interna | Resplandor decorativo del layout |
 
-Los nombres --color-* de @theme inline exponen las utilidades Tailwind equivalentes: por ejemplo, bg-action-primary, text-fg y border-border-control. El color oficial de línea permanece como --border-default; no se reemplaza ni se modifica.
+La parada inicial del degradado de página reutiliza --background (#eafcf1). Los nombres --color-* de @theme inline exponen las utilidades Tailwind equivalentes: por ejemplo, bg-action-primary, text-fg y border-border-control. El color oficial de línea permanece como --border-default; no se reemplaza ni se modifica.
 
 ## Compatibilidad de fondo y texto
 

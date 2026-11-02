@@ -36,6 +36,23 @@
   --text-disabled: #5A6D5E;
 
   /*
+   * Propuestas internas derivadas de la maqueta de auth/calculadora.
+   * --text-link ajusta #168A3D (4.43:1 sobre blanco, 3.82:1 sobre canvas)
+   * al valor #127A35: 5.44:1 sobre blanco y 4.69:1 sobre canvas.
+   * --accent-glow es decorativo (1.88:1 sobre blanco): nunca es el unico
+   * indicador de foco ni de estado.
+   */
+  --text-link: #127A35;
+  --text-link-hover: var(--action-primary-hover);
+  --accent-glow: #3AD85C;
+  --brand-tile: #0A3D22;
+  --brand-glyph: #39E05A;
+  --brand-surface: #1A5C3A;
+  --page-gradient-via: #D3F5E1;
+  --page-gradient-to: #BDEBCF;
+  --page-glow: #39FF14;
+
+  /*
    * Contrato reservado por #170 / PR #212. Sus valores se preservan tal como
    * fueron propuestos allí y no definen las acciones semánticas de Figma.
    */
@@ -82,6 +99,15 @@
   --color-warning: var(--status-warning);
   --color-warning-subtle: var(--surface-warning);
   --color-focus: var(--focus-ring);
+  --color-link: var(--text-link);
+  --color-link-hover: var(--text-link-hover);
+  --color-accent-glow: var(--accent-glow);
+  --color-brand-tile: var(--brand-tile);
+  --color-brand-glyph: var(--brand-glyph);
+  --color-brand-surface: var(--brand-surface);
+  --color-page-gradient-via: var(--page-gradient-via);
+  --color-page-gradient-to: var(--page-gradient-to);
+  --color-page-glow: var(--page-glow);
   --color-brand-green-50: var(--brand-green-50);
   --color-brand-green-100: var(--brand-green-100);
   --color-brand-green-500: var(--brand-green-500);
