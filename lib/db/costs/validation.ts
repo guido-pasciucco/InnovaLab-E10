@@ -51,7 +51,7 @@ export const createBusinessCostLineInputSchema = createInsertSchema(
 
 export const createCalcCostLineInputSchema = createInsertSchema(calcCostLines, {
   scenarioId: uuidString.nullish(),
-  sourceBusinessCostId: uuidString,
+  sourceBusinessCostId: uuidString.nullish(),
   concept: conceptField,
   behavior: behaviorField,
   traceability: traceabilityField,
@@ -66,6 +66,30 @@ export const createCalcCostLineInputSchema = createInsertSchema(calcCostLines, {
   updatedAt: true,
 });
 
+// Paso 2 sends only the concept and the amount. The service injects behavior,
+// traceability and the null catalog link; those fields are not in this object,
+// so the client cannot set them.
+export const addCalcCostLineInputSchema = z.object({
+  concept: conceptField,
+  amount: amountField,
+});
+
+// Paso 2 can correct the amount of a line it already saved. The object has
+// no concept, behavior or traceability, so those columns cannot be patched.
+export const updateCalcCostLineAmountInputSchema = z.object({
+  amount: amountField,
+});
+
+// A saved line can also be renamed. Same rule as the concept of a new line;
+// the object has no amount, behavior or traceability, so those cannot be patched.
+export const updateCalcCostLineConceptInputSchema = z.object({
+  concept: conceptField,
+});
+
+export const listCalcCostLinesOptionsSchema = z.object({
+  behavior: behaviorField.optional(),
+});
+
 // --- Inferred input/row types: single source of truth, no manual interfaces. ---
 
 export type BusinessCostLineRow = z.infer<typeof businessCostLineRowSchema>;
@@ -75,3 +99,11 @@ export type CreateBusinessCostLineInput = z.infer<
   typeof createBusinessCostLineInputSchema
 >;
 export type CreateCalcCostLineInput = z.infer<typeof createCalcCostLineInputSchema>;
+export type AddCalcCostLineInput = z.infer<typeof addCalcCostLineInputSchema>;
+export type UpdateCalcCostLineAmountInput = z.infer<
+  typeof updateCalcCostLineAmountInputSchema
+>;
+export type UpdateCalcCostLineConceptInput = z.infer<
+  typeof updateCalcCostLineConceptInputSchema
+>;
+export type ListCalcCostLinesOptions = z.infer<typeof listCalcCostLinesOptionsSchema>;

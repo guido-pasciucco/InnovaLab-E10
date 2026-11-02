@@ -4,24 +4,18 @@ import { Paso1Page } from "../pages/paso-1.page";
 const saved = { name: "Pan de avena", unit: "docena", volume: 96 };
 const edited = { name: "Galletas de limón", unit: "caja", volume: 144 };
 
-test("editing a saved setup hides its confirmation until the next successful save", async ({ authedPage }) => {
+test("a successful save moves on to step 2", async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
-  await setup.save(saved);
-  await setup.expectSaved(saved);
 
-  await setup.fill(edited);
-
-  await expect(setup.confirmation).toHaveCount(0);
-  await setup.save(edited);
-  await setup.expectSaved(edited);
+  await setup.saveAndContinue(saved);
 });
 
-test("a server-rejected save does not show the previous success or replace persisted data", async ({ authedPage }) => {
+test("a server-rejected save keeps the user on step 1 and does not replace persisted data", async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
-  await setup.save(saved);
-  await setup.expectSaved(saved);
+  await setup.saveAndContinue(saved);
+  await setup.goto();
   // Pass client validation, then exercise the real server validation error.
   await authedPage.route("**/paso-1", async (route) => {
     const request = route.request();
@@ -38,7 +32,7 @@ test("a server-rejected save does not show the previous success or replace persi
     await setup.save(edited);
 
     await expect(setup.fieldError).toHaveText("Escribí el nombre de tu producto.");
-    await expect(setup.confirmation).toHaveCount(0);
+    await setup.expectStillOnStep1();
     await setup.expectValues(edited);
   } finally {
     // A test timeout may already have closed the context and its routes.
@@ -50,7 +44,7 @@ test("a server-rejected save does not show the previous success or replace persi
   await setup.expectValues(saved);
 });
 
-test("a save response preserves local edits made after its request", async ({ authedPage }) => {
+test("edits typed while the save is pending are not persisted", async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
   await setup.fill(saved);
@@ -77,21 +71,20 @@ test("a save response preserves local edits made after its request", async ({ au
     await authedPage.unrouteAll({ behavior: "wait" });
   }
   await response;
-  await expect(setup.saveButton).toBeEnabled();
+  await setup.expectOnStep2();
 
-  await setup.expectValues({ ...saved, name: edited.name });
-  await expect(setup.confirmation).toHaveCount(0);
-  await authedPage.reload();
+  // The server saved what was submitted, not the late local edit.
+  await setup.goto();
   await setup.expectValues(saved);
 });
 
-test("a successful save confirms normalized values without treating them as later edits", async ({ authedPage }) => {
+test("a successful save stores normalized values", async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
 
-  await setup.save({ ...saved, name: `  ${saved.name}  `, unit: `  ${saved.unit}  ` });
+  await setup.saveAndContinue({ ...saved, name: `  ${saved.name}  `, unit: `  ${saved.unit}  ` });
 
-  await setup.expectSaved(saved);
+  await setup.goto();
   await setup.expectValues(saved);
 });
 
@@ -124,9 +117,20 @@ test("repeated submit events during a pending save send only one request", async
     await authedPage.unrouteAll({ behavior: "wait" });
   }
   await response;
-  await setup.expectSaved(saved);
+  await setup.expectOnStep2();
 
   expect(requests).toBe(1);
-  await authedPage.reload();
+  await setup.goto();
   await setup.expectValues(saved);
+});
+
+test("an invalid form stays on step 1 and shows the error", async ({ authedPage }) => {
+  const setup = new Paso1Page(authedPage);
+  await setup.goto();
+
+  await setup.fill({ ...saved, name: "" });
+  await setup.saveButton.click();
+
+  await expect(setup.fieldError.first()).toBeVisible();
+  await setup.expectStillOnStep1();
 });
