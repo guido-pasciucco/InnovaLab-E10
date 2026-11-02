@@ -11,16 +11,17 @@ import {
   updateCalcCostLineConceptService,
 } from "@/lib/services/cost";
 
-// The step reads its lines on the server, so each write invalidates the page:
-// the subtotal the user sees is always the one the server just summed.
-const STEP_PATH = "/paso-2";
+// The step and the shell's live cost card read the lines on the server, so each
+// write invalidates the whole calculator layout: the totals the user sees are
+// always the ones the server just summed.
+const revalidateCalculator = () => revalidatePath("/", "layout");
 
 export const addFixedCostLine = handleActionErrors(async (input: unknown) => {
   const user = await requireUser();
 
   const line = await addCalcCostLineService(user.id, input);
 
-  revalidatePath(STEP_PATH);
+  revalidateCalculator();
 
   return { id: line.id };
 }, "CALC_UNAVAILABLE");
@@ -31,7 +32,7 @@ export const updateFixedCostAmount = handleActionErrors(
 
     const line = await updateCalcCostLineAmountService(user.id, lineId, input);
 
-    revalidatePath(STEP_PATH);
+    revalidateCalculator();
 
     return { id: line.id };
   },
@@ -44,7 +45,7 @@ export const renameFixedCostLine = handleActionErrors(
 
     const line = await updateCalcCostLineConceptService(user.id, lineId, input);
 
-    revalidatePath(STEP_PATH);
+    revalidateCalculator();
 
     return { id: line.id };
   },
@@ -56,7 +57,7 @@ export const removeFixedCostLine = handleActionErrors(async (lineId: string) => 
 
   const line = await removeCalcCostLineService(user.id, lineId);
 
-  revalidatePath(STEP_PATH);
+  revalidateCalculator();
 
   return { id: line.id };
 }, "CALC_UNAVAILABLE");
