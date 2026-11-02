@@ -109,6 +109,12 @@ export const ERROR_CATALOG = {
     message: "Calculator draft not found",
     logLevel: "silent",
   },
+  CALC_NOT_FOUND: {
+    // Missing, foreign or non-uuid calculation id: all look the same.
+    status: 404,
+    message: "Calculation not found",
+    logLevel: "silent",
+  },
   CALC_COST_LINE_NOT_FOUND: {
     // Same code when the id is missing or belongs to another draft, so a
     // caller cannot tell those two cases apart.
