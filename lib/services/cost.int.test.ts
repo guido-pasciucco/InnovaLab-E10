@@ -20,6 +20,7 @@ import {
   updateCalcCostLineAmountService,
   updateCalcCostLineConceptService,
   updateVariableCalcCostLineAmountService,
+  updateVariableCalcCostLineConceptService,
 } from "./cost";
 
 // Integration tests against the local Supabase stack. One pool per file.
@@ -881,6 +882,111 @@ describe("updateVariableCalcCostLineAmountService", () => {
 
     const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, harina.id));
     expect(stored[0].amount).toBe("20000.00");
+  });
+});
+
+describe("updateVariableCalcCostLineConceptService", () => {
+  it("throws CALC_DRAFT_MISSING when the user has no draft", async () => {
+    const user = await makeUser();
+
+    await expect(
+      updateVariableCalcCostLineConceptService(user.id, UNKNOWN_LINE_ID, { concept: "Otro" }, db),
+    ).rejects.toEqual(new AppError("CALC_DRAFT_MISSING"));
+  });
+
+  it("renames the line and keeps the amount and the axes", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const harina = await addVariableCalcCostLineService(
+      user.id,
+      { concept: "Harina", amount: "20000.00" },
+      db,
+    );
+    await addVariableCalcCostLineService(user.id, { concept: "Esencia", amount: "15000.00" }, db);
+
+    const updated = await updateVariableCalcCostLineConceptService(
+      user.id,
+      harina.id,
+      { concept: "  Harina 000  ", amount: "1.00", behavior: "fixed" },
+      db,
+    );
+
+    expect(updated).toMatchObject({
+      id: harina.id,
+      concept: "Harina 000",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "20000.00",
+    });
+    const listed = await listVariableCalcCostLinesService(user.id, db);
+    expect(listed.lines.map((line) => line.concept).sort()).toEqual(["Esencia", "Harina 000"]);
+    expect(listed.totalVariable).toBe("35000.00");
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the line is fixed", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const alquiler = await addCalcCostLineService(
+      user.id,
+      { concept: "Alquiler", amount: "60000.00" },
+      db,
+    );
+
+    await expect(
+      updateVariableCalcCostLineConceptService(user.id, alquiler.id, { concept: "Otro" }, db),
+    ).rejects.toEqual(new AppError("CALC_COST_LINE_NOT_FOUND"));
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, alquiler.id));
+    expect(stored[0].concept).toBe("Alquiler");
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the line belongs to another user", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    await saveDraft(userA.id);
+    await saveDraft(userB.id);
+    const lineA = await addVariableCalcCostLineService(
+      userA.id,
+      { concept: "Harina", amount: "20000.00" },
+      db,
+    );
+
+    await expect(
+      updateVariableCalcCostLineConceptService(userB.id, lineA.id, { concept: "Otro" }, db),
+    ).rejects.toEqual(new AppError("CALC_COST_LINE_NOT_FOUND"));
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, lineA.id));
+    expect(stored[0].concept).toBe("Harina");
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the id does not exist", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    await addVariableCalcCostLineService(user.id, { concept: "Harina", amount: "20000.00" }, db);
+
+    await expect(
+      updateVariableCalcCostLineConceptService(user.id, UNKNOWN_LINE_ID, { concept: "Otro" }, db),
+    ).rejects.toEqual(new AppError("CALC_COST_LINE_NOT_FOUND"));
+
+    const listed = await listVariableCalcCostLinesService(user.id, db);
+    expect(listed.lines.map((line) => line.concept)).toEqual(["Harina"]);
+  });
+
+  it("rejects an empty concept without changing the line", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const harina = await addVariableCalcCostLineService(
+      user.id,
+      { concept: "Harina", amount: "20000.00" },
+      db,
+    );
+
+    await expect(
+      updateVariableCalcCostLineConceptService(user.id, harina.id, { concept: "   " }, db),
+    ).rejects.toBeInstanceOf(ZodError);
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, harina.id));
+    expect(stored[0].concept).toBe("Harina");
   });
 });
 

@@ -273,6 +273,29 @@ export async function updateVariableCalcCostLineAmountService(
   return updated;
 }
 
+export async function updateVariableCalcCostLineConceptService(
+  userId: string,
+  lineId: string,
+  input: unknown,
+  db: Db = getDrizzleClient(),
+): Promise<CalcCostLine> {
+  const { concept } = updateCalcCostLineConceptInputSchema.parse(input);
+  const id = requireLineId(lineId);
+  const draftId = await requireDraftId(userId, db);
+
+  const [updated] = await db
+    .update(calcCostLines)
+    .set({ concept })
+    .where(variableLineOfDraft(id, draftId))
+    .returning();
+
+  if (!updated) {
+    throw new AppError("CALC_COST_LINE_NOT_FOUND");
+  }
+
+  return updated;
+}
+
 export async function removeVariableCalcCostLineService(
   userId: string,
   lineId: string,
