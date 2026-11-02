@@ -7,7 +7,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Path } from "react-hook-form";
 
@@ -56,6 +56,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
     reset,
@@ -65,6 +66,14 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     resolver: zodResolver(calculatorSetupSchema),
     defaultValues,
   });
+
+  // The live card mirrors the volume being typed; an empty or invalid value
+  // (NaN from valueAsNumber) shows "—" instead of a made-up number.
+  const watchedVolume = useWatch({ control, name: "volume" });
+  const liveVolume =
+    Number.isFinite(watchedVolume) && watchedVolume > 0
+      ? watchedVolume
+      : undefined;
 
   const [selectedSector, setSelectedSector] = useState<string>(SECTORS[0]);
   const [kind, setKind] = useState("Producto");
@@ -233,7 +242,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
         </form>
       </section>
 
-      <LiveCostCard volume={200} />
+      <LiveCostCard volume={liveVolume} />
     </>
   );
 }
