@@ -10,10 +10,12 @@ import {
 } from "@/lib/db/calculation/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { businessCostLines, calcCostLines } from "@/lib/db/costs/table";
+import { AppError } from "@/lib/errors/app-error";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
 import {
+  advanceCalculatorProgressService,
   getCalculatorCostSummaryService,
   getCalculatorDraftSetupService,
   getCalculatorProgressService,
@@ -706,5 +708,73 @@ describe("wizard progress (calculations.current_step)", () => {
     await getCalculatorProgressService(user.id, db);
 
     expect(await getSetupRows(user.id)).toEqual(before);
+  });
+});
+
+describe("advanceCalculatorProgressService", () => {
+  it("advances from step 2 to step 3", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+
+    const result = await advanceCalculatorProgressService(user.id, 3, db);
+
+    expect(result).toEqual({ currentStep: 3 });
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 3 });
+  });
+
+  it("never lowers the step when an earlier one is requested", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    await advanceCalculatorProgressService(user.id, 3, db);
+
+    const result = await advanceCalculatorProgressService(user.id, 2, db);
+
+    expect(result).toEqual({ currentStep: 3 });
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 3 });
+  });
+
+  it("caps the step at 7", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    await db.update(calculations).set({ currentStep: 7 }).where(eq(calculations.userId, user.id));
+
+    const result = await advanceCalculatorProgressService(user.id, 7, db);
+
+    expect(result).toEqual({ currentStep: 7 });
+  });
+
+  it.each([
+    ["below the range", 1],
+    ["above the range", 8],
+    ["not an integer", 2.5],
+  ])("rejects a step that is %s without changing the progress", async (_name, step) => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+
+    await expect(advanceCalculatorProgressService(user.id, step, db)).rejects.toBeInstanceOf(
+      ZodError,
+    );
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 2 });
+  });
+
+  it("throws CALC_DRAFT_MISSING when the user has no draft", async () => {
+    const user = await makeUser();
+
+    await expect(advanceCalculatorProgressService(user.id, 3, db)).rejects.toEqual(
+      new AppError("CALC_DRAFT_MISSING"),
+    );
+  });
+
+  it("leaves another user's draft untouched", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    await saveCalculatorSetupService(userA.id, validInput, db);
+    await saveCalculatorSetupService(userB.id, validInput, db);
+
+    await advanceCalculatorProgressService(userA.id, 4, db);
+
+    expect(await getCalculatorProgressService(userA.id, db)).toEqual({ currentStep: 4 });
+    expect(await getCalculatorProgressService(userB.id, db)).toEqual({ currentStep: 2 });
   });
 });

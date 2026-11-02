@@ -1,10 +1,27 @@
-import { FixedCostsTable } from "@/components/calculator/fixed-costs-table";
-import type { FixedCostLine } from "@/components/calculator/fixed-cost-row-item";
+import {
+  addFixedCostLine,
+  continueToVariableCosts,
+  removeFixedCostLine,
+  renameFixedCostLine,
+  updateFixedCostAmount,
+} from "@/app/(calculator)/paso-2/actions";
+import { CostLinesTable } from "@/components/calculator/cost-lines-table";
+import type {
+  CostLine,
+  CostLineActions,
+} from "@/components/calculator/cost-line-row-item";
 import { StepHeader } from "@/components/calculator/wizard/step-header";
 import { StepNav } from "@/components/calculator/wizard/step-nav";
 
+const FIXED_COST_ACTIONS: CostLineActions = {
+  add: addFixedCostLine,
+  rename: renameFixedCostLine,
+  updateAmount: updateFixedCostAmount,
+  remove: removeFixedCostLine,
+};
+
 type FixedCostsStepProps = {
-  lines: readonly FixedCostLine[];
+  lines: readonly CostLine[];
   totalFixed: string;
 };
 
@@ -21,10 +38,19 @@ export function FixedCostsStep({ lines, totalFixed }: FixedCostsStepProps) {
         />
 
         <div className="mt-4">
-          <FixedCostsTable lines={lines} totalFixed={totalFixed} />
+          <CostLinesTable
+            lines={lines}
+            total={totalFixed}
+            actions={FIXED_COST_ACTIONS}
+            listLabel="Costos fijos del mes"
+            subtotalLabel="Subtotal fijos"
+          />
         </div>
 
-        <StepNav previous="/paso-1" next="/paso-3" />
+        <StepNav
+          previous="/paso-1"
+          nextAction={continueToVariableCosts}
+        />
       </section>
     </>
   );

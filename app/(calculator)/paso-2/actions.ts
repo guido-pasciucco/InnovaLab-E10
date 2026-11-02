@@ -1,7 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
+import {
+  advanceThenRedirect,
+  revalidateCalculator,
+} from "@/app/(calculator)/revalidate-calculator";
 import { requireUser } from "@/lib/auth/require-user";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
 import {
@@ -10,11 +12,6 @@ import {
   updateCalcCostLineAmountService,
   updateCalcCostLineConceptService,
 } from "@/lib/services/cost";
-
-// The step and the shell's live cost card read the lines on the server, so each
-// write invalidates the whole calculator layout: the totals the user sees are
-// always the ones the server just summed.
-const revalidateCalculator = () => revalidatePath("/", "layout");
 
 export const addFixedCostLine = handleActionErrors(async (input: unknown) => {
   const user = await requireUser();
@@ -61,3 +58,8 @@ export const removeFixedCostLine = handleActionErrors(async (lineId: string) => 
 
   return { id: line.id };
 }, "CALC_UNAVAILABLE");
+
+// "Siguiente": unlocks step 3 and goes there.
+export async function continueToVariableCosts(): Promise<void> {
+  await advanceThenRedirect(3, "/paso-3");
+}
