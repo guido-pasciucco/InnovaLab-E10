@@ -17,7 +17,7 @@ import {
 } from "@/app/(calculator)/paso-2/actions";
 import { FixedCostDeleteButton } from "@/components/calculator/fixed-cost-delete-button";
 import { conceptField } from "@/lib/schemas/costs/fields";
-import { formatARS, parseAmountInput } from "@/lib/money/format";
+import { formatARSCompact, parseAmountInput } from "@/lib/money/format";
 
 // What the table shows of a saved line. The server owns the id and the amount.
 export type FixedCostLine = {
@@ -50,7 +50,7 @@ function firstIssue(concept: string): string | null {
 }
 
 function displayAmount(amount: string): string {
-  return formatARS(amount) || amount;
+  return formatARSCompact(amount) || amount;
 }
 
 // The row keeps what the user is typing and saves it when focus leaves the
@@ -237,7 +237,7 @@ export function FixedCostRowItem({
             onChange={(event) => handleAmountChange(event.target.value)}
             inputMode="decimal"
             autoComplete="off"
-            placeholder="$ 0,00"
+            placeholder="$0"
             aria-invalid={amountError ? true : undefined}
             aria-describedby={amountError ? amountErrorId : undefined}
             className={AMOUNT_INPUT_CLASS}

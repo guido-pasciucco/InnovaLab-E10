@@ -20,7 +20,7 @@ test("a draft without costs shows dashes in every amount", async ({ authedPage }
   await expect(cardValue(authedPage, "Variable por unidad")).toHaveText("—");
 });
 
-test("saved fixed costs reach the card when coming back to step 1", async ({ authedPage }) => {
+test("saved fixed costs reach the card; per-unit amounts wait for a variable cost", async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
   await setup.saveAndContinue(saved);
@@ -28,14 +28,13 @@ test("saved fixed costs reach the card when coming back to step 1", async ({ aut
 
   await setup.goto();
 
-  // 60000 / 96 = 625.00 per unit; no variable lines yet, so 0.00 (not a dash).
-  await expect(authedPage.getByRole("heading", { name: "Costo unitario $ 625,00" })).toBeVisible();
-  await expect(cardValue(authedPage, "Costos fijos")).toHaveText("$ 60.000,00");
-  await expect(cardValue(authedPage, "Variable por unidad")).toHaveText("$ 0,00");
+  await expect(authedPage.getByRole("heading", { name: "Costo unitario —" })).toBeVisible();
+  await expect(cardValue(authedPage, "Costos fijos")).toHaveText("$60.000");
+  await expect(cardValue(authedPage, "Variable por unidad")).toHaveText("—");
   await expect(cardValue(authedPage, "Volumen")).toHaveText("96");
 });
 
-test("typing a different volume hides the per-unit amounts but keeps the fixed total", async ({ authedPage }) => {
+test("typing a different volume updates the card's volume and keeps the fixed total", async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
   await setup.saveAndContinue(saved);
@@ -45,13 +44,10 @@ test("typing a different volume hides the per-unit amounts but keeps the fixed t
   await setup.volumeInput.fill("48");
 
   await expect(cardValue(authedPage, "Volumen")).toHaveText("48");
-  await expect(authedPage.getByRole("heading", { name: "Costo unitario —" })).toBeVisible();
-  await expect(cardValue(authedPage, "Variable por unidad")).toHaveText("—");
-  await expect(cardValue(authedPage, "Costos fijos")).toHaveText("$ 60.000,00");
+  await expect(cardValue(authedPage, "Costos fijos")).toHaveText("$60.000");
 
-  // Back to the saved volume: the persisted per-unit amounts apply again.
   await setup.volumeInput.fill("96");
-  await expect(authedPage.getByRole("heading", { name: "Costo unitario $ 625,00" })).toBeVisible();
+  await expect(cardValue(authedPage, "Volumen")).toHaveText("96");
 });
 
 test("the same card shows the same data on step 2 and updates when a cost is added", async ({ authedPage }) => {
@@ -59,14 +55,14 @@ test("the same card shows the same data on step 2 and updates when a cost is add
   await setup.goto();
   await setup.saveAndContinue(saved);
 
-  await expect(authedPage.getByRole("heading", { name: "Costo unitario —" })).toBeVisible();
+  await expect(cardValue(authedPage, "Costos fijos")).toHaveText("—");
   await expect(cardValue(authedPage, "Volumen")).toHaveText("96");
 
   await new Paso2Page(authedPage).addLine("Alquiler", "60000");
+  await new Paso2Page(authedPage).addLine("Servicios", "1.500,50");
 
-  await expect(authedPage.getByRole("heading", { name: "Costo unitario $ 625,00" })).toBeVisible();
-  await expect(cardValue(authedPage, "Costos fijos")).toHaveText("$ 60.000,00");
-  await expect(cardValue(authedPage, "Variable por unidad")).toHaveText("$ 0,00");
+  await expect(cardValue(authedPage, "Costos fijos")).toHaveText("$61.500,50");
+  await expect(cardValue(authedPage, "Variable por unidad")).toHaveText("—");
   await expect(cardValue(authedPage, "Volumen")).toHaveText("96");
 });
 
@@ -78,6 +74,6 @@ test("the card is also shown on the steps that are not built yet", async ({ auth
 
   await authedPage.goto("/paso-3");
 
-  await expect(authedPage.getByRole("heading", { name: "Costo unitario $ 625,00" })).toBeVisible();
-  await expect(cardValue(authedPage, "Costos fijos")).toHaveText("$ 60.000,00");
+  await expect(cardValue(authedPage, "Costos fijos")).toHaveText("$60.000");
+  await expect(cardValue(authedPage, "Volumen")).toHaveText("96");
 });

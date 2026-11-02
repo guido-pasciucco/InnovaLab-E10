@@ -68,9 +68,23 @@ describe("toLiveCostCardValues", () => {
     });
   });
 
-  it("keeps a zero amount instead of treating it as missing", () => {
+  it("keeps a zero fixed total instead of treating it as missing", () => {
     expect(
-      toLiveCostCardValues({ ...summary, totalFixed: "0.00", variableUnit: "0.00" }, 12),
-    ).toMatchObject({ fixedCosts: "0.00", variablePerUnit: "0.00" });
+      toLiveCostCardValues({ ...summary, totalFixed: "0.00" }, 12),
+    ).toMatchObject({ fixedCosts: "0.00" });
+  });
+
+  it("shows dashes per unit while there are only fixed costs", () => {
+    expect(
+      toLiveCostCardValues(
+        { ...summary, variableUnit: "0.00", unitCost: "83.33" },
+        12,
+      ),
+    ).toEqual({
+      volume: 12,
+      fixedCosts: "1000.00",
+      unitCost: undefined,
+      variablePerUnit: undefined,
+    });
   });
 });

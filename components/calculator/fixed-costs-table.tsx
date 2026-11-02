@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { formatARS } from "@/lib/money/format";
+import { formatARSCompact } from "@/lib/money/format";
 import {
   FixedCostRowItem,
   type FixedCostLine,
@@ -25,7 +25,7 @@ export function FixedCostsTable({ lines, totalFixed }: FixedCostsTableProps) {
 
   // Nothing to add up yet: a dash reads better than a zero total.
   const subtotalText =
-    lines.length === 0 ? "—" : formatARS(totalFixed) || "—";
+    lines.length === 0 ? "—" : formatARSCompact(totalFixed) || "—";
 
   // Stable on purpose: React calls a ref callback again whenever its identity
   // changes, and the focus must only move when the new row mounts.

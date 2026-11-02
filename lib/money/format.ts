@@ -199,3 +199,18 @@ export function formatARS(amount: string): string {
 
   return `${CURRENCY_PREFIX}${sign}${withThousandsSeparators(integer)}${DECIMAL_SEPARATOR}${cents}`;
 }
+
+/**
+ * Short display form for the wizard's cards: "$60.000" instead of
+ * "$ 60.000,00". The currency sign sits against the number and a whole amount
+ * drops its ",00"; any real cents are kept ("$1.500,50"). Same rules as
+ * formatARS otherwise: an amount that is not a decimal returns "".
+ */
+export function formatARSCompact(amount: string): string {
+  const full = formatARS(amount);
+  if (full === "") {
+    return "";
+  }
+
+  return full.replace(/^\$ /, "$").replace(/,00$/, "");
+}

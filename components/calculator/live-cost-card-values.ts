@@ -11,20 +11,27 @@ export type LiveCostCardValues = {
 // volume being typed, but `unitCost` and `variableUnit` were divided by the
 // persisted volume: when the two differ those amounts are stale, so they show
 // "—" instead of mixing a new volume with the old division. `totalFixed` does
-// not depend on the volume, so it stays. `null` ("no costs yet") becomes
+// not depend on the volume, so it stays.
+// Per-unit amounts also wait for the first variable cost: with fixed costs
+// alone the unit cost is incomplete, so the card shows dashes (the service
+// reports "0.00" for a category with no lines). `null` ("no costs yet") becomes
 // `undefined`, which the card renders as "—".
 export function toLiveCostCardValues(
   summary: CalculatorCostSummary | null,
   liveVolume: number | undefined,
 ): LiveCostCardValues {
-  const volumeIsPersisted =
-    summary !== null && liveVolume !== undefined && summary.volume === liveVolume;
+  const perUnitIsCurrent =
+    summary !== null &&
+    liveVolume !== undefined &&
+    summary.volume === liveVolume &&
+    summary.variableUnit !== null &&
+    summary.variableUnit !== "0.00";
 
   return {
     volume: liveVolume,
     fixedCosts: summary?.totalFixed ?? undefined,
-    unitCost: volumeIsPersisted ? (summary.unitCost ?? undefined) : undefined,
-    variablePerUnit: volumeIsPersisted
+    unitCost: perUnitIsCurrent ? (summary.unitCost ?? undefined) : undefined,
+    variablePerUnit: perUnitIsCurrent
       ? (summary.variableUnit ?? undefined)
       : undefined,
   };

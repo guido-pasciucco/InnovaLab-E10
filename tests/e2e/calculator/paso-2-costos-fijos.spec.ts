@@ -23,16 +23,16 @@ test("a new line is saved, summed by the server and survives a reload", async ({
 
   await fixedCosts.addLine("Alquiler", "60.000");
 
-  await fixedCosts.expectSubtotal("$ 60.000,00");
-  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$ 60.000,00");
+  await fixedCosts.expectSubtotal("$60.000");
+  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$60.000");
 
   await authedPage.reload();
   await fixedCosts.expectLoaded();
 
   await expect(fixedCosts.lines).toHaveCount(1);
   await expect(fixedCosts.conceptInputs.nth(0)).toHaveValue("Alquiler");
-  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$ 60.000,00");
-  await fixedCosts.expectSubtotal("$ 60.000,00");
+  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$60.000");
+  await fixedCosts.expectSubtotal("$60.000");
 });
 
 test("two lines add up in the subtotal", async ({ authedPage }) => {
@@ -41,11 +41,11 @@ test("two lines add up in the subtotal", async ({ authedPage }) => {
   await fixedCosts.addLine("Alquiler", "60000");
   await fixedCosts.addLine("Servicios", "1.500,50");
 
-  await fixedCosts.expectSubtotal("$ 61.500,50");
+  await fixedCosts.expectSubtotal("$61.500,50");
   await authedPage.reload();
   await fixedCosts.expectLoaded();
   await expect(fixedCosts.lines).toHaveCount(2);
-  await fixedCosts.expectSubtotal("$ 61.500,50");
+  await fixedCosts.expectSubtotal("$61.500,50");
 });
 
 test("editing the amount of a saved line updates the subtotal after a reload", async ({ authedPage }) => {
@@ -54,12 +54,12 @@ test("editing the amount of a saved line updates the subtotal after a reload", a
 
   await fixedCosts.editAmount(0, "75.000,25");
 
-  await fixedCosts.expectSubtotal("$ 75.000,25");
+  await fixedCosts.expectSubtotal("$75.000,25");
   await authedPage.reload();
   await fixedCosts.expectLoaded();
   await expect(fixedCosts.lines).toHaveCount(1);
-  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$ 75.000,25");
-  await fixedCosts.expectSubtotal("$ 75.000,25");
+  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$75.000,25");
+  await fixedCosts.expectSubtotal("$75.000,25");
 });
 
 test("an invalid amount shows its error after leaving the field and is not saved", async ({ authedPage }) => {
@@ -88,10 +88,10 @@ test("an invalid edit of a saved line keeps the stored amount in the subtotal", 
   await fixedCosts.amountInputs.nth(0).blur();
 
   await expect(fixedCosts.alerts).toHaveCount(1);
-  await fixedCosts.expectSubtotal("$ 60.000,00");
+  await fixedCosts.expectSubtotal("$60.000");
   await authedPage.reload();
   await fixedCosts.expectLoaded();
-  await fixedCosts.expectSubtotal("$ 60.000,00");
+  await fixedCosts.expectSubtotal("$60.000");
 });
 
 test("a new row without a concept is not saved and asks for it", async ({ authedPage }) => {
@@ -126,8 +126,8 @@ test("editing the concept of a saved line persists after a reload and keeps the 
   await fixedCosts.expectLoaded();
   await expect(fixedCosts.lines).toHaveCount(1);
   await expect(fixedCosts.conceptInputs.nth(0)).toHaveValue("Alquiler del local");
-  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$ 60.000,00");
-  await fixedCosts.expectSubtotal("$ 60.000,00");
+  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$60.000");
+  await fixedCosts.expectSubtotal("$60.000");
 });
 
 test("an empty concept on a saved line shows its error and is not saved", async ({ authedPage }) => {
@@ -142,7 +142,7 @@ test("an empty concept on a saved line shows its error and is not saved", async 
   await authedPage.reload();
   await fixedCosts.expectLoaded();
   await expect(fixedCosts.conceptInputs.nth(0)).toHaveValue("Alquiler");
-  await fixedCosts.expectSubtotal("$ 60.000,00");
+  await fixedCosts.expectSubtotal("$60.000");
 });
 
 test("changing the concept and the amount of a saved line saves both", async ({ authedPage }) => {
@@ -153,12 +153,12 @@ test("changing the concept and the amount of a saved line saves both", async ({ 
   await fixedCosts.amountInputs.nth(0).fill("70000");
   await fixedCosts.amountInputs.nth(0).blur();
 
-  await fixedCosts.expectSubtotal("$ 70.000,00");
+  await fixedCosts.expectSubtotal("$70.000");
   await expect(fixedCosts.alerts).toHaveCount(0);
   await authedPage.reload();
   await fixedCosts.expectLoaded();
   await expect(fixedCosts.conceptInputs.nth(0)).toHaveValue("Alquiler del local");
-  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$ 70.000,00");
+  await expect(fixedCosts.amountInputs.nth(0)).toHaveValue("$70.000");
 });
 
 test("deleting a saved line removes it and updates the subtotal after a reload", async ({ authedPage }) => {
@@ -169,12 +169,12 @@ test("deleting a saved line removes it and updates the subtotal after a reload",
   await fixedCosts.deleteLine("Alquiler");
 
   await expect(fixedCosts.lines).toHaveCount(1);
-  await fixedCosts.expectSubtotal("$ 1.500,50");
+  await fixedCosts.expectSubtotal("$1.500,50");
   await authedPage.reload();
   await fixedCosts.expectLoaded();
   await expect(fixedCosts.lines).toHaveCount(1);
   await expect(fixedCosts.conceptInputs.nth(0)).toHaveValue("Servicios");
-  await fixedCosts.expectSubtotal("$ 1.500,50");
+  await fixedCosts.expectSubtotal("$1.500,50");
 });
 
 test("deleting the last line returns to the empty table and a dash as subtotal", async ({ authedPage }) => {
