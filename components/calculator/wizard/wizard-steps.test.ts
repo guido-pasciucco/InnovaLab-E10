@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { stepFromPathname } from "./wizard-steps";
+import { STEP_HREFS, TOTAL_STEPS, stepFromPathname } from "./wizard-steps";
 
 describe("stepFromPathname", () => {
   it.each([
@@ -18,4 +18,12 @@ describe("stepFromPathname", () => {
       expect(stepFromPathname(pathname)).toBeNull();
     },
   );
+});
+
+describe("STEP_HREFS", () => {
+  it("maps every step to its /paso-N route", () => {
+    for (let step = 1; step <= TOTAL_STEPS; step++) {
+      expect(STEP_HREFS[step]).toBe(`/paso-${step}`);
+    }
+  });
 });

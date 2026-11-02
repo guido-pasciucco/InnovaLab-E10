@@ -56,7 +56,7 @@ export class Paso1Page {
   async expectOnStep2(): Promise<void> {
     await expect(this.page).toHaveURL(/\/paso-2$/);
     await expect(
-      this.page.getByRole("heading", { name: "Paso 2", exact: true }),
+      this.page.getByRole("heading", { name: "Costos fijos del mes", exact: true }),
     ).toBeVisible();
   }
 

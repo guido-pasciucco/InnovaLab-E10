@@ -1,12 +1,27 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth/require-user";
+import { AppError } from "@/lib/errors/app-error";
 import { getCalculatorProgressService } from "@/lib/services/calculator";
-import { StepHeader } from "@/components/calculator/wizard/step-header";
+import {
+  listCalcCostLinesService,
+  type CalcCostLineList,
+} from "@/lib/services/cost";
+import { FixedCostsStep } from "@/components/calculator/fixed-costs-step";
 
-// Placeholder for calculator step 2 (pricing inputs go here). Already guarded
-// and linked back to step 1 so the wizard flow works end to end.
+async function listFixedCosts(userId: string): Promise<CalcCostLineList> {
+  try {
+    return await listCalcCostLinesService(userId, { behavior: "fixed" });
+  } catch (err) {
+    // The progress says step 2 is open, so a missing draft means the user has
+    // to save step 1 again before there is anything to attach costs to.
+    if (err instanceof AppError && err.code === "CALC_DRAFT_MISSING") {
+      redirect("/paso-1");
+    }
+    throw err;
+  }
+}
+
 export default async function Paso2Page() {
   const user = await requireUser();
   const { currentStep } = await getCalculatorProgressService(user.id);
@@ -14,19 +29,14 @@ export default async function Paso2Page() {
   // Not reachable yet: send the user to the furthest step they may open.
   if (currentStep < 2) redirect(`/paso-${currentStep}`);
 
+  const { lines, totalFixed } = await listFixedCosts(user.id);
+
+  // Only what the table shows crosses to the client: no timestamps, no
+  // server-owned dimensions.
   return (
-    <section className="rounded-[32px] bg-white/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6 lg:col-span-2">
-      <StepHeader
-        currentStep={2}
-        title="Paso 2"
-        description="Esta pantalla todavía no está disponible."
-      />
-      <Link
-        href="/paso-1"
-        className="mt-4 inline-block text-base font-semibold text-brand-green-700 underline"
-      >
-        Volver al paso 1
-      </Link>
-    </section>
+    <FixedCostsStep
+      lines={lines.map(({ id, concept, amount }) => ({ id, concept, amount }))}
+      totalFixed={totalFixed}
+    />
   );
 }

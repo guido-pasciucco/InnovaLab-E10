@@ -1,7 +1,12 @@
-// Wizard step -> route, only for the steps that already have a page.
+// Wizard step -> route. Every step has a route, even if it is a placeholder.
 export const STEP_HREFS: Readonly<Record<number, string>> = {
   1: "/paso-1",
   2: "/paso-2",
+  3: "/paso-3",
+  4: "/paso-4",
+  5: "/paso-5",
+  6: "/paso-6",
+  7: "/paso-7",
 };
 
 export const TOTAL_STEPS = 7;
