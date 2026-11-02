@@ -10,6 +10,7 @@ import { createUser, deleteUser, type CreatedUser } from "../../tests/support/fa
 import { loadTestEnv } from "../../tests/support/test-env";
 import {
   getCalculatorDraftSetupService,
+  getCalculatorProgressService,
   getDraftCalculationId,
   saveCalculatorSetupService,
 } from "./calculator";
@@ -371,6 +372,50 @@ describe("getCalculatorDraftSetupService", () => {
     const before = await getSetupRows(user.id);
 
     await getCalculatorDraftSetupService(user.id, db);
+
+    expect(await getSetupRows(user.id)).toEqual(before);
+  });
+});
+
+describe("wizard progress (calculations.current_step)", () => {
+  it("a user without a draft only has step 1", async () => {
+    const user = await makeUser();
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 1 });
+  });
+
+  it("the first save unlocks step 2", async () => {
+    const user = await makeUser();
+
+    await saveCalculatorSetupService(user.id, validInput, db);
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 2 });
+  });
+
+  it("saving step 1 again never lowers a more advanced step", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    await db.update(calculations).set({ currentStep: 4 }).where(eq(calculations.userId, user.id));
+
+    await saveCalculatorSetupService(user.id, { ...validInput, volume: 60 }, db);
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 4 });
+  });
+
+  it("progress is private to each user", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    await saveCalculatorSetupService(userA.id, validInput, db);
+
+    expect(await getCalculatorProgressService(userB.id, db)).toEqual({ currentStep: 1 });
+  });
+
+  it("the read does not write any row", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const before = await getSetupRows(user.id);
+
+    await getCalculatorProgressService(user.id, db);
 
     expect(await getSetupRows(user.id)).toEqual(before);
   });
