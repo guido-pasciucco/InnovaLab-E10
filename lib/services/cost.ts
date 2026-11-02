@@ -149,11 +149,13 @@ export async function updateCalcCostLineAmountService(
   return updated;
 }
 
-export async function updateCalcCostLineConceptService(
+// Both rename services differ only in which behavior they match.
+async function renameCalcCostLine(
   userId: string,
   lineId: string,
   input: unknown,
-  db: Db = getDrizzleClient(),
+  db: Db,
+  lineOfDraft: typeof fixedLineOfDraft,
 ): Promise<CalcCostLine> {
   const { concept } = updateCalcCostLineConceptInputSchema.parse(input);
   const id = requireLineId(lineId);
@@ -162,7 +164,7 @@ export async function updateCalcCostLineConceptService(
   const [updated] = await db
     .update(calcCostLines)
     .set({ concept })
-    .where(fixedLineOfDraft(id, draftId))
+    .where(lineOfDraft(id, draftId))
     .returning();
 
   if (!updated) {
@@ -170,6 +172,15 @@ export async function updateCalcCostLineConceptService(
   }
 
   return updated;
+}
+
+export async function updateCalcCostLineConceptService(
+  userId: string,
+  lineId: string,
+  input: unknown,
+  db: Db = getDrizzleClient(),
+): Promise<CalcCostLine> {
+  return renameCalcCostLine(userId, lineId, input, db, fixedLineOfDraft);
 }
 
 export async function removeCalcCostLineService(
@@ -279,21 +290,7 @@ export async function updateVariableCalcCostLineConceptService(
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalcCostLine> {
-  const { concept } = updateCalcCostLineConceptInputSchema.parse(input);
-  const id = requireLineId(lineId);
-  const draftId = await requireDraftId(userId, db);
-
-  const [updated] = await db
-    .update(calcCostLines)
-    .set({ concept })
-    .where(variableLineOfDraft(id, draftId))
-    .returning();
-
-  if (!updated) {
-    throw new AppError("CALC_COST_LINE_NOT_FOUND");
-  }
-
-  return updated;
+  return renameCalcCostLine(userId, lineId, input, db, variableLineOfDraft);
 }
 
 export async function removeVariableCalcCostLineService(
