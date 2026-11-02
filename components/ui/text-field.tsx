@@ -34,7 +34,7 @@ export function TextField({
             .filter(Boolean)
             .join(" ") || undefined
         }
-        className={`min-h-11 w-full rounded-[10px] border border-border-default bg-surface px-4 py-2 text-base text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-invalid:border-danger disabled:cursor-not-allowed disabled:bg-surface-disabled disabled:text-fg-disabled ${className}`}
+        className={`min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-4 py-2 text-base text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-invalid:border-danger disabled:cursor-not-allowed disabled:bg-surface-disabled disabled:text-fg-disabled ${className}`}
       />
       {error && (
         <p id={errorId} role="alert" className="text-sm text-danger">

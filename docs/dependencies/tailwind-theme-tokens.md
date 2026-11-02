@@ -2,6 +2,8 @@
 
 La paleta visual se define una vez en app/globals.css. Los componentes consumen nombres semánticos de Tailwind y no valores de color directos.
 
+Fuente de los valores oficiales: captura de la sección Fundamentos → COLOR del Figma de la Calculadora Inteligente de Costos, aportada por el equipo. Esta documentación no afirma que la captura se haya adjuntado a GitHub.
+
 ## Fuente y uso
 
 | Token fuente | Valor | Origen | Uso semántico |
@@ -9,10 +11,13 @@ La paleta visual se define una vez en app/globals.css. Los componentes consumen 
 | --surface-canvas | #D8F5E3 | Figma | Fondo principal |
 | --surface-raised | #FFFFFF | Figma | Superficies elevadas y texto sobre acción primaria |
 | --surface-tint | #F1FFF5 | Figma | Superficie suave |
-| --border-default | #BFE3CB | Figma | Bordes de controles |
+| --border-default | #BFE3CB | Figma | Bordes de línea generales |
+| --border-control | #5A7A60 | Propuesta interna ajustada | Borde accesible de inputs y selects |
+| --border-tonal | #5A7A60 | Propuesta interna ajustada | Borde o indicador de acción tonal sobre canvas |
 | --text-primary | #0B1F10 | Figma | Texto principal |
 | --text-muted | #4D6354 | Figma | Texto secundario |
-| --text-on-action | #06130A | Figma | Texto sobre acción tonal |
+| --text-placeholder | #4D6354 | Propuesta semántica | Placeholder de campos |
+| --text-on-action-tonal | #06130A | Figma | Texto sobre acción tonal |
 | --action-primary | #15803D | Figma | Acción primaria |
 | --action-primary-hover | #166534 | Figma | Hover de acción primaria |
 | --action-primary-pressed | #14532D | Figma | Estado presionado |
@@ -27,7 +32,11 @@ La paleta visual se define una vez en app/globals.css. Los componentes consumen 
 | --surface-success | #E1F5E7 | Propuesta interna | Fondo de éxito |
 | --text-disabled | #5A6D5E | Propuesta interna ajustada | Texto deshabilitado |
 
-Los nombres --color-* de @theme inline exponen las utilidades Tailwind equivalentes: por ejemplo, bg-action-primary, text-fg y border-border-default.
+Los nombres --color-* de @theme inline exponen las utilidades Tailwind equivalentes: por ejemplo, bg-action-primary, text-fg y border-border-control. El color oficial de línea permanece como --border-default; no se reemplaza ni se modifica.
+
+## Compatibilidad de fondo y texto
+
+--background conserva su nombre para los consumidores existentes, pero ahora referencia --surface-canvas (#D8F5E3). --foreground también conserva compatibilidad y ahora referencia --text-primary (#0B1F10). Los nuevos componentes deben preferir los nombres semánticos y no depender de esos alias heredados.
 
 ## Accesibilidad
 
@@ -39,8 +48,12 @@ Se verificaron contrastes de texto normal contra sus superficies:
 - --status-warning sobre --surface-warning: 4.61:1.
 - --status-success sobre --surface-success: 4.75:1.
 - --text-disabled sobre --surface-disabled: 4.66:1.
+- --border-control sobre blanco: 4.79:1.
+- --border-control sobre --surface-canvas: 4.12:1.
 
-El valor Figma --text-on-action tiene 3.79:1 sobre --action-primary; por eso --color-on-action-primary usa --surface-raised (#FFFFFF, 5.02:1). El valor Figma se conserva para --color-on-action sobre la acción tonal.
+El valor Figma --text-on-action-tonal tiene 3.79:1 sobre --action-primary; por eso --color-on-action-primary usa --surface-raised (#FFFFFF, 5.02:1). El valor Figma se conserva solamente para --color-on-action-tonal sobre la acción tonal.
+
+--status-warning sobre --surface-warning alcanza 4.61:1 y debe usarse sobre ese fondo o sobre superficies con contraste equivalente o mayor. --border-tonal reutiliza --border-control para distinguir la acción tonal #E1F5E7 sobre canvas sin alterar el color tonal oficial.
 
 ## Compatibilidad con #170 / PR #212
 
@@ -58,4 +71,8 @@ Estos valores no se usan como fuente de las nuevas acciones semánticas. En part
 
 ## Alcance de la fase 1
 
-La fase 1 tokeniza PrimaryButton, TextField y SelectField. No activa --color-*: initial ni migra páginas, Auth, Calculator, gradientes, sombras o variantes dark:. Esos cambios quedan para la fase 2, después de integrar o reconciliar los PR que todavía modifican esas superficies.
+La fase 1 tokeniza PrimaryButton, TextField y SelectField. Mantiene tamaños, radios, espaciados, semántica ARIA y lógica funcional. No activa --color-*: initial ni migra páginas, Auth, Calculator, gradientes, sombras o variantes dark:.
+
+En la base de esta fase, paso 1 conserva GREEN_TOKENS como override local de los tokens de marca para coordinar con #212 y #215. No se modifica ese bloque. PrimaryButton pasa a usar la acción oficial #15803D en vez del override local #17803d; es una diferencia visual deliberada y documentada para alinear el componente compartido con Figma. La integración posterior con main debe conservar la resolución que elimina ese override junto con el wizard.
+
+La fase 2 migrará las superficies restantes y decidirá cuándo activar --color-*: initial, después de integrar o reconciliar los PR que todavía modifican esas superficies.
