@@ -10,6 +10,18 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Animación de halo de luz constante, suave y continua (4.5 segundos) */
+  --animate-glint: glint 4.5s infinite linear;
+
+  @keyframes glint {
+    0% {
+      transform: translateX(-100%) skewX(-20deg);
+    }
+    100% {
+      transform: translateX(200%) skewX(-20deg);
+    }
+  }
 }
 
 body {
