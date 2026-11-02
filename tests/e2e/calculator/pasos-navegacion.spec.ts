@@ -10,15 +10,19 @@ test.beforeEach(async ({ authedPage }) => {
 });
 
 test("Siguiente walks from step 2 to the results and Anterior walks back", async ({ authedPage }) => {
-  const next = authedPage.getByRole("link", { name: "Siguiente", exact: true });
+  // Steps 2 and 3 save the progress, so their "Siguiente" is a button; the
+  // placeholders after them still link.
+  const next = authedPage
+    .getByRole("navigation", { name: "Navegación entre pasos" })
+    .getByText("Siguiente", { exact: true });
   const previous = authedPage.getByRole("link", { name: "Anterior", exact: true });
 
   for (let step = 3; step <= 7; step++) {
     await next.click();
     await expect(authedPage).toHaveURL(new RegExp(`/paso-${step}$`));
-    await expect(
-      authedPage.getByRole("heading", { name: `Paso ${step}`, exact: true }),
-    ).toBeVisible();
+    // Step 3 is built; the steps after it are still placeholders.
+    const heading = step === 3 ? "Costos variables por unidad" : `Paso ${step}`;
+    await expect(authedPage.getByRole("heading", { name: heading, exact: true })).toBeVisible();
   }
 
   await next.click();
