@@ -13,7 +13,7 @@ import {
 
 // Money is formatted before it reaches the chart. These numbers are SVG
 // coordinates, not amounts the UI adds up: the break-even values come from the
-// calculation engine when the results view is wired to it.
+// calculation engine (lib/calc/calculateBreakEven).
 export type BreakEvenPoint = {
   units: number;
   revenue: number;
