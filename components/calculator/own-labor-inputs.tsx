@@ -93,7 +93,7 @@ export function OwnLaborInputs({ hours, hourlyRate, amount }: OwnLaborInputsProp
   };
 
   return (
-    <div onBlur={handleBlur} aria-busy={isPending || undefined} className="mt-6">
+    <div onBlur={handleBlur} aria-busy={isPending || undefined} className="mt-6 short:mt-3">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="min-w-0">
           <label htmlFor={hoursId} className="text-sm font-semibold text-fg">
@@ -146,7 +146,7 @@ export function OwnLaborInputs({ hours, hourlyRate, amount }: OwnLaborInputsProp
         </p>
       )}
 
-      <div className="mt-4 flex items-baseline justify-between gap-2 border-y border-border-default py-3">
+      <div className="mt-4 flex items-baseline justify-between gap-2 border-y border-border-default py-3 short:mt-3 short:py-2">
         <span className="text-base font-medium text-fg">Trabajo propio</span>
         <span aria-live="polite" className="text-xl font-bold tabular-nums text-fg">
           {formatARSCompact(amount) || amount}

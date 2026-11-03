@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Laptop-height viewports: the wizard tightens its spacing so a whole step
+   (header, content and nav) fits without scrolling the page. */
+@custom-variant short (@media (max-height: 800px));
+
+/* Thin brand-green scrollbar for the wizard's inner scroll boxes. */
+@utility scrollbar-brand {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-green-500) var(--brand-green-50);
+}
+
 :root {
   /*
    * Valores oficiales de Figma. Las variables fuente no generan utilidades

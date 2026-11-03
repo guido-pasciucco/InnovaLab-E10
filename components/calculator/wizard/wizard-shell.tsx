@@ -21,14 +21,14 @@ export function WizardShell({
 }: WizardShellProps) {
   return (
     <main className="wizard-shell relative z-10 min-h-screen">
-      <div className="mx-auto max-w-7xl space-y-4 px-6 py-5">
+      <div className="mx-auto max-w-7xl space-y-4 px-6 py-5 short:space-y-3 short:py-3">
         <WizardChrome furthestStep={furthestStep} />
 
         {/* Each step renders only its own card (with its StepHeader inside);
             the live cost card beside it belongs to the shell, so it is the
             same on every step. */}
         <TypedVolumeProvider>
-          <div className="grid grid-cols-1 items-start gap-6 pt-2 lg:grid-cols-[2fr_1fr]">
+          <div className="grid grid-cols-1 items-start gap-6 pt-2 short:pt-0 lg:grid-cols-[2fr_1fr]">
             {children}
             <LiveCostPanel costSummary={costSummary} />
           </div>
