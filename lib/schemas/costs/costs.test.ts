@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { calcCostLineSchema } from "./costs";
+import { hoursField } from "./fields";
 
 const validLine = {
   concept: "alquiler del taller",
@@ -130,5 +131,32 @@ describe("calcCostLineSchema", () => {
         "Elegí cómo se relaciona el costo con el producto: directo o indirecto.",
       ],
     });
+  });
+});
+
+describe("hoursField", () => {
+  it.each(["10", "0", "1.5", "0.25", "9999999999.99"])("accepts %j", (hours) => {
+    expect(hoursField.safeParse(hours).success).toBe(true);
+  });
+
+  it("trims the value", () => {
+    expect(hoursField.parse(" 10 ")).toBe("10");
+  });
+
+  it.each([
+    { hours: "", message: "Las horas son obligatorias." },
+    { hours: "   ", message: "Las horas son obligatorias." },
+    { hours: "texto", message: "Las horas deben ser un número." },
+    { hours: 10, message: "Las horas deben ser un número." },
+    { hours: "-1", message: "Las horas no pueden ser negativas." },
+    { hours: "99999999999", message: "Las horas son demasiado grandes." },
+    { hours: "1.005", message: "Las horas deben tener hasta 2 decimales." },
+  ])("reports the Spanish message when the hours are %j", ({ hours, message }) => {
+    const result = hoursField.safeParse(hours);
+
+    expect(result.success).toBe(false);
+    expect(result.success ? [] : result.error.issues.map((issue) => issue.message)).toEqual([
+      message,
+    ]);
   });
 });

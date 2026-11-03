@@ -231,6 +231,7 @@ export async function getCalculatorCostSummaryService(
       behavior: calcCostLines.behavior,
       traceability: calcCostLines.traceability,
       amount: calcCostLines.amount,
+      isOwnLabor: calcCostLines.isOwnLabor,
     })
     .from(calcCostLines)
     .where(eq(calcCostLines.calculationId, calculationId));
@@ -239,8 +240,7 @@ export async function getCalculatorCostSummaryService(
     return emptyCostSummary(calculationId, setup.volume);
   }
 
-  // #91 adds `is_own_labor` to calc_cost_lines. Until it lands, every line is
-  // "not own labor": that cross-cut never changes totalFixed, variableUnit or
+  // `isOwnLabor` is a cross-cut: it never changes totalFixed, variableUnit or
   // unitCost, because own labor already enters the total through its behavior.
   const lines: CostLine[] = rows.map((row) => ({
     id: row.id,
@@ -248,7 +248,7 @@ export async function getCalculatorCostSummaryService(
     // rejects unknown values, so the cast only bridges the static type.
     behavior: row.behavior as CostLine["behavior"],
     traceability: row.traceability as CostLine["traceability"],
-    isOwnLabor: false,
+    isOwnLabor: row.isOwnLabor,
     amount: row.amount,
   }));
 

@@ -1068,6 +1068,69 @@ describe("removeVariableCalcCostLineService", () => {
   });
 });
 
+describe("paso 2 isolation from paso 4 lines", () => {
+  async function seedStep4Lines(userId: string) {
+    const draftId = await getDraftCalculationId(userId, db);
+    if (draftId === null) {
+      throw new Error("draft setup did not create a draft");
+    }
+    const [ownLabor] = await db
+      .insert(calcCostLines)
+      .values({
+        calculationId: draftId,
+        concept: "Trabajo propio",
+        amount: "200000.00",
+        behavior: "fixed",
+        // Direct on purpose: only the flag tells it apart from a paso 2 line.
+        traceability: "direct",
+        isOwnLabor: true,
+      })
+      .returning();
+    const [indirect] = await db
+      .insert(calcCostLines)
+      .values({
+        calculationId: draftId,
+        concept: "Publicidad",
+        amount: "30000.00",
+        behavior: "fixed",
+        traceability: "indirect",
+      })
+      .returning();
+    return [ownLabor, indirect];
+  }
+
+  it("lists only the paso 2 lines and leaves the step 4 ones out of the fixed list", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    await seedStep4Lines(user.id);
+    await addCalcCostLineService(user.id, { concept: "Alquiler", amount: "60000.00" }, db);
+
+    const result = await listCalcCostLinesService(user.id, { behavior: "fixed" }, db);
+
+    expect(result.lines.map((line) => line.concept)).toEqual(["Alquiler"]);
+    expect(result.totalFixed).toBe("60000.00");
+  });
+
+  it("refuses to edit, rename or remove a step 4 line from paso 2", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const step4 = await seedStep4Lines(user.id);
+
+    for (const line of step4) {
+      const notFound = new AppError("CALC_COST_LINE_NOT_FOUND");
+      await expect(
+        updateCalcCostLineAmountService(user.id, line.id, { amount: "1.00" }, db),
+      ).rejects.toEqual(notFound);
+      await expect(
+        updateCalcCostLineConceptService(user.id, line.id, { concept: "Otro" }, db),
+      ).rejects.toEqual(notFound);
+      await expect(removeCalcCostLineService(user.id, line.id, db)).rejects.toEqual(notFound);
+    }
+    const stored = await db.select().from(calcCostLines);
+    expect(stored.filter((row) => step4.some((line) => line.id === row.id))).toHaveLength(2);
+  });
+});
+
 describe("catalog link on delete", () => {
   it("keeps the calculation line and clears sourceBusinessCostId when the catalog row is deleted", async () => {
     const user = await makeUser();

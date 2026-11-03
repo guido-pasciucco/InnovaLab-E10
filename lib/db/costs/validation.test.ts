@@ -3,9 +3,11 @@ import { z } from "zod";
 
 import {
   addCalcCostLineInputSchema,
+  calcCostLineRowSchema,
   createBusinessCostLineInputSchema,
   createCalcCostLineInputSchema,
   listCalcCostLinesOptionsSchema,
+  saveOwnLaborInputSchema,
   updateCalcCostLineAmountInputSchema,
   updateCalcCostLineConceptInputSchema,
 } from "./validation";
@@ -271,5 +273,69 @@ describe("updateCalcCostLineConceptInputSchema", () => {
     ).toEqual({
       concept: ["El concepto del costo debe tener como máximo 200 caracteres."],
     });
+  });
+});
+
+// Paso 4 sends both values of the own-labor line, each one a string or null:
+// an empty input is null and the service saves the line with amount 0.
+describe("saveOwnLaborInputSchema", () => {
+  it("accepts hours and hourly rate", () => {
+    expect(saveOwnLaborInputSchema.parse({ hours: "10", hourlyRate: "20000" })).toEqual({
+      hours: "10",
+      hourlyRate: "20000",
+    });
+  });
+
+  it("accepts a null on either side or on both", () => {
+    expect(saveOwnLaborInputSchema.safeParse({ hours: "10", hourlyRate: null }).success).toBe(true);
+    expect(saveOwnLaborInputSchema.safeParse({ hours: null, hourlyRate: "20000" }).success).toBe(true);
+    expect(saveOwnLaborInputSchema.safeParse({ hours: null, hourlyRate: null }).success).toBe(true);
+  });
+
+  it("requires both keys", () => {
+    expect(saveOwnLaborInputSchema.safeParse({ hours: "10" }).success).toBe(false);
+  });
+
+  it("reports the Spanish message of each field", () => {
+    expect(fieldErrors(saveOwnLaborInputSchema, { hours: "-1", hourlyRate: "texto" })).toEqual({
+      hours: ["Las horas no pueden ser negativas."],
+      hourlyRate: ["El importe debe ser un número."],
+    });
+  });
+});
+
+describe("isOwnLabor in the calc cost line schemas", () => {
+  it("is a boolean on the persisted row", () => {
+    const row = {
+      id: SERVER_ID,
+      calculationId: SERVER_ID,
+      scenarioId: null,
+      sourceBusinessCostId: null,
+      concept: "Trabajo propio",
+      behavior: "fixed",
+      traceability: "indirect",
+      amount: "200000.00",
+      hours: null,
+      hourlyRate: null,
+      allocationPct: null,
+      createdAt: SERVER_TIMESTAMP,
+      updatedAt: SERVER_TIMESTAMP,
+    };
+
+    expect(calcCostLineRowSchema.safeParse({ ...row, isOwnLabor: true }).success).toBe(true);
+    expect(calcCostLineRowSchema.safeParse(row).success).toBe(false);
+  });
+
+  it("is optional on the create input, so it defaults to false in the column", () => {
+    expect(createCalcCostLineInputSchema.safeParse(validCalcCostLine).success).toBe(true);
+    expect(
+      createCalcCostLineInputSchema.safeParse({ ...validCalcCostLine, isOwnLabor: true }).success,
+    ).toBe(true);
+  });
+
+  it("is not part of the paso 2 add input", () => {
+    expect(
+      addCalcCostLineInputSchema.parse({ concept: "Alquiler", amount: "1.00", isOwnLabor: true }),
+    ).toEqual({ concept: "Alquiler", amount: "1.00" });
   });
 });

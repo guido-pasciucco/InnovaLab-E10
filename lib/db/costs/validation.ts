@@ -6,6 +6,7 @@ import {
   amountField,
   behaviorField,
   conceptField,
+  hoursField,
   traceabilityField,
 } from "@/lib/schemas/costs/fields";
 import { businessCostLines, calcCostLines } from "./table";
@@ -86,6 +87,14 @@ export const updateCalcCostLineConceptInputSchema = z.object({
   concept: conceptField,
 });
 
+// Paso 4 saves the own-labor line with both values at once. Each one is a
+// string or null: an empty input is null, and the service then saves the line
+// with amount 0.00. The service injects behavior, traceability and the flag.
+export const saveOwnLaborInputSchema = z.object({
+  hours: hoursField.nullable(),
+  hourlyRate: amountField.nullable(),
+});
+
 export const listCalcCostLinesOptionsSchema = z.object({
   behavior: behaviorField.optional(),
 });
@@ -106,4 +115,5 @@ export type UpdateCalcCostLineAmountInput = z.infer<
 export type UpdateCalcCostLineConceptInput = z.infer<
   typeof updateCalcCostLineConceptInputSchema
 >;
+export type SaveOwnLaborInput = z.infer<typeof saveOwnLaborInputSchema>;
 export type ListCalcCostLinesOptions = z.infer<typeof listCalcCostLinesOptionsSchema>;

@@ -70,6 +70,35 @@ export const amountField = z
     }),
   );
 
+// Hours of own labor for the month (paso 4). Same pipeline as `amountField`
+// with the messages worded for hours, so the user never reads "importe" under
+// an hours input. It keeps the amount's bounds (>= 0, 10 integer digits,
+// 2 decimals): the product with the hourly rate must still fit numeric(12,2).
+export const hoursField = z
+  .string({ error: "Las horas deben ser un número." })
+  .trim()
+  .pipe(z.string().min(1, { error: "Las horas son obligatorias." }))
+  .pipe(
+    z.string().regex(amountShape, {
+      error: "Las horas deben ser un número.",
+    }),
+  )
+  .pipe(
+    z.string().refine((v) => !v.startsWith("-"), {
+      error: "Las horas no pueden ser negativas.",
+    }),
+  )
+  .pipe(
+    z.string().refine((v) => v.split(".")[0].length <= 10, {
+      error: "Las horas son demasiado grandes.",
+    }),
+  )
+  .pipe(
+    z.string().regex(/^\d+(\.\d{1,2})?$/, {
+      error: "Las horas deben tener hasta 2 decimales.",
+    }),
+  );
+
 // Independent dimensions: the user answers each one separately (decision
 // confirmed 2026-10-17). No refinements cross these dimensions.
 //

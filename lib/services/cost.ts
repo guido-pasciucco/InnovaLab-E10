@@ -33,12 +33,12 @@ export type CalcCostLineList = {
 };
 
 // Decimal keeps the cent: 0.10 + 0.20 is 0.30.
-function sumMoney(amounts: string[]): string {
+export function sumMoney(amounts: string[]): string {
   const total = amounts.reduce((sum, amount) => sum.plus(amount), new Decimal(0));
   return total.toFixed(MONEY_DECIMALS);
 }
 
-async function requireDraftId(userId: string, db: Db): Promise<string> {
+export async function requireDraftId(userId: string, db: Db): Promise<string> {
   const draftId = await getDraftCalculationId(userId, db);
   if (draftId === null) {
     throw new AppError("CALC_DRAFT_MISSING");
@@ -60,7 +60,7 @@ async function touchCalculation(db: Db | Tx, calculationId: string): Promise<voi
 // exist, or that sits on another user's draft all surface as the same code.
 // Postgres would otherwise reject a non-uuid with a type error and the door
 // would turn that into a 500.
-function requireLineId(lineId: string): string {
+export function requireLineId(lineId: string): string {
   const parsed = uuidString.safeParse(lineId);
   if (!parsed.success) {
     throw new AppError("CALC_COST_LINE_NOT_FOUND");
@@ -68,11 +68,16 @@ function requireLineId(lineId: string): string {
   return parsed.data;
 }
 
+// Paso 2 owns only the fixed, direct lines that are not own labor. The own
+// labor and the indirect lines of paso 4 are also fixed but live in their own
+// step (lib/services/own-labor.ts), so paso 2 can neither list nor touch them.
 function fixedLineOfDraft(lineId: string, draftId: string) {
   return and(
     eq(calcCostLines.id, lineId),
     eq(calcCostLines.calculationId, draftId),
     eq(calcCostLines.behavior, "fixed"),
+    eq(calcCostLines.traceability, "direct"),
+    eq(calcCostLines.isOwnLabor, false),
   );
 }
 
@@ -87,6 +92,12 @@ export async function listCalcCostLinesService(
   const filters = [eq(calcCostLines.calculationId, draftId)];
   if (options.behavior !== undefined) {
     filters.push(eq(calcCostLines.behavior, options.behavior));
+    if (options.behavior === "fixed") {
+      filters.push(
+        eq(calcCostLines.traceability, "direct"),
+        eq(calcCostLines.isOwnLabor, false),
+      );
+    }
   }
 
   // createdAt is the order the paso 2 list shows. id only breaks a tie, so
@@ -163,8 +174,8 @@ export async function updateCalcCostLineAmountService(
   return updated;
 }
 
-// Both rename services differ only in which behavior they match.
-async function renameCalcCostLine(
+// The rename services differ only in which lines they match.
+export async function renameCalcCostLine(
   userId: string,
   lineId: string,
   input: unknown,
