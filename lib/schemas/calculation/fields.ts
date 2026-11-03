@@ -24,11 +24,10 @@ export const marginConventionField = z
     error: "La convención de margen debe tener como máximo 40 caracteres.",
   });
 
-// Margin convention persisted in `pricing_inputs.margin_convention`. The
-// business decision is still pending
-// (docs/decisiones/pendientes/negocio/02-convencion-de-margen.md); step 5
-// explains the margin as "ganancia ÷ precio de venta", so the calculator
-// stores the margin on the selling price. Same literal the RLS tests use.
+// Margin convention persisted in `pricing_inputs.margin_convention`: the
+// margin is measured on the selling price
+// (docs/decisiones/establecidas/negocio/0003-el-margen-se-mide-sobre-el-precio-de-venta.md).
+// Same literal the RLS tests use.
 export const MARGIN_CONVENTION_ON_PRICE = "sobre_precio";
 
 const MARGIN_SHAPE = /^-?\d+(\.\d+)?$/;

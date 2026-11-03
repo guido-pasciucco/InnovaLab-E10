@@ -7,9 +7,8 @@ import Decimal from "decimal.js";
 //   contributionUnit = suggestedPrice - variableUnit
 //   estimatedProfit  = contributionUnit × volume - totalFixed
 //
-// The margin convention is still a pending business decision
-// (docs/decisiones/pendientes/negocio/02-convencion-de-margen.md); "on the
-// selling price" is the one the step 5 copy explains to the user.
+// Margin on the selling price is the decided convention
+// (docs/decisiones/establecidas/negocio/0003-el-margen-se-mide-sobre-el-precio-de-venta.md).
 //
 // Like calculateCostTotals, money stays a Decimal until it leaves the function
 // and each returned amount is rounded once, from full precision, with
