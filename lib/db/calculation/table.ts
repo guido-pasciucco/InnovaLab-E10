@@ -40,7 +40,7 @@ export const calculations = pgTable("calculations", {
     .notNull()
     .references(() => products.id, { onDelete: "cascade" }),
   status: text("status").notNull().default("draft"),
-  // Furthest wizard step the user may open (1..6). Saving step N raises it to
+  // Furthest wizard step the user may open (1..7). Saving step N raises it to
   // N + 1 and never lowers it, so going back to edit keeps the progress.
   currentStep: integer("current_step").notNull().default(1),
   schemaVersion: integer("schema_version").notNull().default(1),

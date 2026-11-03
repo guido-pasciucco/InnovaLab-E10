@@ -1,3 +1,4 @@
+import { continueToStep7 } from "@/app/(calculator)/paso-6/actions";
 import { BreakEvenChart } from "@/components/charts/break-even-chart";
 import { StepHeader } from "@/components/calculator/wizard/step-header";
 import { StepNav } from "@/components/calculator/wizard/step-nav";
@@ -26,7 +27,7 @@ export function BreakEvenStep(props: BreakEvenStepProps) {
         </p>
       )}
 
-      <StepNav previous="/paso-5" next="/resultados" />
+      <StepNav previous="/paso-5" nextAction={continueToStep7} />
     </section>
   );
 }

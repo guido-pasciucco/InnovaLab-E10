@@ -1,16 +1,16 @@
 import { expect, test } from "../fixtures";
 import { Paso1Page } from "../pages/paso-1.page";
 
-// Steps 2 to 6 are built. Step 2 is reachable only once step 1 is saved.
+// Steps 2 to 7 are built. Step 2 is reachable only once step 1 is saved.
 test.beforeEach(async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
   await setup.saveAndContinue({ name: "Pan de avena", unit: "docena", volume: 96 });
 });
 
-test("Siguiente walks from step 2 to the results and Anterior walks back", async ({ authedPage }) => {
-  // Steps 2 to 5 save the progress, so their "Siguiente" is a button; step 6
-  // still links.
+test("Siguiente walks from step 2 to step 7 and Anterior walks back", async ({ authedPage }) => {
+  // Steps 2 to 6 save the progress, so their "Siguiente" is a button; step 7
+  // is the last one and has none.
   const next = authedPage
     .getByRole("navigation", { name: "Navegación entre pasos" })
     .getByText("Siguiente", { exact: true });
@@ -20,9 +20,10 @@ test("Siguiente walks from step 2 to the results and Anterior walks back", async
     4: "Trabajo propio e indirectos",
     5: "Margen y precio sugerido",
     6: "Punto de equilibrio",
+    7: "Comparar escenarios",
   };
 
-  for (const step of [3, 4, 5, 6]) {
+  for (const step of [3, 4, 5, 6, 7]) {
     await next.click();
     await expect(authedPage).toHaveURL(new RegExp(`/paso-${step}$`));
     await expect(
@@ -30,15 +31,9 @@ test("Siguiente walks from step 2 to the results and Anterior walks back", async
     ).toBeVisible();
   }
 
-  await next.click();
-  await expect(authedPage).toHaveURL(/\/resultados$/);
-  await expect(authedPage.getByRole("heading", { name: "Resultados", exact: true })).toBeVisible();
   await expect(next).toHaveCount(0);
 
-  await previous.click();
-  await expect(authedPage).toHaveURL(/\/paso-6$/);
-
-  for (const step of [5, 4, 3, 2]) {
+  for (const step of [6, 5, 4, 3, 2]) {
     await previous.click();
     await expect(authedPage).toHaveURL(new RegExp(`/paso-${step}$`));
   }
@@ -52,7 +47,7 @@ test("the step navigator links only to steps up to the saved progress", async ({
   const nav = authedPage.getByRole("navigation", { name: "Progreso de la calculadora" });
 
   await expect(nav.getByRole("link", { name: "Ir al paso 1" })).toBeVisible();
-  for (const step of [3, 4, 5, 6]) {
+  for (const step of [3, 4, 5, 6, 7]) {
     await expect(nav.getByRole("link", { name: `Ir al paso ${step}` })).toHaveCount(0);
     await expect(nav.getByLabel(`Paso ${step} bloqueado`)).toHaveAttribute("aria-disabled", "true");
   }
@@ -66,4 +61,11 @@ test("Ir al dashboard leaves the wizard for the dashboard", async ({ authedPage 
   await authedPage.getByRole("link", { name: "Ir al dashboard" }).click();
 
   await expect(authedPage).toHaveURL("/dashboard");
+});
+
+test("opening step 7 before it is unlocked goes back to the saved step", async ({ authedPage }) => {
+  // beforeEach saved step 1 only, so the furthest step is 2.
+  await authedPage.goto("/paso-7");
+
+  await expect(authedPage).toHaveURL(/\/paso-2$/);
 });
