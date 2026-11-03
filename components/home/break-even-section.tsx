@@ -7,7 +7,7 @@ import { container, eyebrow, sectionLead, sectionTitle } from "./styles";
 const checklist = [
   "Cuántas ventas necesitás para cubrir tus costos fijos y variables.",
   "Cuánto ganás por encima del punto de equilibrio.",
-  "Cómo cambia el escenario si subís o bajás el precio.",
+  "Cuánto tenés que facturar para llegar al equilibrio.",
 ] as const;
 
 export function BreakEvenSection() {
@@ -80,7 +80,7 @@ export function BreakEvenSection() {
 
           <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border-default pt-4 sm:gap-3">
             <PreviewMetric label="Costo fijo mensual" value="$180.000" />
-            <PreviewMetric label="Costo unitario" value="$21.065" />
+            <PreviewMetric label="Costo variable unitario" value="$21.065" />
             <PreviewMetric label="Precio de venta" value="$24.900" />
           </div>
 
