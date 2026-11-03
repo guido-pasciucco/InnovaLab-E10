@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 
-// Pure break-even for wizard step 7 (docs/producto/05-Motor de cálculo).
-// From the step 6 price and the persisted costs:
+// Pure break-even for wizard step 6 (docs/producto/05-Motor de cálculo).
+// From the step 5 price and the persisted costs:
 //
 //   contributionUnit  = price - variableUnit
 //   breakEvenUnits    = totalFixed / contributionUnit
@@ -24,7 +24,7 @@ const EXACT_UNITS_DECIMALS = 4;
 export type MoneyString = string;
 
 export type BreakEvenInput = {
-  // Selling price per unit, as a decimal string (step 6 suggested price).
+  // Selling price per unit, as a decimal string (step 5 suggested price).
   price: string;
   variableUnit: string;
   totalFixed: string;

@@ -8,15 +8,15 @@ import type { BreakEvenStepProps } from "./break-even-step-values";
 // Shown instead of the chart when there is no break-even to draw yet.
 const MESSAGES: Record<Exclude<BreakEvenStepProps["status"], "ready">, string> = {
   "missing-costs": "Cargá tus costos en los pasos 2 y 3 para ver tu punto de equilibrio.",
-  "missing-margin": "Guardá tu margen en el paso 6 para ver tu punto de equilibrio.",
+  "missing-margin": "Guardá tu margen en el paso 5 para ver tu punto de equilibrio.",
   "no-contribution":
-    "Con este precio, cada venta no cubre su costo variable, así que no hay punto de equilibrio. Probá con un margen más alto en el paso 6.",
+    "Con este precio, cada venta no cubre su costo variable, así que no hay punto de equilibrio. Probá con un margen más alto en el paso 5.",
 };
 
 export function BreakEvenStep(props: BreakEvenStepProps) {
   return (
     <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
-      <StepHeader currentStep={7} title="Punto de equilibrio" />
+      <StepHeader currentStep={6} title="Punto de equilibrio" />
 
       {props.status === "ready" ? (
         <BreakEvenResult {...props} />
@@ -26,7 +26,7 @@ export function BreakEvenStep(props: BreakEvenStepProps) {
         </p>
       )}
 
-      <StepNav previous="/paso-6" next="/resultados" />
+      <StepNav previous="/paso-5" next="/resultados" />
     </section>
   );
 }

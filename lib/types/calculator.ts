@@ -29,7 +29,7 @@ export type CalculatorCostSummary = {
 };
 
 // One dashboard card: a calculation the user owns. `currentStep` is the
-// furthest wizard step persisted (1..7); `isActive` marks the one the wizard
+// furthest wizard step persisted (1..6); `isActive` marks the one the wizard
 // currently edits.
 export type CalculationSummary = {
   id: string;
@@ -40,7 +40,7 @@ export type CalculationSummary = {
   isActive: boolean;
 };
 
-// Read model for step 6: the expected margin saved for the draft, in percent
+// Read model for step 5: the expected margin saved for the draft, in percent
 // on the selling price ("30" is 30 %), without trailing zeros. Null means
 // nothing was saved yet (no draft, or a draft without `pricing_inputs`).
 export type CalculatorPricingInputs = {

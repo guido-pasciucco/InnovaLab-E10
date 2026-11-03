@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { TOTAL_STEPS } from "./wizard-steps";
+
 type WizardHeaderProps = {
   currentStep: number;
   totalSteps?: number;
@@ -23,7 +25,7 @@ function CalculatorLogo() {
 
 export function WizardHeader({
   currentStep,
-  totalSteps = 7,
+  totalSteps = TOTAL_STEPS,
 }: WizardHeaderProps) {
   return (
     <header className="flex items-center justify-between">

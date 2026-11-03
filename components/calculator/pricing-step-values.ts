@@ -2,7 +2,7 @@ import { calculatePricing, markupFromMargin } from "@/lib/calc/calculatePricing"
 import { formatARSCompact } from "@/lib/money/format";
 import { expectedMarginField } from "@/lib/schemas/calculation/fields";
 
-// The persisted cost summary step 6 prices. Null amounts mean "no costs yet".
+// The persisted cost summary step 5 prices. Null amounts mean "no costs yet".
 export type PricingCosts = {
   unitCost: string | null;
   variableUnit: string | null;
@@ -56,7 +56,7 @@ function completeCosts(costs: PricingCosts | null): CompleteCosts | null {
   };
 }
 
-// Maps the typed margin and the persisted costs to what the step 6 cards show.
+// Maps the typed margin and the persisted costs to what the step 5 cards show.
 // The margin is read the Argentine way (comma as the decimal mark) and checked
 // with expectedMarginField, the same rule the server applies; the amounts come
 // from the pure engine, so the page and a later results screen cannot disagree.

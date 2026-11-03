@@ -30,8 +30,8 @@ export type BreakEvenStepProps =
   | { status: "missing-margin" }
   | { status: "no-contribution" };
 
-// Maps the persisted costs and the step 6 margin to what step 7 shows. The
-// price comes from calculatePricing, as on step 6, so both steps agree on it;
+// Maps the persisted costs and the step 5 margin to what step 6 shows. The
+// price comes from calculatePricing, as on step 5, so both steps agree on it;
 // the break-even comes from the pure engine. Number() is used only for the
 // chart, whose values are SVG coordinates, never amounts the UI adds up.
 export function toBreakEvenStepProps(

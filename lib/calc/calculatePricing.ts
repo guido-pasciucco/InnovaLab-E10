@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 
-// Pure pricing for wizard step 6 (docs/producto/05-Motor de cálculo, §11-12).
+// Pure pricing for wizard step 5 (docs/producto/05-Motor de cálculo, §11-12).
 // The margin is measured on the selling price, not on the cost:
 //
 //   suggestedPrice   = unitCost / (1 - margin)
@@ -9,7 +9,7 @@ import Decimal from "decimal.js";
 //
 // The margin convention is still a pending business decision
 // (docs/decisiones/pendientes/negocio/02-convencion-de-margen.md); "on the
-// selling price" is the one the step 6 copy explains to the user.
+// selling price" is the one the step 5 copy explains to the user.
 //
 // Like calculateCostTotals, money stays a Decimal until it leaves the function
 // and each returned amount is rounded once, from full precision, with

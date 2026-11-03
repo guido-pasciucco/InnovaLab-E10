@@ -1,6 +1,6 @@
 import {
   addIndirectCostLine,
-  continueToStep6,
+  continueToStep5,
   removeIndirectCostLine,
   renameIndirectCostLine,
   updateIndirectCostAmount,
@@ -59,7 +59,7 @@ export function OwnLaborStep({ ownLabor, lines, totalIndirect, unitCost }: OwnLa
 
       <UnitCostBox unitCost={unitCost} />
 
-      <StepNav previous="/paso-3" nextAction={continueToStep6} />
+      <StepNav previous="/paso-3" nextAction={continueToStep5} />
     </section>
   );
 }

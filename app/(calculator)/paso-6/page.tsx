@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth/require-user";
@@ -6,7 +7,12 @@ import {
   getCalculatorProgressService,
 } from "@/lib/services/calculator";
 import { getCalculatorPricingInputsService } from "@/lib/services/pricing";
-import { PricingStep } from "@/components/calculator/pricing-step";
+import { BreakEvenStep } from "@/components/calculator/break-even-step";
+import { toBreakEvenStepProps } from "@/components/calculator/break-even-step-values";
+
+export const metadata: Metadata = {
+  title: "Punto de equilibrio",
+};
 
 export default async function Paso6Page() {
   const user = await requireUser();
@@ -17,8 +23,8 @@ export default async function Paso6Page() {
 
   const [pricing, costSummary] = await Promise.all([
     getCalculatorPricingInputsService(user.id),
-    // Same fallback as the layout's live card: persisted costs the engine
-    // rejects must not take the step down; the cards show "—" instead.
+    // Same fallback as step 5: persisted costs the engine rejects must not
+    // take the step down; it explains that the costs are missing instead.
     getCalculatorCostSummaryService(user.id).catch((error: unknown) => {
       console.error("[calculator] cost summary failed", error);
       return null;
@@ -26,20 +32,8 @@ export default async function Paso6Page() {
   ]);
 
   // The progress says step 6 is open, so a missing draft means the user has
-  // to save step 1 again before there is a cost to price.
+  // to save step 1 again before there is anything to break even on.
   if (pricing.calculationId === null) redirect("/paso-1");
 
-  return (
-    <PricingStep
-      costs={
-        costSummary && {
-          unitCost: costSummary.unitCost,
-          variableUnit: costSummary.variableUnit,
-          totalFixed: costSummary.totalFixed,
-          volume: costSummary.volume,
-        }
-      }
-      savedMargin={pricing.expectedMarginPct}
-    />
-  );
+  return <BreakEvenStep {...toBreakEvenStepProps(costSummary, pricing.expectedMarginPct)} />;
 }

@@ -42,7 +42,7 @@ test("own labor and an indirect concept reach the unit cost, stay out of step 2 
   await expect(fixedCosts.conceptInputs.nth(0)).toHaveValue("Alquiler");
 
   await authedPage.goto("/paso-4");
-  // "Siguiente" skips the optional step 5 and opens step 6.
+  // "Siguiente" opens step 5.
   await ownLabor.nextButton.click();
-  await expect(authedPage).toHaveURL(/\/paso-6$/);
+  await expect(authedPage).toHaveURL(/\/paso-5$/);
 });

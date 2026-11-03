@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { TOTAL_STEPS } from "./wizard-steps";
+
 type WizardProgressProps = {
   currentStep: number;
   completedSteps: number[];
@@ -15,7 +17,7 @@ export function WizardProgress({
   return (
     <nav aria-label="Progreso de la calculadora">
       <ol className="flex gap-1.5">
-        {Array.from({ length: 7 }, (_, index) => {
+        {Array.from({ length: TOTAL_STEPS }, (_, index) => {
           const step = index + 1;
           const isComplete = completedSteps.includes(step);
           const isCurrent = currentStep === step;
