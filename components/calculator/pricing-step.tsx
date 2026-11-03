@@ -92,6 +92,8 @@ export function PricingStep({ costs, savedMargin }: PricingStepProps) {
           Margen = ganancia ÷ precio de venta.
           {values.marginValue !== null &&
             ` Con ${values.marginLabel} %, de cada $100 que cobrás, $${values.marginLabel} son ganancia.`}
+          {values.markupLabel !== null &&
+            ` Equivale a sumarle un ${values.markupLabel} % a tu costo.`}
         </p>
         {saveError && (
           <p role="alert" className="text-sm text-danger">

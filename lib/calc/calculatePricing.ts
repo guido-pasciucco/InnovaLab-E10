@@ -91,3 +91,14 @@ export function calculatePricing(input: PricingInput): PricingResult {
     hasPositiveContribution: contribution.gt(0),
   };
 }
+
+// The markup on cost that yields the same price as `marginPct` on the selling
+// price: markup = margin / (100 - margin). Shown next to the margin so a user
+// who thinks "I add X % to my cost" sees why the price is higher than that.
+// Percent with 1 decimal ("42.9"), or null when the margin has no price.
+export function markupFromMargin(marginPct: string): string | null {
+  const margin = parseDecimal(marginPct);
+  if (margin === undefined || margin.lt(0) || margin.gte(HUNDRED)) return null;
+
+  return margin.div(HUNDRED.minus(margin)).times(HUNDRED).toFixed(1, Decimal.ROUND_HALF_UP);
+}

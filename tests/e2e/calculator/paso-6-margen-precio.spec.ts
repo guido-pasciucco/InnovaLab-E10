@@ -36,6 +36,9 @@ test("the default 30 % margin shows the mockup price, contribution and profit", 
   await expect(
     authedPage.getByText("Con 30 %, de cada $100 que cobrás, $30 son ganancia.", { exact: false }),
   ).toBeVisible();
+  await expect(
+    authedPage.getByText("Equivale a sumarle un 42,9 % a tu costo.", { exact: false }),
+  ).toBeVisible();
   await step.expectCard("Costo unitario", "$4.100");
   await step.expectCard("Precio sugerido", "$5.857,14");
   await step.expectCard("Contribución por unidad", "$3.357,14");

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { calculatePricing, type PricingInput } from "./calculatePricing";
+import { calculatePricing, markupFromMargin, type PricingInput } from "./calculatePricing";
 
 // Mockup example for step 6: fixed 320.000, variable 2.500 per unit, 200 units
 // (unit cost 4.100) and a 30 % margin on the selling price.
@@ -93,5 +93,30 @@ describe("calculatePricing", () => {
     const result = calculatePricing({ ...validInput, [field]: value });
 
     expect(result).toEqual({ ok: false, code: "INVALID_AMOUNT" });
+  });
+});
+
+describe("markupFromMargin", () => {
+  it("returns the markup on cost that gives the same price when the margin is 30 %", () => {
+    // 30 / (100 - 30) = 42.857… % → 1.000 × 1.42857 = 1.428,57, same as 1.000 / 0.70.
+    expect(markupFromMargin("30")).toBe("42.9");
+  });
+
+  it("returns 0 when the margin is 0", () => {
+    expect(markupFromMargin("0")).toBe("0.0");
+  });
+
+  it("returns 25 when the margin is 20", () => {
+    // Docs example: cost 8.000, price 10.000 → 20 % margin, 25 % markup.
+    expect(markupFromMargin("20")).toBe("25.0");
+  });
+
+  it("returns null when the margin is 100 or more", () => {
+    expect(markupFromMargin("100")).toBeNull();
+  });
+
+  it("returns null when the margin is negative or not a number", () => {
+    expect(markupFromMargin("-1")).toBeNull();
+    expect(markupFromMargin("abc")).toBeNull();
   });
 });

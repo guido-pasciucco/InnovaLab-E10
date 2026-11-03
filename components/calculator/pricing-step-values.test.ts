@@ -16,6 +16,7 @@ describe("toPricingStepValues", () => {
       marginValue: "30",
       marginIssue: null,
       marginLabel: "30",
+      markupLabel: "42,9",
       unitCost: "$4.100",
       suggestedPrice: "$5.857,14",
       contributionUnit: "$3.357,14",
@@ -30,6 +31,14 @@ describe("toPricingStepValues", () => {
     const values = toPricingStepValues(costs, "12,5");
 
     expect(values).toMatchObject({ marginValue: "12.5", marginLabel: "12,5", marginIssue: null });
+  });
+
+  it("returns the markup label without costs when the margin is valid", () => {
+    expect(toPricingStepValues(null, "20").markupLabel).toBe("25");
+  });
+
+  it("returns no markup label when the margin is invalid", () => {
+    expect(toPricingStepValues(costs, "100").markupLabel).toBeNull();
   });
 
   it("returns the rule message and dashes when the margin is 100", () => {

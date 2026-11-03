@@ -1,4 +1,4 @@
-import { calculatePricing } from "@/lib/calc/calculatePricing";
+import { calculatePricing, markupFromMargin } from "@/lib/calc/calculatePricing";
 import { formatARSCompact } from "@/lib/money/format";
 import { expectedMarginField } from "@/lib/schemas/calculation/fields";
 
@@ -16,6 +16,8 @@ export type PricingStepValues = {
   marginIssue: string | null;
   // The margin as the helper text shows it ("12,5").
   marginLabel: string;
+  // The equivalent markup on cost ("42,9"), or null when the margin is invalid.
+  markupLabel: string | null;
   unitCost: string;
   suggestedPrice: string;
   contributionUnit: string;
@@ -69,6 +71,8 @@ export function toPricingStepValues(
     ? null
     : (margin.error.issues[0]?.message ?? "El margen no es válido.");
 
+  const markup = marginValue !== null ? markupFromMargin(marginValue) : null;
+
   const complete = completeCosts(costs);
   const missingCosts = complete === null;
 
@@ -82,6 +86,7 @@ export function toPricingStepValues(
     marginValue,
     marginIssue,
     marginLabel: (marginValue ?? normalized).replace(".", ","),
+    markupLabel: markup?.replace(/\.0$/, "").replace(".", ",") ?? null,
     unitCost: money(costs?.unitCost),
     suggestedPrice: money(priced?.suggestedPrice),
     contributionUnit: money(priced?.contributionUnit),
