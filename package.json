@@ -29,6 +29,7 @@
     "supabase:stop": "supabase stop",
     "deploy": "bun run deploy:migrate && bunx vercel --prod",
     "deploy:migrate": "bun --env-file=.env.deploy scripts/deploy/migrate.ts",
+    "deploy:seed": "bun --env-file=.env.deploy --conditions=react-server scripts/seed/costs.ts --remote",
     "deploy:preview": "bunx vercel",
     "deploy:env": "bun scripts/deploy/env-sync.ts"
   },

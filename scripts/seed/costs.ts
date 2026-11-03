@@ -8,18 +8,24 @@ import {
 import { addCalcCostLineService, addVariableCalcCostLineService } from "@/lib/services/cost";
 import { addIndirectCalcCostLineService, saveOwnLaborService } from "@/lib/services/own-labor";
 import { saveExpectedMarginService } from "@/lib/services/pricing";
+import {
+  duplicateScenarioService,
+  getScenarioComparisonService,
+  updateScenarioService,
+} from "@/lib/services/scenarios";
 
 // Seed: one confirmed user with a few finished cost calculations.
 // It goes through the same services the wizard uses, so every row passes the
-// app's own validation and lands where the UI expects it. The env comes from
-// `.env` (Bun loads it automatically), so the target is whatever project that
-// file points at. A non-local target requires the explicit `--remote` flag.
+// app's own validation and lands where the UI expects it. `db:seed` reads
+// `.env` (Bun loads it automatically); `deploy:seed` reads `.env.deploy`
+// through `--env-file`. A non-local target requires the `--remote` flag,
+// which only `deploy:seed` passes.
 //
 // Re-running it deletes the seed user (cascading its calculations) and
 // recreates it. No other user is touched.
 //
-//   bun run db:seed            # local Supabase
-//   bun run db:seed --remote   # hosted project from .env
+//   bun run db:seed       # local Supabase, from .env
+//   bun run deploy:seed   # hosted project, from .env.deploy
 
 const SEED_USER = {
   email: "demo@example.test",
@@ -27,8 +33,8 @@ const SEED_USER = {
   displayName: "Usuario Demo",
 };
 
-// Wizard step the seeded calculations are left on (margin and price).
-const SEED_STEP = 5;
+// Wizard step the seeded calculations are left on (summary, the last one).
+const SEED_STEP = 8;
 
 type SeedCalculation = {
   setup: { name: string; unit: string; volume: number; currency: string; period: string };
@@ -37,6 +43,9 @@ type SeedCalculation = {
   ownLabor: { hours: string; hourlyRate: string };
   indirect: { concept: string; amount: string }[];
   expectedMarginPct: string;
+  // Step 7 alternatives next to the base (at most MAX_SCENARIOS - 1). Null
+  // keeps the base value.
+  scenarios: { name: string; priceOverride: string | null; volumeOverride: number | null }[];
 };
 
 const CALCULATIONS: SeedCalculation[] = [
@@ -50,6 +59,10 @@ const CALCULATIONS: SeedCalculation[] = [
     ownLabor: { hours: "80", hourlyRate: "2500" },
     indirect: [{ concept: "Luz y gas", amount: "18000" }],
     expectedMarginPct: "25",
+    scenarios: [
+      { name: "Subir el precio", priceOverride: "9000", volumeOverride: null },
+      { name: "Vender más docenas", priceOverride: null, volumeOverride: 150 },
+    ],
   },
   {
     setup: { name: "Velas de soja", unit: "caja", volume: 40, currency: "ARS", period: "Mensual" },
@@ -65,6 +78,10 @@ const CALCULATIONS: SeedCalculation[] = [
     ownLabor: { hours: "40", hourlyRate: "3000" },
     indirect: [{ concept: "Internet", amount: "12000" }],
     expectedMarginPct: "35",
+    scenarios: [
+      { name: "Precio competitivo", priceOverride: "14000", volumeOverride: null },
+      { name: "Duplicar producción", priceOverride: null, volumeOverride: 80 },
+    ],
   },
   {
     setup: { name: "Budines artesanales", unit: "unidad", volume: 250, currency: "ARS", period: "Mensual" },
@@ -77,6 +94,7 @@ const CALCULATIONS: SeedCalculation[] = [
     ownLabor: { hours: "60", hourlyRate: "2800" },
     indirect: [{ concept: "Gas del horno", amount: "22000" }],
     expectedMarginPct: "30",
+    scenarios: [{ name: "Precio de feria", priceOverride: "3500", volumeOverride: 300 }],
   },
 ];
 
@@ -85,7 +103,7 @@ const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
 
 function readEnv(): Record<(typeof REQUIRED_KEYS)[number], string> {
   const missing = REQUIRED_KEYS.filter((key) => !process.env[key]);
-  if (missing.length > 0) throw new Error(`[seed] Missing in .env: ${missing.join(", ")}`);
+  if (missing.length > 0) throw new Error(`[seed] Missing env vars: ${missing.join(", ")}`);
   return Object.fromEntries(REQUIRED_KEYS.map((key) => [key, process.env[key]!])) as Record<
     (typeof REQUIRED_KEYS)[number],
     string
@@ -99,7 +117,7 @@ function assertTarget(env: ReturnType<typeof readEnv>): void {
   const remote = hosts.filter((host) => !LOCAL_HOSTS.has(host));
   console.log(`[seed] Target: ${[...new Set(hosts)].join(", ")}`);
   if (remote.length > 0 && !process.argv.includes("--remote")) {
-    throw new Error(`[seed] ${remote.join(", ")} is not local. Re-run with --remote to seed it.`);
+    throw new Error(`[seed] ${remote.join(", ")} is not local. Use \`bun run deploy:seed\` to seed it.`);
   }
 }
 
@@ -162,6 +180,17 @@ async function seed(): Promise<void> {
       await saveOwnLaborService(user.id, calc.ownLabor, db);
       for (const line of calc.indirect) await addIndirectCalcCostLineService(user.id, line, db);
       await saveExpectedMarginService(user.id, { expectedMarginPct: calc.expectedMarginPct }, db);
+
+      // Opening step 7 creates the base scenario; alternatives are copies of
+      // it with their own overrides, as the "Duplicar" button does.
+      const { scenarios } = await getScenarioComparisonService(user.id, db);
+      const base = scenarios.find((scenario) => scenario.isBase);
+      if (!base) throw new Error(`[seed] No base scenario for "${calc.setup.name}"`);
+      for (const alternative of calc.scenarios) {
+        const copy = await duplicateScenarioService(user.id, base.id, db);
+        await updateScenarioService(user.id, { scenarioId: copy.id, ...alternative }, db);
+      }
+
       await advanceCalculatorProgressService(user.id, SEED_STEP, db);
     }
 
