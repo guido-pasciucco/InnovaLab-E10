@@ -39,8 +39,8 @@ export function FinalCta() {
                 Empezar gratis
                 <ArrowRightIcon className="h-4 w-4" />
               </Link>
-              <Link href="/paso-1" className={secondaryButtonOnDark}>
-                Ver demostración
+              <Link href="/login" className={secondaryButtonOnDark}>
+                Ya tengo cuenta
               </Link>
             </div>
 

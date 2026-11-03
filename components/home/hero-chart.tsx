@@ -1,4 +1,4 @@
-const labels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun"] as const;
+const labels = ["30 u.", "60 u.", "90 u.", "120 u.", "150 u.", "180 u."] as const;
 
 const currentPrice = [10_050, 20_100, 30_150, 40_200, 50_250, 60_300];
 const suggestedPrice = [115_050, 230_100, 345_150, 460_200, 575_250, 690_300];
@@ -42,10 +42,10 @@ export function HeroChart() {
       aria-labelledby="hero-chart-title hero-chart-description"
       className="h-auto w-full"
     >
-      <title id="hero-chart-title">Margen acumulado con el precio actual y con el precio sugerido</title>
+      <title id="hero-chart-title">Contribución acumulada según unidades vendidas, con un precio de $21.400 y con el precio sugerido</title>
       <desc id="hero-chart-description">
-        Con el precio actual de $21.400, el margen acumulado a junio es de $60.300. Con el precio
-        sugerido de $24.900, el margen acumulado a junio es de $690.300.
+        Al vender 180 unidades, con un precio de $21.400 la contribución acumulada es de $60.300.
+        Con el precio sugerido de $24.900, la contribución acumulada es de $690.300.
       </desc>
 
       <defs>

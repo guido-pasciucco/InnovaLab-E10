@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 
 import {
   ArrowRightIcon,
+  ChartIcon,
   GridIcon,
   LayersIcon,
   PackageIcon,
@@ -26,47 +27,53 @@ type Step = {
 const steps: readonly Step[] = [
   {
     number: "01",
-    title: "Configuración comercial",
-    description: "Definí tu negocio: qué vendés, en qué escala y con qué costos fijos y variables.",
+    title: "Tu producto",
+    description: "Definí qué vendés, en qué unidad y cuánto estimás vender por mes.",
     icon: GridIcon,
   },
   {
     number: "02",
-    title: "Costos fijos y variables",
-    description: "Registrá tus costos y gastos, y clasificalos como fijos o variables.",
+    title: "Costos fijos",
+    description: "Cargá los gastos mensuales que pagás vendas o no: alquiler, servicios, abonos.",
     icon: WalletIcon,
   },
   {
     number: "03",
-    title: "Costos por producto",
-    description: "Conocé el costo real de cada producto y su participación en tu rentabilidad.",
+    title: "Costos variables",
+    description: "Registrá tus compras y cuántas unidades rinde cada una para obtener el costo por unidad.",
     icon: PackageIcon,
   },
   {
     number: "04",
+    title: "Tu trabajo y costos indirectos",
+    description: "Sumá el valor de tus horas y los gastos indirectos para llegar a tu costo unitario real.",
+    icon: LayersIcon,
+  },
+  {
+    number: "05",
+    title: "Precio sugerido",
+    description: "Elegí el margen que querés ganar y obtené tu precio sugerido y tu ganancia estimada.",
+    icon: TrendingUpIcon,
+  },
+  {
+    number: "06",
     title: "Punto de equilibrio",
     description: "Calculá cuántas unidades necesitás vender para cubrir tus costos y no perder plata.",
     icon: TargetIcon,
     featured: true,
   },
   {
-    number: "05",
-    title: "Proyección de rentabilidad",
-    description: "Modelá tus ganancias según distintos niveles de ventas y precios.",
-    icon: TrendingUpIcon,
-  },
-  {
-    number: "06",
-    title: "Probá distintos escenarios",
-    description: "Compará cómo cambia tu rentabilidad según el precio que elegís.",
+    number: "07",
+    title: "Compará escenarios",
+    description: "Probá otros precios y volúmenes en hasta 3 escenarios, sin tocar tus datos originales.",
     icon: SlidersIcon,
   },
   {
-    number: "07",
-    title: "Simulación de 3 escenarios comparables",
+    number: "08",
+    title: "Resumen y ficha en PDF",
     description:
-      "Vas a poder ver cómo se mueve tu rentabilidad con cada cambio de precio, en tiempo real.",
-    icon: LayersIcon,
+      "Revisá todos tus números en un resumen, copialo o descargá tu ficha de costos en PDF.",
+    icon: ChartIcon,
     wide: true,
   },
 ];
@@ -83,7 +90,7 @@ export function StepsSection() {
           <p className={eyebrow}>El recorrido</p>
           <h2 id="steps-title" className={sectionTitle}>
             Al iniciar sesión, accedés al recorrido guiado en{" "}
-            <span className="text-link">7 pasos</span>
+            <span className="text-link">8 pasos</span>
           </h2>
           <p className={sectionLead}>
             Avanzás sabiendo dónde estás, qué te falta y cómo impacta cada cambio que hacés.
@@ -98,7 +105,7 @@ export function StepsSection() {
                 step.featured
                   ? "border-brand-tile bg-brand-tile text-on-action-primary shadow-xl shadow-brand-tile/20"
                   : "border-border-default bg-surface-tint"
-              } ${step.wide ? "sm:col-span-2 lg:col-span-3" : ""}`}
+              } ${step.wide ? "lg:col-span-2" : ""}`}
             >
               <div
                 className={
@@ -143,7 +150,7 @@ export function StepsSection() {
                     href="/paso-1"
                     className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-on-brand-accent hover:text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
                   >
-                    Ver cómo funciona
+                    Calcular mi equilibrio
                     <ArrowRightIcon className="h-4 w-4" />
                   </Link>
                 ) : null}

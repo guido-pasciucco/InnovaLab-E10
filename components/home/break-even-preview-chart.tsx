@@ -61,7 +61,7 @@ export function BreakEvenPreviewChart() {
       <title id="break-even-chart-title">Gráfico de punto de equilibrio</title>
       <desc id="break-even-chart-description">
         Los ingresos y los costos totales se cruzan en 47 unidades. Con costos fijos de $180.000,
-        costo unitario de $21.065 y precio de venta de $24.900, el punto de equilibrio es de
+        costo variable unitario de $21.065 y precio de venta de $24.900, el punto de equilibrio es de
         $1.170.300.
       </desc>
 

@@ -50,7 +50,7 @@ export function PrivacySection() {
               id="privacy-title"
               className="mt-5 text-3xl font-semibold tracking-[-0.025em] text-on-action-primary sm:text-4xl"
             >
-              Tu información económica nunca sale de tu sesión.
+              Tu información económica es solo tuya.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-on-brand sm:text-base">
               Tus datos se guardan de forma segura y solo vos podés acceder a ellos. No compartimos

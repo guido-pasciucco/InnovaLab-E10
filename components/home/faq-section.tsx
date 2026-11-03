@@ -10,12 +10,12 @@ const faqs = [
   {
     question: "¿Puedo usarla si vendo más de un producto?",
     answer:
-      "Sí. Podés cargar los costos de cada producto y comparar su rentabilidad por separado para decidir dónde conviene poner el foco.",
+      "Sí. Desde tu panel podés crear un cálculo por cada producto y retomarlo cuando quieras. Cada cálculo tiene sus propios costos, precio y punto de equilibrio.",
   },
   {
     question: "¿Mis datos están seguros?",
     answer:
-      "Sí. Tu información se guarda asociada a tu sesión y solo vos podés acceder a ella. No la compartimos con terceros ni la usamos para publicidad.",
+      "Sí. Tu información se guarda asociada a tu cuenta y solo vos podés acceder a ella. No la compartimos con terceros ni la usamos para publicidad.",
   },
   {
     question: "¿Cuánto cuesta empezar?",

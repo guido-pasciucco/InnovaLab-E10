@@ -14,45 +14,51 @@ type Scenario = {
   note: string;
 };
 
+// Example figures follow the app formulas: fixed costs $180.000 per month,
+// variable cost $18.000 per unit, unit cost = fixed / volume + variable and
+// estimated profit = (price - variable) x volume - fixed.
 const scenarios: readonly Scenario[] = [
   {
-    name: "Cálculo estándar",
-    badge: "Actual",
+    name: "Base",
+    badge: "Tus datos",
     tone: "neutral",
     icon: ChartIcon,
     rows: [
-      { label: "Precio de venta", value: "$24.900" },
-      { label: "Costo unitario", value: "$21.065" },
-      { label: "Margen neto", value: "15,4%" },
-      { label: "Margen de contribución (30 u.)", value: "$115.050" },
+      { label: "Precio", value: "$30.000" },
+      { label: "Volumen", value: "60 u." },
+      { label: "Margen real", value: "30%" },
+      { label: "Ganancia estimada", value: "$540.000" },
+      { label: "Unidades de equilibrio", value: "15" },
     ],
-    note: "Tu punto de partida, con los datos que ya cargaste.",
+    note: "Tu punto de partida, con los datos que cargaste. Nunca se modifica.",
   },
   {
-    name: "Aumento del 10% en costos",
-    badge: "−8,5 pts",
+    name: "Precio más bajo",
+    badge: "−7,8 pts",
     tone: "warning",
     icon: TrendingUpIcon,
     rows: [
-      { label: "Precio de venta", value: "$24.900" },
-      { label: "Costo unitario", value: "$23.172" },
-      { label: "Margen neto", value: "6,9%" },
-      { label: "Margen de contribución (30 u.)", value: "$51.840" },
+      { label: "Precio", value: "$27.000" },
+      { label: "Volumen", value: "60 u." },
+      { label: "Margen real", value: "22,2%" },
+      { label: "Ganancia estimada", value: "$360.000" },
+      { label: "Unidades de equilibrio", value: "20" },
     ],
-    note: "Mismo precio, menos margen: reaccioná antes de que lo notes en la caja.",
+    note: "Bajar el precio achica tu margen y te exige más ventas para cubrir tus costos.",
   },
   {
-    name: "Precio de lista y margen",
-    badge: "Recomendado",
+    name: "Más volumen",
+    badge: "+2,5 pts",
     tone: "positive",
     icon: TargetIcon,
     rows: [
-      { label: "Precio de venta", value: "$26.900" },
-      { label: "Costo unitario", value: "$21.065" },
-      { label: "Margen neto", value: "21,7%" },
-      { label: "Margen de contribución (30 u.)", value: "$175.050" },
+      { label: "Precio", value: "$30.000" },
+      { label: "Volumen", value: "80 u." },
+      { label: "Margen real", value: "32,5%" },
+      { label: "Ganancia estimada", value: "$780.000" },
+      { label: "Unidades de equilibrio", value: "15" },
     ],
-    note: "Más margen sin tocar tus costos. Compará el impacto antes de decidir.",
+    note: "Vender más reparte tus costos fijos entre más unidades y mejora tu margen.",
   },
 ];
 
@@ -91,10 +97,10 @@ export function ScenariosSection() {
         <div className="mx-auto max-w-3xl text-center">
           <p className={eyebrow}>Comparador de escenarios</p>
           <h2 id="scenarios-title" className={sectionTitle}>
-            Compará 3 escenarios sin modificar tus datos originales
+            Compará hasta 3 escenarios sin modificar tus datos originales
           </h2>
           <p className={sectionLead}>
-            Probá distintos precios y costos, y mirá el impacto en tu rentabilidad antes de decidir.
+            Duplicá tu escenario base, cambiá el precio o el volumen y compará margen, ganancia y punto de equilibrio antes de decidir.
           </p>
         </div>
 
@@ -107,12 +113,6 @@ export function ScenariosSection() {
                 key={scenario.name}
                 className={`relative flex flex-col rounded-2xl border p-6 ${styles.card}`}
               >
-                {scenario.tone === "positive" ? (
-                  <span className="absolute -top-3 left-6 rounded-full bg-action-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-on-action-primary">
-                    Recomendado
-                  </span>
-                ) : null}
-
                 <div className="flex items-center justify-between gap-3">
                   <span
                     className={`flex h-10 w-10 items-center justify-center rounded-xl ${styles.icon}`}
@@ -146,6 +146,11 @@ export function ScenariosSection() {
             );
           })}
         </div>
+
+        <p className="mx-auto mt-8 max-w-2xl text-center text-sm leading-6 text-fg-muted">
+          Además, podés simular un aumento de tus costos variables por inflación y ver cómo afecta
+          tu margen, sin guardar cambios.
+        </p>
       </div>
     </section>
   );
