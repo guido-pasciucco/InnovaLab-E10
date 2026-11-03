@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type WizardHeaderProps = {
   currentStep: number;
   totalSteps?: number;
@@ -32,9 +34,17 @@ export function WizardHeader({
         </h2>
       </div>
 
-      <span className="rounded-full bg-surface/70 px-5 py-2 text-sm font-semibold text-fg-muted shadow-sm">
-        Paso {currentStep} de {totalSteps}
-      </span>
+      <div className="flex items-center gap-3">
+        <Link
+          href="/dashboard"
+          className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          Ir al dashboard
+        </Link>
+        <span className="rounded-full bg-surface/70 px-5 py-2 text-sm font-semibold text-fg-muted shadow-sm">
+          Paso {currentStep} de {totalSteps}
+        </span>
+      </div>
     </header>
   );
 }

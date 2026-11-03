@@ -51,3 +51,10 @@ test("the step navigator links only to steps up to the saved progress", async ({
   await nav.getByRole("link", { name: "Ir al paso 1" }).click();
   await expect(authedPage).toHaveURL(/\/paso-1$/);
 });
+
+test("Ir al dashboard leaves the wizard for the dashboard", async ({ authedPage }) => {
+  await authedPage.goto("/paso-1");
+  await authedPage.getByRole("link", { name: "Ir al dashboard" }).click();
+
+  await expect(authedPage).toHaveURL("/dashboard");
+});
