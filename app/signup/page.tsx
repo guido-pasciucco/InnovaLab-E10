@@ -8,6 +8,7 @@ const BENEFITS = ["Valores productivos", "Historial de precios", "Planes para co
 export default function SignupPage() {
   return (
     <AuthPageShell
+      showHomeLink
       hero={
         <AuthHeroPanel
           badge="Paso previo: acceso"

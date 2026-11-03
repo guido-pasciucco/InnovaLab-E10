@@ -14,6 +14,7 @@ Editá `.env.deploy` con:
 - `DATABASE_URL`: connection string del transaction pooler (puerto 6543).
 - `DIRECT_URL`: connection string del session pooler (puerto 5432). Opcional para deployar.
 - `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: los del proyecto de Supabase.
+- `SUPABASE_SECRET_KEY`: opcional, solo para `bun run deploy:seed` (crea el usuario demo con sus cálculos). `env-sync` no la sube a Vercel.
 
 `.env.deploy` está en `.gitignore` y no se commitea nunca.
 
