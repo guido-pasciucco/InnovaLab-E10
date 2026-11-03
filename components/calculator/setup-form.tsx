@@ -116,7 +116,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
 
   return (
     <>
-      <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+      <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6 short:sm:p-4">
         <StepHeader
           currentStep={1}
           title="Configuración"
@@ -126,7 +126,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
         <form
           onSubmit={handleFormSubmit}
           noValidate
-          className="mt-4 flex flex-col gap-3"
+          className="mt-4 flex flex-col gap-3 short:mt-3 short:gap-2"
         >
           {state && !state.ok && !hasServerFieldErrors && (
             <p role="alert" className="text-sm text-danger">

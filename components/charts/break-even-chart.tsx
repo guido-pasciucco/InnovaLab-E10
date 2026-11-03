@@ -63,7 +63,7 @@ export function BreakEvenChart({
       <div
         role="img"
         aria-label={description}
-        className="h-[260px] w-full sm:h-[300px]"
+        className="h-[260px] w-full sm:h-[300px] short:h-[200px] short:sm:h-[220px]"
       >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart

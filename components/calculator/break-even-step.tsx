@@ -16,7 +16,7 @@ const MESSAGES: Record<Exclude<BreakEvenStepProps["status"], "ready">, string> =
 
 export function BreakEvenStep(props: BreakEvenStepProps) {
   return (
-    <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+    <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6 short:sm:p-4">
       <StepHeader currentStep={6} title="Punto de equilibrio" />
 
       {props.status === "ready" ? (
@@ -48,7 +48,7 @@ function BreakEvenResult({
           : `de las ${volume} unidades que estimás.`}
       </p>
 
-      <div className="mt-8 rounded-[20px] bg-[#f7faf8] p-3 sm:p-5">
+      <div className="mt-8 short:mt-4 rounded-[20px] bg-[#f7faf8] p-3 sm:p-5 short:sm:p-3">
         <BreakEvenChart
           points={chart.points}
           volume={chart.volume}
@@ -58,19 +58,19 @@ function BreakEvenResult({
         />
       </div>
 
-      <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="rounded-[16px] border-2 border-brand-green-600 bg-brand-green-50 p-5">
+      <dl className="mt-4 short:mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-[16px] border-2 border-brand-green-600 bg-brand-green-50 p-5 short:py-3">
           <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-green-700">
             Unidades de equilibrio
           </dt>
-          <dd className="mt-3 text-4xl font-bold text-fg">{breakEvenUnits}</dd>
+          <dd className="mt-3 short:mt-1 text-4xl font-bold text-fg short:text-3xl">{breakEvenUnits}</dd>
         </div>
 
-        <div className="rounded-[16px] border border-border-default bg-[#f9fafb] p-5">
+        <div className="rounded-[16px] border border-border-default bg-[#f9fafb] p-5 short:py-3">
           <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-fg-muted">
             Ventas de equilibrio
           </dt>
-          <dd className="mt-3 text-3xl font-bold tabular-nums text-fg sm:text-4xl">
+          <dd className="mt-3 short:mt-1 text-3xl font-bold tabular-nums text-fg sm:text-4xl short:sm:text-3xl">
             {formatARS(breakEvenSales)}
           </dd>
         </div>

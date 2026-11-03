@@ -34,7 +34,7 @@ type VariableCostsStepProps = {
 // has no client state of its own: each save revalidates the page.
 export function VariableCostsStep({ lines, totalVariable, unit }: VariableCostsStepProps) {
   return (
-    <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+    <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6 short:sm:p-4">
       <StepHeader
         currentStep={3}
         title="Costos variables por unidad"
