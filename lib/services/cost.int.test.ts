@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { ZodError } from "zod";
 
 import { businesses } from "@/lib/db/business/table";
+import { calculations } from "@/lib/db/calculation/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { businessCostLines, calcCostLines } from "@/lib/db/costs/table";
 import { AppError } from "@/lib/errors/app-error";
@@ -1105,5 +1106,47 @@ describe("catalog link on delete", () => {
     expect(stored[0].sourceBusinessCostId).toBeNull();
     expect(stored[0].concept).toBe("Alquiler");
     expect(stored[0].amount).toBe("60000.00");
+  });
+});
+
+describe("calculation recency", () => {
+  async function updatedAtOf(userId: string): Promise<Date> {
+    const draftId = await getDraftCalculationId(userId, db);
+    const [row] = await db.select().from(calculations).where(eq(calculations.id, draftId!));
+    return row.updatedAt;
+  }
+
+  async function backdate(userId: string): Promise<Date> {
+    const draftId = await getDraftCalculationId(userId, db);
+    const old = new Date("2026-01-01T00:00:00Z");
+    await db.update(calculations).set({ updatedAt: old }).where(eq(calculations.id, draftId!));
+    return old;
+  }
+
+  it("moves updatedAt forward when a fixed line is added, edited or removed", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+
+    let old = await backdate(user.id);
+    const line = await addCalcCostLineService(user.id, { concept: "Alquiler", amount: "100" }, db);
+    expect((await updatedAtOf(user.id)).getTime()).toBeGreaterThan(old.getTime());
+
+    old = await backdate(user.id);
+    await updateCalcCostLineAmountService(user.id, line.id, { amount: "200" }, db);
+    expect((await updatedAtOf(user.id)).getTime()).toBeGreaterThan(old.getTime());
+
+    old = await backdate(user.id);
+    await removeCalcCostLineService(user.id, line.id, db);
+    expect((await updatedAtOf(user.id)).getTime()).toBeGreaterThan(old.getTime());
+  });
+
+  it("moves updatedAt forward when a variable line is added", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+
+    const old = await backdate(user.id);
+    await addVariableCalcCostLineService(user.id, { concept: "Harina", amount: "50" }, db);
+
+    expect((await updatedAtOf(user.id)).getTime()).toBeGreaterThan(old.getTime());
   });
 });

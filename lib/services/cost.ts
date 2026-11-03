@@ -3,6 +3,7 @@ import "server-only";
 import Decimal from "decimal.js";
 import { and, asc, eq } from "drizzle-orm";
 
+import { calculations } from "@/lib/db/calculation/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { calcCostLines, type CalcCostLine } from "@/lib/db/costs/table";
 import { uuidString } from "@/lib/db/formats";
@@ -16,6 +17,7 @@ import {
 import { AppError } from "@/lib/errors/app-error";
 
 import { getDraftCalculationId } from "./calculator";
+import type { Tx } from "./calculations";
 
 // Fixed-cost lines of the calculator draft (paso 2, #176).
 // The client sends concept and amount. behavior, traceability and the catalog
@@ -42,6 +44,16 @@ async function requireDraftId(userId: string, db: Db): Promise<string> {
     throw new AppError("CALC_DRAFT_MISSING");
   }
   return draftId;
+}
+
+// The dashboard orders and dates calculations by calculations.updated_at, which
+// a cost-line write would not move on its own: touch it so an edited
+// calculation shows as recently updated.
+async function touchCalculation(db: Db | Tx, calculationId: string): Promise<void> {
+  await db
+    .update(calculations)
+    .set({ updatedAt: new Date() })
+    .where(eq(calculations.id, calculationId));
 }
 
 // A line id comes from the client. An id that is not a uuid, that does not
@@ -122,6 +134,7 @@ export async function addCalcCostLineService(
       })
       .returning();
 
+    await touchCalculation(tx, draftId);
     return created;
   });
 }
@@ -146,6 +159,7 @@ export async function updateCalcCostLineAmountService(
     throw new AppError("CALC_COST_LINE_NOT_FOUND");
   }
 
+  await touchCalculation(db, draftId);
   return updated;
 }
 
@@ -171,6 +185,7 @@ async function renameCalcCostLine(
     throw new AppError("CALC_COST_LINE_NOT_FOUND");
   }
 
+  await touchCalculation(db, draftId);
   return updated;
 }
 
@@ -200,6 +215,7 @@ export async function removeCalcCostLineService(
     throw new AppError("CALC_COST_LINE_NOT_FOUND");
   }
 
+  await touchCalculation(db, draftId);
   return removed;
 }
 
@@ -257,6 +273,7 @@ export async function addVariableCalcCostLineService(
       })
       .returning();
 
+    await touchCalculation(tx, draftId);
     return created;
   });
 }
@@ -281,6 +298,7 @@ export async function updateVariableCalcCostLineAmountService(
     throw new AppError("CALC_COST_LINE_NOT_FOUND");
   }
 
+  await touchCalculation(db, draftId);
   return updated;
 }
 
@@ -310,5 +328,6 @@ export async function removeVariableCalcCostLineService(
     throw new AppError("CALC_COST_LINE_NOT_FOUND");
   }
 
+  await touchCalculation(db, draftId);
   return removed;
 }
