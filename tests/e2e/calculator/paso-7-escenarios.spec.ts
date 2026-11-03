@@ -88,13 +88,15 @@ test("the base has no editor and survives a reload unchanged", async ({ authedPa
   const step = new Paso7Page(authedPage);
   await step.duplicateBase();
   await step.editScenario("Base (copia)", { volume: "250" });
+  // The save is async: reloading before it lands would read the old row.
+  // 320000 / 250 + 2500 = 3780; 3780 / 0.7 = 5400.
+  await expect(step.cell("Precio", 1)).toContainText("$5.400");
 
   await authedPage.reload();
 
   await expect(step.editor("Base")).toHaveCount(0);
   await expect(step.cell("Precio", 0)).toContainText("$5.857,14");
   await expect(step.editor("Base (copia)").getByLabel("Unidades del mes")).toHaveValue("250");
-  // 320000 / 250 + 2500 = 3780; 3780 / 0.7 = 5400.
   await expect(step.cell("Precio", 1)).toContainText("$5.400");
 });
 
