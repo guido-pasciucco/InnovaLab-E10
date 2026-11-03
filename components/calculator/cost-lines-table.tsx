@@ -18,6 +18,9 @@ type CostLinesTableProps = {
   listLabel: string;
   // Caption of the sum under the list, e.g. "Subtotal fijos".
   subtotalLabel: string;
+  // Forwarded to each row: see CostLineRowItem.
+  amountLabel?: string;
+  yieldUnit?: string;
 };
 
 // The wizard shell (#170) forces a light colour scheme, so the table keeps
@@ -28,6 +31,8 @@ export function CostLinesTable({
   actions,
   listLabel,
   subtotalLabel,
+  amountLabel,
+  yieldUnit,
 }: CostLinesTableProps) {
   // At most one new row is open at a time; saving it hands it over to the
   // server's list.
@@ -79,6 +84,8 @@ export function CostLinesTable({
             actions={actions}
             line={line}
             onRemoved={focusAddButton}
+            amountLabel={amountLabel}
+            yieldUnit={yieldUnit}
           />
         ))}
         {adding && (
@@ -88,6 +95,8 @@ export function CostLinesTable({
             onSaved={setSavedId}
             onRemoved={handleDiscardNewRow}
             conceptRef={setNewConceptInput}
+            amountLabel={amountLabel}
+            yieldUnit={yieldUnit}
           />
         )}
       </ul>

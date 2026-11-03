@@ -8,6 +8,7 @@ import {
   conceptField,
   hoursField,
   traceabilityField,
+  yieldField,
 } from "@/lib/schemas/costs/fields";
 import { businessCostLines, calcCostLines } from "./table";
 
@@ -30,6 +31,7 @@ export const calcCostLineRowSchema = createSelectSchema(calcCostLines, {
   hours: quantityString.nullable(),
   hourlyRate: quantityString.nullable(),
   allocationPct: quantityString.nullable(),
+  yieldQuantity: quantityString,
 });
 
 // --- Public inputs: insert schema minus every server-controlled field. ---
@@ -60,6 +62,7 @@ export const createCalcCostLineInputSchema = createInsertSchema(calcCostLines, {
   hours: quantityString.nullish(),
   hourlyRate: quantityString.nullish(),
   allocationPct: quantityString.nullish(),
+  yieldQuantity: yieldField.optional(),
 }).omit({
   id: true,
   calculationId: true,
@@ -73,6 +76,19 @@ export const createCalcCostLineInputSchema = createInsertSchema(calcCostLines, {
 export const addCalcCostLineInputSchema = z.object({
   concept: conceptField,
   amount: amountField,
+});
+
+// Paso 3 adds the product units one purchase yields. It is optional: an
+// omitted yield takes the column default, 1. The service injects behavior,
+// traceability and the null catalog link, as in paso 2.
+export const addVariableCalcCostLineInputSchema = addCalcCostLineInputSchema.extend({
+  yieldQuantity: yieldField.optional(),
+});
+
+// Paso 3 can correct the yield of a variable line it already saved. The
+// object has only the yield, so no other column can be patched with it.
+export const updateCalcCostLineYieldInputSchema = z.object({
+  yieldQuantity: yieldField,
 });
 
 // Paso 2 can correct the amount of a line it already saved. The object has
@@ -109,6 +125,12 @@ export type CreateBusinessCostLineInput = z.infer<
 >;
 export type CreateCalcCostLineInput = z.infer<typeof createCalcCostLineInputSchema>;
 export type AddCalcCostLineInput = z.infer<typeof addCalcCostLineInputSchema>;
+export type AddVariableCalcCostLineInput = z.infer<
+  typeof addVariableCalcCostLineInputSchema
+>;
+export type UpdateCalcCostLineYieldInput = z.infer<
+  typeof updateCalcCostLineYieldInputSchema
+>;
 export type UpdateCalcCostLineAmountInput = z.infer<
   typeof updateCalcCostLineAmountInputSchema
 >;

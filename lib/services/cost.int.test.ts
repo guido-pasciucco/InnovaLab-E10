@@ -22,6 +22,7 @@ import {
   updateCalcCostLineConceptService,
   updateVariableCalcCostLineAmountService,
   updateVariableCalcCostLineConceptService,
+  updateVariableCalcCostLineYieldService,
 } from "./cost";
 
 // Integration tests against the local Supabase stack. One pool per file.
@@ -679,7 +680,7 @@ describe("listVariableCalcCostLinesService", () => {
     expect(result.lines.every((line) => line.behavior === "variable")).toBe(true);
   });
 
-  it("sums the variable lines when the paso 3 amounts are listed", async () => {
+  it("sums the variable lines per unit when every line yields one unit", async () => {
     const user = await makeUser();
     await saveDraft(user.id);
     await addVariableCalcCostLineService(user.id, { concept: "Harina", amount: "20000.00" }, db);
@@ -700,6 +701,26 @@ describe("listVariableCalcCostLinesService", () => {
     const result = await listVariableCalcCostLinesService(user.id, db);
 
     expect(result.totalVariable).toBe("0.30");
+  });
+
+  it("divides each purchase by the units it yields", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    await addVariableCalcCostLineService(
+      user.id,
+      { concept: "Rollo", amount: "30000.00", yieldQuantity: "20" },
+      db,
+    );
+    await addVariableCalcCostLineService(
+      user.id,
+      { concept: "Cinta", amount: "1.00", yieldQuantity: "3" },
+      db,
+    );
+
+    const result = await listVariableCalcCostLinesService(user.id, db);
+
+    // 30000 / 20 + 1 / 3 = 1500.333... -> 1500.33
+    expect(result.totalVariable).toBe("1500.33");
   });
 });
 
@@ -883,6 +904,111 @@ describe("updateVariableCalcCostLineAmountService", () => {
 
     const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, harina.id));
     expect(stored[0].amount).toBe("20000.00");
+  });
+});
+
+describe("variable line yield", () => {
+  it("defaults to 1 when the add input omits it", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+
+    const created = await addVariableCalcCostLineService(
+      user.id,
+      { concept: "Envase", amount: "100.00" },
+      db,
+    );
+
+    expect(created.yieldQuantity).toBe("1.0000");
+  });
+
+  it("persists the yield sent with a new line", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+
+    const created = await addVariableCalcCostLineService(
+      user.id,
+      { concept: "Rollo", amount: "30000.00", yieldQuantity: "20.5" },
+      db,
+    );
+
+    expect(created.yieldQuantity).toBe("20.5000");
+  });
+
+  it("rejects a zero yield on a new line", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+
+    await expect(
+      addVariableCalcCostLineService(
+        user.id,
+        { concept: "Rollo", amount: "30000.00", yieldQuantity: "0" },
+        db,
+      ),
+    ).rejects.toBeInstanceOf(ZodError);
+  });
+
+  it("replaces the yield and keeps the amount", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const rollo = await addVariableCalcCostLineService(
+      user.id,
+      { concept: "Rollo", amount: "30000.00" },
+      db,
+    );
+
+    const updated = await updateVariableCalcCostLineYieldService(
+      user.id,
+      rollo.id,
+      { yieldQuantity: "20", amount: "1.00" },
+      db,
+    );
+
+    expect(updated).toMatchObject({ id: rollo.id, amount: "30000.00", yieldQuantity: "20.0000" });
+    expect((await listVariableCalcCostLinesService(user.id, db)).totalVariable).toBe("1500.00");
+  });
+
+  it("throws CALC_COST_LINE_NOT_FOUND when the line is fixed or belongs to another user", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    await saveDraft(userA.id);
+    await saveDraft(userB.id);
+    const alquiler = await addCalcCostLineService(
+      userA.id,
+      { concept: "Alquiler", amount: "60000.00" },
+      db,
+    );
+    const rolloB = await addVariableCalcCostLineService(
+      userB.id,
+      { concept: "Rollo", amount: "30000.00" },
+      db,
+    );
+    const notFound = new AppError("CALC_COST_LINE_NOT_FOUND");
+
+    for (const id of [alquiler.id, rolloB.id]) {
+      await expect(
+        updateVariableCalcCostLineYieldService(userA.id, id, { yieldQuantity: "5" }, db),
+      ).rejects.toEqual(notFound);
+    }
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, rolloB.id));
+    expect(stored[0].yieldQuantity).toBe("1.0000");
+  });
+
+  it("rejects an invalid yield without changing the line", async () => {
+    const user = await makeUser();
+    await saveDraft(user.id);
+    const rollo = await addVariableCalcCostLineService(
+      user.id,
+      { concept: "Rollo", amount: "30000.00", yieldQuantity: "20" },
+      db,
+    );
+
+    await expect(
+      updateVariableCalcCostLineYieldService(user.id, rollo.id, { yieldQuantity: "-1" }, db),
+    ).rejects.toBeInstanceOf(ZodError);
+
+    const stored = await db.select().from(calcCostLines).where(eq(calcCostLines.id, rollo.id));
+    expect(stored[0].yieldQuantity).toBe("20.0000");
   });
 });
 

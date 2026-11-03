@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   addCalcCostLineInputSchema,
+  addVariableCalcCostLineInputSchema,
   calcCostLineRowSchema,
   createBusinessCostLineInputSchema,
   createCalcCostLineInputSchema,
@@ -10,6 +11,7 @@ import {
   saveOwnLaborInputSchema,
   updateCalcCostLineAmountInputSchema,
   updateCalcCostLineConceptInputSchema,
+  updateCalcCostLineYieldInputSchema,
 } from "./validation";
 
 // DB tests cover shared-field wiring and removal of server-controlled fields
@@ -318,6 +320,7 @@ describe("isOwnLabor in the calc cost line schemas", () => {
       hours: null,
       hourlyRate: null,
       allocationPct: null,
+      yieldQuantity: "1.0000",
       createdAt: SERVER_TIMESTAMP,
       updatedAt: SERVER_TIMESTAMP,
     };
@@ -337,5 +340,55 @@ describe("isOwnLabor in the calc cost line schemas", () => {
     expect(
       addCalcCostLineInputSchema.parse({ concept: "Alquiler", amount: "1.00", isOwnLabor: true }),
     ).toEqual({ concept: "Alquiler", amount: "1.00" });
+  });
+});
+
+describe("yieldQuantity in the calc cost line schemas", () => {
+  it("is optional on the paso 3 add input, so it defaults to 1 in the column", () => {
+    expect(addVariableCalcCostLineInputSchema.parse({ concept: "Rollo", amount: "30000" })).toEqual({
+      concept: "Rollo",
+      amount: "30000",
+    });
+  });
+
+  it("keeps a valid yield on the paso 3 add input", () => {
+    expect(
+      addVariableCalcCostLineInputSchema.parse({
+        concept: "Rollo",
+        amount: "30000",
+        yieldQuantity: "20",
+      }),
+    ).toEqual({ concept: "Rollo", amount: "30000", yieldQuantity: "20" });
+  });
+
+  it("uses the shared yield rule on the add input", () => {
+    expect(
+      fieldErrors(addVariableCalcCostLineInputSchema, {
+        concept: "Rollo",
+        amount: "30000",
+        yieldQuantity: "0",
+      }),
+    ).toEqual({ yieldQuantity: ["El rendimiento debe ser mayor que cero."] });
+  });
+
+  it("is not part of the paso 2 add input", () => {
+    expect(
+      addCalcCostLineInputSchema.parse({ concept: "Alquiler", amount: "1.00", yieldQuantity: "5" }),
+    ).toEqual({ concept: "Alquiler", amount: "1.00" });
+  });
+
+  it("is the only field of the yield update input", () => {
+    expect(
+      updateCalcCostLineYieldInputSchema.parse({ yieldQuantity: "20", amount: "1.00" }),
+    ).toEqual({ yieldQuantity: "20" });
+    expect(fieldErrors(updateCalcCostLineYieldInputSchema, {})).toEqual({
+      yieldQuantity: ["El rendimiento debe ser un número."],
+    });
+  });
+
+  it("validates the yield on the create input", () => {
+    expect(
+      fieldErrors(createCalcCostLineInputSchema, { ...validCalcCostLine, yieldQuantity: "-1" }),
+    ).toEqual({ yieldQuantity: ["El rendimiento debe ser mayor que cero."] });
   });
 });

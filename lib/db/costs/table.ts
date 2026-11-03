@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   numeric,
   pgTable,
   text,
@@ -70,6 +71,12 @@ export const calcCostLines = pgTable(
     hours: numeric("hours", { precision: 14, scale: 4 }),
     hourlyRate: numeric("hourly_rate", { precision: 14, scale: 4 }),
     allocationPct: numeric("allocation_pct", { precision: 14, scale: 4 }),
+    // Product units one purchase of a variable line yields (paso 3): the engine
+    // takes amount / yield as the per-unit cost. Fixed lines ignore it. The
+    // > 0 rule and its message live in yieldField (lib/schemas/costs/fields.ts).
+    yieldQuantity: numeric("yield_quantity", { precision: 14, scale: 4 })
+      .notNull()
+      .default("1"),
     // Cross-cut flag for the paso 4 "Trabajo propio" line. It does not change the
     // totals: the line already counts through its behavior.
     isOwnLabor: boolean("is_own_labor").notNull().default(false),
@@ -87,6 +94,8 @@ export const calcCostLines = pgTable(
     uniqueIndex("calc_cost_lines_own_labor_uq")
       .on(table.calculationId)
       .where(sql`${table.isOwnLabor}`),
+    // Second net for yieldField: the engine divides by the yield.
+    check("calc_cost_lines_yield_quantity_positive", sql`${table.yieldQuantity} > 0`),
   ],
 );
 
