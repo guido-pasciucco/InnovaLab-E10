@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import { createCalculation } from "@/app/dashboard/actions";
-import { duplicateScenario } from "@/app/(calculator)/paso-7/actions";
+import { continueToStep8, duplicateScenario } from "@/app/(calculator)/paso-7/actions";
 import { InflationBox } from "@/components/calculator/inflation-box";
 import { ScenarioEditor } from "@/components/calculator/scenario-editor";
 import { StepHeader } from "@/components/calculator/wizard/step-header";
@@ -104,9 +103,9 @@ export function ScenariosStep({ scenarios, comparison, inputs }: ScenariosStepPr
         <Link href="/paso-6" className={PREVIOUS}>
           Anterior
         </Link>
-        <form action={createCalculation} className="contents">
+        <form action={continueToStep8} className="contents">
           <button type="submit" className={PRIMARY}>
-            Nuevo cálculo
+            Siguiente
           </button>
         </form>
       </nav>

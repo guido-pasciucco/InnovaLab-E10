@@ -870,19 +870,19 @@ describe("advanceCalculatorProgressService", () => {
     expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 3 });
   });
 
-  it("caps the step at 7", async () => {
+  it("caps the step at 8", async () => {
     const user = await makeUser();
     await saveCalculatorSetupService(user.id, validInput, db);
-    await db.update(calculations).set({ currentStep: 7 }).where(eq(calculations.userId, user.id));
+    await db.update(calculations).set({ currentStep: 8 }).where(eq(calculations.userId, user.id));
 
-    const result = await advanceCalculatorProgressService(user.id, 7, db);
+    const result = await advanceCalculatorProgressService(user.id, 8, db);
 
-    expect(result).toEqual({ currentStep: 7 });
+    expect(result).toEqual({ currentStep: 8 });
   });
 
   it.each([
     ["below the range", 1],
-    ["above the range", 8],
+    ["above the range", 9],
     ["not an integer", 2.5],
   ])("rejects a step that is %s without changing the progress", async (_name, step) => {
     const user = await makeUser();

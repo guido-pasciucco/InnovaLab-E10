@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   // (HMR/the RSC payload) from that host by default, which silently skips
   // hydration and leaves the form inert. No effect on production builds.
   allowedDevOrigins: ["127.0.0.1"],
+  // The step 8 PDF route renders with @react-pdf/renderer, which loads its
+  // fonts and layout engine at runtime: keep it a Node require, not bundled.
+  serverExternalPackages: ["@react-pdf/renderer"],
 };
 
 export default nextConfig;

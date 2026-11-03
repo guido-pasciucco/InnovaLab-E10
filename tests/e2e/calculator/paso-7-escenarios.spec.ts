@@ -113,9 +113,7 @@ test("the inflation box shows the margin lost and the price that keeps it", asyn
   );
 });
 
-test("Anterior goes back to step 6 and Nuevo cálculo opens a new step 1", async ({
-  authedPage,
-}) => {
+test("Anterior goes back to step 6 and Siguiente opens step 8", async ({ authedPage }) => {
   const step = new Paso7Page(authedPage);
 
   await step.previous.click();
@@ -123,6 +121,6 @@ test("Anterior goes back to step 6 and Nuevo cálculo opens a new step 1", async
   await authedPage.goBack();
   await step.expectLoaded();
 
-  await step.newCalculation.click();
-  await expect(authedPage).toHaveURL(/\/paso-1$/);
+  await authedPage.getByRole("button", { name: "Siguiente", exact: true }).click();
+  await expect(authedPage).toHaveURL(/\/paso-8$/);
 });

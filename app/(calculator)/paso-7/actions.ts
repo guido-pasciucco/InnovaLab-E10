@@ -1,6 +1,9 @@
 "use server";
 
-import { revalidateCalculator } from "@/app/(calculator)/revalidate-calculator";
+import {
+  advanceThenRedirect,
+  revalidateCalculator,
+} from "@/app/(calculator)/revalidate-calculator";
 import { requireUser } from "@/lib/auth/require-user";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
 import {
@@ -48,3 +51,8 @@ export const deleteScenario = handleActionErrors(async (scenarioId: string) => {
 
   return removed;
 }, "CALC_UNAVAILABLE");
+
+// "Siguiente": unlocks step 8 and goes there.
+export async function continueToStep8(): Promise<void> {
+  await advanceThenRedirect(8, "/paso-8");
+}

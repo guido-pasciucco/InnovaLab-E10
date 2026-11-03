@@ -10,7 +10,7 @@ const saved = { name: "Pan de avena", unit: "docena", volume: 96 };
 const edited = { name: "Galletas de limón", unit: "caja", volume: 144 };
 
 const headerStep = (page: Page, step: number) =>
-  page.locator("header").getByText(`Paso ${step} de 7`, { exact: true });
+  page.locator("header").getByText(`Paso ${step} de 8`, { exact: true });
 const progressItem = (page: Page, step: number) =>
   page.getByRole("navigation", { name: "Progreso de la calculadora" }).locator(`li[data-step="${step}"]`);
 

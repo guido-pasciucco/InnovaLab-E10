@@ -7,9 +7,10 @@ export const STEP_HREFS: Readonly<Record<number, string>> = {
   5: "/paso-5",
   6: "/paso-6",
   7: "/paso-7",
+  8: "/paso-8",
 };
 
-export const TOTAL_STEPS = 7;
+export const TOTAL_STEPS = 8;
 
 // The viewed step comes from the route, not from the persisted progress, so
 // going back to edit an earlier step shows that step as the current one.

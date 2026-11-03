@@ -28,9 +28,9 @@ import { getOrCreateDefaultBusiness, resolveActiveCalculation } from "./calculat
 
 // Wizard progress: the setup is step 1, and saving it unlocks step 2.
 const SETUP_STEP = 1;
-const LAST_STEP = 7;
+const LAST_STEP = 8;
 
-// Only steps 2..7 are ever requested: step 1 is where a draft starts.
+// Only steps 2..8 are ever requested: step 1 is where a draft starts.
 const advanceStepSchema = z.number().int().min(SETUP_STEP + 1).max(LAST_STEP);
 
 // The calculation the wizard targets (see resolveActiveCalculation).
@@ -269,7 +269,7 @@ export async function getCalculatorCostSummaryService(
 }
 
 export type CalculatorProgress = {
-  // Furthest wizard step the user may open (1..7).
+  // Furthest wizard step the user may open (1..8).
   currentStep: number;
 };
 
@@ -277,7 +277,7 @@ export type CalculatorProgress = {
  * Unlocks `toStep` on the user's draft. The progress only moves forward and is
  * capped at the last step: asking for a step already reached changes nothing.
  *
- * @throws ZodError when `toStep` is not an integer between 2 and 7.
+ * @throws ZodError when `toStep` is not an integer between 2 and 8.
  * @throws AppError CALC_DRAFT_MISSING when the user has no draft.
  */
 export async function advanceCalculatorProgressService(
