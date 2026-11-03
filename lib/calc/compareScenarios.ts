@@ -23,6 +23,9 @@ import { calculatePricing } from "./calculatePricing";
 // The deltas subtract the rounded figures, so what the user reads adds up:
 // a margin of 18.00 against 30.00 is 12 points less, never 11.99.
 
+// The base plus two alternatives, the three columns step 7 compares.
+export const MAX_SCENARIOS = 3;
+
 const FINAL_MONEY_DECIMALS = 2;
 const FINAL_MONEY_ROUNDING = Decimal.ROUND_HALF_UP;
 const MARGIN_DECIMALS = 2;

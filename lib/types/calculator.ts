@@ -1,3 +1,4 @@
+import type { CompareScenariosResult } from "@/lib/calc/compareScenarios";
 import type { ServiceResult } from "@/lib/errors/catalog";
 import type { CalculatorSetup } from "@/lib/schemas/calculator-setup/calculator-setup";
 
@@ -46,4 +47,37 @@ export type CalculationSummary = {
 export type CalculatorPricingInputs = {
   calculationId: string | null;
   expectedMarginPct: string | null;
+};
+
+// One step 7 scenario as persisted. Null overrides keep the base value: the
+// price from the saved margin, the setup volume. The base never has overrides.
+export type CalculatorScenario = {
+  id: string;
+  name: string;
+  isBase: boolean;
+  // Manual price per unit as typed ("5000"), or null.
+  priceOverride: string | null;
+  volumeOverride: number | null;
+};
+
+// What the step 7 comparison starts from: the persisted totals and margin.
+export type ScenarioComparisonInputs = {
+  totalFixed: string;
+  variableUnit: string;
+  unitCost: string;
+  volume: number;
+  marginPct: string;
+};
+
+// Read model for step 7. The scenarios come base first, then by creation.
+//
+// Null semantics: no draft returns `calculationId` null and no scenarios;
+// `inputs` and `comparison` are null while the costs or the margin are missing
+// (the step points back to steps 2, 3 and 5). `comparison` is the engine result
+// as-is, so a failure carries its code.
+export type ScenarioComparisonView = {
+  calculationId: string | null;
+  scenarios: CalculatorScenario[];
+  inputs: ScenarioComparisonInputs | null;
+  comparison: CompareScenariosResult | null;
 };

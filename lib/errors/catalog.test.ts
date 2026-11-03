@@ -32,6 +32,13 @@ describe("ERROR_CATALOG", () => {
     });
   });
 
+  it("exposes the step 7 scenario codes", () => {
+    expect(ERROR_CATALOG.CALC_SCENARIO_NOT_FOUND).toMatchObject({ status: 404, logLevel: "silent" });
+    expect(ERROR_CATALOG.CALC_SCENARIO_LIMIT_REACHED).toMatchObject({ status: 409 });
+    expect(ERROR_CATALOG.CALC_SCENARIO_BASE_LOCKED).toMatchObject({ status: 409 });
+    expect(ERROR_CATALOG.CALC_SCENARIO_INVALID_PRICE).toMatchObject({ status: 422 });
+  });
+
   it("exposes the auth-specific codes", () => {
     expect(ERROR_CATALOG.AUTH_INVALID_CREDENTIALS).toMatchObject({ status: 401 });
     expect(ERROR_CATALOG.AUTH_UNAVAILABLE).toMatchObject({ status: 503 });

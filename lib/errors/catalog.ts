@@ -122,6 +122,32 @@ export const ERROR_CATALOG = {
     message: "Cost line not found",
     logLevel: "silent",
   },
+  CALC_SCENARIO_NOT_FOUND: {
+    // Same code when the id is missing, not a uuid or belongs to another
+    // draft, so a caller cannot tell those cases apart.
+    status: 404,
+    message: "Scenario not found",
+    logLevel: "silent",
+  },
+  CALC_SCENARIO_LIMIT_REACHED: {
+    // Step 7 compares the base with at most two alternatives.
+    status: 409,
+    message: "Scenario limit reached",
+    logLevel: "silent",
+  },
+  CALC_SCENARIO_BASE_LOCKED: {
+    // The base scenario is the calculation itself: it is never edited or
+    // deleted from step 7.
+    status: 409,
+    message: "The base scenario cannot be changed",
+    logLevel: "silent",
+  },
+  CALC_SCENARIO_INVALID_PRICE: {
+    // A manual price of 0 has no margin to compare.
+    status: 422,
+    message: "The scenario price must be greater than 0",
+    logLevel: "silent",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;

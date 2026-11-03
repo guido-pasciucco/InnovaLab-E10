@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -7,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -132,7 +134,14 @@ export const scenarios = pgTable("scenarios", {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+},
+(table) => [
+  // One base per calculation: step 7 creates it lazily with an insert that
+  // does nothing on this index, so two tabs cannot create two bases.
+  uniqueIndex("scenarios_base_uq")
+    .on(table.calculationId)
+    .where(sql`${table.isBase}`),
+]);
 
 export const computedResults = pgTable("computed_results", {
   id: uuid("id").defaultRandom().primaryKey(),
