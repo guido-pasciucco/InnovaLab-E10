@@ -3,6 +3,29 @@ import { expect, type Locator, type Page } from "@playwright/test";
 // Step 2 lists the fixed costs saved in the draft. Every row, saved or being
 // added, has a concept input, an amount input and a delete button named after
 // its concept. The row being added is always the last one.
+//
+// Step 3 (variable costs) renders the same table under another heading and
+// path, so it reuses this page object through `CostStepOptions`.
+export type CostStepOptions = {
+  // Heading of the step, which is also the accessible name of its list.
+  listName: string;
+  path: string;
+  // Accessible name of the amount inputs.
+  amountLabel: string;
+};
+
+const FIXED_COSTS_STEP: CostStepOptions = {
+  listName: "Costos fijos del mes",
+  path: "/paso-2",
+  amountLabel: "Importe",
+};
+
+export const VARIABLE_COSTS_STEP: CostStepOptions = {
+  listName: "Costos variables por unidad",
+  path: "/paso-3",
+  amountLabel: "Importe de compra",
+};
+
 export class Paso2Page {
   readonly lines: Locator;
   readonly conceptInputs: Locator;
@@ -13,25 +36,28 @@ export class Paso2Page {
   readonly subtotal: Locator;
   readonly alerts: Locator;
 
-  constructor(private readonly page: Page) {
-    this.lines = page.getByRole("list", { name: "Costos fijos del mes" }).getByRole("listitem");
+  constructor(
+    private readonly page: Page,
+    private readonly step: CostStepOptions = FIXED_COSTS_STEP,
+  ) {
+    this.lines = page.getByRole("list", { name: step.listName }).getByRole("listitem");
     this.conceptInputs = page.getByLabel("Concepto", { exact: true });
     this.newConceptInput = this.conceptInputs.last();
     this.newRowDeleteButton = page.getByRole("button", { name: "Eliminar fila", exact: true });
-    this.amountInputs = page.getByLabel("Importe", { exact: true });
+    this.amountInputs = page.getByLabel(step.amountLabel, { exact: true });
     this.addButton = page.getByRole("button", { name: "Agregar concepto" });
     this.subtotal = page.getByLabel(/^Subtotal fijos /);
     this.alerts = page.getByRole("main").getByRole("alert");
   }
 
   async goto(): Promise<void> {
-    await this.page.goto("/paso-2");
+    await this.page.goto(this.step.path);
     await this.expectLoaded();
   }
 
   async expectLoaded(): Promise<void> {
     await expect(
-      this.page.getByRole("heading", { name: "Costos fijos del mes", exact: true }),
+      this.page.getByRole("heading", { name: this.step.listName, exact: true }),
     ).toBeVisible();
   }
 
@@ -95,7 +121,7 @@ export class Paso2Page {
     const response = await this.page.waitForResponse((response) => {
       const request = response.request();
       return (
-        new URL(response.url()).pathname === "/paso-2" &&
+        new URL(response.url()).pathname === this.step.path &&
         request.method() === "POST" &&
         Boolean(request.headers()["next-action"])
       );

@@ -39,3 +39,11 @@ export type CalculationSummary = {
   updatedAt: Date;
   isActive: boolean;
 };
+
+// Read model for step 5: the expected margin saved for the draft, in percent
+// on the selling price ("30" is 30 %), without trailing zeros. Null means
+// nothing was saved yet (no draft, or a draft without `pricing_inputs`).
+export type CalculatorPricingInputs = {
+  calculationId: string | null;
+  expectedMarginPct: string | null;
+};

@@ -1,8 +1,8 @@
 import { expect, test } from "../fixtures";
 import { Paso1Page } from "../pages/paso-1.page";
 
-// Steps 5 to 7 are navigation-only placeholders; step 2 is reachable only
-// once step 1 is saved.
+// Steps 2 to 5 are built; 6 and 7 are navigation-only placeholders. Step 2 is
+// reachable only once step 1 is saved.
 test.beforeEach(async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
@@ -10,23 +10,26 @@ test.beforeEach(async ({ authedPage }) => {
 });
 
 test("Siguiente walks from step 2 to the results and Anterior walks back", async ({ authedPage }) => {
-  // Steps 2 to 4 save the progress, so their "Siguiente" is a button; the
+  // Steps 2 to 5 save the progress, so their "Siguiente" is a button; the
   // placeholders after them still link.
   const next = authedPage
     .getByRole("navigation", { name: "Navegación entre pasos" })
     .getByText("Siguiente", { exact: true });
   const previous = authedPage.getByRole("link", { name: "Anterior", exact: true });
+  const headings: Record<number, string> = {
+    3: "Costos variables por unidad",
+    4: "Trabajo propio e indirectos",
+    5: "Margen y precio sugerido",
+    6: "Paso 6",
+    7: "Paso 7",
+  };
 
   for (let step = 3; step <= 7; step++) {
     await next.click();
     await expect(authedPage).toHaveURL(new RegExp(`/paso-${step}$`));
-    // Steps 3 and 4 are built; the steps after them are still placeholders.
-    const builtHeadings: Record<number, string> = {
-      3: "Costos variables por unidad",
-      4: "Trabajo propio e indirectos",
-    };
-    const heading = builtHeadings[step] ?? `Paso ${step}`;
-    await expect(authedPage.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    await expect(
+      authedPage.getByRole("heading", { name: headings[step], exact: true }),
+    ).toBeVisible();
   }
 
   await next.click();

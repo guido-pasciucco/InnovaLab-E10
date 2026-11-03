@@ -17,6 +17,7 @@ import {
   volumeField,
 } from "@/lib/schemas/calculator-setup/fields";
 import {
+  expectedMarginField,
   marginConventionField,
   scenarioNameField,
 } from "@/lib/schemas/calculation/fields";
@@ -83,7 +84,7 @@ export const upsertCostingSetupInputSchema = createInsertSchema(costingSetup, {
 
 export const upsertPricingInputsInputSchema = createInsertSchema(pricingInputs, {
   marginConvention: marginConventionField,
-  expectedMarginPct: quantityString,
+  expectedMarginPct: expectedMarginField,
   manualPrice: moneyString.nullish(),
 }).omit({
   calculationId: true,
@@ -115,6 +116,12 @@ export const saveCalculatorSetupInputSchema = createProductInputSchema
     }).shape,
   );
 
+// Server gate for the step 5 margin save (lib/services/pricing.ts): the user
+// only types the expected margin; the convention is set by the server.
+export const saveExpectedMarginInputSchema = upsertPricingInputsInputSchema.pick({
+  expectedMarginPct: true,
+});
+
 // No public input schema for computed_results: rows are written by the server
 // after running lib/calc, never by the client.
 
@@ -133,3 +140,4 @@ export type UpsertPricingInputsInput = z.infer<
 >;
 export type CreateScenarioInput = z.infer<typeof createScenarioInputSchema>;
 export type SaveCalculatorSetupInput = z.infer<typeof saveCalculatorSetupInputSchema>;
+export type SaveExpectedMarginInput = z.infer<typeof saveExpectedMarginInputSchema>;
