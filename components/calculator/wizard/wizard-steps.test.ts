@@ -12,12 +12,13 @@ describe("stepFromPathname", () => {
     ["/paso-1", 1],
     ["/paso-2", 2],
     ["/paso-6", 6],
+    ["/paso-7", 7],
     ["/paso-2/", 2],
   ])("reads the step from %s", (pathname, step) => {
     expect(stepFromPathname(pathname)).toBe(step);
   });
 
-  it.each(["/", "/resultados", "/paso-0", "/paso-7", "/paso-x", "/paso-12"])(
+  it.each(["/", "/resultados", "/paso-0", "/paso-8", "/paso-x", "/paso-12"])(
     "returns null for %s",
     (pathname) => {
       expect(stepFromPathname(pathname)).toBeNull();
@@ -38,6 +39,7 @@ describe("resumeHref", () => {
     [1, "/paso-1"],
     [2, "/paso-2"],
     [6, "/paso-6"],
+    [7, "/paso-7"],
   ])("sends furthest step %i to %s", (step, href) => {
     expect(resumeHref(step)).toBe(href);
   });
@@ -46,7 +48,7 @@ describe("resumeHref", () => {
     [0, "/paso-1"],
     [-3, "/paso-1"],
     [Number.NaN, "/paso-1"],
-    [7, "/paso-6"],
+    [8, "/paso-7"],
     [2.9, "/paso-2"],
   ])("clamps %s to a real step (%s)", (step, href) => {
     expect(resumeHref(step)).toBe(href);

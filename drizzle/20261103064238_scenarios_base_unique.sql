@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "scenarios_base_uq" ON "scenarios" USING btree ("calculation_id") WHERE "scenarios"."is_base";

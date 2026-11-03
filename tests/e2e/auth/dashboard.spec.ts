@@ -44,7 +44,7 @@ test("Nuevo cálculo opens step 1 and the saved progress shows on the dashboard"
   await paso1.saveAndContinue({ name: "Pan de avena", unit: "docena", volume: 96 });
   await dashboardPage.goto();
 
-  await expect(dashboardPage.card("Pan de avena")).toContainText("Paso 2 de 6");
+  await expect(dashboardPage.card("Pan de avena")).toContainText("Paso 2 de 7");
   await expect(authedPage.getByText("Ver pasos")).toHaveCount(0);
 });
 

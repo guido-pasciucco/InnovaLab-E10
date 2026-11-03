@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -7,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -40,7 +42,7 @@ export const calculations = pgTable("calculations", {
     .notNull()
     .references(() => products.id, { onDelete: "cascade" }),
   status: text("status").notNull().default("draft"),
-  // Furthest wizard step the user may open (1..6). Saving step N raises it to
+  // Furthest wizard step the user may open (1..7). Saving step N raises it to
   // N + 1 and never lowers it, so going back to edit keeps the progress.
   currentStep: integer("current_step").notNull().default(1),
   schemaVersion: integer("schema_version").notNull().default(1),
@@ -121,6 +123,10 @@ export const scenarios = pgTable("scenarios", {
     .references(() => calculations.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   isBase: boolean("is_base").notNull().default(false),
+  // Step 7 alternatives: null keeps the base value (the margin price, the
+  // setup volume). The base scenario never sets them.
+  priceOverride: numeric("price_override", { precision: 12, scale: 2 }),
+  volumeOverride: integer("volume_override"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -128,7 +134,14 @@ export const scenarios = pgTable("scenarios", {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+},
+(table) => [
+  // One base per calculation: step 7 creates it lazily with an insert that
+  // does nothing on this index, so two tabs cannot create two bases.
+  uniqueIndex("scenarios_base_uq")
+    .on(table.calculationId)
+    .where(sql`${table.isBase}`),
+]);
 
 export const computedResults = pgTable("computed_results", {
   id: uuid("id").defaultRandom().primaryKey(),
