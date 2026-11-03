@@ -1,16 +1,30 @@
 import Decimal from "decimal.js";
 
+import {
+  COST_BEHAVIORS,
+  COST_TRACEABILITIES,
+  type CostBehavior,
+  type CostTraceability,
+} from "@/lib/schemas/costs/fields";
+
 // Pure period totals for #111. Each snapshot line is counted once, by its id,
-// into the behavior bucket that owns the period total:
+// into the behavior bucket that owns the period total. A fixed line is a
+// period amount; a variable line is a purchase amount that yields
+// `yieldQuantity` product units, so its per-unit share is amount / yield:
 //
-//   totalPeriodo = subtotalFijo + subtotalVariable
-//   unitarioPorDocena = totalPeriodo / volume
+//   subtotalFijo     = Σ amount                 (fixed; yield is ignored)
+//   variableUnitario = Σ amount / yield         (variable)
+//   subtotalVariable = variableUnitario × volume
+//   totalPeriodo     = subtotalFijo + subtotalVariable
+//   unitario         = subtotalFijo / volume + variableUnitario
 //
-// `volume` is dozens produced. Dozens sold are not an input, so they cannot
-// change the divisor. `subtotalIndirecto` (traceability indirecto) and
-// `subtotalTrabajoPropio` (isOwnLabor) are cross-cuts: the same amount is
-// already inside the total through its behavior, and adding the cross-cut
-// again would bill that line twice.
+// `volume` is the product units produced in the period, counted in the
+// free-text unit of the setup (`costing_setup.unit`). Units sold are not an
+// input, so they cannot change the divisor. `subtotalIndirecto` (traceability
+// indirect) and `subtotalTrabajoPropio` (isOwnLabor) are cross-cuts: each line
+// adds its period contribution (fixed: amount; variable: amount / yield ×
+// volume), which is already inside the total through its behavior, and adding
+// the cross-cut again would bill that line twice.
 //
 // Money stays a Decimal until the value leaves the function. Each returned
 // amount is rounded once, from full precision, with ROUND_HALF_UP to 2
@@ -21,19 +35,16 @@ const FINAL_MONEY_DECIMALS = 2;
 const FINAL_MONEY_ROUNDING = Decimal.ROUND_HALF_UP;
 const ZERO_MONEY = "0.00";
 
-const BEHAVIOR_FIJO = "fijo";
-const BEHAVIOR_VARIABLE = "variable";
-const TRACEABILITY_DIRECTO = "directo";
-const TRACEABILITY_INDIRECTO = "indirecto";
-
 export type MoneyString = string;
 
 export type CostLine = {
   id: string;
-  behavior: string;
-  traceability: string;
+  behavior: CostBehavior;
+  traceability: CostTraceability;
   isOwnLabor: boolean;
   amount: string;
+  // Product units one purchase of a variable line yields. Must be > 0.
+  yieldQuantity: string;
 };
 
 export type CostTotalsInput = {
@@ -46,7 +57,8 @@ export type CostTotalsErrorCode =
   | "INVALID_BEHAVIOR"
   | "INVALID_TRACEABILITY"
   | "DUPLICATE_LINE_ID"
-  | "INVALID_AMOUNT";
+  | "INVALID_AMOUNT"
+  | "INVALID_YIELD";
 
 type CostTotalsSuccess = {
   ok: true;
@@ -55,7 +67,8 @@ type CostTotalsSuccess = {
   subtotalTrabajoPropio: MoneyString;
   subtotalIndirecto: MoneyString;
   totalPeriodo: MoneyString;
-  unitarioPorDocena: MoneyString;
+  variableUnitario: MoneyString;
+  unitario: MoneyString;
   volume: number;
   lineCount: number;
 };
@@ -66,7 +79,7 @@ type CostTotalsFailure = {
   details?: { lineId: string };
 };
 
-// Success carries the six amounts plus `{ volume, lineCount }`. Failure is a
+// Success carries the seven amounts plus `{ volume, lineCount }`. Failure is a
 // value, not a throw: the service that calls this (WU2) matches on `ok`.
 export type CostTotalsResult = CostTotalsSuccess | CostTotalsFailure;
 
@@ -87,8 +100,9 @@ function asMoney(value: Decimal): MoneyString {
 }
 
 // Decimal reports a bad literal by throwing. That throw stops here: the
-// public contract is a Result, and an unparseable amount is INVALID_AMOUNT.
-function parseAmount(raw: string): Decimal | undefined {
+// public contract is a Result, and an unparseable amount is INVALID_AMOUNT
+// (an unparseable yield, INVALID_YIELD).
+function parseDecimal(raw: string): Decimal | undefined {
   try {
     const value = new Decimal(raw);
     return value.isFinite() ? value : undefined;
@@ -105,7 +119,8 @@ function zeros(volume: number): CostTotalsSuccess {
     subtotalTrabajoPropio: ZERO_MONEY,
     subtotalIndirecto: ZERO_MONEY,
     totalPeriodo: ZERO_MONEY,
-    unitarioPorDocena: ZERO_MONEY,
+    variableUnitario: ZERO_MONEY,
+    unitario: ZERO_MONEY,
     volume,
     lineCount: 0,
   };
@@ -125,6 +140,7 @@ export function calculateCostTotals(input: CostTotalsInput): CostTotalsResult {
   const seen = new Set<string>();
   let fijo = new Decimal(0);
   let variable = new Decimal(0);
+  let variableUnitario = new Decimal(0);
   let trabajoPropio = new Decimal(0);
   let indirecto = new Decimal(0);
 
@@ -134,37 +150,47 @@ export function calculateCostTotals(input: CostTotalsInput): CostTotalsResult {
     }
 
     const behavior = norm(line.behavior);
-    if (behavior !== BEHAVIOR_FIJO && behavior !== BEHAVIOR_VARIABLE) {
+    if (!(COST_BEHAVIORS as readonly string[]).includes(behavior)) {
       return failure("INVALID_BEHAVIOR", line.id);
     }
 
     const traceability = norm(line.traceability);
-    if (
-      traceability !== TRACEABILITY_DIRECTO &&
-      traceability !== TRACEABILITY_INDIRECTO
-    ) {
+    if (!(COST_TRACEABILITIES as readonly string[]).includes(traceability)) {
       return failure("INVALID_TRACEABILITY", line.id);
     }
 
-    const amount = parseAmount(line.amount);
+    const amount = parseDecimal(line.amount);
     if (amount === undefined) {
       return failure("INVALID_AMOUNT", line.id);
     }
 
+    // The period contribution is what this line adds to the total; the
+    // cross-cuts add the same value so they stay consistent with it.
+    let contribution: Decimal;
+
+    if (behavior === "fixed") {
+      contribution = amount;
+      fijo = fijo.plus(contribution);
+    } else {
+      const yieldQuantity = parseDecimal(line.yieldQuantity);
+      if (yieldQuantity === undefined || yieldQuantity.lte(0)) {
+        return failure("INVALID_YIELD", line.id);
+      }
+      // Multiply before dividing so a period amount backfilled with
+      // yield = volume comes back exact.
+      contribution = amount.times(input.volume).div(yieldQuantity);
+      variable = variable.plus(contribution);
+      variableUnitario = variableUnitario.plus(amount.div(yieldQuantity));
+    }
+
     seen.add(line.id);
 
-    if (behavior === BEHAVIOR_FIJO) {
-      fijo = fijo.plus(amount);
-    } else {
-      variable = variable.plus(amount);
-    }
-
     if (line.isOwnLabor) {
-      trabajoPropio = trabajoPropio.plus(amount);
+      trabajoPropio = trabajoPropio.plus(contribution);
     }
 
-    if (traceability === TRACEABILITY_INDIRECTO) {
-      indirecto = indirecto.plus(amount);
+    if (traceability === "indirect") {
+      indirecto = indirecto.plus(contribution);
     }
   }
 
@@ -177,7 +203,8 @@ export function calculateCostTotals(input: CostTotalsInput): CostTotalsResult {
     subtotalTrabajoPropio: asMoney(trabajoPropio),
     subtotalIndirecto: asMoney(indirecto),
     totalPeriodo: asMoney(totalPeriodo),
-    unitarioPorDocena: asMoney(totalPeriodo.div(input.volume)),
+    variableUnitario: asMoney(variableUnitario),
+    unitario: asMoney(fijo.div(input.volume).plus(variableUnitario)),
     volume: input.volume,
     lineCount: input.lines.length,
   };

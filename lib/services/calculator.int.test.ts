@@ -3,14 +3,23 @@ import { ZodError } from "zod";
 import { and, eq } from "drizzle-orm";
 
 import { businesses, products } from "@/lib/db/business/table";
-import { calculations, costingSetup } from "@/lib/db/calculation/table";
+import {
+  calculations,
+  computedResults,
+  costingSetup,
+} from "@/lib/db/calculation/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
+import { businessCostLines, calcCostLines } from "@/lib/db/costs/table";
+import { AppError } from "@/lib/errors/app-error";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
+import { createCalculationService, setActiveCalculationService } from "./calculations";
 import {
+  advanceCalculatorProgressService,
+  getCalculatorCostSummaryService,
   getCalculatorDraftSetupService,
-  getCalculatorSetupService,
+  getCalculatorProgressService,
   getDraftCalculationId,
   saveCalculatorSetupService,
 } from "./calculator";
@@ -188,7 +197,7 @@ describe("saveCalculatorSetupService", () => {
     ).rejects.toBeInstanceOf(ZodError);
 
     expect(await getDraftCalculationId(user.id, db)).toBeNull();
-    expect(await getCalculatorSetupService(user.id, db)).toBeNull();
+    expect((await getCalculatorDraftSetupService(user.id, db)).setup).toBeNull();
     const businessRows = await db
       .select()
       .from(businesses)
@@ -224,7 +233,7 @@ describe("saveCalculatorSetupService", () => {
     const draftIdA = await getDraftCalculationId(userA.id, db);
 
     // B sees nothing of A's setup.
-    expect(await getCalculatorSetupService(userB.id, db)).toBeNull();
+    expect((await getCalculatorDraftSetupService(userB.id, db)).setup).toBeNull();
     expect(await getDraftCalculationId(userB.id, db)).toBeNull();
 
     // B saving creates B's own rows and leaves A untouched.
@@ -232,28 +241,14 @@ describe("saveCalculatorSetupService", () => {
     await saveCalculatorSetupService(userB.id, bInput, db);
 
     expect(await getDraftCalculationId(userA.id, db)).toBe(draftIdA);
-    expect(await getCalculatorSetupService(userA.id, db)).toEqual(validInput);
-    expect(await getCalculatorSetupService(userB.id, db)).toEqual(bInput);
+    expect((await getCalculatorDraftSetupService(userA.id, db)).setup).toEqual(validInput);
+    expect((await getCalculatorDraftSetupService(userB.id, db)).setup).toEqual(bInput);
 
     const aBusinesses = await db
       .select()
       .from(businesses)
       .where(eq(businesses.ownerUserId, userA.id));
     expect(aBusinesses).toHaveLength(1);
-  });
-});
-
-describe("getCalculatorSetupService", () => {
-  it("returns exactly what was saved", async () => {
-    const user = await makeUser();
-    await saveCalculatorSetupService(user.id, validInput, db);
-
-    expect(await getCalculatorSetupService(user.id, db)).toEqual(validInput);
-  });
-
-  it("returns null for a user with no draft", async () => {
-    const user = await makeUser();
-    expect(await getCalculatorSetupService(user.id, db)).toBeNull();
   });
 });
 
@@ -388,5 +383,535 @@ describe("getCalculatorDraftSetupService", () => {
     await getCalculatorDraftSetupService(user.id, db);
 
     expect(await getSetupRows(user.id)).toEqual(before);
+  });
+});
+
+type DraftFixture = {
+  user: CreatedUser;
+  calculationId: string;
+  businessId: string;
+};
+
+// Creates a draft through the setup service, then resolves the business the
+// cost lines hang from. A business_cost_lines row is required until #91 makes
+// calc_cost_lines.source_business_cost_id optional.
+async function arrangeDraftWithSetup(volume: number): Promise<DraftFixture> {
+  const user = await makeUser();
+  await saveCalculatorSetupService(user.id, { ...validInput, volume }, db);
+
+  const calculationId = await getDraftCalculationId(user.id, db);
+  const [business] = await db
+    .select({ id: businesses.id })
+    .from(businesses)
+    .where(eq(businesses.ownerUserId, user.id));
+
+  if (!calculationId || !business) {
+    throw new Error("[int] draft fixture was not created");
+  }
+
+  return { user, calculationId, businessId: business.id };
+}
+
+type CostLineValues = {
+  concept: string;
+  behavior: string;
+  traceability: string;
+  amount: string;
+  // Omitted: the column default, 1.
+  yieldQuantity?: string;
+};
+
+async function insertCostLine(
+  fixture: DraftFixture,
+  values: CostLineValues,
+): Promise<void> {
+  const [source] = await db
+    .insert(businessCostLines)
+    .values({
+      businessId: fixture.businessId,
+      concept: values.concept,
+      behavior: values.behavior,
+      traceability: values.traceability,
+      amountPeriod: values.amount,
+    })
+    .returning({ id: businessCostLines.id });
+
+  await db.insert(calcCostLines).values({
+    calculationId: fixture.calculationId,
+    sourceBusinessCostId: source.id,
+    concept: values.concept,
+    behavior: values.behavior,
+    traceability: values.traceability,
+    amount: values.amount,
+    yieldQuantity: values.yieldQuantity,
+  });
+}
+
+describe("getCalculatorCostSummaryService", () => {
+  it("returns no values when the user has no draft", async () => {
+    const user = await makeUser();
+
+    expect(await getCalculatorCostSummaryService(user.id, db)).toEqual({
+      calculationId: null,
+      totalFixed: null,
+      variableUnit: null,
+      unitCost: null,
+      volume: null,
+      currency: "ARS",
+    });
+  });
+
+  it("returns only the draft id when the draft has no costing_setup", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await db
+      .delete(costingSetup)
+      .where(eq(costingSetup.calculationId, fixture.calculationId));
+
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: null,
+      variableUnit: null,
+      unitCost: null,
+      volume: null,
+      currency: "ARS",
+    });
+  });
+
+  it("returns the draft and its volume but no amounts when there are no cost lines", async () => {
+    const fixture = await arrangeDraftWithSetup(24);
+
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: null,
+      variableUnit: null,
+      unitCost: null,
+      volume: 24,
+      currency: "ARS",
+    });
+  });
+
+  it("returns the engine totals as decimal strings when there are fixed and variable costs", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "indirect",
+      amount: "1000.00",
+    });
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "2400.00",
+      yieldQuantity: "12",
+    });
+
+    const summary = await getCalculatorCostSummaryService(fixture.user.id, db);
+
+    // totalFixed = subtotalFijo (1000.00); variableUnit = 2400 / yield 12 =
+    // 200.00; unitCost = 1000 / 12 + 200 = 283.333... -> 283.33.
+    expect(summary).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "1000.00",
+      variableUnit: "200.00",
+      unitCost: "283.33",
+      volume: 12,
+      currency: "ARS",
+    });
+    expect(typeof summary.totalFixed).toBe("string");
+    expect(typeof summary.variableUnit).toBe("string");
+    expect(typeof summary.unitCost).toBe("string");
+  });
+
+  it("returns 0.00 for the variable category when only fixed lines exist", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "indirect",
+      amount: "1200.00",
+    });
+
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "1200.00",
+      variableUnit: "0.00",
+      unitCost: "100.00",
+      volume: 12,
+      currency: "ARS",
+    });
+  });
+
+  it("returns 0.00 for the fixed category when only variable lines exist", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "1200.00",
+      yieldQuantity: "12",
+    });
+
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "0.00",
+      variableUnit: "100.00",
+      unitCost: "100.00",
+      volume: 12,
+      currency: "ARS",
+    });
+  });
+
+  it("accepts the persisted fixed/direct vocabulary as stored", async () => {
+    const fixture = await arrangeDraftWithSetup(10);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "direct",
+      amount: "50.00",
+    });
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "30.00",
+      yieldQuantity: "10",
+    });
+
+    // The base stores "fixed"/"direct" and the engine accepts that vocabulary
+    // as-is (2f28426), so the rows reach it with no translation.
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "50.00",
+      variableUnit: "3.00",
+      unitCost: "8.00",
+      volume: 10,
+      currency: "ARS",
+    });
+  });
+
+  it("divides each variable purchase by its yield, whatever the volume", async () => {
+    const fixture = await arrangeDraftWithSetup(100);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "direct",
+      amount: "10000.00",
+    });
+    await insertCostLine(fixture, {
+      concept: "Rollo de envases",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "30000.00",
+      yieldQuantity: "20",
+    });
+    await insertCostLine(fixture, {
+      concept: "Etiqueta",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "5.00",
+    });
+
+    // variableUnit = 30000 / 20 + 5 / 1 = 1505.00; unitCost = 10000 / 100 + 1505.
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "10000.00",
+      variableUnit: "1505.00",
+      unitCost: "1605.00",
+      volume: 100,
+      currency: "ARS",
+    });
+  });
+
+  it("does not write computed_results or calc_cost_lines", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "240.00",
+    });
+
+    const resultsBefore = await db
+      .select()
+      .from(computedResults)
+      .where(eq(computedResults.calculationId, fixture.calculationId));
+    const linesBefore = await db
+      .select()
+      .from(calcCostLines)
+      .where(eq(calcCostLines.calculationId, fixture.calculationId));
+
+    await getCalculatorCostSummaryService(fixture.user.id, db);
+
+    expect(
+      await db
+        .select()
+        .from(computedResults)
+        .where(eq(computedResults.calculationId, fixture.calculationId)),
+    ).toEqual(resultsBefore);
+    expect(
+      await db
+        .select()
+        .from(calcCostLines)
+        .where(eq(calcCostLines.calculationId, fixture.calculationId)),
+    ).toEqual(linesBefore);
+  });
+
+  it("does not leak one user's costs into another user's summary", async () => {
+    const fixtureA = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixtureA, {
+      concept: "Harina de A",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "1200.00",
+      yieldQuantity: "12",
+    });
+
+    const fixtureB = await arrangeDraftWithSetup(24);
+    await insertCostLine(fixtureB, {
+      concept: "Harina de B",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "4800.00",
+      yieldQuantity: "24",
+    });
+
+    expect(await getCalculatorCostSummaryService(fixtureA.user.id, db)).toEqual({
+      calculationId: fixtureA.calculationId,
+      totalFixed: "0.00",
+      variableUnit: "100.00",
+      unitCost: "100.00",
+      volume: 12,
+      currency: "ARS",
+    });
+    expect(await getCalculatorCostSummaryService(fixtureB.user.id, db)).toEqual({
+      calculationId: fixtureB.calculationId,
+      totalFixed: "0.00",
+      variableUnit: "200.00",
+      unitCost: "200.00",
+      volume: 24,
+      currency: "ARS",
+    });
+  });
+
+  it("throws CALC_COST_SUMMARY_FAILED when the engine rejects a persisted line", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Harina",
+      behavior: "banana",
+      traceability: "direct",
+      amount: "1200.00",
+    });
+
+    await expect(
+      getCalculatorCostSummaryService(fixture.user.id, db),
+    ).rejects.toMatchObject({ code: "CALC_COST_SUMMARY_FAILED" });
+  });
+});
+
+describe("calc_cost_lines.is_own_labor", () => {
+  const ownLaborLine = (fixture: DraftFixture, amount = "200000.00") => ({
+    calculationId: fixture.calculationId,
+    concept: "Trabajo propio",
+    behavior: "fixed",
+    traceability: "indirect",
+    amount,
+    isOwnLabor: true,
+  });
+
+  it("defaults to false for a line inserted without the flag", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "direct",
+      amount: "1000.00",
+    });
+
+    const rows = await db
+      .select({ isOwnLabor: calcCostLines.isOwnLabor })
+      .from(calcCostLines)
+      .where(eq(calcCostLines.calculationId, fixture.calculationId));
+
+    expect(rows).toEqual([{ isOwnLabor: false }]);
+  });
+
+  it("counts an own-labor line in the totals like any other fixed line", async () => {
+    const fixture = await arrangeDraftWithSetup(10);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "direct",
+      amount: "1000.00",
+    });
+    await db.insert(calcCostLines).values(ownLaborLine(fixture, "2000.00"));
+
+    const summary = await getCalculatorCostSummaryService(fixture.user.id, db);
+
+    expect(summary.totalFixed).toBe("3000.00");
+    expect(summary.unitCost).toBe("300.00");
+  });
+
+  it("allows one own-labor line per draft and rejects a second one", async () => {
+    const fixture = await arrangeDraftWithSetup(10);
+    await db.insert(calcCostLines).values(ownLaborLine(fixture));
+
+    await expect(db.insert(calcCostLines).values(ownLaborLine(fixture))).rejects.toThrow();
+  });
+
+  it("does not limit the lines that are not own labor", async () => {
+    const fixture = await arrangeDraftWithSetup(10);
+    await db.insert(calcCostLines).values(ownLaborLine(fixture));
+
+    for (const concept of ["Publicidad", "Contador"]) {
+      await db.insert(calcCostLines).values({
+        calculationId: fixture.calculationId,
+        concept,
+        behavior: "fixed",
+        traceability: "indirect",
+        amount: "100.00",
+      });
+    }
+
+    const rows = await db
+      .select({ id: calcCostLines.id })
+      .from(calcCostLines)
+      .where(eq(calcCostLines.calculationId, fixture.calculationId));
+
+    expect(rows).toHaveLength(3);
+  });
+});
+
+describe("wizard progress (calculations.current_step)", () => {
+  it("a user without a draft only has step 1", async () => {
+    const user = await makeUser();
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 1 });
+  });
+
+  it("the first save unlocks step 2", async () => {
+    const user = await makeUser();
+
+    await saveCalculatorSetupService(user.id, validInput, db);
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 2 });
+  });
+
+  it("saving step 1 again never lowers a more advanced step", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    await db.update(calculations).set({ currentStep: 4 }).where(eq(calculations.userId, user.id));
+
+    await saveCalculatorSetupService(user.id, { ...validInput, volume: 60 }, db);
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 4 });
+  });
+
+  it("editing the active calculation X leaves a newer draft Z untouched", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const xId = await getDraftCalculationId(user.id, db);
+    await db.update(calculations).set({ currentStep: 5 }).where(eq(calculations.id, xId!));
+    const { calculationId: zId } = await createCalculationService(user.id, db);
+    await setActiveCalculationService(user.id, xId!, db);
+
+    await saveCalculatorSetupService(user.id, { ...validInput, name: "Editado" }, db);
+
+    expect(await getDraftCalculationId(user.id, db)).toBe(xId);
+    expect(await getCalculatorDraftSetupService(user.id, db)).toMatchObject({
+      calculationId: xId,
+      setup: { name: "Editado" },
+    });
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 5 });
+    const [z] = await db.select().from(calculations).where(eq(calculations.id, zId));
+    expect(z.currentStep).toBe(1);
+    const zSetup = await db.select().from(costingSetup).where(eq(costingSetup.calculationId, zId));
+    expect(zSetup).toHaveLength(0);
+  });
+
+  it("progress is private to each user", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    await saveCalculatorSetupService(userA.id, validInput, db);
+
+    expect(await getCalculatorProgressService(userB.id, db)).toEqual({ currentStep: 1 });
+  });
+
+  it("the read does not write any row", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const before = await getSetupRows(user.id);
+
+    await getCalculatorProgressService(user.id, db);
+
+    expect(await getSetupRows(user.id)).toEqual(before);
+  });
+});
+
+describe("advanceCalculatorProgressService", () => {
+  it("advances from step 2 to step 3", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+
+    const result = await advanceCalculatorProgressService(user.id, 3, db);
+
+    expect(result).toEqual({ currentStep: 3 });
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 3 });
+  });
+
+  it("never lowers the step when an earlier one is requested", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    await advanceCalculatorProgressService(user.id, 3, db);
+
+    const result = await advanceCalculatorProgressService(user.id, 2, db);
+
+    expect(result).toEqual({ currentStep: 3 });
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 3 });
+  });
+
+  it("caps the step at 7", async () => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+    await db.update(calculations).set({ currentStep: 7 }).where(eq(calculations.userId, user.id));
+
+    const result = await advanceCalculatorProgressService(user.id, 7, db);
+
+    expect(result).toEqual({ currentStep: 7 });
+  });
+
+  it.each([
+    ["below the range", 1],
+    ["above the range", 8],
+    ["not an integer", 2.5],
+  ])("rejects a step that is %s without changing the progress", async (_name, step) => {
+    const user = await makeUser();
+    await saveCalculatorSetupService(user.id, validInput, db);
+
+    await expect(advanceCalculatorProgressService(user.id, step, db)).rejects.toBeInstanceOf(
+      ZodError,
+    );
+
+    expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 2 });
+  });
+
+  it("throws CALC_DRAFT_MISSING when the user has no draft", async () => {
+    const user = await makeUser();
+
+    await expect(advanceCalculatorProgressService(user.id, 3, db)).rejects.toEqual(
+      new AppError("CALC_DRAFT_MISSING"),
+    );
+  });
+
+  it("leaves another user's draft untouched", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    await saveCalculatorSetupService(userA.id, validInput, db);
+    await saveCalculatorSetupService(userB.id, validInput, db);
+
+    await advanceCalculatorProgressService(userA.id, 4, db);
+
+    expect(await getCalculatorProgressService(userA.id, db)).toEqual({ currentStep: 4 });
+    expect(await getCalculatorProgressService(userB.id, db)).toEqual({ currentStep: 2 });
   });
 });

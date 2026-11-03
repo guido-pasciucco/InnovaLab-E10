@@ -98,14 +98,14 @@ Cada costo se describe con **tres datos independientes que el usuario responde p
 
 - **`behavior`** (¿cambia si hago más unidades?): `fixed` o `variable`.
 - **`traceability`** (¿se puede asignar directo a este producto o es de todo el negocio?): `direct` o `indirect`. Cada renglón guarda exactamente lo que respondió el usuario: no se adivina a partir de ningún menú de categorías, así que sí se puede, por ejemplo, un costo indirecto *variable* (el gas del horno compartido).
-- **`is_own_labor`** (columna que agrega #91, hoy no existe en la tabla): ¿es trabajo propio del emprendedor? Tercera dimensión independiente — un renglón de trabajo propio también es fijo o variable y directo o indirecto. Como tal, **entra en `totalPeriodo`** por su `behavior` (decisión [0001 — El trabajo propio SÍ entra en totalPeriodo](../decisiones/establecidas/negocio/0001-confirmar-trabajo-propio-en-totalperiodo.md)).
+- **`is_own_labor`** (columna agregada por #91: `boolean NOT NULL DEFAULT false`; un índice único parcial `calc_cost_lines_own_labor_uq` garantiza a lo sumo un renglón de trabajo propio por cálculo): ¿es trabajo propio del emprendedor? Tercera dimensión independiente — un renglón de trabajo propio también es fijo o variable y directo o indirecto. Como tal, **entra en `totalPeriodo`** por su `behavior` (decisión [0001 — El trabajo propio SÍ entra en totalPeriodo](../decisiones/establecidas/negocio/0001-confirmar-trabajo-propio-en-totalperiodo.md)).
 
 **No existe `category` ni `categoryToAxes`.** Cualquier combinación de los tres datos es válida y no se deriva de los otros ejes. Cómo agrupa la UI filas con tres ejes es una decisión abierta del dueño de la historia (ver #75).
 
 Otros campos:
 
 - `scenario_id` (opcional): si está vacío, el renglón vale para todo el cálculo; si tiene valor, solo para ese escenario (ver paso 7).
-- `source_business_cost_id` (opcional desde #91): si el renglón salió del catálogo del negocio (ver sección 4).
+- `source_business_cost_id` (opcional desde #176): si el renglón salió del catálogo del negocio (ver sección 4). Borrar el ítem del catálogo deja el enlace en null y conserva el renglón.
 - `hours`, `hourly_rate`, `allocation_pct`: reservados para cargar trabajo propio como horas × valor por hora, o para prorratear indirectos. No los usa H2.
 
 ### Paso 6 — Ana define cómo quiere ponerle precio → `pricing_inputs` (futuro)
@@ -206,7 +206,7 @@ Algunos costos son del **negocio**, no de un producto: el alquiler del taller se
 
 Cuando un renglón de un cálculo sale del catálogo, `calc_cost_lines.source_business_cost_id` apunta a él (`bc-1`). El renglón guarda **su propia copia** del concepto y el importe: si el alquiler sube en el catálogo, los cálculos viejos no cambian.
 
-> **Estado en la Fase 1:** el catálogo está **fuera de alcance** de H2. Los costos se cargan sueltos en cada cálculo, por eso #91 hace opcional `source_business_cost_id` y cambia su borrado a `set null` (borrar un ítem del catálogo no debe borrar renglones de cálculos ya hechos).
+> **Estado en la Fase 1:** el catálogo está **fuera de alcance** de H2. Los costos se cargan sueltos en cada cálculo. #176 dejó `source_business_cost_id` opcional y su borrado en `set null` (borrar un ítem del catálogo no borra renglones de cálculos ya hechos).
 
 ---
 

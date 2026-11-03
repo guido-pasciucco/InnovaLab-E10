@@ -9,11 +9,9 @@ import {
 } from "./fields";
 
 // Form contract. Keys match the calc_cost_lines columns: concept, amount,
-// behavior and traceability. `isOwnLabor` is forward-looking: the column
-// `is_own_labor` comes with #91's migration and does not exist yet, so a
-// form wired today would silently drop it. The contract owns the field rule
-// so the column can plug in without renaming; the db validation wires it
-// when the migration lands.
+// behavior and traceability. `isOwnLabor` mirrors the `is_own_labor` column.
+// No form sends it yet: paso 4's own-labor line is written by its service,
+// which sets the flag itself (see lib/services/own-labor.ts).
 //
 // These types (`CalcCostLine`, `CostBehavior`, `CostTraceability`) are
 // scaffolding for the form ticket: they have no consumers outside tests yet.

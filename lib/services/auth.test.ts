@@ -4,10 +4,12 @@ import { AppError } from "@/lib/errors/app-error";
 import { fakerES as faker } from "@faker-js/faker";
 import {
   confirmAuthLinkService,
+  getEmailVerificationStatusService,
   getSessionUserService,
   loginService,
   logoutService,
   requestPasswordResetService,
+  resendSignupConfirmationService,
   signupService,
   updatePasswordService,
 } from "./auth";
@@ -79,49 +81,57 @@ function authClient(auth: Record<string, () => Promise<unknown>>) {
 }
 
 describe("signupService", () => {
+  const REDIRECT_TO = "http://127.0.0.1:3000/login";
   const input = { email: "a@b.com", password: FAKE_PASSWORD, displayName: " Ana " };
 
   it("signs up with a trimmed display name", async () => {
     const client = authClient({ signUp: async () => ({ error: null }) });
-    await expect(signupService(client, input)).resolves.toEqual({});
+    await expect(signupService(client, input, REDIRECT_TO)).resolves.toEqual({});
     expect(client.auth.signUp).toHaveBeenCalledWith({
       email: "a@b.com",
       password: FAKE_PASSWORD,
-      options: { data: { display_name: "Ana" } },
+      options: { data: { display_name: "Ana" }, emailRedirectTo: REDIRECT_TO },
     });
   });
 
   it("throws a ZodError for invalid input", async () => {
     const client = authClient({ signUp: async () => ({ error: null }) });
-    await expect(signupService(client, { email: "a@b.com" })).rejects.toMatchObject({ name: "ZodError" });
+    await expect(signupService(client, { email: "a@b.com" }, REDIRECT_TO)).rejects.toMatchObject({ name: "ZodError" });
   });
 
-  it("throws AUTH_SIGNUP_FAILED without revealing why", async () => {
+  it("throws AUTH_EMAIL_TAKEN when the email already has an account", async () => {
     const client = authClient({
       signUp: async () => ({ error: { message: "User already registered", code: "user_already_exists", status: 422 } }),
     });
-    await expect(signupService(client, input)).rejects.toEqual(new AppError("AUTH_SIGNUP_FAILED"));
+    await expect(signupService(client, input, REDIRECT_TO)).rejects.toMatchObject({ code: "AUTH_EMAIL_TAKEN" });
+  });
+
+  it("throws AUTH_SIGNUP_FAILED for any other rejection", async () => {
+    const client = authClient({
+      signUp: async () => ({ error: { message: "Weak password", code: "weak_password", status: 422 } }),
+    });
+    await expect(signupService(client, input, REDIRECT_TO)).rejects.toEqual(new AppError("AUTH_SIGNUP_FAILED"));
   });
 
   it("throws AUTH_RATE_LIMITED when too many confirmation emails were sent", async () => {
     const client = authClient({
       signUp: async () => ({ error: { message: "Rate limit", code: "over_email_send_rate_limit", status: 429 } }),
     });
-    await expect(signupService(client, input)).rejects.toMatchObject({ code: "AUTH_RATE_LIMITED" });
+    await expect(signupService(client, input, REDIRECT_TO)).rejects.toMatchObject({ code: "AUTH_RATE_LIMITED" });
   });
 
   it("throws AUTH_UNAVAILABLE when Supabase is down", async () => {
     const client = authClient({ signUp: async () => ({ error: { message: "Service unavailable", status: 503 } }) });
-    await expect(signupService(client, input)).rejects.toMatchObject({ code: "AUTH_UNAVAILABLE" });
+    await expect(signupService(client, input, REDIRECT_TO)).rejects.toMatchObject({ code: "AUTH_UNAVAILABLE" });
   });
 
   it("sends no display name instead of an empty string when the display name is blank", async () => {
     const client = authClient({ signUp: async () => ({ error: null }) });
-    await signupService(client, { email: "a@b.com", password: FAKE_PASSWORD, displayName: "  " });
+    await signupService(client, { email: "a@b.com", password: FAKE_PASSWORD, displayName: "  " }, REDIRECT_TO);
     expect(client.auth.signUp).toHaveBeenCalledWith({
       email: "a@b.com",
       password: FAKE_PASSWORD,
-      options: { data: { display_name: undefined } },
+      options: { data: { display_name: undefined }, emailRedirectTo: REDIRECT_TO },
     });
   });
 });
@@ -154,6 +164,146 @@ describe("getSessionUserService", () => {
   it("throws UNAUTHORIZED when Supabase returns an error", async () => {
     const client = authClient({ getUser: async () => ({ data: { user: null }, error: { message: "jwt" } }) });
     await expect(getSessionUserService(client)).rejects.toEqual(new AppError("UNAUTHORIZED"));
+  });
+});
+
+describe("resendSignupConfirmationService", () => {
+  const REDIRECT_TO = "http://127.0.0.1:3000/auth/confirm?next=/auth/account-created";
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("resends the signup email with the given redirect", async () => {
+    const client = authClient({ resend: async () => ({ error: null }) });
+    await expect(resendSignupConfirmationService(client, { email: "a@b.com" }, REDIRECT_TO)).resolves.toEqual({});
+    expect(client.auth.resend).toHaveBeenCalledWith({
+      type: "signup",
+      email: "a@b.com",
+      options: { emailRedirectTo: REDIRECT_TO },
+    });
+  });
+
+  it("throws AUTH_RATE_LIMITED when Supabase limits the sends", async () => {
+    const client = authClient({
+      resend: async () => ({ error: { message: "Rate limit", code: "over_email_send_rate_limit", status: 429 } }),
+    });
+    await expect(resendSignupConfirmationService(client, { email: "a@b.com" }, REDIRECT_TO)).rejects.toMatchObject({
+      code: "AUTH_RATE_LIMITED",
+    });
+  });
+
+  it("throws AUTH_UNAVAILABLE when Supabase is down", async () => {
+    const client = authClient({ resend: async () => ({ error: { message: "Service unavailable", status: 503 } }) });
+    await expect(resendSignupConfirmationService(client, { email: "a@b.com" }, REDIRECT_TO)).rejects.toMatchObject({
+      code: "AUTH_UNAVAILABLE",
+    });
+  });
+
+  it("resolves when Supabase rejects the address, to prevent account enumeration", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const client = authClient({ resend: async () => ({ error: { message: "not found", status: 400 } }) });
+    await expect(resendSignupConfirmationService(client, { email: "a@b.com" }, REDIRECT_TO)).resolves.toEqual({});
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("a@b.com");
+  });
+
+  it("throws a ZodError for an invalid email without calling Supabase", async () => {
+    const client = authClient({ resend: async () => ({ error: null }) });
+    await expect(resendSignupConfirmationService(client, { email: "nope" }, REDIRECT_TO)).rejects.toMatchObject({
+      name: "ZodError",
+    });
+    expect(client.auth.resend).not.toHaveBeenCalled();
+  });
+});
+
+describe("getEmailVerificationStatusService", () => {
+  it("confirms a verified session whose email matches", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: { email: "a@b.com", email_confirmed_at: "2026-10-31T12:00:00Z" } },
+        error: null,
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "A@B.com" })).resolves.toEqual({
+      confirmed: true,
+    });
+  });
+
+  it("falls back to the legacy confirmed_at field", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: { email: "a@b.com", confirmed_at: "2026-10-31T12:00:00Z" } },
+        error: null,
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).resolves.toEqual({
+      confirmed: true,
+    });
+  });
+
+  it("does not confirm when the email is not verified yet", async () => {
+    const client = authClient({
+      getUser: async () => ({ data: { user: { email: "a@b.com" } }, error: null }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).resolves.toEqual({
+      confirmed: false,
+    });
+  });
+
+  it("does not confirm a session for a different email", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: { email: "other@b.com", email_confirmed_at: "2026-10-31T12:00:00Z" } },
+        error: null,
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).resolves.toEqual({
+      confirmed: false,
+    });
+  });
+
+  it("returns not confirmed when there is no session", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: null },
+        // No status: the session-missing special case must win over the
+        // generic "no status means outage" classification.
+        error: { message: "Auth session missing!", name: "AuthSessionMissingError" },
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).resolves.toEqual({
+      confirmed: false,
+    });
+  });
+
+  it("throws AUTH_UNAVAILABLE when the session cannot be read because Supabase is down", async () => {
+    const client = authClient({
+      getUser: async () => ({
+        data: { user: null },
+        error: { message: "Bad gateway", status: 502 },
+      }),
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).rejects.toMatchObject({
+      code: "AUTH_UNAVAILABLE",
+    });
+  });
+
+  it("throws a ZodError for an invalid email without calling Supabase", async () => {
+    const client = authClient({ getUser: async () => ({ data: { user: null }, error: null }) });
+    await expect(getEmailVerificationStatusService(client, { email: "nope" })).rejects.toMatchObject({
+      name: "ZodError",
+    });
+    expect(client.auth.getUser).not.toHaveBeenCalled();
+  });
+
+  it("lets unexpected failures bubble up untouched", async () => {
+    const boom = new Error("network");
+    const client = authClient({
+      getUser: async () => {
+        throw boom;
+      },
+    });
+    await expect(getEmailVerificationStatusService(client, { email: "a@b.com" })).rejects.toBe(boom);
   });
 });
 

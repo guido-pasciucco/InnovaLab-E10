@@ -12,3 +12,30 @@ export type CalculatorDraftSetup = {
   calculationId: string | null;
   setup: CalculatorSetup | null;
 };
+
+// Read model for the step 1 "live unit cost" card (#172). Amounts are decimal
+// strings, never numbers. Null means "there are no costs yet" (no draft, or a
+// draft with no cost lines), not zero: a draft that does have costs returns
+// "0.00" for a category with no lines. `volume` is the setup volume, the same
+// divisor the engine uses. `currency` is always "ARS": the calculator only
+// supports that currency today (see lib/schemas/calculator-setup/fields.ts).
+export type CalculatorCostSummary = {
+  calculationId: string | null;
+  totalFixed: string | null;
+  variableUnit: string | null;
+  unitCost: string | null;
+  volume: number | null;
+  currency: "ARS";
+};
+
+// One dashboard card: a calculation the user owns. `currentStep` is the
+// furthest wizard step persisted (1..7); `isActive` marks the one the wizard
+// currently edits.
+export type CalculationSummary = {
+  id: string;
+  productName: string;
+  status: string;
+  currentStep: number;
+  updatedAt: Date;
+  isActive: boolean;
+};

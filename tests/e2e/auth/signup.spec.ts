@@ -15,24 +15,25 @@ test("signup, confirm the email through Mailpit, log in and reach the dashboard"
   const user = buildUser({ displayName: "E2E Signup" });
   cleanup.trackUserEmail(user.email);
 
-  // Act: sign up (the form pushes to /login on success) and confirm.
+  // Act: sign up (success continues to the "check your email" screen) and confirm.
   await signupPage.goto();
   await signupPage.signUp(user);
-  await expect(page).toHaveURL("/login");
+  await expect(page).toHaveURL("/auth/check-email");
+  await expect(page.getByRole("heading", { name: "Revisá tu correo" })).toBeVisible();
 
   // Email confirmations are ON (supabase/config.toml). With PKCE, GoTrue
-  // verifies the email on /auth/v1/verify and redirects to the site with a
-  // `?code=` that the app never exchanges (known gap, see the reset spec).
-  // The email still ends up confirmed, so the flow continues via login.
+  // verifies the email on /auth/v1/verify and redirects to /auth/confirm
+  // (emailRedirectTo) with a `?code=`, which the app exchanges for a session
+  // before continuing to the "account created" screen.
   await page.goto(await waitForAuthLink(user.email, "signup"));
-  await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:3100\/\?code=/);
+  await expect(page).toHaveURL("/auth/account-created");
+  await expect(page.getByRole("heading", { name: "¡Cuenta creada!" })).toBeVisible();
 
   await loginPage.goto();
   await loginPage.logIn(user);
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL("/dashboard");
 
   // Assert
-  await dashboardPage.goto();
   await expect(dashboardPage.heading).toBeVisible();
   await expect(dashboardPage.userEmail(user.email)).toBeVisible();
 });

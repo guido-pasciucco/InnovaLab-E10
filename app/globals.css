@@ -1,13 +1,131 @@
 @import "tailwindcss";
 
 :root {
-  --background: #EAFCF1;
+  /*
+   * Valores oficiales de Figma. Las variables fuente no generan utilidades
+   * por sí mismas; los nombres semánticos se exponen abajo con @theme inline.
+   */
+  --surface-canvas: #D8F5E3;
+  --surface-raised: #FFFFFF;
+  --surface-tint: #F1FFF5;
+  --border-default: #BFE3CB;
+  --border-control: #5A7A60;
+  --border-tonal: var(--border-control);
+  --text-primary: #0B1F10;
+  --text-muted: #4D6354;
+  --text-placeholder: var(--text-muted);
+  --text-on-action-tonal: #06130A;
+  --action-primary: #15803D;
+  --action-primary-hover: #166534;
+  --action-primary-pressed: #14532D;
+  --action-tonal: #E1F5E7;
+  --status-success: #0B7A43;
+  --status-danger: #B3202F;
+  --surface-disabled: #E6EDE7;
+
+  /*
+   * Propuestas internas de accesibilidad. --border-control alcanza 4.79:1
+   * sobre blanco y 4.12:1 sobre canvas. --text-disabled se ajusta desde
+   * #617568 para alcanzar 4.66:1 sobre --surface-disabled.
+   */
+  --focus-ring: #168A46;
+  --surface-danger: #FCE8EB;
+  --status-warning: #A45C12;
+  --surface-warning: #FFF2DA;
+  --surface-success: #E1F5E7;
+  --text-disabled: #5A6D5E;
+
+  /*
+   * Propuestas internas derivadas de la maqueta de auth/calculadora.
+   * --text-link ajusta #168A3D (4.43:1 sobre blanco, 3.82:1 sobre canvas)
+   * al valor #127A35: 5.44:1 sobre blanco y 4.69:1 sobre canvas.
+   * --accent-glow es decorativo (1.88:1 sobre blanco): nunca es el unico
+   * indicador de foco ni de estado.
+   */
+  --text-link: #127A35;
+  --text-link-hover: var(--action-primary-hover);
+  --accent-glow: #3AD85C;
+  --brand-tile: #0A3D22;
+  --brand-glyph: #39E05A;
+  --brand-surface: #1A5C3A;
+  --page-gradient-via: #D3F5E1;
+  --page-gradient-to: #BDEBCF;
+  --page-glow: #39FF14;
+
+  /*
+   * Texto sobre superficies oscuras de marca (--brand-tile #0A3D22 y --text-primary
+   * #0B1F10). Contrastes sobre --brand-tile: on-brand 9.27:1, muted 6.90:1,
+   * accent 9.61:1; sobre --text-primary: 12.97:1, 9.65:1 y 13.45:1.
+   */
+  --text-on-brand: #C9E6D8;
+  --text-on-brand-muted: #A9C9BA;
+  --text-on-brand-accent: #A7F3D0;
+
+  /*
+   * Contrato reservado por #170 / PR #212. Sus valores se preservan tal como
+   * fueron propuestos allí y no definen las acciones semánticas de Figma.
+   */
+  --brand-green-50: #f0fdf4;
+  --brand-green-100: #dcfce7;
+  --brand-green-500: #22c55e;
+  --brand-green-600: #16a34a;
+  --brand-green-700: #15803d;
+
+  /* Compatibilidad temporal con los colores globales vigentes de main. */
+  --background: #eafcf1;
   --foreground: #171717;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-canvas: var(--surface-canvas);
+  --color-surface: var(--surface-raised);
+  --color-surface-tint: var(--surface-tint);
+  --color-surface-disabled: var(--surface-disabled);
+  --color-border-default: var(--border-default);
+  --color-border-control: var(--border-control);
+  --color-border-tonal: var(--border-tonal);
+
+  --color-fg: var(--text-primary);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-disabled: var(--text-disabled);
+  --color-placeholder: var(--text-placeholder);
+  --color-on-action-tonal: var(--text-on-action-tonal);
+  --color-on-action-primary: var(--surface-raised);
+
+  --color-action-primary: var(--action-primary);
+  --color-action-primary-hover: var(--action-primary-hover);
+  --color-action-primary-pressed: var(--action-primary-pressed);
+  --color-action-tonal: var(--action-tonal);
+  --color-action-disabled: var(--surface-disabled);
+
+  --color-success: var(--status-success);
+  --color-success-subtle: var(--surface-success);
+  --color-danger: var(--status-danger);
+  --color-danger-subtle: var(--surface-danger);
+  --color-warning: var(--status-warning);
+  --color-warning-subtle: var(--surface-warning);
+  --color-focus: var(--focus-ring);
+  --color-link: var(--text-link);
+  --color-link-hover: var(--text-link-hover);
+  --color-accent-glow: var(--accent-glow);
+  --color-brand-tile: var(--brand-tile);
+  --color-brand-glyph: var(--brand-glyph);
+  --color-brand-surface: var(--brand-surface);
+  --color-page-gradient-via: var(--page-gradient-via);
+  --color-page-gradient-to: var(--page-gradient-to);
+  --color-page-glow: var(--page-glow);
+  --color-on-brand: var(--text-on-brand);
+  --color-on-brand-muted: var(--text-on-brand-muted);
+  --color-on-brand-accent: var(--text-on-brand-accent);
+  --color-brand-green-50: var(--brand-green-50);
+  --color-brand-green-100: var(--brand-green-100);
+  --color-brand-green-500: var(--brand-green-500);
+  --color-brand-green-600: var(--brand-green-600);
+  --color-brand-green-700: var(--brand-green-700);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,4 +134,10 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.wizard-shell {
+  min-height: 100vh;
+  color: #171717;
+  color-scheme: light;
 }

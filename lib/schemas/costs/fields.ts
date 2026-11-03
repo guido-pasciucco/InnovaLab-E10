@@ -70,12 +70,79 @@ export const amountField = z
     }),
   );
 
+// Hours of own labor for the month (paso 4). Same pipeline as `amountField`
+// with the messages worded for hours, so the user never reads "importe" under
+// an hours input. It keeps the amount's bounds (>= 0, 10 integer digits,
+// 2 decimals): the product with the hourly rate must still fit numeric(12,2).
+export const hoursField = z
+  .string({ error: "Las horas deben ser un número." })
+  .trim()
+  .pipe(z.string().min(1, { error: "Las horas son obligatorias." }))
+  .pipe(
+    z.string().regex(amountShape, {
+      error: "Las horas deben ser un número.",
+    }),
+  )
+  .pipe(
+    z.string().refine((v) => !v.startsWith("-"), {
+      error: "Las horas no pueden ser negativas.",
+    }),
+  )
+  .pipe(
+    z.string().refine((v) => v.split(".")[0].length <= 10, {
+      error: "Las horas son demasiado grandes.",
+    }),
+  )
+  .pipe(
+    z.string().regex(/^\d+(\.\d{1,2})?$/, {
+      error: "Las horas deben tener hasta 2 decimales.",
+    }),
+  );
+
+// Product units one purchase of a variable cost yields (paso 3): a roll that
+// yields 20 boxes is "20". Same staged pipeline as `amountField`, bounded by
+// the yield_quantity column, numeric(14,4): 10 integer digits, 4 decimals.
+// Zero and negatives share one message: the engine divides by this value.
+export const yieldField = z
+  .string({ error: "El rendimiento debe ser un número." })
+  .trim()
+  .pipe(z.string().min(1, { error: "Indicá para cuántas unidades rinde." }))
+  .pipe(
+    z.string().regex(amountShape, {
+      error: "El rendimiento debe ser un número.",
+    }),
+  )
+  .pipe(
+    z.string().refine((v) => !v.startsWith("-") && /[1-9]/.test(v), {
+      error: "El rendimiento debe ser mayor que cero.",
+    }),
+  )
+  .pipe(
+    z.string().refine((v) => v.split(".")[0].length <= 10, {
+      error: "El rendimiento es demasiado grande.",
+    }),
+  )
+  .pipe(
+    z.string().regex(/^\d+(\.\d{1,4})?$/, {
+      error: "El rendimiento debe tener hasta 4 decimales.",
+    }),
+  );
+
 // Independent dimensions: the user answers each one separately (decision
 // confirmed 2026-10-17). No refinements cross these dimensions.
 //
 // These were free text in #146, with a TODO to close them here. Now that they
 // are enums the messages can honestly say "elegí", because the field really
 // does restrict the answer.
+//
+// Single owner of the closed vocabulary. The calc engine imports these lists
+// instead of restating them. The field schemas below keep their own literals.
+export const COST_BEHAVIORS = ["fixed", "variable"] as const;
+export type CostBehavior = (typeof COST_BEHAVIORS)[number];
+
+export const COST_TRACEABILITIES = ["direct", "indirect"] as const;
+export type CostTraceability = (typeof COST_TRACEABILITIES)[number];
+
 export const behaviorField = z.enum(["fixed", "variable"], {
   error: "Elegí cómo se comporta el costo: fijo o variable.",
 });

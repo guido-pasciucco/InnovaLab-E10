@@ -1,7 +1,14 @@
 "use client";
 
-import { useActionState, useEffect, useRef, type FormEvent } from "react";
-import { useForm } from "react-hook-form";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import { useRouter } from "next/navigation";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Path } from "react-hook-form";
 
@@ -11,18 +18,40 @@ import {
   type CalculatorSetup,
 } from "@/lib/schemas/calculator-setup/calculator-setup";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
-import { buildConfirmation } from "@/components/calculator/build-confirmation";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { StepHeader } from "@/components/calculator/wizard/step-header";
+import { useReportTypedVolume } from "@/components/calculator/wizard/typed-volume";
+import { FormGrid } from "@/components/ui/form-grid";
+import { PrimaryButton } from "@/components/ui/primary-button";
+import { SelectField } from "@/components/ui/select-field";
+import { TextField } from "@/components/ui/text-field";
 
 type SetupFormProps = {
   defaultValues: CalculatorSetup;
 };
 
 // Fields the server may flag; module-level so the reference stays stable.
-const SERVER_FIELDS: readonly Path<CalculatorSetup>[] = ["name", "unit", "volume"];
-const SETUP_FIELDS = ["name", "unit", "volume", "currency", "period"] as const;
+const SERVER_FIELDS: readonly Path<CalculatorSetup>[] = [
+  "name",
+  "unit",
+  "volume",
+];
+// Saving the setup unlocks and opens step 2.
+const NEXT_STEP_HREF = "/paso-2";
+
+// Visual only: the sector chips and "Tipo" are not part of the saved setup.
+const SECTORS = [
+  "Velas y cosmética",
+  "Gastronomía",
+  "Diseño y servicios",
+  "Indumentaria",
+] as const;
+
+// Moneda and Período are fixed by the schema; their selects are read-only.
+const noop = () => {};
 
 export function SetupForm({ defaultValues }: SetupFormProps) {
+  const router = useRouter();
   const [state, submitAction, isPending] = useActionState(
     saveCalculatorSetup,
     undefined,
@@ -30,15 +59,27 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
-    reset,
-    getValues,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<CalculatorSetup>({
     resolver: zodResolver(calculatorSetupSchema),
     defaultValues,
   });
+
+  // The shell's live card mirrors the volume being typed; an empty or invalid value
+  // (NaN from valueAsNumber) shows "—" instead of a made-up number.
+  const watchedVolume = useWatch({ control, name: "volume" });
+  const liveVolume =
+    Number.isFinite(watchedVolume) && watchedVolume > 0
+      ? watchedVolume
+      : undefined;
+
+  useReportTypedVolume(liveVolume);
+
+  const [selectedSector, setSelectedSector] = useState<string>(SECTORS[0]);
+  const [kind, setKind] = useState("Producto");
 
   const hasServerFieldErrors = useServerFieldErrors(
     state,
@@ -46,11 +87,7 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     SERVER_FIELDS,
   );
 
-  const hasSuccess = state?.ok && state.data;
-
   const isSubmittingRef = useRef(false);
-  const lastProcessedStateRef = useRef<typeof state | null>(null);
-  const submittedValuesRef = useRef<CalculatorSetup | null>(null);
 
   // Libera el bloqueo de doble envío cuando la acción termina (éxito o fallo).
   useEffect(() => {
@@ -59,26 +96,15 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
     }
   }, [isPending]);
 
-  // Sincroniza el formulario con los datos confirmados por el servidor
-  // después de un guardado exitoso, sin sobrescribir ediciones pendientes.
+  // "Siguiente": once the server confirms the save, move on to the next step.
+  // A failed save keeps the user here with the error shown below.
   useEffect(() => {
-    if (!state?.ok || !state.data) return;
-    if (lastProcessedStateRef.current === state) return;
-    lastProcessedStateRef.current = state;
-    const current = getValues();
-    const submitted = submittedValuesRef.current;
-    const hasLaterEdits = submitted !== null && SETUP_FIELDS.some(
-      (field) => current[field] !== submitted[field],
-    );
-    // El resultado confirmado pasa a ser el nuevo baseline. Si hubo cambios
-    // posteriores al envío, RHF los conserva y recalcula isDirty contra él.
-    reset(state.data, { keepValues: hasLaterEdits });
-  }, [state, reset, getValues]);
+    if (state?.ok) router.push(NEXT_STEP_HREF);
+  }, [state, router]);
 
   const handleSubmitAction = (data: CalculatorSetup) => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    submittedValuesRef.current = getValues();
     dispatchInTransition(submitAction)(data);
   };
 
@@ -89,93 +115,110 @@ export function SetupForm({ defaultValues }: SetupFormProps) {
   };
 
   return (
-    <form
-      onSubmit={handleFormSubmit}
-      noValidate
-      className="mt-6 flex flex-col gap-4"
-    >
-      {hasSuccess && !isDirty && !isPending && (
-        <div role="status" className="text-sm text-green-600">
-          <p>Guardado</p>
-          <p>{buildConfirmation(state.data)}</p>
-        </div>
-      )}
-      {state && !state.ok && !hasServerFieldErrors && (
-        <p role="alert" className="text-sm text-red-600">
-          {state.message}
-        </p>
-      )}
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="name" className="text-sm font-medium text-gray-700">
-          Nombre del producto
-        </label>
-        <input
-          id="name"
-          disabled={isPending}
-          {...register("name")}
-          className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
+    <>
+      <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+        <StepHeader
+          currentStep={1}
+          title="Configuración"
+          description="Contanos qué vendés para empezar el cálculo."
         />
-        {errors.name && (
-          <p role="alert" className="text-sm text-red-600">
-            {errors.name.message}
-          </p>
-        )}
-      </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="unit" className="text-sm font-medium text-gray-700">
-          Unidad
-        </label>
-        <input
-          id="unit"
-          disabled={isPending}
-          {...register("unit")}
-          className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
-        />
-        {errors.unit && (
-          <p role="alert" className="text-sm text-red-600">
-            {errors.unit.message}
-          </p>
-        )}
-      </div>
+        <form
+          onSubmit={handleFormSubmit}
+          noValidate
+          className="mt-4 flex flex-col gap-3"
+        >
+          {state && !state.ok && !hasServerFieldErrors && (
+            <p role="alert" className="text-sm text-danger">
+              {state.message}
+            </p>
+          )}
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="volume" className="text-sm font-medium text-gray-700">
-          Volumen
-        </label>
-        <input
-          id="volume"
-          type="number"
-          disabled={isPending}
-          {...register("volume", { valueAsNumber: true })}
-          className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
-        />
-        {errors.volume && (
-          <p role="alert" className="text-sm text-red-600">
-            {errors.volume.message}
-          </p>
-        )}
-        <p className="mt-1 text-xs text-gray-500">El volumen divide los costos fijos.</p>
-      </div>
+          <div className="flex flex-col gap-2">
+            <p
+              id="sector-label"
+              className="text-base font-semibold text-fg"
+            >
+              Empezá con un ejemplo por rubro
+            </p>
+            <div
+              role="group"
+              aria-labelledby="sector-label"
+              className="flex flex-wrap gap-2"
+            >
+              {SECTORS.map((sector) => (
+                <button
+                  key={sector}
+                  type="button"
+                  aria-pressed={sector === selectedSector}
+                  onClick={() => setSelectedSector(sector)}
+                  className="min-h-9 rounded-full border-2 border-border-control bg-surface px-4 text-sm font-semibold text-fg aria-pressed:border-accent-glow aria-pressed:bg-action-tonal aria-pressed:text-on-action-tonal aria-pressed:ring-2 aria-pressed:ring-accent-glow/40"
+                >
+                  {sector}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-gray-700">Moneda</span>
-        <span className="text-sm text-gray-900">ARS</span>
-      </div>
+          <TextField
+            label="Producto o servicio"
+            placeholder="Vela de soja 200 g"
+            disabled={isPending}
+            error={errors.name?.message}
+            {...register("name")}
+          />
 
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-gray-700">Período</span>
-        <span className="text-sm text-gray-900">Mensual</span>
-      </div>
+          <SelectField
+            label="Tipo"
+            value={kind}
+            onChange={(event) => setKind(event.target.value)}
+            disabled={isPending}
+            className="appearance-none"
+          >
+            <option value="Producto">Producto</option>
+            <option value="Servicio">Servicio</option>
+          </SelectField>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-blue-300"
-      >
-        {isPending ? "Guardando…" : "Guardar"}
-      </button>
-    </form>
+          <FormGrid>
+            <SelectField
+              label="Moneda"
+              value="ARS"
+              disabled
+              onChange={noop}
+              className="appearance-none disabled:bg-surface! disabled:text-fg!"
+            >
+              <option value="ARS">ARS</option>
+            </SelectField>
+            <SelectField
+              label="Período"
+              value="Mensual"
+              disabled
+              onChange={noop}
+              className="appearance-none disabled:bg-surface! disabled:text-fg!"
+            >
+              <option value="Mensual">Mensual</option>
+            </SelectField>
+            <TextField
+              label="Unidad de venta"
+              placeholder="Unidad"
+              disabled={isPending}
+              error={errors.unit?.message}
+              {...register("unit")}
+            />
+            <TextField
+              label="Volumen estimado"
+              type="number"
+              disabled={isPending}
+              error={errors.volume?.message}
+              {...register("volume", { valueAsNumber: true })}
+            />
+          </FormGrid>
+
+          <PrimaryButton type="submit" disabled={isPending}>
+            {isPending ? "Guardando…" : "Siguiente"}
+          </PrimaryButton>
+        </form>
+      </section>
+    </>
   );
 }

@@ -62,7 +62,7 @@ export default function UpdatePasswordForm() {
       className="flex flex-col gap-4"
     >
       <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="text-sm font-medium text-gray-700">
+        <label htmlFor="password" className="text-sm font-medium text-fg-muted">
           New password
         </label>
         <input
@@ -71,17 +71,17 @@ export default function UpdatePasswordForm() {
           type="password"
           autoComplete="new-password"
           disabled={pending}
-          className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
+          className="rounded-md border border-border-control px-3 py-2 text-fg disabled:bg-surface-tint"
         />
         {errors.password && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-danger">
             {errors.password.message}
           </p>
         )}
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="confirm" className="text-sm font-medium text-gray-700">
+        <label htmlFor="confirm" className="text-sm font-medium text-fg-muted">
           Confirm password
         </label>
         <input
@@ -90,23 +90,23 @@ export default function UpdatePasswordForm() {
           type="password"
           autoComplete="new-password"
           disabled={pending}
-          className="rounded-md border border-gray-300 px-3 py-2 text-gray-900 disabled:bg-gray-100"
+          className="rounded-md border border-border-control px-3 py-2 text-fg disabled:bg-surface-tint"
         />
         {errors.confirm && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-danger">
             {errors.confirm.message}
           </p>
         )}
       </div>
 
       {state && !state.ok && !hasServerFieldErrors && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger">
           {state.message}
         </p>
       )}
 
       {state?.ok && (
-        <p role="status" className="text-sm text-green-600">
+        <p role="status" className="text-sm text-success">
           Password updated. Redirecting to sign in…
         </p>
       )}
@@ -114,7 +114,7 @@ export default function UpdatePasswordForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:bg-blue-300"
+        className="rounded-md bg-action-primary px-4 py-2 font-medium text-on-action-primary hover:bg-action-primary-hover disabled:bg-action-disabled disabled:text-fg-disabled"
       >
         {pending ? "Updating..." : "Update password"}
       </button>

@@ -26,10 +26,10 @@ export default function RootLayout({
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased overflow-x-clip`}>
       <body 
         suppressHydrationWarning
-        className="relative min-h-full flex flex-col bg-gradient-to-br from-[#EAFCF1] via-[#D3F5E1] to-[#BDEBCF] text-slate-800"
+        className="relative flex min-h-full flex-col overflow-x-clip bg-gradient-to-br from-background via-page-gradient-via to-page-gradient-to text-fg"
       >
         {/* Capas de luces difuminadas de Figma */}
-        <div className="pointer-events-none absolute -top-20 -right-20 w-[420px] h-[420px] rounded-full bg-[#39FF14]/30 blur-[110px]" />
+        <div className="pointer-events-none absolute -top-20 -right-20 w-[420px] h-[420px] rounded-full bg-page-glow/30 blur-[110px]" />
 
         {/* Elemento decorativo global: Carrito (Esquina inferior izquierda - fijo al viewport) */}
         <div 

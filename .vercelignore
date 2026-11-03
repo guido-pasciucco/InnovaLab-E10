@@ -1,0 +1,9 @@
+# Local tooling state. CodeGraph keeps a live Unix socket here; the CLI
+# aborts the upload with ENXIO when it tries to read it.
+.codegraph/
+.atl/
+odd/
+
+# Secrets and local config must never enter the build context.
+.env*
+.vercel/
