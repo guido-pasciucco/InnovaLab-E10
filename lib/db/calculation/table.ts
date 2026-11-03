@@ -121,6 +121,10 @@ export const scenarios = pgTable("scenarios", {
     .references(() => calculations.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   isBase: boolean("is_base").notNull().default(false),
+  // Step 7 alternatives: null keeps the base value (the margin price, the
+  // setup volume). The base scenario never sets them.
+  priceOverride: numeric("price_override", { precision: 12, scale: 2 }),
+  volumeOverride: integer("volume_override"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
