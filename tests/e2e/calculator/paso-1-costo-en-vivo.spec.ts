@@ -72,7 +72,8 @@ test("the card is also shown on the steps that are not built yet", async ({ auth
   await setup.saveAndContinue(saved);
   await new Paso2Page(authedPage).addLine("Alquiler", "60000");
 
-  await authedPage.goto("/paso-3");
+  await authedPage.getByRole("button", { name: "Siguiente", exact: true }).click();
+  await expect(authedPage).toHaveURL(/\/paso-3$/);
 
   await expect(cardValue(authedPage, "Costos fijos")).toHaveText("$60.000");
   await expect(cardValue(authedPage, "Volumen")).toHaveText("96");

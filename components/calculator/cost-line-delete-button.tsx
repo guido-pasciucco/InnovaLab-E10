@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 
-type FixedCostDeleteButtonProps = {
+type CostLineDeleteButtonProps = {
   // Names the row it removes, so a screen reader can tell the buttons apart.
   label: string;
   onClick: () => void;
@@ -8,11 +8,11 @@ type FixedCostDeleteButtonProps = {
 };
 
 // 44px square: the touch target stays comfortable on the mobile layout.
-export function FixedCostDeleteButton({
+export function CostLineDeleteButton({
   label,
   onClick,
   disabled,
-}: FixedCostDeleteButtonProps) {
+}: CostLineDeleteButtonProps) {
   return (
     <button
       type="button"

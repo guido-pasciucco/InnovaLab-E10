@@ -9,26 +9,40 @@ import {
   type Ref,
 } from "react";
 
-import {
-  addFixedCostLine,
-  removeFixedCostLine,
-  renameFixedCostLine,
-  updateFixedCostAmount,
-} from "@/app/(calculator)/paso-2/actions";
-import { FixedCostDeleteButton } from "@/components/calculator/fixed-cost-delete-button";
+import { CostLineDeleteButton } from "@/components/calculator/cost-line-delete-button";
+import type { ServiceResult } from "@/lib/errors/catalog";
 import { conceptField } from "@/lib/schemas/costs/fields";
 import { formatARSCompact, parseAmountInput } from "@/lib/money/format";
 
 // What the table shows of a saved line. The server owns the id and the amount.
-export type FixedCostLine = {
+export type CostLine = {
   id: string;
   concept: string;
   amount: string;
 };
 
-type FixedCostRowItemProps = {
+// The writes a row can make. Each step passes its own Server Actions, so the
+// same row serves fixed and variable lines.
+export type CostLineActions = {
+  add: (input: {
+    concept: string;
+    amount: string;
+  }) => Promise<ServiceResult<{ id: string }>>;
+  rename: (
+    lineId: string,
+    input: { concept: string },
+  ) => Promise<ServiceResult<{ id: string }>>;
+  updateAmount: (
+    lineId: string,
+    input: { amount: string },
+  ) => Promise<ServiceResult<{ id: string }>>;
+  remove: (lineId: string) => Promise<ServiceResult<{ id: string }>>;
+};
+
+type CostLineRowItemProps = {
+  actions: CostLineActions;
   // null: a new row the user is still filling in.
-  line: FixedCostLine | null;
+  line: CostLine | null;
   // A new row saved: it stays on screen, locked, until the server's list
   // brings the saved line (the table swaps them), so it never blinks out.
   onSaved?: (id: string) => void;
@@ -59,12 +73,13 @@ function displayAmount(amount: string): string {
 // A saved line saves only the fields that changed and are valid, one action
 // each: if one fails the other stays applied. Failed saves keep the typed text
 // and can be retried by leaving the row again.
-export function FixedCostRowItem({
+export function CostLineRowItem({
+  actions,
   line,
   onSaved,
   onRemoved,
   conceptRef,
-}: FixedCostRowItemProps) {
+}: CostLineRowItemProps) {
   const id = useId();
   const conceptId = `${id}-concept`;
   const amountId = `${id}-amount`;
@@ -114,7 +129,7 @@ export function FixedCostRowItem({
 
   const saveNew = (concept: string, amount: string) => {
     startTransition(async () => {
-      const result = await addFixedCostLine({ concept, amount });
+      const result = await actions.add({ concept, amount });
 
       if (!result.ok) {
         setSaveError(SAVE_FAILED);
@@ -130,7 +145,7 @@ export function FixedCostRowItem({
 
   // null: that field is not saved, either unchanged or still invalid.
   const saveChanges = (
-    saved: FixedCostLine,
+    saved: CostLine,
     concept: string | null,
     amount: string | null,
   ) => {
@@ -138,7 +153,7 @@ export function FixedCostRowItem({
       let failed = false;
 
       if (concept !== null) {
-        const result = await renameFixedCostLine(saved.id, { concept });
+        const result = await actions.rename(saved.id, { concept });
         if (result.ok) {
           setConceptDirty(false);
           setConceptDraft(concept);
@@ -148,7 +163,7 @@ export function FixedCostRowItem({
       }
 
       if (amount !== null) {
-        const result = await updateFixedCostAmount(saved.id, { amount });
+        const result = await actions.updateAmount(saved.id, { amount });
         if (result.ok) {
           setAmountDirty(false);
           setAmountDraft(displayAmount(amount));
@@ -198,7 +213,7 @@ export function FixedCostRowItem({
 
     setSaveError(null);
     startTransition(async () => {
-      const result = await removeFixedCostLine(line.id);
+      const result = await actions.remove(line.id);
 
       if (!result.ok) {
         setSaveError(DELETE_FAILED);
@@ -253,7 +268,7 @@ export function FixedCostRowItem({
           />
         </div>
 
-        <FixedCostDeleteButton
+        <CostLineDeleteButton
           label={line ? `Eliminar ${line.concept}` : "Eliminar fila"}
           onClick={handleRemove}
           disabled={busy}
