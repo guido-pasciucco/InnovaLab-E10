@@ -94,3 +94,18 @@ test("a user never sees another user's calculations", async ({ authedPage, dashb
   await dashboardPage.goto();
   await expect(dashboardPage.card("Secreto de A")).toBeVisible();
 });
+
+test("the home header shows Dashboard instead of Iniciar sesión when signed in", async ({ authedPage }) => {
+  await authedPage.goto("/");
+
+  const banner = authedPage.getByRole("banner");
+  await expect(banner.getByRole("link", { name: "Dashboard" })).toBeVisible();
+  await expect(banner.getByRole("link", { name: "Iniciar sesión" })).toHaveCount(0);
+});
+
+test("Volver al inicio goes from the dashboard back to the home", async ({ authedPage, dashboardPage }) => {
+  await dashboardPage.goto();
+  await authedPage.getByRole("link", { name: "Volver al inicio" }).click();
+
+  await expect(authedPage).toHaveURL("/");
+});

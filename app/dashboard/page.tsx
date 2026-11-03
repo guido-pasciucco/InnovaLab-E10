@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CalculationList, NewCalculationButton } from "@/components/dashboard/calculation-list";
 import { TOTAL_STEPS } from "@/components/calculator/wizard/wizard-steps";
 import { requireUser } from "@/lib/auth/require-user";
@@ -40,7 +41,15 @@ export default async function DashboardPage() {
               Retomá tus cálculos donde los dejaste o empezá uno nuevo.
             </p>
           </div>
-          <NewCalculationButton />
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Volver al inicio
+            </Link>
+            <NewCalculationButton />
+          </div>
         </header>
 
         <section
