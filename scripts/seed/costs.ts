@@ -1,3 +1,4 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getDrizzleClient } from "@/lib/db/client";
 import { createCalculationService } from "@/lib/services/calculations";
 import {
@@ -8,18 +9,17 @@ import { addCalcCostLineService, addVariableCalcCostLineService } from "@/lib/se
 import { addIndirectCalcCostLineService, saveOwnLaborService } from "@/lib/services/own-labor";
 import { saveExpectedMarginService } from "@/lib/services/pricing";
 
-import { createUser, deleteUser, findUserIdByEmail } from "../../tests/support/factories/user";
-import { loadTestEnv } from "../../tests/support/test-env";
-
-// Local seed: one confirmed user with a few finished cost calculations.
+// Seed: one confirmed user with a few finished cost calculations.
 // It goes through the same services the wizard uses, so every row passes the
 // app's own validation and lands where the UI expects it. The env comes from
-// `.env.test`, which loadTestEnv only accepts when every URL is local: this
-// script cannot write to the hosted project.
+// `.env` (Bun loads it automatically), so the target is whatever project that
+// file points at. A non-local target requires the explicit `--remote` flag.
 //
-// Re-running it deletes the user (cascading its calculations) and recreates it.
+// Re-running it deletes the seed user (cascading its calculations) and
+// recreates it. No other user is touched.
 //
-//   bun run db:seed:local
+//   bun run db:seed            # local Supabase
+//   bun run db:seed --remote   # hosted project from .env
 
 const SEED_USER = {
   email: "demo@example.test",
@@ -80,16 +80,79 @@ const CALCULATIONS: SeedCalculation[] = [
   },
 ];
 
+const REQUIRED_KEYS = ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SECRET_KEY", "DATABASE_URL"] as const;
+const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
+
+function readEnv(): Record<(typeof REQUIRED_KEYS)[number], string> {
+  const missing = REQUIRED_KEYS.filter((key) => !process.env[key]);
+  if (missing.length > 0) throw new Error(`[seed] Missing in .env: ${missing.join(", ")}`);
+  return Object.fromEntries(REQUIRED_KEYS.map((key) => [key, process.env[key]!])) as Record<
+    (typeof REQUIRED_KEYS)[number],
+    string
+  >;
+}
+
+// Refuses a hosted target unless `--remote` was passed, so a stray run
+// against production cannot happen by accident.
+function assertTarget(env: ReturnType<typeof readEnv>): void {
+  const hosts = [env.NEXT_PUBLIC_SUPABASE_URL, env.DATABASE_URL].map((url) => new URL(url).hostname);
+  const remote = hosts.filter((host) => !LOCAL_HOSTS.has(host));
+  console.log(`[seed] Target: ${[...new Set(hosts)].join(", ")}`);
+  if (remote.length > 0 && !process.argv.includes("--remote")) {
+    throw new Error(`[seed] ${remote.join(", ")} is not local. Re-run with --remote to seed it.`);
+  }
+}
+
+// Supabase Admin API (secret key): bypasses RLS and manages auth users.
+function adminClient(env: ReturnType<typeof readEnv>): SupabaseClient {
+  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+// The Admin API has no email filter, so this pages through the user list.
+async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<string | undefined> {
+  const perPage = 1000;
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) throw new Error(`[seed] listUsers failed: ${error.message}`);
+    const match = data.users.find((user) => user.email === email.toLowerCase());
+    if (match) return match.id;
+    if (data.users.length < perPage) return undefined;
+  }
+}
+
+// Deletes the profile row too: `public.profiles` has no FK to `auth.users`.
+async function deleteUser(admin: SupabaseClient, id: string): Promise<void> {
+  const { error: profileError } = await admin.from("profiles").delete().eq("id", id);
+  if (profileError) throw new Error(`[seed] deleting profile ${id} failed: ${profileError.message}`);
+  const { error } = await admin.auth.admin.deleteUser(id);
+  if (error && error.status !== 404) throw new Error(`[seed] deleteUser ${id} failed: ${error.message}`);
+}
+
+// Confirmed user; the `on_auth_user_created` trigger inserts its profile.
+async function createUser(admin: SupabaseClient): Promise<{ id: string }> {
+  const { data, error } = await admin.auth.admin.createUser({
+    email: SEED_USER.email,
+    password: SEED_USER.password,
+    email_confirm: true,
+    user_metadata: { display_name: SEED_USER.displayName },
+  });
+  if (error || !data.user) throw new Error(`[seed] createUser failed: ${error?.message ?? "no user"}`);
+  return { id: data.user.id };
+}
+
 async function seed(): Promise<void> {
-  loadTestEnv();
-  globalThis.__drizzleClient = undefined;
+  const env = readEnv();
+  assertTarget(env);
+  const admin = adminClient(env);
   const db = getDrizzleClient();
 
   try {
-    const existingId = await findUserIdByEmail(SEED_USER.email);
-    if (existingId) await deleteUser(existingId);
+    const existingId = await findUserIdByEmail(admin, SEED_USER.email);
+    if (existingId) await deleteUser(admin, existingId);
 
-    const user = await createUser(SEED_USER);
+    const user = await createUser(admin);
 
     for (const calc of CALCULATIONS) {
       await createCalculationService(user.id, db);
