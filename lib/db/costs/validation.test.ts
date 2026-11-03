@@ -6,6 +6,7 @@ import {
   createBusinessCostLineInputSchema,
   createCalcCostLineInputSchema,
   listCalcCostLinesOptionsSchema,
+  saveOwnLaborInputSchema,
   updateCalcCostLineAmountInputSchema,
   updateCalcCostLineConceptInputSchema,
 } from "./validation";
@@ -270,6 +271,34 @@ describe("updateCalcCostLineConceptInputSchema", () => {
       fieldErrors(updateCalcCostLineConceptInputSchema, { concept: "a".repeat(201) }),
     ).toEqual({
       concept: ["El concepto del costo debe tener como máximo 200 caracteres."],
+    });
+  });
+});
+
+// Paso 4 sends both values of the own-labor line, each one a string or null:
+// an empty input is null and the service saves the line with amount 0.
+describe("saveOwnLaborInputSchema", () => {
+  it("accepts hours and hourly rate", () => {
+    expect(saveOwnLaborInputSchema.parse({ hours: "10", hourlyRate: "20000" })).toEqual({
+      hours: "10",
+      hourlyRate: "20000",
+    });
+  });
+
+  it("accepts a null on either side or on both", () => {
+    expect(saveOwnLaborInputSchema.safeParse({ hours: "10", hourlyRate: null }).success).toBe(true);
+    expect(saveOwnLaborInputSchema.safeParse({ hours: null, hourlyRate: "20000" }).success).toBe(true);
+    expect(saveOwnLaborInputSchema.safeParse({ hours: null, hourlyRate: null }).success).toBe(true);
+  });
+
+  it("requires both keys", () => {
+    expect(saveOwnLaborInputSchema.safeParse({ hours: "10" }).success).toBe(false);
+  });
+
+  it("reports the Spanish message of each field", () => {
+    expect(fieldErrors(saveOwnLaborInputSchema, { hours: "-1", hourlyRate: "texto" })).toEqual({
+      hours: ["Las horas no pueden ser negativas."],
+      hourlyRate: ["El importe debe ser un número."],
     });
   });
 });
