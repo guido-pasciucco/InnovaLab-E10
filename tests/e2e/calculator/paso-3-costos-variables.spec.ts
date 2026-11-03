@@ -24,7 +24,7 @@ test("Siguiente on step 2 opens step 3 and Siguiente on step 3 opens step 4", as
   await next.click();
 
   await expect(authedPage).toHaveURL(/\/paso-4$/);
-  await expect(authedPage.getByRole("heading", { name: "Paso 4", exact: true })).toBeVisible();
+  await expect(authedPage.getByRole("heading", { name: "Trabajo propio e indirectos", exact: true })).toBeVisible();
 });
 
 test("step 3 stays open after a reload once Siguiente on step 2 unlocked it", async ({

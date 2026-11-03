@@ -15,7 +15,7 @@ import type { CalculatorPricingInputs } from "@/lib/types/calculator";
 
 import { getDraftCalculationId } from "./calculator";
 
-// Step 6 persistence: the expected margin of the user's draft, in the 1:1
+// Step 5 persistence: the expected margin of the user's draft, in the 1:1
 // `pricing_inputs` row. The service validates with the server gate from
 // lib/db (saveExpectedMarginInputSchema) and sets the margin convention
 // itself: the user never chooses it (pending decision, see
@@ -24,7 +24,7 @@ import { getDraftCalculationId } from "./calculator";
 // The service throws (ZodError, AppError); doors translate. No try/catch.
 
 /**
- * Read model for step 6. It never writes.
+ * Read model for step 5. It never writes.
  *
  * Null semantics: no draft returns both values null; a draft without a
  * `pricing_inputs` row returns its `calculationId` and a null margin.

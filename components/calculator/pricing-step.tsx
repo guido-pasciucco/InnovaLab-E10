@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from "react";
 
-import { continueToStep7, saveExpectedMargin } from "@/app/(calculator)/paso-6/actions";
+import { continueToStep6, saveExpectedMargin } from "@/app/(calculator)/paso-5/actions";
 import { StepHeader } from "@/components/calculator/wizard/step-header";
 import { StepNav } from "@/components/calculator/wizard/step-nav";
 import { TextField } from "@/components/ui/text-field";
 
 import { toPricingStepValues, type PricingCosts } from "./pricing-step-values";
 
-// Shown until the user saves their own margin: the engine docs and the step 6
+// Shown until the user saves their own margin: the engine docs and the step 5
 // mockup both use 30 % as the example margin.
 const DEFAULT_MARGIN = "30";
 
@@ -62,13 +62,13 @@ export function PricingStep({ costs, savedMargin }: PricingStepProps) {
     const margin = values.marginValue;
     if (margin === null) return;
     if (margin !== lastSaved && !(await save(margin))) return;
-    await continueToStep7();
+    await continueToStep6();
   };
 
   return (
     <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
       <StepHeader
-        currentStep={6}
+        currentStep={5}
         title="Margen y precio sugerido"
         description="Elegí cuánto querés ganar de cada venta y mirá el precio que te conviene."
       />

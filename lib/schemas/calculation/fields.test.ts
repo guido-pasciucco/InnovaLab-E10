@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { expectedMarginField } from "./fields";
 
-// No form contract exposes expectedMarginField (step 6 validates the typed
+// No form contract exposes expectedMarginField (step 5 validates the typed
 // margin with the field itself), so the rule is tested here.
 function firstIssue(input: unknown): string | undefined {
   const result = expectedMarginField.safeParse(input);

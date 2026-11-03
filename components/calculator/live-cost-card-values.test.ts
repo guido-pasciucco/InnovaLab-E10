@@ -32,21 +32,23 @@ describe("toLiveCostCardValues", () => {
     });
   });
 
-  it("keeps the fixed total but hides per-unit amounts when the typed volume differs", () => {
+  // The variable per-unit amount comes from each purchase and its yield, not
+  // from the volume, so only the unit cost (fixed / volume) goes stale.
+  it("keeps the fixed total and the variable per unit but hides the unit cost when the typed volume differs", () => {
     expect(toLiveCostCardValues(summary, 24)).toEqual({
       volume: 24,
       fixedCosts: "1000.00",
       unitCost: undefined,
-      variablePerUnit: undefined,
+      variablePerUnit: "200.00",
     });
   });
 
-  it("hides per-unit amounts while the volume field is empty or invalid", () => {
+  it("hides the unit cost while the volume field is empty or invalid", () => {
     expect(toLiveCostCardValues(summary, undefined)).toEqual({
       volume: undefined,
       fixedCosts: "1000.00",
       unitCost: undefined,
-      variablePerUnit: undefined,
+      variablePerUnit: "200.00",
     });
   });
 

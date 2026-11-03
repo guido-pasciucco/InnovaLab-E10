@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from "react";
 import { formatARSCompact } from "@/lib/money/format";
 import {
   CostLineRowItem,
+  costLineGridClass,
   type CostLine,
   type CostLineActions,
 } from "@/components/calculator/cost-line-row-item";
@@ -18,6 +19,9 @@ type CostLinesTableProps = {
   listLabel: string;
   // Caption of the sum under the list, e.g. "Subtotal fijos".
   subtotalLabel: string;
+  // Forwarded to each row: see CostLineRowItem.
+  amountLabel?: string;
+  yieldUnit?: string;
 };
 
 // The wizard shell (#170) forces a light colour scheme, so the table keeps
@@ -28,6 +32,8 @@ export function CostLinesTable({
   actions,
   listLabel,
   subtotalLabel,
+  amountLabel,
+  yieldUnit,
 }: CostLinesTableProps) {
   // At most one new row is open at a time; saving it hands it over to the
   // server's list.
@@ -72,6 +78,19 @@ export function CostLinesTable({
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Visual column titles only: each input keeps its own label. */}
+      {(lines.length > 0 || adding) && (
+        <div
+          aria-hidden="true"
+          className={`${costLineGridClass(yieldUnit !== undefined)} -mb-5 border-b border-border-default pb-2 text-xs font-semibold uppercase tracking-wide text-fg-muted`}
+        >
+          <span className="px-2">Concepto</span>
+          <span className="px-2 text-right">{amountLabel ?? "Importe"}</span>
+          {yieldUnit !== undefined && (
+            <span className="hidden sm:block">Rinde para</span>
+          )}
+        </div>
+      )}
       <ul aria-label={listLabel} className="flex flex-col">
         {lines.map((line) => (
           <CostLineRowItem
@@ -79,6 +98,8 @@ export function CostLinesTable({
             actions={actions}
             line={line}
             onRemoved={focusAddButton}
+            amountLabel={amountLabel}
+            yieldUnit={yieldUnit}
           />
         ))}
         {adding && (
@@ -88,6 +109,8 @@ export function CostLinesTable({
             onSaved={setSavedId}
             onRemoved={handleDiscardNewRow}
             conceptRef={setNewConceptInput}
+            amountLabel={amountLabel}
+            yieldUnit={yieldUnit}
           />
         )}
       </ul>

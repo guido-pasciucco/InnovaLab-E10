@@ -116,7 +116,7 @@ export const saveCalculatorSetupInputSchema = createProductInputSchema
     }).shape,
   );
 
-// Server gate for the step 6 margin save (lib/services/pricing.ts): the user
+// Server gate for the step 5 margin save (lib/services/pricing.ts): the user
 // only types the expected margin; the convention is set by the server.
 export const saveExpectedMarginInputSchema = upsertPricingInputsInputSchema.pick({
   expectedMarginPct: true,

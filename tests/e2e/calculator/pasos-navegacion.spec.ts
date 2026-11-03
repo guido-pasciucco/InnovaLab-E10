@@ -1,9 +1,8 @@
 import { expect, test } from "../fixtures";
 import { Paso1Page } from "../pages/paso-1.page";
 
-// Steps 2, 3 and 6 are built; 4, 5 and 7 are navigation-only placeholders.
-// Step 2 is reachable only once step 1 is saved, and "Siguiente" on step 4
-// skips step 5 (optional cost of sales and taxes) straight to step 6.
+// Steps 2 to 5 are built; 6 and 7 are navigation-only placeholders. Step 2 is
+// reachable only once step 1 is saved.
 test.beforeEach(async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
@@ -11,20 +10,21 @@ test.beforeEach(async ({ authedPage }) => {
 });
 
 test("Siguiente walks from step 2 to the results and Anterior walks back", async ({ authedPage }) => {
-  // Steps 2, 3, 4 and 6 save the progress, so their "Siguiente" is a button;
-  // step 7 still links.
+  // Steps 2 to 5 save the progress, so their "Siguiente" is a button; the
+  // placeholders after them still link.
   const next = authedPage
     .getByRole("navigation", { name: "Navegación entre pasos" })
     .getByText("Siguiente", { exact: true });
   const previous = authedPage.getByRole("link", { name: "Anterior", exact: true });
   const headings: Record<number, string> = {
     3: "Costos variables por unidad",
-    4: "Paso 4",
-    6: "Margen y precio sugerido",
+    4: "Trabajo propio e indirectos",
+    5: "Margen y precio sugerido",
+    6: "Paso 6",
     7: "Paso 7",
   };
 
-  for (const step of [3, 4, 6, 7]) {
+  for (let step = 3; step <= 7; step++) {
     await next.click();
     await expect(authedPage).toHaveURL(new RegExp(`/paso-${step}$`));
     await expect(
@@ -40,8 +40,7 @@ test("Siguiente walks from step 2 to the results and Anterior walks back", async
   await previous.click();
   await expect(authedPage).toHaveURL(/\/paso-7$/);
 
-  // Step 6 goes back to step 4, the step it was reached from.
-  for (const step of [6, 4, 3, 2]) {
+  for (let step = 6; step >= 2; step--) {
     await previous.click();
     await expect(authedPage).toHaveURL(new RegExp(`/paso-${step}$`));
   }

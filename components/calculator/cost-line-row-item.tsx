@@ -11,14 +11,16 @@ import {
 
 import { CostLineDeleteButton } from "@/components/calculator/cost-line-delete-button";
 import type { ServiceResult } from "@/lib/errors/catalog";
-import { conceptField } from "@/lib/schemas/costs/fields";
+import { conceptField, yieldField } from "@/lib/schemas/costs/fields";
 import { formatARSCompact, parseAmountInput } from "@/lib/money/format";
 
 // What the table shows of a saved line. The server owns the id and the amount.
+// `yieldQuantity` is only sent for variable lines (paso 3).
 export type CostLine = {
   id: string;
   concept: string;
   amount: string;
+  yieldQuantity?: string;
 };
 
 // The writes a row can make. Each step passes its own Server Actions, so the
@@ -27,6 +29,7 @@ export type CostLineActions = {
   add: (input: {
     concept: string;
     amount: string;
+    yieldQuantity?: string;
   }) => Promise<ServiceResult<{ id: string }>>;
   rename: (
     lineId: string,
@@ -37,6 +40,11 @@ export type CostLineActions = {
     input: { amount: string },
   ) => Promise<ServiceResult<{ id: string }>>;
   remove: (lineId: string) => Promise<ServiceResult<{ id: string }>>;
+  // Only steps whose lines carry a yield (paso 3) pass it.
+  updateYield?: (
+    lineId: string,
+    input: { yieldQuantity: string },
+  ) => Promise<ServiceResult<{ id: string }>>;
 };
 
 type CostLineRowItemProps = {
@@ -49,19 +57,43 @@ type CostLineRowItemProps = {
   // The row is gone: a saved line deleted on the server, or a new row discarded.
   onRemoved?: () => void;
   conceptRef?: Ref<HTMLInputElement>;
+  // Screen-reader name of the amount input, e.g. "Importe de compra".
+  amountLabel?: string;
+  // The product unit of the setup. When set, the row asks how many of those
+  // units the amount yields ("Rinde para N <unit>").
+  yieldUnit?: string;
 };
 
 const INPUT_BASE =
   "w-full min-w-0 rounded-md border border-transparent bg-transparent px-2 py-2 text-base text-fg transition-colors placeholder:text-placeholder hover:border-border-control focus:border-brand-green-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600";
 const AMOUNT_INPUT_CLASS = `${INPUT_BASE} text-right font-medium tabular-nums`;
 
+// Shared by the rows and the table header so the columns line up. With a
+// yield the third column moves under the row on narrow screens.
+export function costLineGridClass(withYield: boolean): string {
+  return withYield
+    ? "grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_minmax(0,10rem)_2.75rem] sm:gap-3"
+    : "grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_2.75rem] sm:gap-3";
+}
+
 const SAVE_FAILED = "No pudimos guardar el costo. Probá de nuevo.";
 const DELETE_FAILED = "No pudimos eliminar el costo. Probá de nuevo.";
+
+const DEFAULT_YIELD = "1";
 
 // The message conceptField gives for the text, or null when it is valid.
 function firstIssue(concept: string): string | null {
   const result = conceptField.safeParse(concept);
   return result.success ? null : (result.error.issues[0]?.message ?? null);
+}
+
+// The yield as yieldField accepts it (a decimal comma becomes a point), or the
+// message it gives.
+function parseYieldInput(text: string): { value: string | null; issue: string | null } {
+  const result = yieldField.safeParse(text.trim().replace(",", "."));
+  return result.success
+    ? { value: result.data, issue: null }
+    : { value: null, issue: result.error.issues[0]?.message ?? null };
 }
 
 function displayAmount(amount: string): string {
@@ -79,12 +111,17 @@ export function CostLineRowItem({
   onSaved,
   onRemoved,
   conceptRef,
+  amountLabel = "Importe",
+  yieldUnit,
 }: CostLineRowItemProps) {
   const id = useId();
   const conceptId = `${id}-concept`;
   const amountId = `${id}-amount`;
+  const yieldId = `${id}-yield`;
   const amountErrorId = `${amountId}-error`;
   const conceptErrorId = `${conceptId}-error`;
+  const yieldErrorId = `${yieldId}-error`;
+  const withYield = yieldUnit !== undefined;
 
   // null: nothing is being edited, so the field shows the stored value.
   const [conceptDraft, setConceptDraft] = useState<string | null>(null);
@@ -92,6 +129,8 @@ export function CostLineRowItem({
   const [touched, setTouched] = useState(false);
   const [conceptDirty, setConceptDirty] = useState(false);
   const [amountDirty, setAmountDirty] = useState(false);
+  const [yieldDraft, setYieldDraft] = useState<string | null>(null);
+  const [yieldDirty, setYieldDirty] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   // A new row the server accepted, still waiting for the refreshed list.
@@ -104,7 +143,10 @@ export function CostLineRowItem({
   const conceptText = conceptDraft ?? line?.concept ?? "";
   const amountText = amountDraft ?? (line ? displayAmount(line.amount) : "");
   const busy = isPending || saved;
+  const yieldText = yieldDraft ?? line?.yieldQuantity ?? DEFAULT_YIELD;
   const { amount: parsedAmount, issue } = parseAmountInput(amountText);
+  const { value: parsedYield, issue: yieldIssue } = parseYieldInput(yieldText);
+  const yieldError = withYield && touched ? yieldIssue : null;
   const conceptIssue = touched ? firstIssue(conceptText) : null;
   // Empty is no error on a saved line or a blank new one; it is on a new row
   // that already has a concept and was left without an amount.
@@ -127,9 +169,18 @@ export function CostLineRowItem({
     setSaveError(null);
   };
 
-  const saveNew = (concept: string, amount: string) => {
+  const handleYieldChange = (value: string) => {
+    setYieldDraft(value);
+    setYieldDirty(true);
+    setTouched(false);
+    setSaveError(null);
+  };
+
+  const saveNew = (concept: string, amount: string, yieldQuantity: string | null) => {
     startTransition(async () => {
-      const result = await actions.add({ concept, amount });
+      const result = await actions.add(
+        yieldQuantity === null ? { concept, amount } : { concept, amount, yieldQuantity },
+      );
 
       if (!result.ok) {
         setSaveError(SAVE_FAILED);
@@ -148,6 +199,7 @@ export function CostLineRowItem({
     saved: CostLine,
     concept: string | null,
     amount: string | null,
+    yieldQuantity: string | null,
   ) => {
     startTransition(async () => {
       let failed = false;
@@ -172,6 +224,16 @@ export function CostLineRowItem({
         }
       }
 
+      if (yieldQuantity !== null && actions.updateYield) {
+        const result = await actions.updateYield(saved.id, { yieldQuantity });
+        if (result.ok) {
+          setYieldDirty(false);
+          setYieldDraft(yieldQuantity);
+        } else {
+          failed = true;
+        }
+      }
+
       if (failed) setSaveError(SAVE_FAILED);
     });
   };
@@ -186,20 +248,21 @@ export function CostLineRowItem({
     if (line === null) {
       if (conceptText.trim() === "" && amountText.trim() === "") return;
       setTouched(true);
-      if (conceptValid && parsedAmount !== null) {
-        saveNew(conceptText.trim(), parsedAmount);
+      if (conceptValid && parsedAmount !== null && (!withYield || parsedYield !== null)) {
+        saveNew(conceptText.trim(), parsedAmount, withYield ? parsedYield : null);
       }
       return;
     }
 
-    if (!conceptDirty && !amountDirty) return;
+    if (!conceptDirty && !amountDirty && !yieldDirty) return;
     setTouched(true);
 
     const concept = conceptDirty && conceptValid ? conceptText.trim() : null;
     const amount = amountDirty ? parsedAmount : null;
-    if (concept === null && amount === null) return;
+    const yieldQuantity = withYield && yieldDirty ? parsedYield : null;
+    if (concept === null && amount === null && yieldQuantity === null) return;
 
-    saveChanges(line, concept, amount);
+    saveChanges(line, concept, amount, yieldQuantity);
   };
 
   const handleRemove = () => {
@@ -231,7 +294,7 @@ export function CostLineRowItem({
       aria-busy={busy || undefined}
       className={`border-b border-border-default py-1 transition-opacity duration-200 last:border-b-0 ${busy ? "opacity-60" : ""}`}
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-start gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_2.75rem] sm:gap-3">
+      <div className={costLineGridClass(withYield)}>
         <div className="min-w-0">
           <label htmlFor={conceptId} className="sr-only">
             Concepto
@@ -252,7 +315,7 @@ export function CostLineRowItem({
 
         <div className="min-w-0">
           <label htmlFor={amountId} className="sr-only">
-            Importe
+            {amountLabel}
           </label>
           <input
             id={amountId}
@@ -267,6 +330,29 @@ export function CostLineRowItem({
             className={AMOUNT_INPUT_CLASS}
           />
         </div>
+
+        {withYield && (
+          <div className="order-last col-span-full flex min-w-0 items-center gap-2 px-2 pb-1 text-sm text-fg-muted sm:order-none sm:col-span-1 sm:px-0 sm:pb-0">
+            {/* The table header names the column on wider screens. */}
+            <label htmlFor={yieldId} className="flex-none sm:sr-only">
+              Rinde para
+            </label>
+            <div className="w-20 flex-none">
+              <input
+                id={yieldId}
+                value={yieldText}
+                onChange={(event) => handleYieldChange(event.target.value)}
+                inputMode="decimal"
+                autoComplete="off"
+                readOnly={saved}
+                aria-invalid={yieldError ? true : undefined}
+                aria-describedby={yieldError ? yieldErrorId : undefined}
+                className={AMOUNT_INPUT_CLASS}
+              />
+            </div>
+            <span className="min-w-0 truncate">{yieldUnit}</span>
+          </div>
+        )}
 
         <CostLineDeleteButton
           label={line ? `Eliminar ${line.concept}` : "Eliminar fila"}
@@ -283,6 +369,11 @@ export function CostLineRowItem({
       {amountError && (
         <p id={amountErrorId} role="alert" className="mt-1 text-sm text-danger">
           {amountError}
+        </p>
+      )}
+      {yieldError && (
+        <p id={yieldErrorId} role="alert" className="mt-1 text-sm text-danger">
+          {yieldError}
         </p>
       )}
       {saveError && (

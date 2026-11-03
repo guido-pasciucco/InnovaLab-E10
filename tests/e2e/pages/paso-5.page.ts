@@ -1,8 +1,8 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-// Step 6 has one margin field and four cards, each a group named after its
+// Step 5 has one margin field and four cards, each a group named after its
 // label ("Precio sugerido") that holds the formatted amount.
-export class Paso6Page {
+export class Paso5Page {
   readonly marginInput: Locator;
   readonly next: Locator;
   readonly previous: Locator;
@@ -16,7 +16,7 @@ export class Paso6Page {
   }
 
   async goto(): Promise<void> {
-    await this.page.goto("/paso-6");
+    await this.page.goto("/paso-5");
     await this.expectLoaded();
   }
 
@@ -40,7 +40,7 @@ export class Paso6Page {
     const saved = this.page.waitForResponse((response) => {
       const request = response.request();
       return (
-        new URL(response.url()).pathname === "/paso-6" &&
+        new URL(response.url()).pathname === "/paso-5" &&
         request.method() === "POST" &&
         Boolean(request.headers()["next-action"])
       );

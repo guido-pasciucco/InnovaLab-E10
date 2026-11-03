@@ -1,9 +1,9 @@
 import "server-only";
 
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
 import { businesses, products } from "@/lib/db/business/table";
-import { activeCalculations, calculations } from "@/lib/db/calculation/table";
+import { activeCalculations, calculations, costingSetup } from "@/lib/db/calculation/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { uuidString } from "@/lib/db/formats";
 import { AppError } from "@/lib/errors/app-error";
@@ -119,12 +119,28 @@ export async function setActiveCalculationService(
 /**
  * Creates an empty draft (step 1) and makes it active. Other drafts are not
  * touched. The product gets a placeholder name until step 1 is saved.
+ *
+ * A draft whose step 1 was never saved (no costing_setup) is still empty, so
+ * it is reused instead of creating another one: pressing "Nuevo cálculo" twice
+ * does not pile up blank rows in the dashboard list.
  */
 export async function createCalculationService(
   userId: string,
   db: Db = getDrizzleClient(),
 ): Promise<{ calculationId: string }> {
   return db.transaction(async (tx) => {
+    const [empty] = await tx
+      .select({ id: calculations.id })
+      .from(calculations)
+      .leftJoin(costingSetup, eq(costingSetup.calculationId, calculations.id))
+      .where(and(eq(calculations.userId, userId), isNull(costingSetup.calculationId)))
+      .orderBy(desc(calculations.createdAt), desc(calculations.id))
+      .limit(1);
+    if (empty) {
+      await upsertPointer(tx, userId, empty.id);
+      return { calculationId: empty.id };
+    }
+
     const business = await getOrCreateDefaultBusiness(tx, userId);
     const [product] = await tx
       .insert(products)

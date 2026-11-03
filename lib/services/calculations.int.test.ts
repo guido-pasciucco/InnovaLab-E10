@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 
 import { businesses, products } from "@/lib/db/business/table";
-import { activeCalculations, calculations } from "@/lib/db/calculation/table";
+import { activeCalculations, calculations, costingSetup } from "@/lib/db/calculation/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
 
@@ -176,10 +176,43 @@ describe("setActiveCalculationService", () => {
   });
 });
 
+// A saved step 1: the calculation is no longer an empty draft.
+async function seedSetup(calculationId: string) {
+  await db
+    .insert(costingSetup)
+    .values({ calculationId, currency: "ARS", period: "monthly", unit: "unidad", volume: 10 });
+}
+
 describe("createCalculationService", () => {
+  it("reuses the user's empty draft instead of piling up new ones", async () => {
+    const user = await makeUser();
+
+    const first = await createCalculationService(user.id, db);
+    const second = await createCalculationService(user.id, db);
+
+    expect(second.calculationId).toBe(first.calculationId);
+    const rows = await db.select().from(calculations).where(eq(calculations.userId, user.id));
+    expect(rows).toHaveLength(1);
+    expect(await pointerOf(user.id)).toBe(first.calculationId);
+  });
+
+  it("makes the empty draft active again when the user was working on another one", async () => {
+    const user = await makeUser();
+    const empty = await createCalculationService(user.id, db);
+    const worked = await seedCalculation(user.id, { currentStep: 2, createdAt: newer });
+    await seedSetup(worked.id);
+    await setActiveCalculationService(user.id, worked.id, db);
+
+    const again = await createCalculationService(user.id, db);
+
+    expect(again.calculationId).toBe(empty.calculationId);
+    expect(await pointerOf(user.id)).toBe(empty.calculationId);
+  });
+
   it("creates a draft at step 1, makes it active and leaves other drafts alone", async () => {
     const user = await makeUser();
     const existing = await seedCalculation(user.id, { currentStep: 3, createdAt: older });
+    await seedSetup(existing.id);
 
     const created = await createCalculationService(user.id, db);
 

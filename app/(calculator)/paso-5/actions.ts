@@ -20,7 +20,7 @@ export const saveExpectedMargin = handleActionErrors(async (input: unknown) => {
   return saved;
 }, "CALC_UNAVAILABLE");
 
-// "Siguiente": unlocks step 7 and goes there.
-export async function continueToStep7(): Promise<void> {
-  await advanceThenRedirect(7, "/paso-7");
+// "Siguiente": unlocks step 6 and goes there.
+export async function continueToStep6(): Promise<void> {
+  await advanceThenRedirect(6, "/paso-6");
 }

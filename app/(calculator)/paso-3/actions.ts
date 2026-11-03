@@ -11,6 +11,7 @@ import {
   removeVariableCalcCostLineService,
   updateVariableCalcCostLineAmountService,
   updateVariableCalcCostLineConceptService,
+  updateVariableCalcCostLineYieldService,
 } from "@/lib/services/cost";
 
 export const addVariableCostLine = handleActionErrors(async (input: unknown) => {
@@ -28,6 +29,19 @@ export const updateVariableCostAmount = handleActionErrors(
     const user = await requireUser();
 
     const line = await updateVariableCalcCostLineAmountService(user.id, lineId, input);
+
+    revalidateCalculator();
+
+    return { id: line.id };
+  },
+  "CALC_UNAVAILABLE",
+);
+
+export const updateVariableCostYield = handleActionErrors(
+  async (lineId: string, input: unknown) => {
+    const user = await requireUser();
+
+    const line = await updateVariableCalcCostLineYieldService(user.id, lineId, input);
 
     revalidateCalculator();
 
