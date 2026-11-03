@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { calculateBreakEven, type BreakEvenInput } from "./calculateBreakEven";
 
-// Mockup example for step 7: fixed 320.000, variable 2.500 per unit, 200 units
-// and the step 6 price for a 30 % margin (4.100 / 0,70 = 5.857,14).
+// Mockup example for step 6: fixed 320.000, variable 2.500 per unit, 200 units
+// and the step 5 price for a 30 % margin (4.100 / 0,70 = 5.857,14).
 const validInput: BreakEvenInput = {
   price: "5857.14",
   variableUnit: "2500.00",

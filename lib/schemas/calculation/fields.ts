@@ -26,7 +26,7 @@ export const marginConventionField = z
 
 // Margin convention persisted in `pricing_inputs.margin_convention`. The
 // business decision is still pending
-// (docs/decisiones/pendientes/negocio/02-convencion-de-margen.md); step 6
+// (docs/decisiones/pendientes/negocio/02-convencion-de-margen.md); step 5
 // explains the margin as "ganancia ÷ precio de venta", so the calculator
 // stores the margin on the selling price. Same literal the RLS tests use.
 export const MARGIN_CONVENTION_ON_PRICE = "sobre_precio";

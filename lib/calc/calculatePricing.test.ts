@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { calculatePricing, markupFromMargin, type PricingInput } from "./calculatePricing";
 
-// Mockup example for step 6: fixed 320.000, variable 2.500 per unit, 200 units
+// Mockup example for step 5: fixed 320.000, variable 2.500 per unit, 200 units
 // (unit cost 4.100) and a 30 % margin on the selling price.
 const validInput: PricingInput = {
   unitCost: "4100.00",
