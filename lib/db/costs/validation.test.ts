@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   addCalcCostLineInputSchema,
+  calcCostLineRowSchema,
   createBusinessCostLineInputSchema,
   createCalcCostLineInputSchema,
   listCalcCostLinesOptionsSchema,
@@ -300,5 +301,41 @@ describe("saveOwnLaborInputSchema", () => {
       hours: ["Las horas no pueden ser negativas."],
       hourlyRate: ["El importe debe ser un número."],
     });
+  });
+});
+
+describe("isOwnLabor in the calc cost line schemas", () => {
+  it("is a boolean on the persisted row", () => {
+    const row = {
+      id: SERVER_ID,
+      calculationId: SERVER_ID,
+      scenarioId: null,
+      sourceBusinessCostId: null,
+      concept: "Trabajo propio",
+      behavior: "fixed",
+      traceability: "indirect",
+      amount: "200000.00",
+      hours: null,
+      hourlyRate: null,
+      allocationPct: null,
+      createdAt: SERVER_TIMESTAMP,
+      updatedAt: SERVER_TIMESTAMP,
+    };
+
+    expect(calcCostLineRowSchema.safeParse({ ...row, isOwnLabor: true }).success).toBe(true);
+    expect(calcCostLineRowSchema.safeParse(row).success).toBe(false);
+  });
+
+  it("is optional on the create input, so it defaults to false in the column", () => {
+    expect(createCalcCostLineInputSchema.safeParse(validCalcCostLine).success).toBe(true);
+    expect(
+      createCalcCostLineInputSchema.safeParse({ ...validCalcCostLine, isOwnLabor: true }).success,
+    ).toBe(true);
+  });
+
+  it("is not part of the paso 2 add input", () => {
+    expect(
+      addCalcCostLineInputSchema.parse({ concept: "Alquiler", amount: "1.00", isOwnLabor: true }),
+    ).toEqual({ concept: "Alquiler", amount: "1.00" });
   });
 });

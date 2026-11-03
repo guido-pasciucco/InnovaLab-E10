@@ -668,6 +668,79 @@ describe("getCalculatorCostSummaryService", () => {
   });
 });
 
+describe("calc_cost_lines.is_own_labor", () => {
+  const ownLaborLine = (fixture: DraftFixture, amount = "200000.00") => ({
+    calculationId: fixture.calculationId,
+    concept: "Trabajo propio",
+    behavior: "fixed",
+    traceability: "indirect",
+    amount,
+    isOwnLabor: true,
+  });
+
+  it("defaults to false for a line inserted without the flag", async () => {
+    const fixture = await arrangeDraftWithSetup(12);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "direct",
+      amount: "1000.00",
+    });
+
+    const rows = await db
+      .select({ isOwnLabor: calcCostLines.isOwnLabor })
+      .from(calcCostLines)
+      .where(eq(calcCostLines.calculationId, fixture.calculationId));
+
+    expect(rows).toEqual([{ isOwnLabor: false }]);
+  });
+
+  it("counts an own-labor line in the totals like any other fixed line", async () => {
+    const fixture = await arrangeDraftWithSetup(10);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "direct",
+      amount: "1000.00",
+    });
+    await db.insert(calcCostLines).values(ownLaborLine(fixture, "2000.00"));
+
+    const summary = await getCalculatorCostSummaryService(fixture.user.id, db);
+
+    expect(summary.totalFixed).toBe("3000.00");
+    expect(summary.unitCost).toBe("300.00");
+  });
+
+  it("allows one own-labor line per draft and rejects a second one", async () => {
+    const fixture = await arrangeDraftWithSetup(10);
+    await db.insert(calcCostLines).values(ownLaborLine(fixture));
+
+    await expect(db.insert(calcCostLines).values(ownLaborLine(fixture))).rejects.toThrow();
+  });
+
+  it("does not limit the lines that are not own labor", async () => {
+    const fixture = await arrangeDraftWithSetup(10);
+    await db.insert(calcCostLines).values(ownLaborLine(fixture));
+
+    for (const concept of ["Publicidad", "Contador"]) {
+      await db.insert(calcCostLines).values({
+        calculationId: fixture.calculationId,
+        concept,
+        behavior: "fixed",
+        traceability: "indirect",
+        amount: "100.00",
+      });
+    }
+
+    const rows = await db
+      .select({ id: calcCostLines.id })
+      .from(calcCostLines)
+      .where(eq(calcCostLines.calculationId, fixture.calculationId));
+
+    expect(rows).toHaveLength(3);
+  });
+});
+
 describe("wizard progress (calculations.current_step)", () => {
   it("a user without a draft only has step 1", async () => {
     const user = await makeUser();

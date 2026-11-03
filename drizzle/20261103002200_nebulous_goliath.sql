@@ -1,0 +1,2 @@
+ALTER TABLE "calc_cost_lines" ADD COLUMN "is_own_labor" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "calc_cost_lines_own_labor_uq" ON "calc_cost_lines" USING btree ("calculation_id") WHERE "calc_cost_lines"."is_own_labor";
