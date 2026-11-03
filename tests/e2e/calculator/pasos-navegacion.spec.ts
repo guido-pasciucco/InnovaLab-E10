@@ -1,7 +1,7 @@
 import { expect, test } from "../fixtures";
 import { Paso1Page } from "../pages/paso-1.page";
 
-// Steps 5 to 7 are navigation-only placeholders; step 2 is reachable only
+// Steps 5 and 6 are navigation-only placeholders; step 2 is reachable only
 // once step 1 is saved.
 test.beforeEach(async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
@@ -20,10 +20,11 @@ test("Siguiente walks from step 2 to the results and Anterior walks back", async
   for (let step = 3; step <= 7; step++) {
     await next.click();
     await expect(authedPage).toHaveURL(new RegExp(`/paso-${step}$`));
-    // Steps 3 and 4 are built; the steps after them are still placeholders.
+    // Steps 3, 4 and 7 are built; steps 5 and 6 are still placeholders.
     const builtHeadings: Record<number, string> = {
       3: "Costos variables por unidad",
       4: "Trabajo propio e indirectos",
+      7: "Punto de equilibrio",
     };
     const heading = builtHeadings[step] ?? `Paso ${step}`;
     await expect(authedPage.getByRole("heading", { name: heading, exact: true })).toBeVisible();
