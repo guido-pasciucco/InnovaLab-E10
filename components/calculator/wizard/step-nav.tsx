@@ -24,7 +24,7 @@ export function StepNav({ previous, next, nextAction }: StepNavProps) {
   return (
     <nav
       aria-label="Navegación entre pasos"
-      className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:gap-4"
+      className="mt-6 short:mt-3 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:gap-4"
     >
       {previous ? (
         <Link href={previous} className={PREVIOUS}>

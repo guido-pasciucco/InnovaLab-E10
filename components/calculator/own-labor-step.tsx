@@ -34,7 +34,7 @@ type OwnLaborStepProps = {
 // state of its own beyond the inputs being typed: each save revalidates the page.
 export function OwnLaborStep({ ownLabor, lines, totalIndirect, unitCost }: OwnLaborStepProps) {
   return (
-    <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+    <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6 short:sm:p-4">
       <StepHeader
         currentStep={4}
         title="Trabajo propio e indirectos"
@@ -47,7 +47,7 @@ export function OwnLaborStep({ ownLabor, lines, totalIndirect, unitCost }: OwnLa
         amount={ownLabor?.amount ?? "0.00"}
       />
 
-      <div className="mt-6">
+      <div className="mt-6 short:mt-3">
         <CostLinesTable
           lines={lines}
           total={totalIndirect}

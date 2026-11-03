@@ -22,7 +22,7 @@ type PricingStepProps = {
   savedMargin: string | null;
 };
 
-const CARD = "rounded-[20px] border border-border-default bg-surface p-4 sm:p-5";
+const CARD = "rounded-[20px] border border-border-default bg-surface p-4 sm:p-5 short:sm:p-4";
 const CARD_LABEL = "text-sm font-semibold text-fg-muted";
 const CARD_VALUE = "mt-1 text-2xl font-bold tabular-nums text-fg";
 
@@ -66,14 +66,14 @@ export function PricingStep({ costs, savedMargin }: PricingStepProps) {
   };
 
   return (
-    <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
+    <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6 short:sm:p-4">
       <StepHeader
         currentStep={5}
         title="Margen y precio sugerido"
         description="Elegí cuánto querés ganar de cada venta y mirá el precio que te conviene."
       />
 
-      <div className="mt-6 flex flex-col gap-2">
+      <div className="mt-6 short:mt-4 flex flex-col gap-2">
         <TextField
           label="Margen esperado (%)"
           value={marginText}
@@ -102,24 +102,28 @@ export function PricingStep({ costs, savedMargin }: PricingStepProps) {
         )}
       </div>
 
-      <div className="mt-6 flex flex-col gap-4">
-        <div role="group" aria-label="Costo unitario" className={CARD}>
-          <p className={CARD_LABEL}>Costo unitario</p>
-          <p className={CARD_VALUE}>{values.unitCost}</p>
+      <div className="mt-6 short:mt-4 flex flex-col gap-4 short:gap-3">
+        {/* Side by side from sm up, so the cost and the price it leads to read
+            as one row and the step fits a laptop screen. */}
+        <div className="grid grid-cols-1 gap-4 short:gap-3 sm:grid-cols-2">
+          <div role="group" aria-label="Costo unitario" className={CARD}>
+            <p className={CARD_LABEL}>Costo unitario</p>
+            <p className={CARD_VALUE}>{values.unitCost}</p>
+          </div>
+
+          <div
+            role="group"
+            aria-label="Precio sugerido"
+            className="rounded-[20px] border-2 border-brand-green-500 bg-gradient-to-br from-brand-green-50 to-surface p-4 sm:p-5 short:sm:p-4"
+          >
+            <p className="text-sm font-semibold text-brand-green-700">Precio sugerido</p>
+            <p aria-live="polite" className="mt-1 text-4xl font-bold tabular-nums text-brand-green-700 short:text-3xl">
+              {values.suggestedPrice}
+            </p>
+          </div>
         </div>
 
-        <div
-          role="group"
-          aria-label="Precio sugerido"
-          className="rounded-[20px] border-2 border-brand-green-500 bg-gradient-to-br from-brand-green-50 to-surface p-4 sm:p-5"
-        >
-          <p className="text-sm font-semibold text-brand-green-700">Precio sugerido</p>
-          <p aria-live="polite" className="mt-1 text-4xl font-bold tabular-nums text-brand-green-700">
-            {values.suggestedPrice}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 short:gap-3 sm:grid-cols-2">
           <div role="group" aria-label="Contribución por unidad" className={CARD}>
             <p className={CARD_LABEL}>Contribución por unidad</p>
             <p className={CARD_VALUE}>{values.contributionUnit}</p>
