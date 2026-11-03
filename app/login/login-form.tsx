@@ -93,7 +93,7 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (state?.ok) {
-      router.push("/");
+      router.push("/dashboard");
       router.refresh();
     }
   }, [state, router]);
@@ -124,7 +124,7 @@ export default function LoginForm() {
           className="rounded-md border border-success/30 bg-success-subtle px-3 py-2 text-xs text-success lg:text-sm"
         >
           Sesión iniciada correctamente. Redirigiendo…{" "}
-          <Link href="/" className="font-semibold underline underline-offset-2">
+          <Link href="/dashboard" className="font-semibold underline underline-offset-2">
             Continuar
           </Link>
         </p>

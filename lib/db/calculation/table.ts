@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   numeric,
@@ -46,6 +47,29 @@ export const calculations = pgTable("calculations", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+},
+(table) => [
+  // Backs the dashboard list and the "latest draft" fallback of the resolver.
+  index("calculations_user_status_created_idx").on(
+    table.userId,
+    table.status,
+    table.createdAt,
+  ),
+]);
+
+// 1:1 with the user: the calculation the wizard edits right now. Lives here
+// (not in profiles) so profile <- business <- calculation stays acyclic.
+export const activeCalculations = pgTable("active_calculations", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  calculationId: uuid("calculation_id")
+    .notNull()
+    .references(() => calculations.id, { onDelete: "cascade" }),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow()
@@ -144,6 +168,8 @@ export const computedResults = pgTable("computed_results", {
 // so there is no hand-written entity interface to keep in sync.
 export type Calculation = typeof calculations.$inferSelect;
 export type NewCalculation = typeof calculations.$inferInsert;
+export type ActiveCalculation = typeof activeCalculations.$inferSelect;
+export type NewActiveCalculation = typeof activeCalculations.$inferInsert;
 export type CostingSetup = typeof costingSetup.$inferSelect;
 export type NewCostingSetup = typeof costingSetup.$inferInsert;
 export type PricingInputs = typeof pricingInputs.$inferSelect;

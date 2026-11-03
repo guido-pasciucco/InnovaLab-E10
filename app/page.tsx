@@ -26,8 +26,7 @@ const CALCULATOR_START_HREF = "/paso-1";
 // A signed-in user resumes at the furthest step saved in the database; anyone
 // else, or anyone whose progress cannot be read, starts at the first step.
 // The home must never break because of the calculator.
-async function getCalculatorStartHref(): Promise<string> {
-  const user = await getOptionalUser();
+async function getCalculatorStartHref(user: { id: string } | null): Promise<string> {
   if (!user) return CALCULATOR_START_HREF;
 
   try {
@@ -43,11 +42,12 @@ async function getCalculatorStartHref(): Promise<string> {
 // Server Component: reads the session only to pick where the main calls to
 // action go, so it renders on demand.
 export default async function HomePage() {
-  const startHref = await getCalculatorStartHref();
+  const user = await getOptionalUser();
+  const startHref = await getCalculatorStartHref(user);
 
   return (
     <>
-      <SiteHeader startHref={startHref} />
+      <SiteHeader startHref={startHref} isSignedIn={user !== null} />
       <main className="relative min-h-screen overflow-x-clip bg-surface-tint font-sans text-fg">
         <Hero startHref={startHref} />
         <StepsSection />

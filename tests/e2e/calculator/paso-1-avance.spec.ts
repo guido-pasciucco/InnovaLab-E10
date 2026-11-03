@@ -40,7 +40,7 @@ test("step 2 stays reachable after a reload and after signing out and in", async
   await dashboardPage.signOut();
   await expect(authedPage).toHaveURL("/login");
   await loginPage.logIn(user);
-  await expect(authedPage).toHaveURL("/");
+  await expect(authedPage).toHaveURL("/dashboard");
   await authedPage.goto("/paso-2");
   await setup.expectOnStep2();
 });

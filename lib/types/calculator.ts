@@ -27,3 +27,15 @@ export type CalculatorCostSummary = {
   volume: number | null;
   currency: "ARS";
 };
+
+// One dashboard card: a calculation the user owns. `currentStep` is the
+// furthest wizard step persisted (1..7); `isActive` marks the one the wizard
+// currently edits.
+export type CalculationSummary = {
+  id: string;
+  productName: string;
+  status: string;
+  currentStep: number;
+  updatedAt: Date;
+  isActive: boolean;
+};

@@ -11,7 +11,7 @@ const navigation = [
   { href: "#faq", label: "FAQ" },
 ] as const;
 
-export function SiteHeader({ startHref }: { startHref: string }) {
+export function SiteHeader({ startHref, isSignedIn }: { startHref: string; isSignedIn: boolean }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border-default bg-surface-tint/95 font-sans backdrop-blur">
       <div className={`${container} flex items-center justify-between gap-4 py-4`}>
@@ -31,10 +31,10 @@ export function SiteHeader({ startHref }: { startHref: string }) {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
-            href="/login"
+            href={isSignedIn ? "/dashboard" : "/login"}
             className="hidden min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-fg transition-colors hover:bg-surface hover:text-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus md:inline-flex"
           >
-            Iniciar sesión
+            {isSignedIn ? "Dashboard" : "Iniciar sesión"}
           </Link>
           <Link href={startHref} className={`${primaryButtonSmall} shrink-0`}>
             <span className="hidden sm:inline">Calcular mis costos</span>

@@ -28,7 +28,7 @@ test("confirmed setup survives signing out and signing back in", async ({
   await dashboardPage.signOut();
   await expect(authedPage).toHaveURL("/login");
   await loginPage.logIn(user);
-  await expect(authedPage).toHaveURL("/");
+  await expect(authedPage).toHaveURL("/dashboard");
   await setup.goto();
 
   await setup.expectValues(savedA);

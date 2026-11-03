@@ -46,8 +46,13 @@ export function WizardProgress({
                 >
                   {bar}
                 </Link>
-              ) : (
+              ) : isCurrent || isComplete ? (
                 bar
+              ) : (
+                // Locked: still announced, but not navigable.
+                <span role="link" aria-disabled="true" aria-label={`Paso ${step} bloqueado`}>
+                  {bar}
+                </span>
               )}
             </li>
           );

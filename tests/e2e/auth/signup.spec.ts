@@ -31,10 +31,9 @@ test("signup, confirm the email through Mailpit, log in and reach the dashboard"
 
   await loginPage.goto();
   await loginPage.logIn(user);
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL("/dashboard");
 
   // Assert
-  await dashboardPage.goto();
   await expect(dashboardPage.heading).toBeVisible();
   await expect(dashboardPage.userEmail(user.email)).toBeVisible();
 });
