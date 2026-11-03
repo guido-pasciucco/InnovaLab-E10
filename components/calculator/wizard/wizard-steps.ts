@@ -1,4 +1,4 @@
-// Wizard step -> route. Every step has a route, even if it is a placeholder.
+// Wizard step -> route.
 export const STEP_HREFS: Readonly<Record<number, string>> = {
   1: "/paso-1",
   2: "/paso-2",
@@ -6,10 +6,9 @@ export const STEP_HREFS: Readonly<Record<number, string>> = {
   4: "/paso-4",
   5: "/paso-5",
   6: "/paso-6",
-  7: "/paso-7",
 };
 
-export const TOTAL_STEPS = 7;
+export const TOTAL_STEPS = 6;
 
 // The viewed step comes from the route, not from the persisted progress, so
 // going back to edit an earlier step shows that step as the current one.

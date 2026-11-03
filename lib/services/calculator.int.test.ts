@@ -870,14 +870,14 @@ describe("advanceCalculatorProgressService", () => {
     expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 3 });
   });
 
-  it("caps the step at 7", async () => {
+  it("caps the step at 6", async () => {
     const user = await makeUser();
     await saveCalculatorSetupService(user.id, validInput, db);
-    await db.update(calculations).set({ currentStep: 7 }).where(eq(calculations.userId, user.id));
+    await db.update(calculations).set({ currentStep: 6 }).where(eq(calculations.userId, user.id));
 
-    const result = await advanceCalculatorProgressService(user.id, 7, db);
+    const result = await advanceCalculatorProgressService(user.id, 6, db);
 
-    expect(result).toEqual({ currentStep: 7 });
+    expect(result).toEqual({ currentStep: 6 });
   });
 
   it.each([

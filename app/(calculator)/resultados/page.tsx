@@ -10,7 +10,7 @@ export default function ResultadosPage() {
       <p className="mt-2 text-base text-fg-muted">
         Esta pantalla todavía no está disponible.
       </p>
-      <StepNav previous="/paso-7" />
+      <StepNav previous="/paso-6" />
     </section>
   );
 }

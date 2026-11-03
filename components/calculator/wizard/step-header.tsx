@@ -1,3 +1,5 @@
+import { TOTAL_STEPS } from "./wizard-steps";
+
 type StepHeaderProps = {
   currentStep: number;
   title: string;
@@ -12,7 +14,7 @@ export function StepHeader({
   return (
     <div className="space-y-2">
       <span className="inline-block rounded-full border border-border-default bg-action-tonal px-4 py-1 text-sm font-semibold uppercase text-on-action-tonal">
-        Paso {currentStep} de 7
+        Paso {currentStep} de {TOTAL_STEPS}
       </span>
 
       <h1 className="text-3xl font-bold text-fg sm:text-4xl">{title}</h1>
