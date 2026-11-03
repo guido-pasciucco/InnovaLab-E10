@@ -1,8 +1,9 @@
 import { expect, test } from "../fixtures";
 import { Paso1Page } from "../pages/paso-1.page";
 
-// Steps 3 to 7 are navigation-only placeholders; step 2 is reachable only
-// once step 1 is saved.
+// Steps 2, 3 and 6 are built; 4, 5 and 7 are navigation-only placeholders.
+// Step 2 is reachable only once step 1 is saved, and "Siguiente" on step 4
+// skips step 5 (optional cost of sales and taxes) straight to step 6.
 test.beforeEach(async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
@@ -10,19 +11,25 @@ test.beforeEach(async ({ authedPage }) => {
 });
 
 test("Siguiente walks from step 2 to the results and Anterior walks back", async ({ authedPage }) => {
-  // Steps 2 and 3 save the progress, so their "Siguiente" is a button; the
-  // placeholders after them still link.
+  // Steps 2, 3, 4 and 6 save the progress, so their "Siguiente" is a button;
+  // step 7 still links.
   const next = authedPage
     .getByRole("navigation", { name: "Navegación entre pasos" })
     .getByText("Siguiente", { exact: true });
   const previous = authedPage.getByRole("link", { name: "Anterior", exact: true });
+  const headings: Record<number, string> = {
+    3: "Costos variables por unidad",
+    4: "Paso 4",
+    6: "Margen y precio sugerido",
+    7: "Paso 7",
+  };
 
-  for (let step = 3; step <= 7; step++) {
+  for (const step of [3, 4, 6, 7]) {
     await next.click();
     await expect(authedPage).toHaveURL(new RegExp(`/paso-${step}$`));
-    // Step 3 is built; the steps after it are still placeholders.
-    const heading = step === 3 ? "Costos variables por unidad" : `Paso ${step}`;
-    await expect(authedPage.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    await expect(
+      authedPage.getByRole("heading", { name: headings[step], exact: true }),
+    ).toBeVisible();
   }
 
   await next.click();
@@ -33,7 +40,8 @@ test("Siguiente walks from step 2 to the results and Anterior walks back", async
   await previous.click();
   await expect(authedPage).toHaveURL(/\/paso-7$/);
 
-  for (let step = 6; step >= 2; step--) {
+  // Step 6 goes back to step 4, the step it was reached from.
+  for (const step of [6, 4, 3, 2]) {
     await previous.click();
     await expect(authedPage).toHaveURL(new RegExp(`/paso-${step}$`));
   }
