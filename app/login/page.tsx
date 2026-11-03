@@ -17,6 +17,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <AuthPageShell
+      showHomeLink
       hero={
         <AuthHeroPanel
           brand="Calculadora de Costos"
