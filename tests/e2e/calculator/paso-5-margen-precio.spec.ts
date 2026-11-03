@@ -7,9 +7,8 @@ import { Paso5Page } from "../pages/paso-5.page";
 // unit cost of 4.100; with a 30 % margin on the selling price the price is
 // 5.857,14.
 //
-// The cost summary divides the sum of the variable lines by the volume
-// (getCalculatorCostSummaryService), so the 2.500 per unit is loaded as its
-// period total: 2.500 × 200 = 500.000.
+// A new variable line yields 1 unit by default, so its amount is already the
+// cost per unit.
 test.beforeEach(async ({ authedPage }) => {
   const setup = new Paso1Page(authedPage);
   await setup.goto();
@@ -19,7 +18,7 @@ test.beforeEach(async ({ authedPage }) => {
   await new Paso2Page(authedPage).addLine("Alquiler", "320000");
   await next.click();
   await expect(authedPage).toHaveURL(/\/paso-3$/);
-  await new Paso2Page(authedPage, VARIABLE_COSTS_STEP).addLine("Envase", "500000");
+  await new Paso2Page(authedPage, VARIABLE_COSTS_STEP).addLine("Envase", "2500");
   await next.click();
   await expect(authedPage).toHaveURL(/\/paso-4$/);
   await next.click();

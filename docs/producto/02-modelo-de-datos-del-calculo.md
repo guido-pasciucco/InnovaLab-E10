@@ -114,13 +114,13 @@ Otra cabecera 1 a 1 del cálculo.
 
 | calculation_id | margin_convention | expected_margin_pct | manual_price |
 |---|---|---|---|
-| c-2 | sobre costo | 30 | — |
+| c-2 | sobre precio | 30 | — |
 
 - `expected_margin_pct`: "quiero ganar un 30 %".
 - `margin_convention`: sobre qué se calcula ese 30 % (sobre el costo o sobre el precio de venta, que dan resultados distintos).
 - `manual_price`: opcional, para la pregunta "ya vendo a $8000, ¿me conviene?".
 
-> **Convención de margen todavía abierta:** el `sobre costo` de este ejemplo es ilustrativo. La convención de margen sigue siendo una decisión abierta (ver [04 — Definición conceptual](./04-definicion-conceptual-calculadora-costos-emprendedores.md), sección 6, y el criterio de cálculo en [01 — Calculadora inteligente](./01-calculadora-inteligente.md)). La decisión se registra en [02 — Convención de margen](../decisiones/pendientes/negocio/02-convencion-de-margen.md).
+> **Convención de margen:** el margen se mide sobre el precio de venta (ver [0003 — El margen se mide sobre el precio de venta](../decisiones/establecidas/negocio/0003-el-margen-se-mide-sobre-el-precio-de-venta.md)).
 
 ### Paso 7 — Ana prueba "¿y si…?" → `scenarios` (futuro)
 
@@ -240,7 +240,7 @@ Costos:                                              ← calc_cost_lines   (H2)
   [Trabajo propio] horas de amasado ....... 40000
   [Indirectos]     contador ............... 20000
 ────────────────────────────────────────────
-Precio: margen 30 % sobre costo                      ← pricing_inputs    (futuro)
+Precio: margen 30 % sobre precio                     ← pricing_inputs    (futuro)
 Resultado: costo unitario 1200 · equilibrio 262 cajas← computed_results  (futuro)
 ```
 

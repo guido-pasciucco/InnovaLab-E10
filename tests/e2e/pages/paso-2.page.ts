@@ -10,13 +10,20 @@ export type CostStepOptions = {
   // Heading of the step, which is also the accessible name of its list.
   listName: string;
   path: string;
+  // Accessible name of the amount inputs.
+  amountLabel: string;
 };
 
-const FIXED_COSTS_STEP: CostStepOptions = { listName: "Costos fijos del mes", path: "/paso-2" };
+const FIXED_COSTS_STEP: CostStepOptions = {
+  listName: "Costos fijos del mes",
+  path: "/paso-2",
+  amountLabel: "Importe",
+};
 
 export const VARIABLE_COSTS_STEP: CostStepOptions = {
   listName: "Costos variables por unidad",
   path: "/paso-3",
+  amountLabel: "Importe de compra",
 };
 
 export class Paso2Page {
@@ -37,7 +44,7 @@ export class Paso2Page {
     this.conceptInputs = page.getByLabel("Concepto", { exact: true });
     this.newConceptInput = this.conceptInputs.last();
     this.newRowDeleteButton = page.getByRole("button", { name: "Eliminar fila", exact: true });
-    this.amountInputs = page.getByLabel("Importe", { exact: true });
+    this.amountInputs = page.getByLabel(step.amountLabel, { exact: true });
     this.addButton = page.getByRole("button", { name: "Agregar concepto" });
     this.subtotal = page.getByLabel(/^Subtotal fijos /);
     this.alerts = page.getByRole("main").getByRole("alert");

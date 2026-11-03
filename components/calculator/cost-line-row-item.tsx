@@ -68,6 +68,14 @@ const INPUT_BASE =
   "w-full min-w-0 rounded-md border border-transparent bg-transparent px-2 py-2 text-base text-fg transition-colors placeholder:text-placeholder hover:border-border-control focus:border-brand-green-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600";
 const AMOUNT_INPUT_CLASS = `${INPUT_BASE} text-right font-medium tabular-nums`;
 
+// Shared by the rows and the table header so the columns line up. With a
+// yield the third column moves under the row on narrow screens.
+export function costLineGridClass(withYield: boolean): string {
+  return withYield
+    ? "grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_minmax(0,10rem)_2.75rem] sm:gap-3"
+    : "grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_2.75rem] sm:gap-3";
+}
+
 const SAVE_FAILED = "No pudimos guardar el costo. Probá de nuevo.";
 const DELETE_FAILED = "No pudimos eliminar el costo. Probá de nuevo.";
 
@@ -286,7 +294,7 @@ export function CostLineRowItem({
       aria-busy={busy || undefined}
       className={`border-b border-border-default py-1 transition-opacity duration-200 last:border-b-0 ${busy ? "opacity-60" : ""}`}
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)_2.75rem] items-start gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_2.75rem] sm:gap-3">
+      <div className={costLineGridClass(withYield)}>
         <div className="min-w-0">
           <label htmlFor={conceptId} className="sr-only">
             Concepto
@@ -323,32 +331,35 @@ export function CostLineRowItem({
           />
         </div>
 
+        {withYield && (
+          <div className="order-last col-span-full flex min-w-0 items-center gap-2 px-2 pb-1 text-sm text-fg-muted sm:order-none sm:col-span-1 sm:px-0 sm:pb-0">
+            {/* The table header names the column on wider screens. */}
+            <label htmlFor={yieldId} className="flex-none sm:sr-only">
+              Rinde para
+            </label>
+            <div className="w-20 flex-none">
+              <input
+                id={yieldId}
+                value={yieldText}
+                onChange={(event) => handleYieldChange(event.target.value)}
+                inputMode="decimal"
+                autoComplete="off"
+                readOnly={saved}
+                aria-invalid={yieldError ? true : undefined}
+                aria-describedby={yieldError ? yieldErrorId : undefined}
+                className={AMOUNT_INPUT_CLASS}
+              />
+            </div>
+            <span className="min-w-0 truncate">{yieldUnit}</span>
+          </div>
+        )}
+
         <CostLineDeleteButton
           label={line ? `Eliminar ${line.concept}` : "Eliminar fila"}
           onClick={handleRemove}
           disabled={busy}
         />
       </div>
-
-      {withYield && (
-        <div className="flex items-center gap-2 px-2 pb-1 text-sm text-fg-muted">
-          <label htmlFor={yieldId}>Rinde para</label>
-          <div className="w-24 flex-none">
-            <input
-              id={yieldId}
-              value={yieldText}
-              onChange={(event) => handleYieldChange(event.target.value)}
-              inputMode="decimal"
-              autoComplete="off"
-              readOnly={saved}
-              aria-invalid={yieldError ? true : undefined}
-              aria-describedby={yieldError ? yieldErrorId : undefined}
-              className={AMOUNT_INPUT_CLASS}
-            />
-          </div>
-          <span className="min-w-0 truncate">{yieldUnit}</span>
-        </div>
-      )}
 
       {conceptIssue && (
         <p id={conceptErrorId} role="alert" className="mt-1 text-sm text-danger">

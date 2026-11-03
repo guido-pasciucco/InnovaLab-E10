@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from "react";
 import { formatARSCompact } from "@/lib/money/format";
 import {
   CostLineRowItem,
+  costLineGridClass,
   type CostLine,
   type CostLineActions,
 } from "@/components/calculator/cost-line-row-item";
@@ -77,6 +78,19 @@ export function CostLinesTable({
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Visual column titles only: each input keeps its own label. */}
+      {(lines.length > 0 || adding) && (
+        <div
+          aria-hidden="true"
+          className={`${costLineGridClass(yieldUnit !== undefined)} -mb-5 border-b border-border-default pb-2 text-xs font-semibold uppercase tracking-wide text-fg-muted`}
+        >
+          <span className="px-2">Concepto</span>
+          <span className="px-2 text-right">{amountLabel ?? "Importe"}</span>
+          {yieldUnit !== undefined && (
+            <span className="hidden sm:block">Rinde para</span>
+          )}
+        </div>
+      )}
       <ul aria-label={listLabel} className="flex flex-col">
         {lines.map((line) => (
           <CostLineRowItem
