@@ -417,6 +417,8 @@ type CostLineValues = {
   behavior: string;
   traceability: string;
   amount: string;
+  // Omitted: the column default, 1.
+  yieldQuantity?: string;
 };
 
 async function insertCostLine(
@@ -441,6 +443,7 @@ async function insertCostLine(
     behavior: values.behavior,
     traceability: values.traceability,
     amount: values.amount,
+    yieldQuantity: values.yieldQuantity,
   });
 }
 
@@ -500,12 +503,13 @@ describe("getCalculatorCostSummaryService", () => {
       behavior: "variable",
       traceability: "direct",
       amount: "2400.00",
+      yieldQuantity: "12",
     });
 
     const summary = await getCalculatorCostSummaryService(fixture.user.id, db);
 
-    // totalFixed = subtotalFijo (1000.00); variableUnit = 2400 / 12 = 200.00;
-    // unitCost = (1000 + 2400) / 12 = 283.333... -> 283.33.
+    // totalFixed = subtotalFijo (1000.00); variableUnit = 2400 / yield 12 =
+    // 200.00; unitCost = 1000 / 12 + 200 = 283.333... -> 283.33.
     expect(summary).toEqual({
       calculationId: fixture.calculationId,
       totalFixed: "1000.00",
@@ -545,6 +549,7 @@ describe("getCalculatorCostSummaryService", () => {
       behavior: "variable",
       traceability: "direct",
       amount: "1200.00",
+      yieldQuantity: "12",
     });
 
     expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
@@ -570,6 +575,7 @@ describe("getCalculatorCostSummaryService", () => {
       behavior: "variable",
       traceability: "direct",
       amount: "30.00",
+      yieldQuantity: "10",
     });
 
     // The base stores "fixed"/"direct" and the engine accepts that vocabulary
@@ -580,6 +586,39 @@ describe("getCalculatorCostSummaryService", () => {
       variableUnit: "3.00",
       unitCost: "8.00",
       volume: 10,
+      currency: "ARS",
+    });
+  });
+
+  it("divides each variable purchase by its yield, whatever the volume", async () => {
+    const fixture = await arrangeDraftWithSetup(100);
+    await insertCostLine(fixture, {
+      concept: "Alquiler",
+      behavior: "fixed",
+      traceability: "direct",
+      amount: "10000.00",
+    });
+    await insertCostLine(fixture, {
+      concept: "Rollo de envases",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "30000.00",
+      yieldQuantity: "20",
+    });
+    await insertCostLine(fixture, {
+      concept: "Etiqueta",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "5.00",
+    });
+
+    // variableUnit = 30000 / 20 + 5 / 1 = 1505.00; unitCost = 10000 / 100 + 1505.
+    expect(await getCalculatorCostSummaryService(fixture.user.id, db)).toEqual({
+      calculationId: fixture.calculationId,
+      totalFixed: "10000.00",
+      variableUnit: "1505.00",
+      unitCost: "1605.00",
+      volume: 100,
       currency: "ARS",
     });
   });
@@ -625,6 +664,7 @@ describe("getCalculatorCostSummaryService", () => {
       behavior: "variable",
       traceability: "direct",
       amount: "1200.00",
+      yieldQuantity: "12",
     });
 
     const fixtureB = await arrangeDraftWithSetup(24);
@@ -633,6 +673,7 @@ describe("getCalculatorCostSummaryService", () => {
       behavior: "variable",
       traceability: "direct",
       amount: "4800.00",
+      yieldQuantity: "24",
     });
 
     expect(await getCalculatorCostSummaryService(fixtureA.user.id, db)).toEqual({

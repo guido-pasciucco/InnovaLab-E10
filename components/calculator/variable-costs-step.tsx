@@ -4,6 +4,7 @@ import {
   removeVariableCostLine,
   renameVariableCostLine,
   updateVariableCostAmount,
+  updateVariableCostYield,
 } from "@/app/(calculator)/paso-3/actions";
 import { CostLinesTable } from "@/components/calculator/cost-lines-table";
 import type {
@@ -18,22 +19,26 @@ const VARIABLE_COST_ACTIONS: CostLineActions = {
   rename: renameVariableCostLine,
   updateAmount: updateVariableCostAmount,
   remove: removeVariableCostLine,
+  updateYield: updateVariableCostYield,
 };
 
 type VariableCostsStepProps = {
   lines: readonly CostLine[];
+  // Variable cost per product unit: Σ amount / yield.
   totalVariable: string;
+  // The product unit of the setup, free text such as "caja" or "kilo".
+  unit: string;
 };
 
 // The lines and their sum come from the server on every render, so the step
 // has no client state of its own: each save revalidates the page.
-export function VariableCostsStep({ lines, totalVariable }: VariableCostsStepProps) {
+export function VariableCostsStep({ lines, totalVariable, unit }: VariableCostsStepProps) {
   return (
     <section className="rounded-[32px] bg-surface/80 p-5 shadow-[0_24px_48px_rgba(10,89,51,0.10)] sm:p-6">
       <StepHeader
         currentStep={3}
         title="Costos variables por unidad"
-        description="Lo gastás cada vez que producís una unidad, por ejemplo el envase."
+        description="Cargá lo que pagás en cada compra (por ejemplo, un rollo de envases) y para cuántas unidades de tu producto te rinde."
       />
 
       <div className="mt-4">
@@ -43,6 +48,8 @@ export function VariableCostsStep({ lines, totalVariable }: VariableCostsStepPro
           actions={VARIABLE_COST_ACTIONS}
           listLabel="Costos variables por unidad"
           subtotalLabel="Variable por unidad"
+          amountLabel="Importe de compra"
+          yieldUnit={unit}
         />
       </div>
 

@@ -1,6 +1,5 @@
 import "server-only";
 
-import Decimal from "decimal.js";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -197,13 +196,12 @@ function emptyCostSummary(
  * - draft with setup and cost lines: the three amounts are decimal strings,
  *   and a category with no lines is "0.00", not null.
  *
- * `unitCost` is the engine's `unitarioPorDocena` (totalPeriodo / volume); the
- * divisor is already the setup volume, so it is exposed as-is, without
- * multiplying or dividing by 12. `variableUnit` is the one division the engine
- * does not expose: subtotalVariable / volume, rounded like the engine.
+ * `unitCost` is the engine's `unitario` (fixed / volume + variable per unit)
+ * and `variableUnit` its `variableUnitario` (Σ amount / yield of the variable
+ * lines). Both are exposed as-is: this service does no arithmetic.
  *
  * @throws AppError CALC_COST_SUMMARY_FAILED when the engine rejects the
- * persisted lines (invalid behavior, traceability, amount or volume).
+ * persisted lines (invalid behavior, traceability, amount, yield or volume).
  */
 export async function getCalculatorCostSummaryService(
   userId: string,
@@ -231,6 +229,7 @@ export async function getCalculatorCostSummaryService(
       behavior: calcCostLines.behavior,
       traceability: calcCostLines.traceability,
       amount: calcCostLines.amount,
+      yieldQuantity: calcCostLines.yieldQuantity,
       isOwnLabor: calcCostLines.isOwnLabor,
     })
     .from(calcCostLines)
@@ -250,6 +249,7 @@ export async function getCalculatorCostSummaryService(
     traceability: row.traceability as CostLine["traceability"],
     isOwnLabor: row.isOwnLabor,
     amount: row.amount,
+    yieldQuantity: row.yieldQuantity,
   }));
 
   const totals = calculateCostTotals({ lines, volume: setup.volume });
@@ -258,18 +258,11 @@ export async function getCalculatorCostSummaryService(
     throw new AppError("CALC_COST_SUMMARY_FAILED", undefined, { cause: totals });
   }
 
-  // The engine does not expose variable/volume: make that single division
-  // here, with the same rounding as the engine (2 decimals, HALF_UP). Do not
-  // recompute subtotals or totals.
-  const variableUnit = new Decimal(totals.subtotalVariable)
-    .div(totals.volume)
-    .toFixed(2, Decimal.ROUND_HALF_UP);
-
   return {
     calculationId,
     totalFixed: totals.subtotalFijo,
-    variableUnit,
-    unitCost: totals.unitarioPorDocena,
+    variableUnit: totals.variableUnitario,
+    unitCost: totals.unitario,
     volume: totals.volume,
     currency: "ARS",
   };

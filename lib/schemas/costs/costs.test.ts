@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { calcCostLineSchema } from "./costs";
-import { hoursField } from "./fields";
+import { hoursField, yieldField } from "./fields";
 
 const validLine = {
   concept: "alquiler del taller",
@@ -153,6 +153,35 @@ describe("hoursField", () => {
     { hours: "1.005", message: "Las horas deben tener hasta 2 decimales." },
   ])("reports the Spanish message when the hours are %j", ({ hours, message }) => {
     const result = hoursField.safeParse(hours);
+
+    expect(result.success).toBe(false);
+    expect(result.success ? [] : result.error.issues.map((issue) => issue.message)).toEqual([
+      message,
+    ]);
+  });
+});
+
+describe("yieldField", () => {
+  it.each(["1", "20", "0.5", "1.2345", "9999999999.9999"])("accepts %j", (value) => {
+    expect(yieldField.safeParse(value).success).toBe(true);
+  });
+
+  it("trims the value", () => {
+    expect(yieldField.parse(" 20 ")).toBe("20");
+  });
+
+  it.each([
+    { value: "", message: "Indicá para cuántas unidades rinde." },
+    { value: "   ", message: "Indicá para cuántas unidades rinde." },
+    { value: "texto", message: "El rendimiento debe ser un número." },
+    { value: 20, message: "El rendimiento debe ser un número." },
+    { value: "0", message: "El rendimiento debe ser mayor que cero." },
+    { value: "0.0000", message: "El rendimiento debe ser mayor que cero." },
+    { value: "-1", message: "El rendimiento debe ser mayor que cero." },
+    { value: "99999999999", message: "El rendimiento es demasiado grande." },
+    { value: "1.00005", message: "El rendimiento debe tener hasta 4 decimales." },
+  ])("reports the Spanish message when the yield is $value", ({ value, message }) => {
+    const result = yieldField.safeParse(value);
 
     expect(result.success).toBe(false);
     expect(result.success ? [] : result.error.issues.map((issue) => issue.message)).toEqual([

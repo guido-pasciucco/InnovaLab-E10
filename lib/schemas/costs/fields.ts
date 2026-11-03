@@ -99,6 +99,35 @@ export const hoursField = z
     }),
   );
 
+// Product units one purchase of a variable cost yields (paso 3): a roll that
+// yields 20 boxes is "20". Same staged pipeline as `amountField`, bounded by
+// the yield_quantity column, numeric(14,4): 10 integer digits, 4 decimals.
+// Zero and negatives share one message: the engine divides by this value.
+export const yieldField = z
+  .string({ error: "El rendimiento debe ser un número." })
+  .trim()
+  .pipe(z.string().min(1, { error: "Indicá para cuántas unidades rinde." }))
+  .pipe(
+    z.string().regex(amountShape, {
+      error: "El rendimiento debe ser un número.",
+    }),
+  )
+  .pipe(
+    z.string().refine((v) => !v.startsWith("-") && /[1-9]/.test(v), {
+      error: "El rendimiento debe ser mayor que cero.",
+    }),
+  )
+  .pipe(
+    z.string().refine((v) => v.split(".")[0].length <= 10, {
+      error: "El rendimiento es demasiado grande.",
+    }),
+  )
+  .pipe(
+    z.string().regex(/^\d+(\.\d{1,4})?$/, {
+      error: "El rendimiento debe tener hasta 4 decimales.",
+    }),
+  );
+
 // Independent dimensions: the user answers each one separately (decision
 // confirmed 2026-10-17). No refinements cross these dimensions.
 //
