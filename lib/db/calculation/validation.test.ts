@@ -4,6 +4,7 @@ import {
   createCalculationInputSchema,
   createScenarioInputSchema,
   saveCalculatorSetupInputSchema,
+  saveExpectedMarginInputSchema,
   upsertCostingSetupInputSchema,
   upsertPricingInputsInputSchema,
 } from "./validation";
@@ -85,6 +86,12 @@ describe("upsertPricingInputsInputSchema", () => {
     ).toEqual({ marginConvention: ["Escribí la convención de margen."] });
   });
 
+  it("reports the margin rule message when the expected margin is 100 %", () => {
+    expect(
+      fieldErrors(upsertPricingInputsInputSchema, { ...validPricingInputs, expectedMarginPct: "100" }),
+    ).toEqual({ expectedMarginPct: ["El margen tiene que ser menor que 100 %."] });
+  });
+
   it("drops server-controlled fields when the input carries them", () => {
     const input = {
       marginConvention: "markup",
@@ -100,6 +107,32 @@ describe("upsertPricingInputsInputSchema", () => {
     expect(result).not.toHaveProperty("calculationId");
     expect(result).not.toHaveProperty("createdAt");
     expect(result).not.toHaveProperty("updatedAt");
+  });
+});
+
+describe("saveExpectedMarginInputSchema", () => {
+  it("accepts the expected margin alone", () => {
+    expect(saveExpectedMarginInputSchema.parse({ expectedMarginPct: "30" })).toEqual({
+      expectedMarginPct: "30",
+    });
+  });
+
+  it("reports the margin rule message when the expected margin is negative", () => {
+    expect(fieldErrors(saveExpectedMarginInputSchema, { expectedMarginPct: "-5" })).toEqual({
+      expectedMarginPct: ["El margen no puede ser negativo."],
+    });
+  });
+
+  it("drops the convention and server-controlled fields when the input carries them", () => {
+    const result = saveExpectedMarginInputSchema.parse({
+      expectedMarginPct: "30",
+      marginConvention: "markup",
+      manualPrice: "1500.00",
+      calculationId: SERVER_ID,
+      createdAt: SERVER_TIMESTAMP,
+    });
+
+    expect(result).toEqual({ expectedMarginPct: "30" });
   });
 });
 

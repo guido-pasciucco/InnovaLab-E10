@@ -23,3 +23,37 @@ export const marginConventionField = z
   .max(40, {
     error: "La convención de margen debe tener como máximo 40 caracteres.",
   });
+
+// Margin convention persisted in `pricing_inputs.margin_convention`. The
+// business decision is still pending
+// (docs/decisiones/pendientes/negocio/02-convencion-de-margen.md); step 6
+// explains the margin as "ganancia ÷ precio de venta", so the calculator
+// stores the margin on the selling price. Same literal the RLS tests use.
+export const MARGIN_CONVENTION_ON_PRICE = "sobre_precio";
+
+const MARGIN_SHAPE = /^-?\d+(\.\d+)?$/;
+
+// Expected margin on the selling price, in percent, as a decimal string ("30"
+// is 30 %). 100 % or more has no valid price (price = cost / (1 - margin)), so
+// the user is asked to change it. Up to 4 decimals, the scale of
+// `pricing_inputs.expected_margin_pct` (numeric(14,4)).
+export const expectedMarginField = z
+  .string({ error: "Escribí el margen que querés ganar." })
+  .trim()
+  .pipe(z.string().min(1, { error: "Escribí el margen que querés ganar." }))
+  .pipe(z.string().regex(MARGIN_SHAPE, { error: "El margen debe ser un número." }))
+  .pipe(
+    z.string().refine((v) => !v.startsWith("-"), {
+      error: "El margen no puede ser negativo.",
+    }),
+  )
+  .pipe(
+    z.string().refine((v) => v.split(".")[0].replace(/^0+(?=\d)/, "").length <= 2, {
+      error: "El margen tiene que ser menor que 100 %.",
+    }),
+  )
+  .pipe(
+    z.string().regex(/^\d+(\.\d{1,4})?$/, {
+      error: "El margen debe tener hasta 4 decimales.",
+    }),
+  );
