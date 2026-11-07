@@ -1,11 +1,11 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { getDrizzleClient } from "@/lib/db/client";
 import { createCalculationService } from "@/lib/services/calculations";
 import {
   advanceCalculatorProgressService,
   saveCalculatorSetupService,
 } from "@/lib/services/calculator";
 import { addCalcCostLineService, addVariableCalcCostLineService } from "@/lib/services/cost";
+import { closeDb } from "@/lib/services/db";
 import { addIndirectCalcCostLineService, saveOwnLaborService } from "@/lib/services/own-labor";
 import { saveExpectedMarginService } from "@/lib/services/pricing";
 import {
@@ -164,7 +164,6 @@ async function seed(): Promise<void> {
   const env = readEnv();
   assertTarget(env);
   const admin = adminClient(env);
-  const db = getDrizzleClient();
 
   try {
     const existingId = await findUserIdByEmail(admin, SEED_USER.email);
@@ -173,30 +172,30 @@ async function seed(): Promise<void> {
     const user = await createUser(admin);
 
     for (const calc of CALCULATIONS) {
-      await createCalculationService(user.id, db);
-      await saveCalculatorSetupService(user.id, calc.setup, db);
-      for (const line of calc.fixed) await addCalcCostLineService(user.id, line, db);
-      for (const line of calc.variable) await addVariableCalcCostLineService(user.id, line, db);
-      await saveOwnLaborService(user.id, calc.ownLabor, db);
-      for (const line of calc.indirect) await addIndirectCalcCostLineService(user.id, line, db);
-      await saveExpectedMarginService(user.id, { expectedMarginPct: calc.expectedMarginPct }, db);
+      await createCalculationService(user.id);
+      await saveCalculatorSetupService(user.id, calc.setup);
+      for (const line of calc.fixed) await addCalcCostLineService(user.id, line);
+      for (const line of calc.variable) await addVariableCalcCostLineService(user.id, line);
+      await saveOwnLaborService(user.id, calc.ownLabor);
+      for (const line of calc.indirect) await addIndirectCalcCostLineService(user.id, line);
+      await saveExpectedMarginService(user.id, { expectedMarginPct: calc.expectedMarginPct });
 
       // Opening step 7 creates the base scenario; alternatives are copies of
       // it with their own overrides, as the "Duplicar" button does.
-      const { scenarios } = await getScenarioComparisonService(user.id, db);
+      const { scenarios } = await getScenarioComparisonService(user.id);
       const base = scenarios.find((scenario) => scenario.isBase);
       if (!base) throw new Error(`[seed] No base scenario for "${calc.setup.name}"`);
       for (const alternative of calc.scenarios) {
-        const copy = await duplicateScenarioService(user.id, base.id, db);
-        await updateScenarioService(user.id, { scenarioId: copy.id, ...alternative }, db);
+        const copy = await duplicateScenarioService(user.id, base.id);
+        await updateScenarioService(user.id, { scenarioId: copy.id, ...alternative });
       }
 
-      await advanceCalculatorProgressService(user.id, SEED_STEP, db);
+      await advanceCalculatorProgressService(user.id, SEED_STEP);
     }
 
     console.log(`Seeded ${SEED_USER.email} with ${CALCULATIONS.length} calculations.`);
   } finally {
-    await db.$client.end();
+    await closeDb();
   }
 }
 
