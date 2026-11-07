@@ -40,3 +40,11 @@ export function getDrizzleClient(): Db {
   globalThis.__drizzleClient = createDrizzleClient(url);
   return globalThis.__drizzleClient;
 }
+
+// Ends the pool and clears the singleton so a later getDrizzleClient() opens
+// a fresh one. Used by non-request callers (seeds, scripts) via lib/services.
+export async function closeDrizzleClient(): Promise<void> {
+  const client = globalThis.__drizzleClient;
+  globalThis.__drizzleClient = undefined;
+  await client?.$client.end();
+}
