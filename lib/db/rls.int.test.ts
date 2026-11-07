@@ -1,3 +1,25 @@
+// RLS INTEGRATION SUITE — DISABLED (commented out, not deleted).
+//
+// Reason: migration `20261107231944_revoke-public-rest-api.sql` closes the
+// public Data API (PostgREST): it revokes USAGE on the `public` schema and
+// all object grants from the `anon` and `authenticated` roles, so the
+// publishable key can no longer reach any table through the API.
+//
+// This suite signed in as test users with the publishable key and asserted
+// policy decisions through PostgREST. That door no longer exists: every
+// check here turned into an unreachable assertion (PostgREST answers
+// "permission denied" before any policy is evaluated).
+//
+// Ownership boundaries are enforced by the services (Drizzle, role
+// `postgres`, BYPASSRLS), filtered by the session `userId`, not by RLS.
+// The RLS policies remain enabled as passive defense in depth; they are
+// simply not reachable nor testable through the API anymore.
+//
+// The suite is kept below as reference for the day the Data API is ever
+// re-opened (e.g. for Realtime/RPC use cases). To re-enable it: restore the
+// grants for `anon`/`authenticated` (reverse the migration above), then run
+// `bun run db:reset:local && bun run test:int`.
+/*
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -1513,4 +1535,13 @@ describe("public.pricing_inputs", () => {
     expect(rows[0]?.margin_convention).toBe("sobre_precio");
     expect(await adminRows("pricing_inputs", "calculation_id", beto.calculationId)).toHaveLength(0);
   });
+});
+*/
+
+// Placeholder so the test runner keeps this file valid: the suite above is
+// retained as reference but never executes. See the header note.
+import { describe, it } from "vitest";
+
+describe("rls.int.test.ts (disabled)", () => {
+  it.skip("public Data API closed; RLS suite kept for reference", () => {});
 });
