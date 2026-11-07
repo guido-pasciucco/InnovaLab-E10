@@ -779,8 +779,6 @@ describe("public.calculations", () => {
     expect(data![0].status).toBe("draft");
   });
 
-  // user_id is the anchor. Pointing business_id and product_id at another
-  // tenant is #117 and is not asserted here.
   it("a user cannot insert a calculation owned by another user", async () => {
     const { ana, beto } = await arrangeTwoCalculations();
     const client = await userClient(ana.user);
@@ -866,6 +864,55 @@ describe("public.calculations", () => {
     const rows = await adminRows("calculations", "id", ana.calculationId);
     expect(rows).toHaveLength(1);
     expect(rows[0]?.user_id).toBe(ana.user.id);
+  });
+
+  // BUG-001: business_id and product_id must belong to the same owner as
+  // user_id, otherwise the row anchors the calculation to another tenant.
+  it("a user cannot anchor their calculation to another user's business", async () => {
+    const { ana, beto } = await arrangeTwoOwners();
+    const client = await userClient(beto.user);
+
+    // Beto's own row, pointing at Ana's business and product.
+    const { error } = await client.from("calculations").insert({
+      user_id: beto.user.id,
+      business_id: ana.businessId,
+      product_id: ana.productId,
+      status: "draft",
+    });
+
+    expect(error?.code).toBe("42501");
+    // Checked as admin, bypassing RLS: no row was kept.
+    expect(await adminRows("calculations", "user_id", beto.user.id)).toHaveLength(0);
+  });
+
+  it("a user can insert a calculation on their own business", async () => {
+    const { beto } = await arrangeTwoOwners();
+    const client = await userClient(beto.user);
+
+    const { error } = await client.from("calculations").insert({
+      user_id: beto.user.id,
+      business_id: beto.businessId,
+      product_id: beto.productId,
+      status: "draft",
+    });
+
+    expect(error).toBeNull();
+  });
+
+  it("a user cannot re-anchor their calculation to another user's business", async () => {
+    const { ana, beto } = await arrangeTwoOwners();
+    const calculationId = await bareCalculation(beto);
+    const client = await userClient(beto.user);
+
+    const { error } = await client
+      .from("calculations")
+      .update({ business_id: ana.businessId, product_id: ana.productId })
+      .eq("id", calculationId);
+
+    expect(error?.code).toBe("42501");
+    const rows = await adminRows("calculations", "id", calculationId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ business_id: beto.businessId, product_id: beto.productId });
   });
 });
 
@@ -1077,6 +1124,60 @@ describe("public.calc_cost_lines", () => {
     const rows = await adminRows("calc_cost_lines", "id", ana.calcCostLineId);
     expect(rows).toHaveLength(1);
     expect(rows[0]?.calculation_id).toBe(ana.calculationId);
+  });
+
+  // BUG-001: source_business_cost_id must point at a cost line of the same
+  // owner, otherwise the snapshot copies another tenant's catalog.
+  it("a user cannot source a line from another user's cost line", async () => {
+    const { ana, beto } = await arrangeTwoCalculations();
+    const client = await userClient(beto.user);
+
+    // Beto's own calculation, snapshotting Ana's cost line.
+    const { error } = await client.from("calc_cost_lines").insert({
+      calculation_id: beto.calculationId,
+      source_business_cost_id: ana.costLineId,
+      concept: "Harina",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "1.00",
+    });
+
+    expect(error?.code).toBe("42501");
+    // Checked as admin, bypassing RLS: only the seeded line remains.
+    const rows = await adminRows("calc_cost_lines", "calculation_id", beto.calculationId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.id).toBe(beto.calcCostLineId);
+  });
+
+  it("a user can source a line from their own cost line", async () => {
+    const { beto } = await arrangeTwoCalculations();
+    const client = await userClient(beto.user);
+
+    const { error } = await client.from("calc_cost_lines").insert({
+      calculation_id: beto.calculationId,
+      source_business_cost_id: beto.costLineId,
+      concept: "Harina extra",
+      behavior: "variable",
+      traceability: "direct",
+      amount: "1.00",
+    });
+
+    expect(error).toBeNull();
+  });
+
+  it("a user cannot re-anchor a calculation line to another user's cost line", async () => {
+    const { ana, beto } = await arrangeTwoCalculations();
+    const client = await userClient(beto.user);
+
+    const { error } = await client
+      .from("calc_cost_lines")
+      .update({ source_business_cost_id: ana.costLineId })
+      .eq("id", beto.calcCostLineId);
+
+    expect(error?.code).toBe("42501");
+    const rows = await adminRows("calc_cost_lines", "id", beto.calcCostLineId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.source_business_cost_id).toBe(beto.costLineId);
   });
 });
 

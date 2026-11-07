@@ -99,6 +99,13 @@
       "when": 1793688158473,
       "tag": "20261103064238_scenarios_base_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794010412730,
+      "tag": "20261107001332_rls_transitive_policies",
+      "breakpoints": true
     }
   ]
 }
