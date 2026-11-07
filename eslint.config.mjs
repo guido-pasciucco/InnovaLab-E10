@@ -11,6 +11,25 @@ const eslintConfig = defineConfig([
     plugins: { playwright },
     rules: { "playwright/no-focused-test": "error" },
   },
+  // Frontera lib/db (ver lib/db/AGENTS.md): la persistencia solo se importa
+  // desde lib/services/ y desde los tests. Todo lo demás pasa por services.
+  {
+    ignores: ["lib/db/**", "lib/services/**", "**/*.test.*"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/lib/db", "**/lib/db/**"],
+              message:
+                "La base solo se toca desde lib/services/ (ver lib/db/AGENTS.md).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
