@@ -103,7 +103,7 @@ lib/
   db/            # esquema Drizzle, cliente getDrizzleClient() y reglas de escritura en servidor
 tests/
   support/       # entorno de .env.test, cliente Admin y factories (integración + E2E)
-  e2e/           # Playwright + Supabase local (auth; RLS se prueba en lib/db/rls.int.test.ts)
+  e2e/           # Playwright + Supabase local (auth; la Data API pública está cerrada, ver lib/db/AGENTS.md)
 ```
 
 **Los tests unitarios y de integración están co-localizados** junto a su módulo (`catalog.test.ts` al lado de `catalog.ts`). Las convenciones de testing están en [`TEST.md`](TEST.md). La policy de review es 400 líneas por PR.
