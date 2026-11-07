@@ -106,3 +106,13 @@ El código eliminado tenía problemas conocidos. Si se reactiva, hay que resolve
 2. **Reset de password sin cookies.** `reset-password` descartaba `applyCookies`, así que se perdía la cookie del *code verifier* de PKCE. Tiene que aplicarlas como las demás rutas.
 3. **Canje del code PKCE.** Igual que en los Server Actions, falta una ruta de callback que canjee el `code` del mail por una sesión (`exchangeCodeForSession`).
 4. **Consumidores nativos y cookies.** Una app nativa no maneja cookies como un navegador. Probablemente convenga que reciba el token de acceso en el body y lo mande en `Authorization: Bearer`, en vez de reutilizar tal cual estas rutas pensadas para cookies.
+
+## Qué puerta usar en cada Route Handler
+
+`handleRouteErrors` es la puerta para Route Handlers que devuelven **JSON** (como el ejemplo de arriba): traduce cada error lanzado al `status` y envelope `{ error: { code, message, details? } }` del catálogo (`lib/errors/handle-route-errors.ts`). No es obligatoria para todos los `route.ts`:
+
+- **Rutas JSON**: usen el adaptador. Es la única puerta con contrato HTTP JSON del proyecto; hoy no hay ninguna en `app/` (se eliminó con `/api/auth/*`) y queda disponible para rutas futuras.
+- **Rutas que redirigen** (como `app/auth/confirm/route.ts`, landing de los links de email): su contrato es una **redirección**, no un JSON. Mantienen su propio `try/catch` con `unstable_rethrow` + `redirect`, y en el error le pasan el código al destino por query string. Convertir su fallo en un envelope HTTP rompería la experiencia del usuario que hace clic en el link.
+
+>[!NOTE]
+> Los tests que afirman este contrato (passthrough de `redirect()`/`notFound()` vía `unstable_rethrow`, envelope exacto sin filtrar causas internas) viven junto al adaptador: `lib/errors/handle-route-errors.test.ts`. Ver también `lib/errors/AGENTS.md` (regla 3 y sección [Tests](../../lib/errors/AGENTS.md#tests)).

@@ -4,6 +4,7 @@ import {
   loginSchema,
   passwordResetRequestSchema,
   passwordUpdateSchema,
+  signupFormSchema,
   signupSchema,
 } from "./auth";
 import { fakerES as faker } from "@faker-js/faker";
@@ -45,6 +46,52 @@ describe("signupSchema", () => {
 
   it("accepts an empty display name (the field is optional in the form)", () => {
     expect(signupSchema.safeParse({ email: "a@b.com", password: FAKE_PASSWORD, displayName: "" }).success).toBe(true);
+  });
+
+  it("keeps the server contract free of the frontend confirmation field", () => {
+    // The form strips confirmPassword before dispatching the action; if the
+    // screen contract ever leaked into the server one, this would catch it.
+    const result = signupSchema.safeParse({ email: "a@b.com", password: FAKE_PASSWORD, confirmPassword: FAKE_PASSWORD });
+
+    expect(result.success).toBe(true);
+    expect(result.data).not.toHaveProperty("confirmPassword");
+  });
+});
+
+describe("signupFormSchema", () => {
+  it("accepts a complete valid object", () => {
+    const result = signupFormSchema.safeParse({
+      email: "ana@example.com",
+      password: FAKE_PASSWORD,
+      confirmPassword: FAKE_PASSWORD,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("reports mismatched passwords under the confirmation field", () => {
+    expect(
+      fieldErrors(signupFormSchema, {
+        email: "ana@example.com",
+        password: FAKE_PASSWORD,
+        confirmPassword: `${FAKE_PASSWORD}x`,
+      }),
+    ).toEqual({
+      confirmPassword: ["Las contraseñas no coinciden."],
+    });
+  });
+
+  it("reuses the shared password rule (and its message) for the confirmation", () => {
+    // With a short confirmation that also mismatches, both issues are
+    // collected under the field; RHF shows the first one.
+    expect(
+      fieldErrors(signupFormSchema, { email: "a@b.com", password: FAKE_PASSWORD, confirmPassword: "corta" }),
+    ).toEqual({
+      confirmPassword: [
+        "La contraseña debe tener al menos 8 caracteres.",
+        "Las contraseñas no coinciden.",
+      ],
+    });
   });
 });
 

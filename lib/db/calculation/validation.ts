@@ -10,6 +10,7 @@ import {
   scenarios,
 } from "./table";
 import { createProductInputSchema } from "../business/validation";
+import { amountField } from "@/lib/schemas/costs/fields";
 import {
   currencyField,
   periodField,
@@ -17,6 +18,7 @@ import {
   volumeField,
 } from "@/lib/schemas/calculator-setup/fields";
 import {
+  expectedMarginField,
   marginConventionField,
   scenarioNameField,
 } from "@/lib/schemas/calculation/fields";
@@ -40,7 +42,9 @@ export const pricingInputsRowSchema = createSelectSchema(pricingInputs, {
   manualPrice: moneyString.nullable(),
 });
 
-export const scenarioRowSchema = createSelectSchema(scenarios);
+export const scenarioRowSchema = createSelectSchema(scenarios, {
+  priceOverride: moneyString.nullable(),
+});
 
 export const computedResultRowSchema = createSelectSchema(computedResults, {
   totalFixed: moneyString,
@@ -83,7 +87,7 @@ export const upsertCostingSetupInputSchema = createInsertSchema(costingSetup, {
 
 export const upsertPricingInputsInputSchema = createInsertSchema(pricingInputs, {
   marginConvention: marginConventionField,
-  expectedMarginPct: quantityString,
+  expectedMarginPct: expectedMarginField,
   manualPrice: moneyString.nullish(),
 }).omit({
   calculationId: true,
@@ -115,6 +119,23 @@ export const saveCalculatorSetupInputSchema = createProductInputSchema
     }).shape,
   );
 
+// Server gate for the step 5 margin save (lib/services/pricing.ts): the user
+// only types the expected margin; the convention is set by the server.
+export const saveExpectedMarginInputSchema = upsertPricingInputsInputSchema.pick({
+  expectedMarginPct: true,
+});
+
+// Server gate for editing a step 7 alternative (lib/services/scenarios.ts);
+// the scenario id is checked by the service. Null overrides keep the base value. The manual price reuses the cost amount
+// rule (>= 0, 2 decimals, fits numeric(12,2)); the service rejects 0 itself,
+// since a price of 0 has no margin. The volume reuses the setup volume rule.
+export const updateScenarioInputSchema = createScenarioInputSchema
+  .pick({ name: true })
+  .extend({
+    priceOverride: amountField.nullable(),
+    volumeOverride: volumeField.nullable(),
+  });
+
 // No public input schema for computed_results: rows are written by the server
 // after running lib/calc, never by the client.
 
@@ -133,3 +154,5 @@ export type UpsertPricingInputsInput = z.infer<
 >;
 export type CreateScenarioInput = z.infer<typeof createScenarioInputSchema>;
 export type SaveCalculatorSetupInput = z.infer<typeof saveCalculatorSetupInputSchema>;
+export type SaveExpectedMarginInput = z.infer<typeof saveExpectedMarginInputSchema>;
+export type UpdateScenarioInput = z.infer<typeof updateScenarioInputSchema>;

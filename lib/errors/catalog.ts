@@ -68,10 +68,15 @@ export const ERROR_CATALOG = {
     logLevel: "warn",
   },
   AUTH_SIGNUP_FAILED: {
-    // Generic on purpose: never reveal whether the email already exists.
     status: 400,
     message: "Could not create account",
     logLevel: "warn",
+  },
+  AUTH_EMAIL_TAKEN: {
+    // Deliberately reveals that the email has an account, for a clearer signup UX.
+    status: 409,
+    message: "Este email ya está registrado. Probá iniciando sesión",
+    logLevel: "silent",
   },
   AUTH_SIGNOUT_FAILED: {
     status: 500,
@@ -90,6 +95,58 @@ export const ERROR_CATALOG = {
     status: 503,
     message: "Calculator unavailable",
     logLevel: "error",
+  },
+  CALC_COST_SUMMARY_FAILED: {
+    // The pure engine rejected the persisted lines (invalid behavior,
+    // traceability, amount or volume): a server-side data problem, not input.
+    status: 500,
+    message: "Could not compute the cost summary",
+    logLevel: "error",
+  },
+  CALC_DRAFT_MISSING: {
+    // The user has not saved paso 1, so there is no draft to attach costs to.
+    status: 404,
+    message: "Calculator draft not found",
+    logLevel: "silent",
+  },
+  CALC_NOT_FOUND: {
+    // Missing, foreign or non-uuid calculation id: all look the same.
+    status: 404,
+    message: "Calculation not found",
+    logLevel: "silent",
+  },
+  CALC_COST_LINE_NOT_FOUND: {
+    // Same code when the id is missing or belongs to another draft, so a
+    // caller cannot tell those two cases apart.
+    status: 404,
+    message: "Cost line not found",
+    logLevel: "silent",
+  },
+  CALC_SCENARIO_NOT_FOUND: {
+    // Same code when the id is missing, not a uuid or belongs to another
+    // draft, so a caller cannot tell those cases apart.
+    status: 404,
+    message: "Scenario not found",
+    logLevel: "silent",
+  },
+  CALC_SCENARIO_LIMIT_REACHED: {
+    // Step 7 compares the base with at most two alternatives.
+    status: 409,
+    message: "Scenario limit reached",
+    logLevel: "silent",
+  },
+  CALC_SCENARIO_BASE_LOCKED: {
+    // The base scenario is the calculation itself: it is never edited or
+    // deleted from step 7.
+    status: 409,
+    message: "The base scenario cannot be changed",
+    logLevel: "silent",
+  },
+  CALC_SCENARIO_INVALID_PRICE: {
+    // A manual price of 0 has no margin to compare.
+    status: 422,
+    message: "The scenario price must be greater than 0",
+    logLevel: "silent",
   },
 } as const satisfies Record<string, CatalogEntry>;
 

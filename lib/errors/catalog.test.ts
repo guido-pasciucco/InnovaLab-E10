@@ -18,6 +18,27 @@ describe("ERROR_CATALOG", () => {
     }
   });
 
+  it("exposes CALC_DRAFT_MISSING as a silent 404", () => {
+    expect(ERROR_CATALOG.CALC_DRAFT_MISSING).toMatchObject({
+      status: 404,
+      logLevel: "silent",
+    });
+  });
+
+  it("exposes CALC_COST_LINE_NOT_FOUND as a silent 404", () => {
+    expect(ERROR_CATALOG.CALC_COST_LINE_NOT_FOUND).toMatchObject({
+      status: 404,
+      logLevel: "silent",
+    });
+  });
+
+  it("exposes the step 7 scenario codes", () => {
+    expect(ERROR_CATALOG.CALC_SCENARIO_NOT_FOUND).toMatchObject({ status: 404, logLevel: "silent" });
+    expect(ERROR_CATALOG.CALC_SCENARIO_LIMIT_REACHED).toMatchObject({ status: 409 });
+    expect(ERROR_CATALOG.CALC_SCENARIO_BASE_LOCKED).toMatchObject({ status: 409 });
+    expect(ERROR_CATALOG.CALC_SCENARIO_INVALID_PRICE).toMatchObject({ status: 422 });
+  });
+
   it("exposes the auth-specific codes", () => {
     expect(ERROR_CATALOG.AUTH_INVALID_CREDENTIALS).toMatchObject({ status: 401 });
     expect(ERROR_CATALOG.AUTH_UNAVAILABLE).toMatchObject({ status: 503 });
@@ -25,6 +46,7 @@ describe("ERROR_CATALOG", () => {
     expect(ERROR_CATALOG.AUTH_EMAIL_NOT_CONFIRMED).toMatchObject({ status: 403 });
     expect(ERROR_CATALOG.AUTH_SESSION_MISSING).toMatchObject({ status: 401 });
     expect(ERROR_CATALOG.AUTH_SIGNUP_FAILED).toMatchObject({ status: 400 });
+    expect(ERROR_CATALOG.AUTH_EMAIL_TAKEN).toMatchObject({ status: 409 });
     expect(ERROR_CATALOG.AUTH_SIGNOUT_FAILED).toMatchObject({ status: 500 });
     expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 422 });
   });

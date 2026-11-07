@@ -51,7 +51,9 @@ Reproducido con tests de integración contra Supabase local
 (`lib/db/rls.int.test.ts`, commit `524903e`): antes del arreglo, el INSERT
 cruzado de Beto (fila propia apuntando a negocio/producto/línea de Ana) pasaba
 en ambas tablas — 2 failed / 8 passed. Después de la migración
-(`drizzle/20261015102837_rls_transitive_policies.sql`, commit `b051f19`), el
+(`drizzle/20261107001332_rls_transitive_policies.sql`; regenerada al mergear
+`main`, que introdujo `source_business_cost_id` nullable — el WITH CHECK admite
+`NULL`), el
 INSERT cruzado falla por violación de RLS y el propio pasa. La regresión también
 cubre UPDATE: no permite reanclar una fila propia a referencias de otro dueño y
 mantiene permitidas las actualizaciones sobre datos propios. La suite versionada

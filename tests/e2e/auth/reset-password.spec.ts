@@ -54,7 +54,7 @@ test("a user sets a new password from the reset email", async ({
   // transient success message is not asserted (it races the redirect).
   await expect(page).toHaveURL("/login", { timeout: 10_000 });
   await loginPage.logIn({ email: user.email, password: newPassword });
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL("/dashboard");
 });
 
 test("an invalid reset link sends the user back to request a new one", async ({ page, resetPasswordPage }) => {
