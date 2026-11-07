@@ -81,7 +81,7 @@ app -> components -> lib/calc
 
 ```text
 app/
-  (calculator)/          # asistente guiado: paso-1, paso-2, resultados
+  (calculator)/          # asistente guiado: paso-1, paso-2, resultados + error.tsx (frontera del segmento)
   auth/              # confirmar email
   dashboard/         # destino tras login
   profile/
@@ -115,7 +115,7 @@ tests/
    - Lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) y servicios (`lib/services`) → `import` directo. Sin HTTP involucrado.
    - Componente de cliente → API (`app/api/*`, si existiera) → **solo mediante `fetch`**. Nunca importar `route.ts`.
    - Mutaciones de formularios propios → Server Actions (se importan, no se hace `fetch`). Las actions **no** hacen `fetch` a las propias rutas: llaman al servicio de `lib/` directo.
-   - Los Server Components leen la persistencia mediante los servicios de `lib/services` (que usan `lib/db` por dentro), nunca importando `lib/db` ni con `fetch` interno a su propia API.
+   - Los Server Components leen la persistencia mediante los servicios de `lib/services` (que usan `lib/db` por dentro), nunca importando `lib/db` ni con `fetch` interno a su propia API. Las lecturas RSC se envuelven con `handleRscErrors`: registran el fallo según el catálogo y lo re-lanzan a la frontera del segmento (`app/(calculator)/error.tsx`), que muestra copy genérico y permite reintentar.
    - Consumidores externos (app nativa, webhooks, terceros) → Route Handlers (contrato HTTP estable). Hoy no hay ninguno; ver [API HTTP de auth](docs/examples/http-auth-api.md) para cómo agregarlos. Una PWA no los necesita.
 3. **El dominio se mantiene universal.** Nada en `lib/calc`, `lib/money`, `lib/schemas` puede usar APIs de servidor de Node/Next ni `window`/`localStorage`.
 4. **La infraestructura permanece en el servidor.** `lib/db/` (su cliente, `lib/db/client.ts`, importa `server-only`) y todo lo que toque secretos o Supabase nunca se importan desde el cliente.
