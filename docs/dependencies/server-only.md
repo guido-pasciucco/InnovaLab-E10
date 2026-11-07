@@ -13,7 +13,7 @@ En Next.js es fácil importar por accidente un helper de base de datos o un clie
 | Dónde aplica | Los módulos que tocan la base o Supabase: `lib/db/` (el cliente `getDrizzleClient()` vive en `lib/db/client.ts`), `lib/services/`, `lib/supabase/` y `lib/auth/` |
 | Cómo se marca | Primera línea del módulo: `import "server-only"` |
 | Qué garantiza | Error de build ante cualquier `import` transitivo desde código de cliente |
-| Lectura de datos | Los Server Components leen la persistencia a través de los servicios de `lib/services` (que usan `lib/db` por dentro). Nunca importan `lib/db` ni hacen `fetch` a su propia API |
+| Lectura de datos | Los Server Components leen la persistencia a través de los servicios de `lib/services` (que usan `lib/db` por dentro). Nunca importan `lib/db` ni hacen `fetch` a su propia API. Las lecturas RSC se envuelven con `handleRscErrors` (ver `lib/errors/`), que registra el fallo según el catálogo y lo re-lanza a la frontera del segmento |
 
 Regla de importación (ver README raíz, sección 2, "Contratos (vinculantes)"): la lógica pura (`lib/calc`, `lib/money`, `lib/schemas`) se importa directo; la persistencia del servidor se alcanza llamando a un servicio de `lib/services` (nunca importando `lib/db`, que es un detalle interno de los servicios); y un componente de cliente solo llega al servidor por `fetch`, jamás importando `route.ts`.
 
