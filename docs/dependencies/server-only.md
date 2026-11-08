@@ -33,11 +33,11 @@ import "server-only";
 // app/(calculator)/paso-1/page.tsx (Server Component)
 import { requireUser } from "@/lib/auth/require-user";
 import { createRscSupabaseClient } from "@/lib/supabase/rsc";
-import { getCalculatorSetupService } from "@/lib/services/calculator";
+import { getCalculatorDraftSetupService } from "@/lib/services/calculator";
 
 export default async function Paso1Page() {
   await requireUser();
-  const setup = await getCalculatorSetupService(await createRscSupabaseClient());
+  const { setup } = await getCalculatorDraftSetupService(await createRscSupabaseClient());
   // ...
 }
 ```

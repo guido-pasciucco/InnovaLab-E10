@@ -42,12 +42,12 @@ export default function LogoutButton() {
         type="button"
         onClick={handleLogout}
         disabled={loading}
-        className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:bg-gray-400"
+        className="rounded-md bg-action-primary px-4 py-2 text-sm font-medium text-on-action-primary hover:bg-action-primary-hover disabled:bg-action-disabled disabled:text-fg-disabled"
       >
         {loading ? "Signing out..." : "Sign out"}
       </button>
       {errorMessage && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger">
           {errorMessage}
         </p>
       )}

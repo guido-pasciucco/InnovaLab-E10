@@ -105,7 +105,7 @@ Cada caso se cierra copiando su fila al registro de evidencia del final, con fec
 - **Pasos:**
   1. Recargar `/paso-1` (F5).
 - **Resultado esperado:** El formulario vuelve con `Pan lactal de avena`, `unidad`, `96`, `ARS`, `Mensual`. No se pide volver a completar.
-- **Trazabilidad:** `lib/services/calculator.ts` (`getCalculatorSetupService`); #71 (leer el borrador); #36 (persistencia tras recargar).
+- **Trazabilidad:** `lib/services/calculator.ts` (`getCalculatorDraftSetupService`); #71 (leer el borrador); #36 (persistencia tras recargar).
 - **Estado:** Pendiente
 
 ### CFI-05 — Persistencia tras cerrar sesión y volver a ingresar
