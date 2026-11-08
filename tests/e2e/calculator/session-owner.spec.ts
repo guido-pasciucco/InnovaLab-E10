@@ -1,22 +1,22 @@
 ﻿import { test, expect } from "../fixtures";
+import { Paso1Page } from "../pages/paso-1.page";
 
 test("a session owner recovers the saved setup after reloading", async ({ authedPage }) => {
-  await authedPage.goto("/paso-1");
-  await authedPage.getByLabel("Nombre del producto", { exact: true }).fill("Producto de sesión");
-  await authedPage.getByLabel("Unidad", { exact: true }).fill("caja");
-  await authedPage.getByLabel("Volumen", { exact: true }).fill("37");
+  const paso1 = new Paso1Page(authedPage);
+  const values = { name: "Producto de sesión", unit: "caja", volume: 37 };
+
+  await paso1.goto();
+  await paso1.fill(values);
 
   const response = authedPage.waitForResponse(
     (res) => res.request().method() === "POST" && new URL(res.url()).pathname === "/paso-1",
   );
-  await authedPage.getByRole("button", { name: "Guardar", exact: true }).click();
+  await paso1.saveButton.click();
   await response;
-  await expect(authedPage.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
+  await expect(paso1.saveButton).toBeEnabled();
   await authedPage.reload();
 
-  await expect(authedPage.getByLabel("Nombre del producto", { exact: true })).toHaveValue("Producto de sesión");
-  await expect(authedPage.getByLabel("Unidad", { exact: true })).toHaveValue("caja");
-  await expect(authedPage.getByLabel("Volumen", { exact: true })).toHaveValue("37");
+  await paso1.expectValues(values);
 });
 
 test("a visitor without a session cannot open calculator setup", async ({ page }) => {
