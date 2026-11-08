@@ -7,7 +7,6 @@ import {
   getCalculatorDraftSetupService,
   getCalculatorProgressService,
 } from "@/lib/services/calculator";
-import { createRscSupabaseClient } from "@/lib/supabase/rsc";
 import {
   listVariableCalcCostLinesService,
   type VariableCalcCostLineList,
@@ -30,14 +29,13 @@ async function listVariableCosts(userId: string): Promise<VariableCalcCostLineLi
 export default async function Paso3Page() {
   const user = await requireUser();
   const { currentStep } = await getCalculatorProgressService(user.id);
-  const session = await createRscSupabaseClient();
 
   // Not reachable yet: send the user to the furthest step they may open.
   if (currentStep < 3) redirect(`/paso-${currentStep}`);
 
   const [{ lines, totalVariable }, { setup }] = await Promise.all([
     listVariableCosts(user.id),
-    getCalculatorDraftSetupService(session),
+    getCalculatorDraftSetupService(user),
   ]);
 
   // Step 3 is open, so step 1 was saved; without a setup there is no unit to

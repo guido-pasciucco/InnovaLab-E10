@@ -14,6 +14,7 @@ import { businessCostLines, calcCostLines } from "@/lib/db/costs/table";
 import { AppError } from "@/lib/errors/app-error";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
+import { getSessionUserService, type VerifiedUser } from "./auth";
 import { loadTestEnv } from "../../tests/support/test-env";
 import { createCalculationService, setActiveCalculationService } from "./calculations";
 import {
@@ -86,6 +87,12 @@ async function makeUser(): Promise<CreatedUser> {
   return user;
 }
 
+// Stands in for the guard's output in tests that already created the user.
+// Production code never builds a VerifiedUser by hand; only getSessionUserService does.
+function verified(user: CreatedUser): VerifiedUser {
+  return { id: user.id, email: user.email } as VerifiedUser;
+}
+
 function session(user: CreatedUser): SupabaseClient {
   const client = clients.get(user.id);
   if (!client) throw new Error("Missing test session");
@@ -124,7 +131,7 @@ describe("saveCalculatorSetupService", () => {
   it("first save creates one business, one product, one draft and one costing_setup", async () => {
     const user = await makeUser();
 
-    const result = await saveCalculatorSetupService(session(user), validInput, db);
+    const result = await saveCalculatorSetupService(verified(user), validInput, db);
 
     expect(result).toEqual(validInput);
 
@@ -162,14 +169,14 @@ describe("saveCalculatorSetupService", () => {
 
   it("second save updates the same rows and stays idempotent", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
-    const draftId = await getDraftCalculationId(session(user), db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
+    const draftId = await getDraftCalculationId(verified(user), db);
 
     const updated = { ...validInput, name: "Velas XL", volume: 24 };
-    const result = await saveCalculatorSetupService(session(user), updated, db);
+    const result = await saveCalculatorSetupService(verified(user), updated, db);
 
     expect(result).toEqual(updated);
-    expect(await getDraftCalculationId(session(user), db)).toBe(draftId);
+    expect(await getDraftCalculationId(verified(user), db)).toBe(draftId);
 
     const businessRows = await db
       .select()
@@ -209,11 +216,11 @@ describe("saveCalculatorSetupService", () => {
     const user = await makeUser();
 
     await expect(
-      saveCalculatorSetupService(session(user), { ...validInput, ...invalidFields }, db),
+      saveCalculatorSetupService(verified(user), { ...validInput, ...invalidFields }, db),
     ).rejects.toBeInstanceOf(ZodError);
 
-    expect(await getDraftCalculationId(session(user), db)).toBeNull();
-    expect((await getCalculatorDraftSetupService(session(user), db)).setup).toBeNull();
+    expect(await getDraftCalculationId(verified(user), db)).toBeNull();
+    expect((await getCalculatorDraftSetupService(verified(user), db)).setup).toBeNull();
     const businessRows = await db
       .select()
       .from(businesses)
@@ -245,23 +252,23 @@ describe("saveCalculatorSetupService", () => {
     const userA = await makeUser();
     const userB = await makeUser();
 
-    await saveCalculatorSetupService(session(userA), validInput, db);
-    const draftIdA = await getDraftCalculationId(session(userA), db);
+    await saveCalculatorSetupService(verified(userA), validInput, db);
+    const draftIdA = await getDraftCalculationId(verified(userA), db);
 
     // B sees nothing of A's setup.
     // B sees nothing of A's setup.
-    expect((await getCalculatorDraftSetupService(session(userB), db)).setup).toBeNull();
-    expect(await getDraftCalculationId(session(userB), db)).toBeNull();
+    expect((await getCalculatorDraftSetupService(verified(userB), db)).setup).toBeNull();
+    expect(await getDraftCalculationId(verified(userB), db)).toBeNull();
 
     // B saving creates B's own rows and leaves A untouched.
     const bInput = { ...validInput, name: "B product" };
-    await saveCalculatorSetupService(session(userB), { ...bInput, userId: userA.id }, db);
+    await saveCalculatorSetupService(verified(userB), { ...bInput, userId: userA.id }, db);
     const updatedB = { ...bInput, volume: 12 };
-    await saveCalculatorSetupService(session(userB), { ...updatedB, userId: userA.id }, db);
+    await saveCalculatorSetupService(verified(userB), { ...updatedB, userId: userA.id }, db);
 
-    expect(await getDraftCalculationId(session(userA), db)).toBe(draftIdA);
-    expect((await getCalculatorDraftSetupService(session(userA), db)).setup).toEqual(validInput);
-    expect((await getCalculatorDraftSetupService(session(userB), db)).setup).toEqual(updatedB);
+    expect(await getDraftCalculationId(verified(userA), db)).toBe(draftIdA);
+    expect((await getCalculatorDraftSetupService(verified(userA), db)).setup).toEqual(validInput);
+    expect((await getCalculatorDraftSetupService(verified(userB), db)).setup).toEqual(updatedB);
 
     const aBusinesses = await db
       .select()
@@ -272,39 +279,41 @@ describe("saveCalculatorSetupService", () => {
 });
 
 describe("session authentication", () => {
-  it("rejects all protected operations when a real session is signed out", async () => {
+  // The services no longer take a client: the guard verifies the session and
+  // passes a VerifiedUser. These cases cover the verification step itself.
+  it("rejects the verified identity once the real session is signed out", async () => {
     const user = await makeUser();
     const client = session(user);
-    await saveCalculatorSetupService(client, validInput, db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
     const { error } = await client.auth.signOut();
     if (error) throw error;
 
-    await expect(getDraftCalculationId(client, db)).rejects.toEqual(new AppError("UNAUTHORIZED"));
-    await expect(getCalculatorDraftSetupService(client, db)).rejects.toEqual(new AppError("UNAUTHORIZED"));
-    await expect(
-      saveCalculatorSetupService(client, { ...validInput, name: "Denied" }, db),
-    ).rejects.toEqual(new AppError("UNAUTHORIZED"));
+    await expect(getSessionUserService(client)).rejects.toEqual(new AppError("UNAUTHORIZED"));
 
     const { error: loginError } = await client.auth.signInWithPassword({
       email: user.email,
       password: user.password,
     });
     if (loginError) throw loginError;
-    expect((await getCalculatorDraftSetupService(client, db)).setup).toEqual(validInput);
+    expect((await getCalculatorDraftSetupService(await getSessionUserService(client), db)).setup).toEqual(
+      validInput,
+    );
   });
 
-  it("uses the current session when the client switches users", async () => {
+  it("derives the identity from the current session when the client switches users", async () => {
     const userA = await makeUser();
     const userB = await makeUser();
     const client = session(userA);
-    await saveCalculatorSetupService(client, validInput, db);
+    await saveCalculatorSetupService(await getSessionUserService(client), validInput, db);
 
     const { error } = await client.auth.signInWithPassword({ email: userB.email, password: userB.password });
     if (error) throw error;
 
-    expect((await getCalculatorDraftSetupService(client, db)).setup).toBeNull();
-    await saveCalculatorSetupService(client, { ...validInput, name: "B current session" }, db);
-    expect((await getCalculatorDraftSetupService(session(userB), db)).setup).toEqual({
+    const currentB = await getSessionUserService(client);
+    expect(currentB.id).toBe(userB.id);
+    expect((await getCalculatorDraftSetupService(currentB, db)).setup).toBeNull();
+    await saveCalculatorSetupService(currentB, { ...validInput, name: "B current session" }, db);
+    expect((await getCalculatorDraftSetupService(verified(userB), db)).setup).toEqual({
       ...validInput,
       name: "B current session",
     });
@@ -313,7 +322,9 @@ describe("session authentication", () => {
       password: userA.password,
     });
     if (restoreError) throw restoreError;
-    expect((await getCalculatorDraftSetupService(client, db)).setup).toEqual(validInput);
+    expect((await getCalculatorDraftSetupService(await getSessionUserService(client), db)).setup).toEqual(
+      validInput,
+    );
   });
 });
 
@@ -321,7 +332,7 @@ describe("getCalculatorDraftSetupService", () => {
   it("returns no draft when the user has no calculations", async () => {
     const user = await makeUser();
 
-    expect(await getCalculatorDraftSetupService(session(user), db)).toEqual({
+    expect(await getCalculatorDraftSetupService(verified(user), db)).toEqual({
       calculationId: null,
       setup: null,
     });
@@ -329,11 +340,11 @@ describe("getCalculatorDraftSetupService", () => {
 
   it("returns the draft id and the saved setup", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
-    const draftId = await getDraftCalculationId(session(user), db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
+    const draftId = await getDraftCalculationId(verified(user), db);
 
     expect(draftId).not.toBeNull();
-    expect(await getCalculatorDraftSetupService(session(user), db)).toEqual({
+    expect(await getCalculatorDraftSetupService(verified(user), db)).toEqual({
       calculationId: draftId,
       setup: validInput,
     });
@@ -341,13 +352,13 @@ describe("getCalculatorDraftSetupService", () => {
 
   it("returns the edited setup on the same draft after save, edit and read", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
-    const draftId = await getDraftCalculationId(session(user), db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
+    const draftId = await getDraftCalculationId(verified(user), db);
     const updated = { ...validInput, name: "Velas XL", unit: "caja", volume: 24 };
 
-    await saveCalculatorSetupService(session(user), updated, db);
+    await saveCalculatorSetupService(verified(user), updated, db);
 
-    expect(await getCalculatorDraftSetupService(session(user), db)).toEqual({
+    expect(await getCalculatorDraftSetupService(verified(user), db)).toEqual({
       calculationId: draftId,
       setup: updated,
     });
@@ -361,8 +372,8 @@ describe("getCalculatorDraftSetupService", () => {
 
   it("picks the latest draft deterministically when the user has two", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
-    const firstDraftId = await getDraftCalculationId(session(user), db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
+    const firstDraftId = await getDraftCalculationId(verified(user), db);
     expect(firstDraftId).not.toBeNull();
 
     const [business] = await db
@@ -401,19 +412,19 @@ describe("getCalculatorDraftSetupService", () => {
     };
 
     // Two reads must agree: createdAt DESC is the tie-breaker.
-    expect(await getCalculatorDraftSetupService(session(user), db)).toEqual(expected);
-    expect(await getCalculatorDraftSetupService(session(user), db)).toEqual(expected);
+    expect(await getCalculatorDraftSetupService(verified(user), db)).toEqual(expected);
+    expect(await getCalculatorDraftSetupService(verified(user), db)).toEqual(expected);
   });
 
   it("returns the draft id but no setup when the setup row is missing", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
-    const draftId = await getDraftCalculationId(session(user), db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
+    const draftId = await getDraftCalculationId(verified(user), db);
     expect(draftId).not.toBeNull();
 
     await db.delete(costingSetup).where(eq(costingSetup.calculationId, draftId!));
 
-    expect(await getCalculatorDraftSetupService(session(user), db)).toEqual({
+    expect(await getCalculatorDraftSetupService(verified(user), db)).toEqual({
       calculationId: draftId,
       setup: null,
     });
@@ -423,18 +434,18 @@ describe("getCalculatorDraftSetupService", () => {
     const userA = await makeUser();
     const userB = await makeUser();
 
-    await saveCalculatorSetupService(session(userA), validInput, db);
-    const draftA = await getDraftCalculationId(session(userA), db);
+    await saveCalculatorSetupService(verified(userA), validInput, db);
+    const draftA = await getDraftCalculationId(verified(userA), db);
 
     const bInput = { ...validInput, name: "B product", volume: 24 };
-    await saveCalculatorSetupService(session(userB), bInput, db);
-    const draftB = await getDraftCalculationId(session(userB), db);
+    await saveCalculatorSetupService(verified(userB), bInput, db);
+    const draftB = await getDraftCalculationId(verified(userB), db);
 
-    expect(await getCalculatorDraftSetupService(session(userA), db)).toEqual({
+    expect(await getCalculatorDraftSetupService(verified(userA), db)).toEqual({
       calculationId: draftA,
       setup: validInput,
     });
-    expect(await getCalculatorDraftSetupService(session(userB), db)).toEqual({
+    expect(await getCalculatorDraftSetupService(verified(userB), db)).toEqual({
       calculationId: draftB,
       setup: bInput,
     });
@@ -442,10 +453,10 @@ describe("getCalculatorDraftSetupService", () => {
 
   it("does not write any row", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
     const before = await getSetupRows(user.id);
 
-    await getCalculatorDraftSetupService(session(user), db);
+    await getCalculatorDraftSetupService(verified(user), db);
 
     expect(await getSetupRows(user.id)).toEqual(before);
   });
@@ -462,9 +473,9 @@ type DraftFixture = {
 // calc_cost_lines.source_business_cost_id optional.
 async function arrangeDraftWithSetup(volume: number): Promise<DraftFixture> {
   const user = await makeUser();
-  await saveCalculatorSetupService(session(user), { ...validInput, volume }, db);
+  await saveCalculatorSetupService(verified(user), { ...validInput, volume }, db);
 
-  const calculationId = await getDraftCalculationId(session(user), db);
+  const calculationId = await getDraftCalculationId(verified(user), db);
   const [business] = await db
     .select({ id: businesses.id })
     .from(businesses)
@@ -857,33 +868,33 @@ describe("wizard progress (calculations.current_step)", () => {
   it("the first save unlocks step 2", async () => {
     const user = await makeUser();
 
-    await saveCalculatorSetupService(session(user), validInput, db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
 
     expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 2 });
   });
 
   it("saving step 1 again never lowers a more advanced step", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
     await db.update(calculations).set({ currentStep: 4 }).where(eq(calculations.userId, user.id));
 
-    await saveCalculatorSetupService(session(user), { ...validInput, volume: 60 }, db);
+    await saveCalculatorSetupService(verified(user), { ...validInput, volume: 60 }, db);
 
     expect(await getCalculatorProgressService(user.id, db)).toEqual({ currentStep: 4 });
   });
 
   it("editing the active calculation X leaves a newer draft Z untouched", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
-    const xId = await getDraftCalculationId(session(user), db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
+    const xId = await getDraftCalculationId(verified(user), db);
     await db.update(calculations).set({ currentStep: 5 }).where(eq(calculations.id, xId!));
     const { calculationId: zId } = await createCalculationService(user.id, db);
     await setActiveCalculationService(user.id, xId!, db);
 
-    await saveCalculatorSetupService(session(user), { ...validInput, name: "Editado" }, db);
+    await saveCalculatorSetupService(verified(user), { ...validInput, name: "Editado" }, db);
 
-    expect(await getDraftCalculationId(session(user), db)).toBe(xId);
-    expect(await getCalculatorDraftSetupService(session(user), db)).toMatchObject({
+    expect(await getDraftCalculationId(verified(user), db)).toBe(xId);
+    expect(await getCalculatorDraftSetupService(verified(user), db)).toMatchObject({
       calculationId: xId,
       setup: { name: "Editado" },
     });
@@ -897,14 +908,14 @@ describe("wizard progress (calculations.current_step)", () => {
   it("progress is private to each user", async () => {
     const userA = await makeUser();
     const userB = await makeUser();
-    await saveCalculatorSetupService(session(userA), validInput, db);
+    await saveCalculatorSetupService(verified(userA), validInput, db);
 
     expect(await getCalculatorProgressService(userB.id, db)).toEqual({ currentStep: 1 });
   });
 
   it("the read does not write any row", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
     const before = await getSetupRows(user.id);
 
     await getCalculatorProgressService(user.id, db);
@@ -916,7 +927,7 @@ describe("wizard progress (calculations.current_step)", () => {
 describe("advanceCalculatorProgressService", () => {
   it("advances from step 2 to step 3", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
 
     const result = await advanceCalculatorProgressService(user.id, 3, db);
 
@@ -926,7 +937,7 @@ describe("advanceCalculatorProgressService", () => {
 
   it("never lowers the step when an earlier one is requested", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
     await advanceCalculatorProgressService(user.id, 3, db);
 
     const result = await advanceCalculatorProgressService(user.id, 2, db);
@@ -937,7 +948,7 @@ describe("advanceCalculatorProgressService", () => {
 
   it("caps the step at 8", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
     await db.update(calculations).set({ currentStep: 8 }).where(eq(calculations.userId, user.id));
 
     const result = await advanceCalculatorProgressService(user.id, 8, db);
@@ -951,7 +962,7 @@ describe("advanceCalculatorProgressService", () => {
     ["not an integer", 2.5],
   ])("rejects a step that is %s without changing the progress", async (_name, step) => {
     const user = await makeUser();
-    await saveCalculatorSetupService(session(user), validInput, db);
+    await saveCalculatorSetupService(verified(user), validInput, db);
 
     await expect(advanceCalculatorProgressService(user.id, step, db)).rejects.toBeInstanceOf(
       ZodError,
@@ -971,8 +982,8 @@ describe("advanceCalculatorProgressService", () => {
   it("leaves another user's draft untouched", async () => {
     const userA = await makeUser();
     const userB = await makeUser();
-    await saveCalculatorSetupService(session(userA), validInput, db);
-    await saveCalculatorSetupService(session(userB), validInput, db);
+    await saveCalculatorSetupService(verified(userA), validInput, db);
+    await saveCalculatorSetupService(verified(userB), validInput, db);
 
     await advanceCalculatorProgressService(userA.id, 4, db);
 

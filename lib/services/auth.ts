@@ -110,9 +110,17 @@ export async function logoutService(
 
 export type SessionUser = { id: string; email: string | undefined };
 
+// A SessionUser that Supabase Auth has verified for the current request. The
+// brand exists only at compile time: it is produced by getSessionUserService
+// (the one place that calls auth.getUser) and passed from the guard to the
+// services, so a service can take the identity without re-verifying it and a
+// caller cannot hand it an arbitrary userId by accident.
+declare const verifiedUserBrand: unique symbol;
+export type VerifiedUser = SessionUser & { readonly [verifiedUserBrand]: true };
+
 export async function getSessionUserService(
   client: SupabaseClient,
-): Promise<SessionUser> {
+): Promise<VerifiedUser> {
   const { data, error } = await client.auth.getUser();
 
   if (error || !data.user) {
@@ -120,7 +128,7 @@ export async function getSessionUserService(
   }
 
   // Expose only public fields, never the full Supabase user.
-  return { id: data.user.id, email: data.user.email };
+  return { id: data.user.id, email: data.user.email } as VerifiedUser;
 }
 
 // Sends the signup confirmation email again. Rate limits and outages are

@@ -1,6 +1,5 @@
 import "server-only";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -21,7 +20,7 @@ import type {
 
 import { getOrCreateDefaultBusiness, resolveActiveCalculation } from "./calculations";
 
-import { getSessionUserService } from "./auth";
+import type { VerifiedUser } from "./auth";
 
 // Calculator setup persistence (ADR 0005: the draft lives server-side only).
 // Input is validated with the server gate from lib/db (saveCalculatorSetupInputSchema),
@@ -170,22 +169,21 @@ export async function getDraftSetupForUser(
 }
 
 // The calculation the wizard targets (see resolveActiveCalculation).
-// The db default resolves lazily so an auth failure never touches the database.
+// Public doors pass the VerifiedUser from requireUser(); the service never
+// reads the identity from its arguments beyond that verified value.
 export async function getDraftCalculationId(
-  client: SupabaseClient,
+  user: VerifiedUser,
   database?: Db,
 ): Promise<string | null> {
-  const { id: userId } = await getSessionUserService(client);
-  return getDraftCalculationIdForUser(userId, database ?? getDrizzleClient());
+  return getDraftCalculationIdForUser(user.id, database ?? getDrizzleClient());
 }
 
 export async function saveCalculatorSetupService(
-  client: SupabaseClient,
+  user: VerifiedUser,
   input: unknown,
   database?: Db,
 ): Promise<SaveCalculatorSetupInput> {
-  const { id: userId } = await getSessionUserService(client);
-  return saveCalculatorSetupForUser(userId, input, database ?? getDrizzleClient());
+  return saveCalculatorSetupForUser(user.id, input, database ?? getDrizzleClient());
 }
 
 /**
@@ -199,11 +197,10 @@ export async function saveCalculatorSetupService(
  * - draft with setup: both values are returned.
  */
 export async function getCalculatorDraftSetupService(
-  client: SupabaseClient,
+  user: VerifiedUser,
   database?: Db,
 ): Promise<CalculatorDraftSetup> {
-  const { id: userId } = await getSessionUserService(client);
-  return getDraftSetupForUser(userId, database ?? getDrizzleClient());
+  return getDraftSetupForUser(user.id, database ?? getDrizzleClient());
 }
 
 function emptyCostSummary(
