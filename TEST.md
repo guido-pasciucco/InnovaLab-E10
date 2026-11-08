@@ -23,7 +23,7 @@ Reglas compartidas para escribir y mantener tests en todo el repo. Leé esta gu�
 - Los tests unit e integración van **co-localizados**, nunca en una carpeta aparte.
 - Los componentes de React no se unit-testean: las reglas se testean en `lib/`; la UI, en E2E.
 - Los specs de Playwright nunca corren bajo Vitest, y Vitest nunca corre specs de Playwright.
-- Un test que prueba la base sin navegador (políticas, RLS, consultas) es de integración, no E2E. Si no pertenece a un módulo sino a las políticas de la base, vive en `lib/db/` (p. ej. `lib/db/rls.int.test.ts`).
+- Un test que prueba la base sin navegador (políticas, RLS, consultas) es de integración, no E2E. Si no pertenece a un módulo sino a las políticas de la base, vive en `lib/db/` (p. ej. `lib/db/data-api.int.test.ts`).
 
 ## Nombres
 

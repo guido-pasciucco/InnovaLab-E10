@@ -115,3 +115,11 @@ El comportamiento interno del trigger de RI de Postgres (no consultar el RLS
 de la tabla referenciada) no se comprobó de forma aislada; con las políticas
 transitivas el INSERT cruzado se rechaza en el `WITH CHECK` antes de que el
 trigger importe, así que dejó de ser load-bearing para este bug.
+
+## Actualización (2026-11-07) — la Data API pública quedó cerrada
+
+La migración `drizzle/20261107231944_revoke-public-rest-api.sql` revocó `USAGE` del schema `public` y todos los grants de `anon`/`authenticated` (más default privileges para objetos futuros). Ninguna request con la publishable key llega ya a las tablas: la puerta por la que este bug era explotable dejó de existir.
+
+- El fix de este bug (PR #118, `drizzle/20261107001332_rls_transitive_policies.sql`) sigue aplicado: las políticas transitivas quedan como defensa pasiva por si el Data API se re-abre en algún momento.
+- La suite RLS por PostgREST (`lib/db/rls.int.test.ts`, commit `524903e`) se eliminó en el PR #248: con el Data API cerrado, PostgREST responde `permission denied` antes de evaluar políticas, así que ya no verificaba nada alcanzable. El test que queda, `lib/db/data-api.int.test.ts`, verifica que `anon`/`authenticated` no tengan grants sobre `public`.
+- Los servicios (Drizzle, rol `postgres` con `BYPASSRLS`) nunca pasaron por RLS: la frontera real de autorización son los filtros por `userId` en `lib/services/`.
