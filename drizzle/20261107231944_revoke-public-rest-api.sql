@@ -4,10 +4,10 @@
 --
 -- Why: the app never queries PostgREST. lib/services goes through Drizzle
 -- (connection pooler, role `postgres`, BYPASSRLS); the Supabase clients
--- (lib/supabase/*) are used for Auth (GoTrue, `/auth/v1/`) only. The only
--- PostgREST consumer was the RLS integration suite (lib/db/rls.int.test.ts),
--- now disabled. RLS policies stay enabled as passive defense in depth; they
--- are simply no longer reachable through the API.
+-- (lib/supabase/*) are used for Auth (GoTrue, `/auth/v1/`) only. Nothing in
+-- the app queries PostgREST; lib/db/data-api.int.test.ts pins the closure.
+-- RLS policies stay enabled as passive defense in depth; they are simply no
+-- longer reachable through the API.
 --
 -- What this does NOT touch:
 --   - `service_role` keeps its grants (server-side Admin API used by test

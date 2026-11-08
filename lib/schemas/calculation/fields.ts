@@ -27,8 +27,7 @@ export const marginConventionField = z
 // Margin convention persisted in `pricing_inputs.margin_convention`: the
 // margin is measured on the selling price
 // (docs/decisiones/establecidas/negocio/0003-el-margen-se-mide-sobre-el-precio-de-venta.md).
-// Same literal the (now disabled) RLS integration suite used; see
-// lib/db/rls.int.test.ts header for why it is disabled.
+// Same literal the RLS tests use.
 export const MARGIN_CONVENTION_ON_PRICE = "sobre_precio";
 
 const MARGIN_SHAPE = /^-?\d+(\.\d+)?$/;
