@@ -26,11 +26,9 @@ import type { VerifiedUserId } from "./auth";
 // Input is validated with the server gate from lib/db (saveCalculatorSetupInputSchema),
 // never with the client form contract.
 // Owner scoping: every query and write is scoped to the authenticated user.
-// The setup/draft services authenticate the session client themselves
-// (BUG-005 / #124): they never accept a caller-provided userId as
-// authorization. The wizard progress and cost summary services receive the
-// userId from doors that already validated the session (ADR 02) and scope
-// every query by it.
+// Every service here takes a VerifiedUserId (BUG-005 / #124, ADR 03): doors
+// pass `user.id` from requireUser(), services pass along the id they
+// received, and a plain string never compiles as an owner.
 // The service throws (ZodError, AppError); doors translate. No try/catch.
 
 // Wizard progress: the setup is step 1, and saving it unlocks step 2.

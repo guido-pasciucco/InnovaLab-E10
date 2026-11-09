@@ -72,6 +72,7 @@ Tres aclaraciones que evitan las confusiones más comunes:
 5. **Fuente única.** Cada fórmula vive en un solo lugar (`lib/calc`); los tipos se infieren (`z.infer`, `$inferSelect`), no se duplican a mano.
 6. **El servidor completa lo suyo.** `id`, dueño y timestamps los pone el servidor, nunca el cliente.
 7. **Servicios agnósticos al transporte.** `services/` no recibe `Request` ni devuelve `Response`/status codes: recibe valores y devuelve datos planos. Ante un fallo lanzan `AppError`, sin `try/catch`; cada puerta traduce con `handleRouteErrors` (status HTTP) o `handleActionErrors` (estado del form). Ver `errors/AGENTS.md`.
+8. **El dueño llega verificado.** Todo servicio con owner-scoping recibe `userId: VerifiedUserId` (`services/auth.ts`), nunca `string`. La puerta valida la sesión una vez y pasa `user.id` de `requireUser()`; el servicio no vuelve a validarla y compone con otros servicios pasando el mismo id. Sólo castean a `VerifiedUserId` `getSessionUserService`, el seed y la factory de tests. Ver [ADR 03](../docs/decisiones/establecidas/desarrollo/03-identidad-verificada-en-servicios.md).
 
 ## Checklist para verificar un cambio en `lib/`
 
