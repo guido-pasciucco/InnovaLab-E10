@@ -4,7 +4,7 @@ import { getDrizzleClient, type Db } from "@/lib/db/client";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
-import { getDraftCalculationIdForUser, saveCalculatorSetupForUser } from "./calculator";
+import { getDraftCalculationId, saveCalculatorSetupService } from "./calculator";
 import { addCalcCostLineService, addVariableCalcCostLineService } from "./cost";
 import { saveExpectedMarginService } from "./pricing";
 import { getCalculatorSummaryService } from "./summary";
@@ -61,8 +61,8 @@ async function makeUser(): Promise<CreatedUser> {
 
 async function makeUserWithCostedDraft(): Promise<{ user: CreatedUser; calculationId: string }> {
   const user = await makeUser();
-  await saveCalculatorSetupForUser(user.id, validSetup, db);
-  const calculationId = await getDraftCalculationIdForUser(user.id, db);
+  await saveCalculatorSetupService(user.id, validSetup, db);
+  const calculationId = await getDraftCalculationId(user.id, db);
   if (calculationId === null) throw new Error("draft was not created");
   await addCalcCostLineService(user.id, { concept: "Alquiler", amount: "320000" }, db);
   await addVariableCalcCostLineService(user.id, { concept: "Envase", amount: "2500" }, db);
@@ -134,7 +134,7 @@ describe("getCalculatorSummaryService", () => {
 
   it("reports missing costs for a draft without cost lines", async () => {
     const user = await makeUser();
-    await saveCalculatorSetupForUser(user.id, validSetup, db);
+    await saveCalculatorSetupService(user.id, validSetup, db);
     await saveExpectedMarginService(user.id, { expectedMarginPct: "30" }, db);
 
     const result = await getCalculatorSummaryService(user.id, db);
@@ -146,7 +146,7 @@ describe("getCalculatorSummaryService", () => {
     const a = await makeUserWithCostedDraft();
     await saveExpectedMarginService(a.user.id, { expectedMarginPct: "30" }, db);
     const b = await makeUser();
-    await saveCalculatorSetupForUser(b.id,{ ...validSetup, name: "Otro" }, db);
+    await saveCalculatorSetupService(b.id,{ ...validSetup, name: "Otro" }, db);
 
     const result = await getCalculatorSummaryService(b.id, db);
 

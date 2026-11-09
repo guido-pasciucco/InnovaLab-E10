@@ -108,19 +108,20 @@ export async function logoutService(
   return {};
 }
 
-export type SessionUser = { id: string; email: string | undefined };
+// A user id that Supabase Auth verified for the current request. The brand
+// exists only at compile time: getSessionUserService (the one place that calls
+// auth.getUser) is the only producer, and every owner-scoped service takes
+// this type instead of a plain string. A door therefore cannot pass an id read
+// from the input or any other string by accident; a deliberate cast still can,
+// so code review keeps covering `as VerifiedUserId` (#124, ADR 03).
+declare const verifiedUserIdBrand: unique symbol;
+export type VerifiedUserId = string & { readonly [verifiedUserIdBrand]: true };
 
-// A SessionUser that Supabase Auth has verified for the current request. The
-// brand exists only at compile time: it is produced by getSessionUserService
-// (the one place that calls auth.getUser) and passed from the guard to the
-// services, so a service can take the identity without re-verifying it and a
-// caller cannot hand it an arbitrary userId by accident.
-declare const verifiedUserBrand: unique symbol;
-export type VerifiedUser = SessionUser & { readonly [verifiedUserBrand]: true };
+export type SessionUser = { id: VerifiedUserId; email: string | undefined };
 
 export async function getSessionUserService(
   client: SupabaseClient,
-): Promise<VerifiedUser> {
+): Promise<SessionUser> {
   const { data, error } = await client.auth.getUser();
 
   if (error || !data.user) {
@@ -128,7 +129,7 @@ export async function getSessionUserService(
   }
 
   // Expose only public fields, never the full Supabase user.
-  return { id: data.user.id, email: data.user.email } as VerifiedUser;
+  return { id: data.user.id as VerifiedUserId, email: data.user.email };
 }
 
 // Sends the signup confirmation email again. Rate limits and outages are

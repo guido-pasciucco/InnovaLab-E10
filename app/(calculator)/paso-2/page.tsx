@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth/require-user";
+import type { VerifiedUserId } from "@/lib/services/auth";
 import { AppError } from "@/lib/errors/app-error";
 import { getCalculatorProgressService } from "@/lib/services/calculator";
 import {
@@ -9,7 +10,7 @@ import {
 } from "@/lib/services/cost";
 import { FixedCostsStep } from "@/components/calculator/fixed-costs-step";
 
-async function listFixedCosts(userId: string): Promise<CalcCostLineList> {
+async function listFixedCosts(userId: VerifiedUserId): Promise<CalcCostLineList> {
   try {
     return await listCalcCostLinesService(userId, { behavior: "fixed" });
   } catch (err) {

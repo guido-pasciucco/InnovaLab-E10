@@ -2,15 +2,15 @@ import "server-only";
 
 import { redirect, unstable_rethrow } from "next/navigation";
 import { AppError } from "@/lib/errors/app-error";
-import { getSessionUserService, type VerifiedUser } from "@/lib/services/auth";
+import { getSessionUserService, type SessionUser } from "@/lib/services/auth";
 import { createRscSupabaseClient } from "@/lib/supabase/rsc";
 
 // Guard for protected Server Components: returns the validated session
 // user or redirects to /login. A missing session is routine (no log);
 // anything else (e.g. missing env) is logged and still treated as
 // signed out, so a broken setup never renders a protected page.
-export async function requireUser(): Promise<VerifiedUser> {
-  let user: VerifiedUser | null = null;
+export async function requireUser(): Promise<SessionUser> {
+  let user: SessionUser | null = null;
 
   try {
     user = await getSessionUserService(await createRscSupabaseClient());

@@ -1,4 +1,5 @@
 import "server-only";
+import type { VerifiedUserId } from "./auth";
 
 import Decimal from "decimal.js";
 import { and, asc, count, desc, eq } from "drizzle-orm";
@@ -16,13 +17,13 @@ import type {
 } from "@/lib/types/calculator";
 
 import type { Tx } from "./calculations";
-import { getCalculatorCostSummaryService, getDraftCalculationIdForUser } from "./calculator";
+import { getCalculatorCostSummaryService, getDraftCalculationId } from "./calculator";
 import { getCalculatorPricingInputsService } from "./pricing";
 
 // Step 7 persistence: the scenarios of the user's draft. The base is the
 // calculation as entered in steps 1-6 and is never edited here; alternatives
 // store nullable price and volume overrides. Owner scoping comes from
-// getDraftCalculationIdForUser, which only resolves the caller's own draft, and every
+// getDraftCalculationId, which only resolves the caller's own draft, and every
 // scenario query also filters by that draft.
 // The service throws (ZodError, AppError); doors translate. No try/catch.
 
@@ -55,8 +56,8 @@ function toScenario(row: ScenarioRow): CalculatorScenario {
   };
 }
 
-async function requireDraftId(userId: string, db: Db): Promise<string> {
-  const draftId = await getDraftCalculationIdForUser(userId, db);
+async function requireDraftId(userId: VerifiedUserId, db: Db): Promise<string> {
+  const draftId = await getDraftCalculationId(userId, db);
   if (draftId === null) {
     throw new AppError("CALC_DRAFT_MISSING");
   }
@@ -120,10 +121,10 @@ async function listScenarios(db: Db, draftId: string): Promise<CalculatorScenari
  * persisted cost lines (see getCalculatorCostSummaryService).
  */
 export async function getScenarioComparisonService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<ScenarioComparisonView> {
-  const draftId = await getDraftCalculationIdForUser(userId, db);
+  const draftId = await getDraftCalculationId(userId, db);
   if (draftId === null) {
     return { calculationId: null, scenarios: [], inputs: null, comparison: null };
   }
@@ -177,7 +178,7 @@ export async function getScenarioComparisonService(
  * MAX_SCENARIOS scenarios.
  */
 export async function duplicateScenarioService(
-  userId: string,
+  userId: VerifiedUserId,
   scenarioId: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorScenario> {
@@ -229,7 +230,7 @@ export async function duplicateScenarioService(
  * @throws AppError CALC_SCENARIO_BASE_LOCKED when the scenario is the base.
  */
 export async function updateScenarioService(
-  userId: string,
+  userId: VerifiedUserId,
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorScenario> {
@@ -267,7 +268,7 @@ export async function updateScenarioService(
  * @throws AppError CALC_SCENARIO_BASE_LOCKED when the scenario is the base.
  */
 export async function deleteScenarioService(
-  userId: string,
+  userId: VerifiedUserId,
   scenarioId: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorScenario> {

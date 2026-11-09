@@ -8,7 +8,7 @@ import { AppError } from "@/lib/errors/app-error";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
-import { getDraftCalculationIdForUser, saveCalculatorSetupForUser } from "./calculator";
+import { getDraftCalculationId, saveCalculatorSetupService } from "./calculator";
 import { getCalculatorPricingInputsService, saveExpectedMarginService } from "./pricing";
 
 // Integration tests against the local Supabase stack (.env.test URLs are
@@ -56,8 +56,8 @@ afterEach(async () => {
 async function makeUserWithDraft(): Promise<{ user: CreatedUser; calculationId: string }> {
   const user = await createUser();
   users.push(user);
-  await saveCalculatorSetupForUser(user.id, validSetup, db);
-  const calculationId = await getDraftCalculationIdForUser(user.id, db);
+  await saveCalculatorSetupService(user.id, validSetup, db);
+  const calculationId = await getDraftCalculationId(user.id, db);
   if (calculationId === null) throw new Error("draft was not created");
   return { user, calculationId };
 }

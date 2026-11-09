@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { unstable_rethrow } from "next/navigation";
 
 import { getOptionalUser } from "@/lib/auth/optional-user";
+import type { SessionUser } from "@/lib/services/auth";
 import { getCalculatorProgressService } from "@/lib/services/calculator";
 import { resumeHref } from "@/components/calculator/wizard/wizard-steps";
 import { BreakEvenSection } from "@/components/home/break-even-section";
@@ -26,7 +27,7 @@ const CALCULATOR_START_HREF = "/paso-1";
 // A signed-in user resumes at the furthest step saved in the database; anyone
 // else, or anyone whose progress cannot be read, starts at the first step.
 // The home must never break because of the calculator.
-async function getCalculatorStartHref(user: { id: string } | null): Promise<string> {
+async function getCalculatorStartHref(user: SessionUser | null): Promise<string> {
   if (!user) return CALCULATOR_START_HREF;
 
   try {

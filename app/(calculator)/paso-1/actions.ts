@@ -9,7 +9,7 @@ import { saveCalculatorSetupService } from "@/lib/services/calculator";
 export const saveCalculatorSetup = handleActionErrors(async (_prev, data) => {
   const user = await requireUser();
 
-  const setup = await saveCalculatorSetupService(user, data);
+  const setup = await saveCalculatorSetupService(user.id, data);
 
   // The wizard layout reads the persisted step on the server and is not
   // re-rendered by a client navigation. Invalidate it so the header and the

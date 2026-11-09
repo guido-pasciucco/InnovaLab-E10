@@ -1,4 +1,5 @@
 import "server-only";
+import type { VerifiedUserId } from "./auth";
 
 import { calculateBreakEven } from "@/lib/calc/calculateBreakEven";
 import { calculatePricing } from "@/lib/calc/calculatePricing";
@@ -10,7 +11,7 @@ import type {
   CalculatorSummaryStatus,
 } from "@/lib/types/calculator";
 
-import { getCalculatorCostSummaryService, getDraftSetupForUser } from "./calculator";
+import { getCalculatorCostSummaryService, getCalculatorDraftSetupService } from "./calculator";
 import { getCalculatorPricingInputsService } from "./pricing";
 
 // Step 8 read model: the figures of steps 1-6 in one place, for the summary
@@ -83,11 +84,11 @@ function figuresFor(costs: CalculatorCostSummary, marginPct: string | null): Fig
  * persisted cost lines (see getCalculatorCostSummaryService).
  */
 export async function getCalculatorSummaryService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorSummary> {
   const [draft, costs, pricing] = await Promise.all([
-    getDraftSetupForUser(userId, db),
+    getCalculatorDraftSetupService(userId, db),
     getCalculatorCostSummaryService(userId, db),
     getCalculatorPricingInputsService(userId, db),
   ]);

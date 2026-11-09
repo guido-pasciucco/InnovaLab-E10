@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import type { VerifiedUserId } from "./auth";
 import { eq } from "drizzle-orm";
 import { ZodError } from "zod";
 
@@ -10,7 +11,7 @@ import { AppError } from "@/lib/errors/app-error";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
-import { getDraftCalculationIdForUser, saveCalculatorSetupForUser } from "./calculator";
+import { getDraftCalculationId, saveCalculatorSetupService } from "./calculator";
 import {
   addCalcCostLineService,
   addVariableCalcCostLineService,
@@ -71,8 +72,8 @@ async function makeUser(): Promise<CreatedUser> {
   return user;
 }
 
-async function saveDraft(userId: string): Promise<void> {
-  await saveCalculatorSetupForUser(userId, setupInput, db);
+async function saveDraft(userId: VerifiedUserId): Promise<void> {
+  await saveCalculatorSetupService(userId, setupInput, db);
 }
 
 describe("listCalcCostLinesService", () => {
@@ -163,7 +164,7 @@ describe("listCalcCostLinesService", () => {
   it("omits variable lines when the behavior filter is fixed", async () => {
     const user = await makeUser();
     await saveDraft(user.id);
-    const draftId = await getDraftCalculationIdForUser(user.id, db);
+    const draftId = await getDraftCalculationId(user.id, db);
     await db.insert(calcCostLines).values({
       calculationId: draftId!,
       concept: "Harina",
@@ -183,7 +184,7 @@ describe("listCalcCostLinesService", () => {
   it("sums only fixed lines when the list is unfiltered", async () => {
     const user = await makeUser();
     await saveDraft(user.id);
-    const draftId = await getDraftCalculationIdForUser(user.id, db);
+    const draftId = await getDraftCalculationId(user.id, db);
     await db.insert(calcCostLines).values({
       calculationId: draftId!,
       concept: "Harina",
@@ -203,7 +204,7 @@ describe("listCalcCostLinesService", () => {
   it("sums the requested variable lines when the behavior filter is variable", async () => {
     const user = await makeUser();
     await saveDraft(user.id);
-    const draftId = await getDraftCalculationIdForUser(user.id, db);
+    const draftId = await getDraftCalculationId(user.id, db);
     await db.insert(calcCostLines).values({
       calculationId: draftId!,
       concept: "Harina",
@@ -383,7 +384,7 @@ describe("updateCalcCostLineAmountService", () => {
   it("throws CALC_COST_LINE_NOT_FOUND when the line is variable", async () => {
     const user = await makeUser();
     await saveDraft(user.id);
-    const draftId = await getDraftCalculationIdForUser(user.id, db);
+    const draftId = await getDraftCalculationId(user.id, db);
     const [variable] = await db
       .insert(calcCostLines)
       .values({
@@ -508,7 +509,7 @@ describe("updateCalcCostLineConceptService", () => {
   it("throws CALC_COST_LINE_NOT_FOUND when the line is variable", async () => {
     const user = await makeUser();
     await saveDraft(user.id);
-    const draftId = await getDraftCalculationIdForUser(user.id, db);
+    const draftId = await getDraftCalculationId(user.id, db);
     const [variable] = await db
       .insert(calcCostLines)
       .values({
@@ -1195,8 +1196,8 @@ describe("removeVariableCalcCostLineService", () => {
 });
 
 describe("paso 2 isolation from paso 4 lines", () => {
-  async function seedStep4Lines(userId: string) {
-    const draftId = await getDraftCalculationIdForUser(userId, db);
+  async function seedStep4Lines(userId: VerifiedUserId) {
+    const draftId = await getDraftCalculationId(userId, db);
     if (draftId === null) {
       throw new Error("draft setup did not create a draft");
     }
@@ -1299,14 +1300,14 @@ describe("catalog link on delete", () => {
 });
 
 describe("calculation recency", () => {
-  async function updatedAtOf(userId: string): Promise<Date> {
-    const draftId = await getDraftCalculationIdForUser(userId, db);
+  async function updatedAtOf(userId: VerifiedUserId): Promise<Date> {
+    const draftId = await getDraftCalculationId(userId, db);
     const [row] = await db.select().from(calculations).where(eq(calculations.id, draftId!));
     return row.updatedAt;
   }
 
-  async function backdate(userId: string): Promise<Date> {
-    const draftId = await getDraftCalculationIdForUser(userId, db);
+  async function backdate(userId: VerifiedUserId): Promise<Date> {
+    const draftId = await getDraftCalculationId(userId, db);
     const old = new Date("2026-01-01T00:00:00Z");
     await db.update(calculations).set({ updatedAt: old }).where(eq(calculations.id, draftId!));
     return old;

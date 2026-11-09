@@ -7,7 +7,7 @@ import type { CalculatorSetup } from "@/lib/schemas/calculator-setup/calculator-
 export default async function Paso1Page() {
   const user = await requireUser();
 
-  const { setup } = await getCalculatorDraftSetupService(user);
+  const { setup } = await getCalculatorDraftSetupService(user.id);
 
   const defaultValues: CalculatorSetup = setup
     ? {

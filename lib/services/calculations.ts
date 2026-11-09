@@ -1,4 +1,5 @@
 import "server-only";
+import type { VerifiedUserId } from "./auth";
 
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
@@ -19,7 +20,7 @@ import type { CalculationSummary } from "@/lib/types/calculator";
 export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 // First owned business wins; created with a sensible default on first use.
-export async function getOrCreateDefaultBusiness(tx: Tx, userId: string) {
+export async function getOrCreateDefaultBusiness(tx: Tx, userId: VerifiedUserId) {
   const [existing] = await tx
     .select()
     .from(businesses)
@@ -48,7 +49,7 @@ export type ActiveCalculation = {
  * join, so it falls back silently.
  */
 export async function resolveActiveCalculation(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db | Tx = getDrizzleClient(),
 ): Promise<ActiveCalculation | null> {
   const [row] = await db
@@ -75,7 +76,7 @@ export async function resolveActiveCalculation(
   return row ?? null;
 }
 
-async function upsertPointer(tx: Db | Tx, userId: string, calculationId: string) {
+async function upsertPointer(tx: Db | Tx, userId: VerifiedUserId, calculationId: string) {
   await tx
     .insert(activeCalculations)
     .values({ userId, calculationId })
@@ -93,7 +94,7 @@ async function upsertPointer(tx: Db | Tx, userId: string, calculationId: string)
  * @throws AppError CALC_NOT_FOUND
  */
 export async function setActiveCalculationService(
-  userId: string,
+  userId: VerifiedUserId,
   calculationId: string,
   db: Db = getDrizzleClient(),
 ): Promise<{ calculationId: string; currentStep: number }> {
@@ -125,7 +126,7 @@ export async function setActiveCalculationService(
  * does not pile up blank rows in the dashboard list.
  */
 export async function createCalculationService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<{ calculationId: string }> {
   return db.transaction(async (tx) => {
@@ -158,7 +159,7 @@ export async function createCalculationService(
 
 /** The user's calculations for the dashboard, most recently updated first. */
 export async function listUserCalculationsService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<CalculationSummary[]> {
   const rows = await db

@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import type { VerifiedUserId } from "./auth";
 import { ZodError } from "zod";
 import { asc, eq } from "drizzle-orm";
 
@@ -8,7 +9,7 @@ import { AppError } from "@/lib/errors/app-error";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
-import { getDraftCalculationIdForUser, saveCalculatorSetupForUser } from "./calculator";
+import { getDraftCalculationId, saveCalculatorSetupService } from "./calculator";
 import { addCalcCostLineService, addVariableCalcCostLineService } from "./cost";
 import { saveExpectedMarginService } from "./pricing";
 import {
@@ -73,8 +74,8 @@ async function makeUser(): Promise<CreatedUser> {
 
 async function makeUserWithDraft(): Promise<{ user: CreatedUser; calculationId: string }> {
   const user = await makeUser();
-  await saveCalculatorSetupForUser(user.id, validSetup, db);
-  const calculationId = await getDraftCalculationIdForUser(user.id, db);
+  await saveCalculatorSetupService(user.id, validSetup, db);
+  const calculationId = await getDraftCalculationId(user.id, db);
   if (calculationId === null) throw new Error("draft was not created");
   return { user, calculationId };
 }
@@ -96,12 +97,12 @@ async function getScenarioRows(calculationId: string) {
     .orderBy(asc(scenarios.createdAt));
 }
 
-async function baseIdOf(userId: string): Promise<string> {
+async function baseIdOf(userId: VerifiedUserId): Promise<string> {
   const view = await getScenarioComparisonService(userId, db);
   return view.scenarios[0].id;
 }
 
-async function addAlternative(userId: string): Promise<string> {
+async function addAlternative(userId: VerifiedUserId): Promise<string> {
   const created = await duplicateScenarioService(userId, await baseIdOf(userId), db);
   return created.id;
 }

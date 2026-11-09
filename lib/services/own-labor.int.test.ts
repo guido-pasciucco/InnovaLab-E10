@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import type { VerifiedUserId } from "./auth";
 import { and, eq } from "drizzle-orm";
 import { ZodError } from "zod";
 
@@ -10,8 +11,8 @@ import { createUser, deleteUser, type CreatedUser } from "../../tests/support/fa
 import { loadTestEnv } from "../../tests/support/test-env";
 import {
   getCalculatorCostSummaryService,
-  getDraftCalculationIdForUser,
-  saveCalculatorSetupForUser,
+  getDraftCalculationId,
+  saveCalculatorSetupService,
 } from "./calculator";
 import {
   addCalcCostLineService,
@@ -71,13 +72,13 @@ afterEach(async () => {
 async function makeDraftUser(): Promise<CreatedUser> {
   const user = await createUser();
   users.push(user);
-  await saveCalculatorSetupForUser(user.id, setupInput, db);
+  await saveCalculatorSetupService(user.id, setupInput, db);
   return user;
 }
 
 // Rows are read by draft so tests in other files cannot leak into the asserts.
-async function ownLaborRows(userId: string) {
-  const draftId = await getDraftCalculationIdForUser(userId, db);
+async function ownLaborRows(userId: VerifiedUserId) {
+  const draftId = await getDraftCalculationId(userId, db);
   if (draftId === null) {
     throw new Error("the user has no draft");
   }

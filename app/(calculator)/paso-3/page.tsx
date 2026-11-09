@@ -2,6 +2,7 @@ import Decimal from "decimal.js";
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth/require-user";
+import type { VerifiedUserId } from "@/lib/services/auth";
 import { AppError } from "@/lib/errors/app-error";
 import {
   getCalculatorDraftSetupService,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/services/cost";
 import { VariableCostsStep } from "@/components/calculator/variable-costs-step";
 
-async function listVariableCosts(userId: string): Promise<VariableCalcCostLineList> {
+async function listVariableCosts(userId: VerifiedUserId): Promise<VariableCalcCostLineList> {
   try {
     return await listVariableCalcCostLinesService(userId);
   } catch (err) {
@@ -35,7 +36,7 @@ export default async function Paso3Page() {
 
   const [{ lines, totalVariable }, { setup }] = await Promise.all([
     listVariableCosts(user.id),
-    getCalculatorDraftSetupService(user),
+    getCalculatorDraftSetupService(user.id),
   ]);
 
   // Step 3 is open, so step 1 was saved; without a setup there is no unit to
