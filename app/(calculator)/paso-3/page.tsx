@@ -2,6 +2,7 @@ import Decimal from "decimal.js";
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth/require-user";
+import type { VerifiedUserId } from "@/lib/services/auth";
 import { AppError } from "@/lib/errors/app-error";
 import {
   getCalculatorDraftSetupService,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/services/cost";
 import { VariableCostsStep } from "@/components/calculator/variable-costs-step";
 
-async function listVariableCosts(userId: string): Promise<VariableCalcCostLineList> {
+async function listVariableCosts(userId: VerifiedUserId): Promise<VariableCalcCostLineList> {
   try {
     return await listVariableCalcCostLinesService(userId);
   } catch (err) {

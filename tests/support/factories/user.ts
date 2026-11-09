@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { fakerES as faker } from "@faker-js/faker";
 import type { z } from "zod";
 import { signupSchema } from "@/lib/schemas/auth/auth";
+import type { VerifiedUserId } from "@/lib/services/auth";
 import { adminClient } from "../supabase";
 
 // User factory: arranges accounts through the Supabase Admin API (back
@@ -12,7 +13,10 @@ import { adminClient } from "../supabase";
 // form; the factory always fills it.
 const userSchema = signupSchema.required();
 export type FakeUser = z.infer<typeof userSchema>;
-export type CreatedUser = FakeUser & { id: string };
+// The id is typed as verified: the factory creates the account through the
+// Admin API, so tests call owner-scoped services with it the way a door
+// passes requireUser().id.
+export type CreatedUser = FakeUser & { id: VerifiedUserId };
 
 // In-memory attributes only (nothing is persisted). Used as-is by the
 // signup spec, which creates the account through the UI.
@@ -52,7 +56,7 @@ export async function createUser(overrides: Partial<FakeUser> = {}): Promise<Cre
     user_metadata: { display_name: user.displayName },
   });
   if (error || !data.user) throw new Error(`[test] createUser failed: ${error?.message ?? "no user"}`);
-  return { ...user, id: data.user.id };
+  return { ...user, id: data.user.id as VerifiedUserId };
 }
 
 // Deletes the auth user AND its profile row. `public.profiles` has no FK to

@@ -1,4 +1,5 @@
 import "server-only";
+import type { VerifiedUserId } from "./auth";
 
 import { calculateBreakEven } from "@/lib/calc/calculateBreakEven";
 import { calculatePricing } from "@/lib/calc/calculatePricing";
@@ -83,7 +84,7 @@ function figuresFor(costs: CalculatorCostSummary, marginPct: string | null): Fig
  * persisted cost lines (see getCalculatorCostSummaryService).
  */
 export async function getCalculatorSummaryService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorSummary> {
   const [draft, costs, pricing] = await Promise.all([

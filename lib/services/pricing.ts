@@ -1,4 +1,5 @@
 import "server-only";
+import type { VerifiedUserId } from "./auth";
 
 import Decimal from "decimal.js";
 import { eq } from "drizzle-orm";
@@ -30,7 +31,7 @@ import { getDraftCalculationId } from "./calculator";
  * `pricing_inputs` row returns its `calculationId` and a null margin.
  */
 export async function getCalculatorPricingInputsService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorPricingInputs> {
   const calculationId = await getDraftCalculationId(userId, db);
@@ -59,7 +60,7 @@ export async function getCalculatorPricingInputsService(
  * @throws AppError CALC_DRAFT_MISSING when the user has no draft.
  */
 export async function saveExpectedMarginService(
-  userId: string,
+  userId: VerifiedUserId,
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<SaveExpectedMarginInput> {

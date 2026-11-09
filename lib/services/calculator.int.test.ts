@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ZodError } from "zod";
 import { and, eq } from "drizzle-orm";
 
@@ -13,6 +14,7 @@ import { businessCostLines, calcCostLines } from "@/lib/db/costs/table";
 import { AppError } from "@/lib/errors/app-error";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
+import { getSessionUserService } from "./auth";
 import { loadTestEnv } from "../../tests/support/test-env";
 import { createCalculationService, setActiveCalculationService } from "./calculations";
 import {
@@ -40,6 +42,7 @@ const validInput = {
 
 let db: Db;
 const users: CreatedUser[] = [];
+const clients = new Map<string, SupabaseClient>();
 
 beforeAll(() => {
   process.env.DATABASE_URL = loadTestEnv().DATABASE_URL;
@@ -60,6 +63,7 @@ afterAll(async () => {
 // Attempts every deletion even if one fails, then reports all failures.
 afterEach(async () => {
   const results = await Promise.allSettled(users.map((user) => deleteUser(user.id)));
+  clients.clear();
   users.length = 0;
   const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
   if (failures.length > 0) {
@@ -73,7 +77,20 @@ afterEach(async () => {
 async function makeUser(): Promise<CreatedUser> {
   const user = await createUser();
   users.push(user);
+  const env = loadTestEnv();
+  const client = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error } = await client.auth.signInWithPassword({ email: user.email, password: user.password });
+  if (error) throw error;
+  clients.set(user.id, client);
   return user;
+}
+
+function session(user: CreatedUser): SupabaseClient {
+  const client = clients.get(user.id);
+  if (!client) throw new Error("Missing test session");
+  return client;
 }
 
 // Snapshot of every row the setup flow owns. The read service must not change
@@ -233,22 +250,75 @@ describe("saveCalculatorSetupService", () => {
     const draftIdA = await getDraftCalculationId(userA.id, db);
 
     // B sees nothing of A's setup.
+    // B sees nothing of A's setup.
     expect((await getCalculatorDraftSetupService(userB.id, db)).setup).toBeNull();
     expect(await getDraftCalculationId(userB.id, db)).toBeNull();
 
     // B saving creates B's own rows and leaves A untouched.
     const bInput = { ...validInput, name: "B product" };
-    await saveCalculatorSetupService(userB.id, bInput, db);
+    await saveCalculatorSetupService(userB.id, { ...bInput, userId: userA.id }, db);
+    const updatedB = { ...bInput, volume: 12 };
+    await saveCalculatorSetupService(userB.id, { ...updatedB, userId: userA.id }, db);
 
     expect(await getDraftCalculationId(userA.id, db)).toBe(draftIdA);
     expect((await getCalculatorDraftSetupService(userA.id, db)).setup).toEqual(validInput);
-    expect((await getCalculatorDraftSetupService(userB.id, db)).setup).toEqual(bInput);
+    expect((await getCalculatorDraftSetupService(userB.id, db)).setup).toEqual(updatedB);
 
     const aBusinesses = await db
       .select()
       .from(businesses)
       .where(eq(businesses.ownerUserId, userA.id));
     expect(aBusinesses).toHaveLength(1);
+  });
+});
+
+describe("session authentication", () => {
+  // The services take a VerifiedUserId, never a client: the guard verifies the
+  // session and passes `user.id`. These cases cover the verification step itself.
+  it("rejects the verified identity once the real session is signed out", async () => {
+    const user = await makeUser();
+    const client = session(user);
+    await saveCalculatorSetupService(user.id, validInput, db);
+    const { error } = await client.auth.signOut();
+    if (error) throw error;
+
+    await expect(getSessionUserService(client)).rejects.toEqual(new AppError("UNAUTHORIZED"));
+
+    const { error: loginError } = await client.auth.signInWithPassword({
+      email: user.email,
+      password: user.password,
+    });
+    if (loginError) throw loginError;
+    expect((await getCalculatorDraftSetupService((await getSessionUserService(client)).id, db)).setup).toEqual(
+      validInput,
+    );
+  });
+
+  it("derives the identity from the current session when the client switches users", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    const client = session(userA);
+    await saveCalculatorSetupService((await getSessionUserService(client)).id, validInput, db);
+
+    const { error } = await client.auth.signInWithPassword({ email: userB.email, password: userB.password });
+    if (error) throw error;
+
+    const currentB = await getSessionUserService(client);
+    expect(currentB.id).toBe(userB.id);
+    expect((await getCalculatorDraftSetupService(currentB.id, db)).setup).toBeNull();
+    await saveCalculatorSetupService(currentB.id, { ...validInput, name: "B current session" }, db);
+    expect((await getCalculatorDraftSetupService(userB.id, db)).setup).toEqual({
+      ...validInput,
+      name: "B current session",
+    });
+    const { error: restoreError } = await client.auth.signInWithPassword({
+      email: userA.email,
+      password: userA.password,
+    });
+    if (restoreError) throw restoreError;
+    expect((await getCalculatorDraftSetupService((await getSessionUserService(client)).id, db)).setup).toEqual(
+      validInput,
+    );
   });
 });
 

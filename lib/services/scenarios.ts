@@ -1,4 +1,5 @@
 import "server-only";
+import type { VerifiedUserId } from "./auth";
 
 import Decimal from "decimal.js";
 import { and, asc, count, desc, eq } from "drizzle-orm";
@@ -55,7 +56,7 @@ function toScenario(row: ScenarioRow): CalculatorScenario {
   };
 }
 
-async function requireDraftId(userId: string, db: Db): Promise<string> {
+async function requireDraftId(userId: VerifiedUserId, db: Db): Promise<string> {
   const draftId = await getDraftCalculationId(userId, db);
   if (draftId === null) {
     throw new AppError("CALC_DRAFT_MISSING");
@@ -120,7 +121,7 @@ async function listScenarios(db: Db, draftId: string): Promise<CalculatorScenari
  * persisted cost lines (see getCalculatorCostSummaryService).
  */
 export async function getScenarioComparisonService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<ScenarioComparisonView> {
   const draftId = await getDraftCalculationId(userId, db);
@@ -177,7 +178,7 @@ export async function getScenarioComparisonService(
  * MAX_SCENARIOS scenarios.
  */
 export async function duplicateScenarioService(
-  userId: string,
+  userId: VerifiedUserId,
   scenarioId: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorScenario> {
@@ -229,7 +230,7 @@ export async function duplicateScenarioService(
  * @throws AppError CALC_SCENARIO_BASE_LOCKED when the scenario is the base.
  */
 export async function updateScenarioService(
-  userId: string,
+  userId: VerifiedUserId,
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorScenario> {
@@ -267,7 +268,7 @@ export async function updateScenarioService(
  * @throws AppError CALC_SCENARIO_BASE_LOCKED when the scenario is the base.
  */
 export async function deleteScenarioService(
-  userId: string,
+  userId: VerifiedUserId,
   scenarioId: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorScenario> {

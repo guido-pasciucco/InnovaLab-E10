@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth/require-user";
+import type { VerifiedUserId } from "@/lib/services/auth";
 import { AppError } from "@/lib/errors/app-error";
 import {
   getCalculatorCostSummaryService,
@@ -12,7 +13,7 @@ import {
 } from "@/lib/services/own-labor";
 import { OwnLaborStep } from "@/components/calculator/own-labor-step";
 
-async function loadStep(userId: string) {
+async function loadStep(userId: VerifiedUserId) {
   try {
     return await Promise.all([
       getOwnLaborService(userId),

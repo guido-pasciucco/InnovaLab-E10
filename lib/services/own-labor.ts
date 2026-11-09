@@ -1,4 +1,5 @@
 import "server-only";
+import type { VerifiedUserId } from "./auth";
 
 import Decimal from "decimal.js";
 import { and, asc, eq, sql } from "drizzle-orm";
@@ -51,7 +52,7 @@ function toOwnLabor(line: CalcCostLine): OwnLabor {
 }
 
 export async function getOwnLaborService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<OwnLabor | null> {
   const draftId = await requireDraftId(userId, db);
@@ -65,7 +66,7 @@ export async function getOwnLaborService(
 }
 
 export async function saveOwnLaborService(
-  userId: string,
+  userId: VerifiedUserId,
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<OwnLabor> {
@@ -121,7 +122,7 @@ function indirectLineOfDraft(lineId: string, draftId: string) {
 }
 
 export async function listIndirectCalcCostLinesService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<IndirectCalcCostLineList> {
   const draftId = await requireDraftId(userId, db);
@@ -143,7 +144,7 @@ export async function listIndirectCalcCostLinesService(
 }
 
 export async function addIndirectCalcCostLineService(
-  userId: string,
+  userId: VerifiedUserId,
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalcCostLine> {
@@ -167,7 +168,7 @@ export async function addIndirectCalcCostLineService(
 }
 
 export async function updateIndirectCalcCostLineAmountService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   input: unknown,
   db: Db = getDrizzleClient(),
@@ -190,7 +191,7 @@ export async function updateIndirectCalcCostLineAmountService(
 }
 
 export async function updateIndirectCalcCostLineConceptService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   input: unknown,
   db: Db = getDrizzleClient(),
@@ -199,7 +200,7 @@ export async function updateIndirectCalcCostLineConceptService(
 }
 
 export async function removeIndirectCalcCostLineService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   db: Db = getDrizzleClient(),
 ): Promise<CalcCostLine> {

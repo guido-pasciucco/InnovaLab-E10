@@ -32,11 +32,11 @@ import "server-only";
 ```tsx
 // app/(calculator)/paso-1/page.tsx (Server Component)
 import { requireUser } from "@/lib/auth/require-user";
-import { getCalculatorSetupService } from "@/lib/services/calculator";
+import { getCalculatorDraftSetupService } from "@/lib/services/calculator";
 
 export default async function Paso1Page() {
   const user = await requireUser();
-  const setup = await getCalculatorSetupService(user.id);
+  const { setup } = await getCalculatorDraftSetupService(user.id);
   // ...
 }
 ```

@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import type { VerifiedUserId } from "./auth";
 import { eq } from "drizzle-orm";
 import { ZodError } from "zod";
 
@@ -71,7 +72,7 @@ async function makeUser(): Promise<CreatedUser> {
   return user;
 }
 
-async function saveDraft(userId: string): Promise<void> {
+async function saveDraft(userId: VerifiedUserId): Promise<void> {
   await saveCalculatorSetupService(userId, setupInput, db);
 }
 
@@ -1195,7 +1196,7 @@ describe("removeVariableCalcCostLineService", () => {
 });
 
 describe("paso 2 isolation from paso 4 lines", () => {
-  async function seedStep4Lines(userId: string) {
+  async function seedStep4Lines(userId: VerifiedUserId) {
     const draftId = await getDraftCalculationId(userId, db);
     if (draftId === null) {
       throw new Error("draft setup did not create a draft");
@@ -1299,13 +1300,13 @@ describe("catalog link on delete", () => {
 });
 
 describe("calculation recency", () => {
-  async function updatedAtOf(userId: string): Promise<Date> {
+  async function updatedAtOf(userId: VerifiedUserId): Promise<Date> {
     const draftId = await getDraftCalculationId(userId, db);
     const [row] = await db.select().from(calculations).where(eq(calculations.id, draftId!));
     return row.updatedAt;
   }
 
-  async function backdate(userId: string): Promise<Date> {
+  async function backdate(userId: VerifiedUserId): Promise<Date> {
     const draftId = await getDraftCalculationId(userId, db);
     const old = new Date("2026-01-01T00:00:00Z");
     await db.update(calculations).set({ updatedAt: old }).where(eq(calculations.id, draftId!));

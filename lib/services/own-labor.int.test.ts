@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import type { VerifiedUserId } from "./auth";
 import { and, eq } from "drizzle-orm";
 import { ZodError } from "zod";
 
@@ -76,7 +77,7 @@ async function makeDraftUser(): Promise<CreatedUser> {
 }
 
 // Rows are read by draft so tests in other files cannot leak into the asserts.
-async function ownLaborRows(userId: string) {
+async function ownLaborRows(userId: VerifiedUserId) {
   const draftId = await getDraftCalculationId(userId, db);
   if (draftId === null) {
     throw new Error("the user has no draft");

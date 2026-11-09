@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import type { VerifiedUserId } from "./auth";
 import { ZodError } from "zod";
 import { asc, eq } from "drizzle-orm";
 
@@ -96,12 +97,12 @@ async function getScenarioRows(calculationId: string) {
     .orderBy(asc(scenarios.createdAt));
 }
 
-async function baseIdOf(userId: string): Promise<string> {
+async function baseIdOf(userId: VerifiedUserId): Promise<string> {
   const view = await getScenarioComparisonService(userId, db);
   return view.scenarios[0].id;
 }
 
-async function addAlternative(userId: string): Promise<string> {
+async function addAlternative(userId: VerifiedUserId): Promise<string> {
   const created = await duplicateScenarioService(userId, await baseIdOf(userId), db);
   return created.id;
 }

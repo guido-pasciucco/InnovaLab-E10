@@ -1,4 +1,5 @@
 import "server-only";
+import type { VerifiedUserId } from "./auth";
 
 import Decimal from "decimal.js";
 import { and, asc, eq } from "drizzle-orm";
@@ -41,7 +42,7 @@ export function sumMoney(amounts: string[]): string {
   return total.toFixed(MONEY_DECIMALS);
 }
 
-export async function requireDraftId(userId: string, db: Db): Promise<string> {
+export async function requireDraftId(userId: VerifiedUserId, db: Db): Promise<string> {
   const draftId = await getDraftCalculationId(userId, db);
   if (draftId === null) {
     throw new AppError("CALC_DRAFT_MISSING");
@@ -85,7 +86,7 @@ function fixedLineOfDraft(lineId: string, draftId: string) {
 }
 
 export async function listCalcCostLinesService(
-  userId: string,
+  userId: VerifiedUserId,
   opts: ListCalcCostLinesOptions = {},
   db: Db = getDrizzleClient(),
 ): Promise<CalcCostLineList> {
@@ -128,7 +129,7 @@ export async function listCalcCostLinesService(
 }
 
 export async function addCalcCostLineService(
-  userId: string,
+  userId: VerifiedUserId,
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalcCostLine> {
@@ -154,7 +155,7 @@ export async function addCalcCostLineService(
 }
 
 export async function updateCalcCostLineAmountService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   input: unknown,
   db: Db = getDrizzleClient(),
@@ -179,7 +180,7 @@ export async function updateCalcCostLineAmountService(
 
 // The rename services differ only in which lines they match.
 export async function renameCalcCostLine(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   input: unknown,
   db: Db,
@@ -204,7 +205,7 @@ export async function renameCalcCostLine(
 }
 
 export async function updateCalcCostLineConceptService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   input: unknown,
   db: Db = getDrizzleClient(),
@@ -213,7 +214,7 @@ export async function updateCalcCostLineConceptService(
 }
 
 export async function removeCalcCostLineService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   db: Db = getDrizzleClient(),
 ): Promise<CalcCostLine> {
@@ -254,7 +255,7 @@ function variableLineOfDraft(lineId: string, draftId: string) {
 }
 
 export async function listVariableCalcCostLinesService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<VariableCalcCostLineList> {
   const { lines } = await listCalcCostLinesService(userId, { behavior: "variable" }, db);
@@ -283,7 +284,7 @@ export async function listVariableCalcCostLinesService(
 }
 
 export async function addVariableCalcCostLineService(
-  userId: string,
+  userId: VerifiedUserId,
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<CalcCostLine> {
@@ -311,7 +312,7 @@ export async function addVariableCalcCostLineService(
 }
 
 export async function updateVariableCalcCostLineAmountService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   input: unknown,
   db: Db = getDrizzleClient(),
@@ -335,7 +336,7 @@ export async function updateVariableCalcCostLineAmountService(
 }
 
 export async function updateVariableCalcCostLineYieldService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   input: unknown,
   db: Db = getDrizzleClient(),
@@ -359,7 +360,7 @@ export async function updateVariableCalcCostLineYieldService(
 }
 
 export async function updateVariableCalcCostLineConceptService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   input: unknown,
   db: Db = getDrizzleClient(),
@@ -368,7 +369,7 @@ export async function updateVariableCalcCostLineConceptService(
 }
 
 export async function removeVariableCalcCostLineService(
-  userId: string,
+  userId: VerifiedUserId,
   lineId: string,
   db: Db = getDrizzleClient(),
 ): Promise<CalcCostLine> {

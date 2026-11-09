@@ -20,10 +20,15 @@ import type {
 
 import { getOrCreateDefaultBusiness, resolveActiveCalculation } from "./calculations";
 
+import type { VerifiedUserId } from "./auth";
+
 // Calculator setup persistence (ADR 0005: the draft lives server-side only).
 // Input is validated with the server gate from lib/db (saveCalculatorSetupInputSchema),
 // never with the client form contract.
-// Owner scoping: every query and write filters by the caller's userId.
+// Owner scoping: every query and write is scoped to the authenticated user.
+// Every service here takes a VerifiedUserId (BUG-005 / #124, ADR 03): doors
+// pass `user.id` from requireUser(), services pass along the id they
+// received, and a plain string never compiles as an owner.
 // The service throws (ZodError, AppError); doors translate. No try/catch.
 
 // Wizard progress: the setup is step 1, and saving it unlocks step 2.
@@ -34,15 +39,17 @@ const LAST_STEP = 8;
 const advanceStepSchema = z.number().int().min(SETUP_STEP + 1).max(LAST_STEP);
 
 // The calculation the wizard targets (see resolveActiveCalculation).
+// Owner-scoped services take a VerifiedUserId: doors pass `user.id` from
+// requireUser(), services pass the id they already received (#124, ADR 03).
 export async function getDraftCalculationId(
-  userId: string,
-  db: Db,
+  userId: VerifiedUserId,
+  db: Db = getDrizzleClient(),
 ): Promise<string | null> {
   return (await resolveActiveCalculation(userId, db))?.id ?? null;
 }
 
 export async function saveCalculatorSetupService(
-  userId: string,
+  userId: VerifiedUserId,
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<SaveCalculatorSetupInput> {
@@ -120,7 +127,7 @@ export async function saveCalculatorSetupService(
  * - draft with setup: both values are returned.
  */
 export async function getCalculatorDraftSetupService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorDraftSetup> {
   const active = await resolveActiveCalculation(userId, db);
@@ -204,7 +211,7 @@ function emptyCostSummary(
  * persisted lines (invalid behavior, traceability, amount, yield or volume).
  */
 export async function getCalculatorCostSummaryService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorCostSummary> {
   const calculationId = await getDraftCalculationId(userId, db);
@@ -281,7 +288,7 @@ export type CalculatorProgress = {
  * @throws AppError CALC_DRAFT_MISSING when the user has no draft.
  */
 export async function advanceCalculatorProgressService(
-  userId: string,
+  userId: VerifiedUserId,
   toStep: number,
   db: Db = getDrizzleClient(),
 ): Promise<{ currentStep: number }> {
@@ -307,7 +314,7 @@ export async function advanceCalculatorProgressService(
  * has only step 1 available. It never writes.
  */
 export async function getCalculatorProgressService(
-  userId: string,
+  userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<CalculatorProgress> {
   const active = await resolveActiveCalculation(userId, db);

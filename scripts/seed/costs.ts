@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { VerifiedUserId } from "@/lib/services/auth";
 import { createCalculationService } from "@/lib/services/calculations";
 import {
   advanceCalculatorProgressService,
@@ -149,7 +150,9 @@ async function deleteUser(admin: SupabaseClient, id: string): Promise<void> {
 }
 
 // Confirmed user; the `on_auth_user_created` trigger inserts its profile.
-async function createUser(admin: SupabaseClient): Promise<{ id: string }> {
+// The seed creates the account itself through the Admin API, so its id is the
+// verified owner for the services it calls next.
+async function createUser(admin: SupabaseClient): Promise<{ id: VerifiedUserId }> {
   const { data, error } = await admin.auth.admin.createUser({
     email: SEED_USER.email,
     password: SEED_USER.password,
@@ -157,7 +160,7 @@ async function createUser(admin: SupabaseClient): Promise<{ id: string }> {
     user_metadata: { display_name: SEED_USER.displayName },
   });
   if (error || !data.user) throw new Error(`[seed] createUser failed: ${error?.message ?? "no user"}`);
-  return { id: data.user.id };
+  return { id: data.user.id as VerifiedUserId };
 }
 
 async function seed(): Promise<void> {

@@ -41,12 +41,16 @@ function parsePreviewMessages(): Partial<Record<PreviewField, string>> {
     return z.flattenError(result.error).fieldErrors[field]?.[0];
   };
 
+  // Only length matters for these samples: passwordField requires 8+ characters.
+  const validSample = "x".repeat(8);
+  const otherValidSample = "y".repeat(8);
+
   return {
-    displayName: firstMessage({ displayName: "x".repeat(81), email: "a@b.com", password: "segura-ejemplo", confirmPassword: "segura-ejemplo" }, "displayName"),
+    displayName: firstMessage({ displayName: "x".repeat(81), email: "a@b.com", password: validSample, confirmPassword: validSample }, "displayName"),
     email: firstMessage({ email: "correo-no-valido" }, "email"),
     password: firstMessage({ password: "corta" }, "password"),
     // Both passwords valid but different: only the mismatch rule reacts.
-    confirmPassword: firstMessage({ email: "a@b.com", password: "segura-ejemplo", confirmPassword: "distinta-ejemplo" }, "confirmPassword"),
+    confirmPassword: firstMessage({ email: "a@b.com", password: validSample, confirmPassword: otherValidSample }, "confirmPassword"),
   };
 }
 
