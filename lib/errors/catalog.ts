@@ -148,6 +148,12 @@ export const ERROR_CATALOG = {
     message: "The scenario price must be greater than 0",
     logLevel: "silent",
   },
+  SUPPLY_NOT_FOUND: {
+    // Missing, foreign or non-uuid supply id: all look the same.
+    status: 404,
+    message: "Supply not found",
+    logLevel: "silent",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;
