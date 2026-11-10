@@ -87,6 +87,39 @@ El orden de habilitación es bloqueante: no se puede cargar indirectos sin la li
 
 ---
 
+## Decisión a definir — ¿el insumo lleva unidades de medida?
+
+> **Estado: pendiente de decisión del equipo.** #239 excluye explícitamente las unidades de compra de su alcance, pero #241 necesita "repartir el precio en la unidad mínima". Sin este dato, el costo variable unitario no se puede calcular.
+
+### Contexto
+
+- **#239** define el insumo como nombre + precio de compra y deja "unidades de compra" fuera de la historia.
+- **#241** pide distinguir compra por cantidad vs. por unidad y "repartir el precio pagado en la unidad mínima", pero no define cuál es esa unidad ni dónde se carga.
+- Ejemplo del problema: si el insumo es "harina, $25.000" sin más datos, no se sabe si eso es una bolsa de 50 kg, una bolsa de 25 kg o un kilo suelto. El costo variable unitario cambia por completo según la respuesta.
+
+### Opción A — Insumo mínimo (lo que dice #239)
+
+- El insumo es solo **nombre + precio de compra**.
+- La unidad mínima y la equivalencia lote ↔ unidad se cargarían **en la línea de la receta** (cada producto declara cómo interpreta el precio del insumo).
+- **Costo:** el mismo insumo puede quedar interpretado distinto en cada receta; el usuario repite el trabajo de conversión por producto; riesgo de inconsistencias entre productos.
+
+### Opción B — Insumo con unidades de medida
+
+- El insumo es **nombre + precio de compra + unidad de compra + cantidad por envase** (ej. "harina, $25.000, bolsa, 50 kg").
+- La unidad mínima se deriva una sola vez y todas las recetas la comparten.
+- **Costo:** excede el alcance declarado de #239; obliga a definir un catálogo de unidades (kg, litro, unidad, docena...) y a validar la equivalencia.
+
+### Impacto en el resto del documento
+
+- Si se elige **A**: el bloque 2 carga la unidad mínima por línea de receta; el costo variable unitario depende de cada producto.
+- Si se elige **B**: el bloque 1 agrega los campos de unidad; el bloque 2 simplifica la línea de receta (solo cantidad en unidad mínima + modo de compra si hace falta).
+
+### Propuesta tentativa
+
+**Opción B.** La conversión lote ↔ unidad es un dato del insumo, no de cada receta: cargarla una vez evita inconsistencias y simplifica la receta. Requiere confirmar con el equipo porque amplía #239.
+
+---
+
 ## Bloque 2 — Productos
 
 ### Pasos
@@ -250,7 +283,7 @@ La capacidad mensual (cuánto se va a fabricar de cada producto en el mes, issue
 
 > _Pendiente._ Lista consolidada de los huecos que requieren respuesta del equipo antes de implementar:
 >
-> 1. Unidades de medida y equivalencia lote ↔ unidad (bloque 1).
+> 1. Unidades de medida del insumo: ¿mínimo (opción A) o con unidades (opción B)? (sección "Decisión a definir — ¿el insumo lleva unidades de medida?").
 > 2. Base de la receta: ¿por unidad de producto o por lote? (bloque 2).
 > 3. Lista cerrada: ¿definitiva o reabrible? (bloque 2).
 > 4. Capacidad mensual: ¿en el alta de producto (opción A) o en el plan del mes (opción B)? (sección "Decisión a definir").
