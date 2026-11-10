@@ -90,6 +90,14 @@ export type PresentationVariableCost = {
   productCost: string;
   packagingCost: string;
   totalCost: string;
+  packaging: PackagingVariableCost[];
+};
+
+export type PackagingVariableCost = {
+  supplyId: string;
+  quantity: string;
+  unit: string;
+  cost: string;
 };
 
 export type VariableCostsSuccess = {
@@ -97,6 +105,10 @@ export type VariableCostsSuccess = {
   ingredientsCost: string;
   recipeYield: string;
   unitCost: string;
+  // Decimal.js value used to calculate presentation product costs. It is not
+  // rounded to money decimals, so UI can explain a total without implying the
+  // displayed unit amount was multiplied after rounding.
+  unitCostExact: string;
   presentations: PresentationVariableCost[];
 };
 
@@ -131,6 +143,10 @@ function normalizedUnit(raw: string): NormalizedUnit | undefined {
   return UNITS[raw.trim().toLowerCase()];
 }
 
+function normalizedId(raw: string): string {
+  return raw.trim();
+}
+
 function money(value: Decimal): string {
   return value.toFixed(MONEY_DECIMALS, MONEY_ROUNDING);
 }
@@ -139,23 +155,24 @@ function validateUsage(
   usage: SupplyUsage,
   supplies: Map<string, { price: Decimal; quantity: Decimal; unit: NormalizedUnit }>,
 ): Decimal | VariableCostsFailure {
+  const supplyId = normalizedId(usage.supplyId);
   const quantity = positiveDecimal(usage.quantity);
   if (quantity === undefined) {
-    return failure("INVALID_USAGE_QUANTITY", { supplyId: usage.supplyId });
+    return failure("INVALID_USAGE_QUANTITY", { supplyId });
   }
 
-  const supply = supplies.get(usage.supplyId);
+  const supply = supplies.get(supplyId);
   if (supply === undefined) {
-    return failure("MISSING_SUPPLY", { supplyId: usage.supplyId });
+    return failure("MISSING_SUPPLY", { supplyId });
   }
 
   const unit = normalizedUnit(usage.unit);
   if (unit === undefined) {
-    return failure("UNSUPPORTED_UNIT", { supplyId: usage.supplyId, unit: usage.unit });
+    return failure("UNSUPPORTED_UNIT", { supplyId, unit: usage.unit });
   }
 
   if (unit.family !== supply.unit.family) {
-    return failure("INCOMPATIBLE_UNIT", { supplyId: usage.supplyId });
+    return failure("INCOMPATIBLE_UNIT", { supplyId });
   }
 
   // Price is normalized to the base unit of each family: unit, gram or ml.
@@ -176,19 +193,20 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
 
   const supplies = new Map<string, { price: Decimal; quantity: Decimal; unit: NormalizedUnit }>();
   for (const supply of input.supplies) {
-    if (supply.id.trim() === "") return failure("INVALID_SUPPLY_ID");
-    if (supplies.has(supply.id)) return failure("DUPLICATE_SUPPLY_ID", { supplyId: supply.id });
+    const supplyId = normalizedId(supply.id);
+    if (supplyId === "") return failure("INVALID_SUPPLY_ID");
+    if (supplies.has(supplyId)) return failure("DUPLICATE_SUPPLY_ID", { supplyId });
 
     const price = nonNegativeDecimal(supply.purchasePrice);
-    if (price === undefined) return failure("INVALID_PURCHASE_PRICE", { supplyId: supply.id });
+    if (price === undefined) return failure("INVALID_PURCHASE_PRICE", { supplyId });
 
     const quantity = positiveDecimal(supply.purchaseQuantity);
-    if (quantity === undefined) return failure("INVALID_PURCHASE_QUANTITY", { supplyId: supply.id });
+    if (quantity === undefined) return failure("INVALID_PURCHASE_QUANTITY", { supplyId });
 
     const unit = normalizedUnit(supply.purchaseUnit);
-    if (unit === undefined) return failure("UNSUPPORTED_UNIT", { supplyId: supply.id, unit: supply.purchaseUnit });
+    if (unit === undefined) return failure("UNSUPPORTED_UNIT", { supplyId, unit: supply.purchaseUnit });
 
-    supplies.set(supply.id, { price, quantity, unit });
+    supplies.set(supplyId, { price, quantity, unit });
   }
 
   let ingredientsCost = new Decimal(0);
@@ -205,36 +223,45 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
   const presentations: PresentationVariableCost[] = [];
 
   for (const presentation of input.presentations) {
-    if (presentation.id.trim() === "") return failure("INVALID_PRESENTATION_ID");
-    if (presentationIds.has(presentation.id)) {
-      return failure("DUPLICATE_PRESENTATION_ID", { presentationId: presentation.id });
+    const presentationId = normalizedId(presentation.id);
+    if (presentationId === "") return failure("INVALID_PRESENTATION_ID");
+    if (presentationIds.has(presentationId)) {
+      return failure("DUPLICATE_PRESENTATION_ID", { presentationId });
     }
     if (presentation.name.trim() === "") {
-      return failure("INVALID_PRESENTATION_NAME", { presentationId: presentation.id });
+      return failure("INVALID_PRESENTATION_NAME", { presentationId });
     }
 
     const units = positiveDecimal(presentation.unitsPerPresentation);
     if (units === undefined || !units.isInteger()) {
-      return failure("INVALID_PRESENTATION_UNITS", { presentationId: presentation.id });
+      return failure("INVALID_PRESENTATION_UNITS", { presentationId });
     }
 
     let packagingCost = new Decimal(0);
+    const packagingBreakdown: PackagingVariableCost[] = [];
     for (const packaging of presentation.packaging ?? []) {
       const cost = validateUsage(packaging, supplies);
       if ("ok" in cost) return cost;
       packagingCost = packagingCost.plus(cost);
+      packagingBreakdown.push({
+        supplyId: normalizedId(packaging.supplyId),
+        quantity: positiveDecimal(packaging.quantity)!.toString(),
+        unit: packaging.unit.trim(),
+        cost: money(cost),
+      });
     }
 
     const productCost = exactUnitCost.times(units);
     presentations.push({
-      id: presentation.id,
+      id: presentationId,
       name: presentation.name.trim(),
       unitsPerPresentation: units.toString(),
       productCost: money(productCost),
       packagingCost: money(packagingCost),
       totalCost: money(productCost.plus(packagingCost)),
+      packaging: packagingBreakdown,
     });
-    presentationIds.add(presentation.id);
+    presentationIds.add(presentationId);
   }
 
   return {
@@ -242,6 +269,7 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
     ingredientsCost: money(ingredientsCost),
     recipeYield: yieldQuantity.toString(),
     unitCost: money(exactUnitCost),
+    unitCostExact: exactUnitCost.toString(),
     presentations,
   };
 }
