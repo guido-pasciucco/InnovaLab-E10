@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  index,
   numeric,
   pgTable,
   text,
@@ -28,24 +29,42 @@ import { calculations, scenarios } from "../calculation/table";
 // numeric(14,4) for extra fractional precision.
 // ---------------------------------------------------------------------------
 
-export const businessCostLines = pgTable("business_cost_lines", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  businessId: uuid("business_id")
-    .notNull()
-    .references(() => businesses.id, { onDelete: "cascade" }),
-  concept: text("concept").notNull(),
-  behavior: text("behavior").notNull(),
-  traceability: text("traceability").notNull(),
-  amountPeriod: numeric("amount_period", { precision: 12, scale: 2 }).notNull(),
-  notes: text("notes"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const businessCostLines = pgTable(
+  "business_cost_lines",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    // Month the expense belongs to (#243), as "YYYY-MM". The calculator is
+    // monthly, so this key replaces a full date and avoids timezone drift.
+    // The default backfills rows created before the column existed and keeps
+    // the column NOT NULL; services always send the period explicitly.
+    period: text("period")
+      .notNull()
+      .default(sql`to_char(now(), 'YYYY-MM')`),
+    concept: text("concept").notNull(),
+    behavior: text("behavior").notNull(),
+    traceability: text("traceability").notNull(),
+    amountPeriod: numeric("amount_period", { precision: 12, scale: 2 }).notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    // The period list is always business + month. One index covers both the
+    // service filter and the period aggregate read.
+    index("business_cost_lines_business_period_idx").on(
+      table.businessId,
+      table.period,
+    ),
+  ],
+);
 
 export const calcCostLines = pgTable(
   "calc_cost_lines",

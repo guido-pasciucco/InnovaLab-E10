@@ -1,0 +1,2 @@
+ALTER TABLE "business_cost_lines" ADD COLUMN "period" text DEFAULT to_char(now(), 'YYYY-MM') NOT NULL;--> statement-breakpoint
+CREATE INDEX "business_cost_lines_business_period_idx" ON "business_cost_lines" USING btree ("business_id","period");

@@ -148,6 +148,15 @@ export const ERROR_CATALOG = {
     message: "The scenario price must be greater than 0",
     logLevel: "silent",
   },
+
+  // Cost catalog
+  COST_CATALOG_LINE_NOT_FOUND: {
+    // Same code when the id is missing, not a uuid or belongs to another
+    // owner's business, so a caller cannot tell those cases apart.
+    status: 404,
+    message: "Cost catalog line not found",
+    logLevel: "silent",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;
