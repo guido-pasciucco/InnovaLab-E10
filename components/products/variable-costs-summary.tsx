@@ -11,7 +11,7 @@ type VariableCostsSummaryProps = {
 };
 
 function money(value: string): string {
-  return formatARS(value) ?? "Importe no disponible";
+  return formatARS(value) || "Importe no disponible";
 }
 
 function calculationValue(value: string): string {
@@ -65,7 +65,7 @@ export function VariableCostsSummary({
     >
       <div>
         <p className="text-xs font-semibold tracking-wide text-fg-muted uppercase">Costos variables</p>
-        <h2 id={headingId} className="mt-1 text-xl font-semibold text-fg">
+        <h2 id={headingId} className="mt-1 break-words text-xl font-semibold text-fg">
           {productName}
         </h2>
       </div>
@@ -87,10 +87,10 @@ export function VariableCostsSummary({
             {costs.presentations.map((presentation) => (
               <li
                 key={presentation.id}
-                className="flex items-center justify-between gap-4 rounded-[14px] border border-border-default px-4 py-3"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] border border-border-default px-4 py-3 sm:flex-nowrap sm:gap-4"
               >
-                <span className="font-medium text-fg">{presentation.name}</span>
-                <span aria-label={presentationLabel(presentation)} className="font-semibold text-fg">
+                <span className="min-w-0 break-words font-medium text-fg">{presentation.name}</span>
+                <span aria-label={presentationLabel(presentation)} className="shrink-0 font-semibold text-fg">
                   {money(presentation.totalCost)}
                 </span>
               </li>
@@ -119,7 +119,7 @@ export function VariableCostsSummary({
             </div>
           </dl>
           <p className="mt-2 text-xs text-fg-muted">
-            Se muestran hasta 8 decimales para lectura. El motor conserva mayor precisión para calcular cada presentación.
+            Se muestran hasta 8 decimales para lectura. Este valor no es un importe de cobro: el motor conserva mayor precisión para calcular cada presentación.
           </p>
 
           {costs.presentations.map((presentation) => (
@@ -145,9 +145,23 @@ export function VariableCostsSummary({
                     </div>
                   ))
                 )}
+                {presentation.packaging.length > 0 && (
+                  <>
+                    <div className="flex flex-wrap justify-between gap-2 border-t border-border-default pt-2 sm:flex-nowrap sm:gap-4">
+                      <dt>Subtotal de packaging</dt>
+                      <dd className="shrink-0">{money(presentation.packagingCost)}</dd>
+                    </div>
+                    {presentation.packagingItemsAdjustment !== "0.00" && (
+                      <div className="flex flex-wrap justify-between gap-2 sm:flex-nowrap sm:gap-4">
+                        <dt>Ajuste de redondeo del packaging</dt>
+                        <dd className="shrink-0">{money(presentation.packagingItemsAdjustment)}</dd>
+                      </div>
+                    )}
+                  </>
+                )}
                 {presentation.roundingAdjustment !== "0.00" && (
                   <div className="flex flex-wrap justify-between gap-2 sm:flex-nowrap sm:gap-4">
-                    <dt>Ajuste de redondeo</dt>
+                    <dt>Ajuste de redondeo de la presentación</dt>
                     <dd className="shrink-0">{money(presentation.roundingAdjustment)}</dd>
                   </div>
                 )}

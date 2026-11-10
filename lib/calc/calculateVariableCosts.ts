@@ -93,6 +93,9 @@ export type PresentationVariableCost = {
   unitsPerPresentation: string;
   productCost: string;
   packagingCost: string;
+  // Reconciles rounded packaging lines with their rounded exact subtotal.
+  packagingItemsAdjustment: string;
+  // Reconciles rounded product and packaging subtotals with the rounded total.
   roundingAdjustment: string;
   totalCost: string;
   packaging: PackagingVariableCost[];
@@ -180,7 +183,10 @@ function validateUsage(
   }
 
   // Price is normalized to the base unit of each family: unit, gram or ml.
-  return supply.price.div(supply.quantity.times(supply.unit.factor)).times(quantity.times(unit.factor));
+  // Multiply before dividing: for example 653.54 × 375 ÷ 492 is exactly
+  // 498.125. Dividing first turns it into a repeating decimal approximation
+  // which may otherwise cross a ROUND_HALF_UP half-cent boundary.
+  return supply.price.times(quantity.times(unit.factor)).div(supply.quantity.times(supply.unit.factor));
 }
 
 /**
@@ -244,6 +250,7 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
     }
 
     let packagingCost = new CalculationDecimal(0);
+    let roundedPackagingItemsCost = new CalculationDecimal(0);
     const packagingBreakdown: PackagingVariableCost[] = [];
     for (const packaging of presentation.packaging ?? []) {
       const cost = validateUsage(packaging, supplies);
@@ -255,6 +262,7 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
         unit: packaging.unit.trim(),
         cost: money(cost),
       });
+      roundedPackagingItemsCost = roundedPackagingItemsCost.plus(money(cost));
     }
 
     // Postpone the recipe-yield division until after presentation units are
@@ -266,6 +274,8 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
     const roundedProductCost = money(productCost);
     const roundedPackagingCost = money(packagingCost);
     const roundedTotalCost = money(totalCost);
+    const packagingItemsAdjustmentValue = new CalculationDecimal(roundedPackagingCost)
+      .minus(roundedPackagingItemsCost);
     const roundingAdjustmentValue = new CalculationDecimal(roundedTotalCost)
       .minus(roundedProductCost)
       .minus(roundedPackagingCost);
@@ -275,6 +285,7 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
       unitsPerPresentation: units.toString(),
       productCost: roundedProductCost,
       packagingCost: roundedPackagingCost,
+      packagingItemsAdjustment: packagingItemsAdjustmentValue.isZero() ? "0.00" : money(packagingItemsAdjustmentValue),
       roundingAdjustment: roundingAdjustmentValue.isZero() ? "0.00" : money(roundingAdjustmentValue),
       totalCost: roundedTotalCost,
       packaging: packagingBreakdown,

@@ -6,20 +6,24 @@ import { VariableCostsSummary } from "./variable-costs-summary";
 
 const costs = {
   ok: true as const,
-  ingredientsCost: "1.00",
+  ingredientsCost: "10.00",
   recipeYield: "1",
-  unitCost: "1.00",
+  unitCost: "10.00",
   unitCostCalculationValue: "1e-7",
   presentations: [
     {
       id: "individual",
       name: "Presentación con un nombre muy largo para comprobar el ajuste móvil",
       unitsPerPresentation: "1",
-      productCost: "0.01",
+      productCost: "10.00",
       packagingCost: "0.01",
-      roundingAdjustment: "-0.01",
-      totalCost: "0.01",
-      packaging: [{ supplyId: "7c12dafa-0101-4bde-9ee0-91ed4b2db4b8", quantity: "1", unit: "unidad", cost: "0.01" }],
+      packagingItemsAdjustment: "-0.01",
+      roundingAdjustment: "0.00",
+      totalCost: "10.01",
+      packaging: [
+        { supplyId: "7c12dafa-0101-4bde-9ee0-91ed4b2db4b8", quantity: "1", unit: "unidad", cost: "0.01" },
+        { supplyId: "7c12dafa-0101-4bde-9ee0-91ed4b2db4b9", quantity: "1", unit: "unidad", cost: "0.01" },
+      ],
     },
   ],
 };
@@ -36,8 +40,10 @@ describe("VariableCostsSummary", () => {
   it("shows the engine reconciliation instead of silently changing a rounded component", () => {
     const html = render();
 
-    expect(html).toContain("Ajuste de redondeo");
+    expect(html).toContain("Ajuste de redondeo del packaging");
     expect(html).toContain("$ -0,01");
+    expect(html).toContain("Subtotal de packaging");
+    expect(html).toContain("$ 10,01");
     expect(html).toContain("Costo variable final");
   });
 
@@ -49,6 +55,7 @@ describe("VariableCostsSummary", () => {
     expect(html).toContain("1 unidad elaborada");
     expect(html).toContain("Insumo de packaging");
     expect(html).not.toContain("7c12dafa-0101-4bde-9ee0-91ed4b2db4b8");
+    expect(html).not.toContain("7c12dafa-0101-4bde-9ee0-91ed4b2db4b9");
   });
 
   it("labels known packaging without exposing its identifier", () => {
@@ -62,6 +69,12 @@ describe("VariableCostsSummary", () => {
     const html = render({ costs: { ...costs, presentations: [{ ...costs.presentations[0]!, packaging: [] }] } });
 
     expect(html).toContain("Sin packaging adicional");
+  });
+
+  it("does not turn an unavailable formatted amount into zero", () => {
+    const html = render({ costs: { ...costs, unitCost: "not-a-money-value" } });
+
+    expect(html).toContain("Importe no disponible");
   });
 
   it("generates a distinct heading id for each instance", () => {

@@ -43,6 +43,7 @@ describe("calculateVariableCosts", () => {
           unitsPerPresentation: "6",
           productCost: "6000.00",
           packagingCost: "500.00",
+          packagingItemsAdjustment: "0.00",
           roundingAdjustment: "0.00",
           totalCost: "6500.00",
           packaging: [
@@ -85,7 +86,7 @@ describe("calculateVariableCosts", () => {
       ok: true,
       unitCost: "0.33",
       unitCostCalculationValue: expect.stringMatching(/^0\.33333333333333333333/),
-      presentations: [{ productCost: "1.00", packagingCost: "0.00", roundingAdjustment: "0.00", totalCost: "1.00" }],
+      presentations: [{ productCost: "1.00", packagingCost: "0.00", packagingItemsAdjustment: "0.00", roundingAdjustment: "0.00", totalCost: "1.00" }],
     });
   });
 
@@ -141,7 +142,7 @@ describe("calculateVariableCosts", () => {
 
     expect(result).toMatchObject({
       ok: true,
-      presentations: [{ productCost: "6.00", packagingCost: "0.01", roundingAdjustment: "0.00", totalCost: "6.01" }],
+      presentations: [{ productCost: "6.00", packagingCost: "0.01", packagingItemsAdjustment: "0.00", roundingAdjustment: "0.00", totalCost: "6.01" }],
     });
   });
 
@@ -168,6 +169,55 @@ describe("calculateVariableCosts", () => {
 
     expect(expected).toBe("271.92");
     expect(result).toMatchObject({ ok: true, presentations: [{ totalCost: expected }] });
+  });
+
+  it.each([
+    ["653.54", "492", "375", "498.13"],
+    ["4920.54", "164", "287", "8610.95"],
+  ])("preserves an exact half-cent when purchase quantity is divided after usage: %s", (purchasePrice, purchaseQuantity, usageQuantity, expected) => {
+    const result = calculateVariableCosts({
+      supplies: [{ id: "ingredient", purchasePrice, purchaseQuantity, purchaseUnit: "unidad" }],
+      recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "ingredient", quantity: usageQuantity, unit: "unidad" }] },
+      presentations: [{ id: "individual", name: "Individual", unitsPerPresentation: "1" }],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      ingredientsCost: expected,
+      presentations: [{ productCost: expected, totalCost: expected }],
+    });
+  });
+
+  it("reconciles individually rounded packaging with its exact subtotal and total", () => {
+    const result = calculateVariableCosts({
+      supplies: [
+        { id: "ingredient", purchasePrice: "10", purchaseQuantity: "1", purchaseUnit: "unidad" },
+        { id: "a", purchasePrice: "0.005", purchaseQuantity: "1", purchaseUnit: "unidad" },
+        { id: "b", purchasePrice: "0.005", purchaseQuantity: "1", purchaseUnit: "unidad" },
+      ],
+      recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "ingredient", quantity: "1", unit: "unidad" }] },
+      presentations: [{
+        id: "single",
+        name: "Individual",
+        unitsPerPresentation: "1",
+        packaging: [
+          { supplyId: "a", quantity: "1", unit: "unidad" },
+          { supplyId: "b", quantity: "1", unit: "unidad" },
+        ],
+      }],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      presentations: [{
+        productCost: "10.00",
+        packagingCost: "0.01",
+        packagingItemsAdjustment: "-0.01",
+        roundingAdjustment: "0.00",
+        totalCost: "10.01",
+        packaging: [{ cost: "0.01" }, { cost: "0.01" }],
+      }],
+    });
   });
 
   it("keeps exact normalized ingredient and packaging values through nested calculations", () => {
