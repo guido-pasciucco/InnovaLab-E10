@@ -85,7 +85,7 @@ describe("calculateVariableCosts", () => {
     expect(result).toMatchObject({
       ok: true,
       unitCost: "0.33",
-      unitCostCalculationValue: expect.stringMatching(/^0\.33333333333333333333/),
+      unitCostCalculationValue: "1/3",
       presentations: [{ productCost: "1.00", packagingCost: "0.00", packagingItemsAdjustment: "0.00", roundingAdjustment: "0.00", totalCost: "1.00" }],
     });
   });
@@ -107,12 +107,13 @@ describe("calculateVariableCosts", () => {
       ...validInput,
       presentations: [
         { id: "individual", name: "Individual", unitsPerPresentation: "1" },
+        { id: "pack-4", name: "Pack x4", unitsPerPresentation: "4" },
         validInput.presentations[0]!,
-        { id: "pack-10", name: "Pack x10", unitsPerPresentation: "10" },
+        { id: "pack-12", name: "Pack x12", unitsPerPresentation: "12" },
       ],
     });
 
-    expect(result).toMatchObject({ ok: true, presentations: [{ id: "individual" }, { id: "box-6" }, { id: "pack-10" }] });
+    expect(result).toMatchObject({ ok: true, presentations: [{ id: "individual" }, { id: "pack-4" }, { id: "box-6" }, { id: "pack-12" }] });
   });
 
   it("rounds returned money with ROUND_HALF_UP", () => {
@@ -123,6 +124,35 @@ describe("calculateVariableCosts", () => {
     });
 
     expect(result).toMatchObject({ ok: true, ingredientsCost: "0.01", unitCost: "0.01" });
+  });
+
+  it.each([
+    ["1/300 + 1/1200 + 1/1200", "300", "0.01"],
+    ["1/3 + 1/1200 + 1/1200", "3", "0.34"],
+  ])("adds exact recurring costs before rounding: %s", (_description, firstQuantity, expected) => {
+    const result = calculateVariableCosts({
+      supplies: [
+        { id: "first", purchasePrice: "1", purchaseQuantity: firstQuantity, purchaseUnit: "unidad" },
+        { id: "second", purchasePrice: "1", purchaseQuantity: "1200", purchaseUnit: "unidad" },
+        { id: "third", purchasePrice: "1", purchaseQuantity: "1200", purchaseUnit: "unidad" },
+      ],
+      recipe: {
+        yieldQuantity: "1",
+        ingredients: [
+          { supplyId: "first", quantity: "1", unit: "unidad" },
+          { supplyId: "second", quantity: "1", unit: "unidad" },
+          { supplyId: "third", quantity: "1", unit: "unidad" },
+        ],
+      },
+      presentations: [{ id: "individual", name: "Individual", unitsPerPresentation: "1" }],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      ingredientsCost: expected,
+      unitCost: expected,
+      presentations: [{ productCost: expected, totalCost: expected }],
+    });
   });
 
   it("preserves a recurring division until the final ROUND_HALF_UP total", () => {
@@ -216,6 +246,39 @@ describe("calculateVariableCosts", () => {
         roundingAdjustment: "0.00",
         totalCost: "10.01",
         packaging: [{ cost: "0.01" }, { cost: "0.01" }],
+      }],
+    });
+  });
+
+  it.each([
+    ["positive packaging adjustment", "0.004", "0.004", "0.01", "0.01", "0.00", "0.01"],
+    ["positive presentation adjustment", "0.004", "0.004", "0.00", "0.00", "0.01", "0.01"],
+    ["negative presentation adjustment", "0.005", "0.005", "0.01", "0.00", "-0.01", "0.01"],
+  ])("keeps rounded adjustments reconciled for %s", (_name, ingredientPrice, packagingPrice, expectedPackaging, expectedPackagingAdjustment, expectedTotalAdjustment, expectedTotal) => {
+    const packaging = expectedPackagingAdjustment === "0.01"
+      ? [
+          { id: "a", purchasePrice: packagingPrice, purchaseQuantity: "1", purchaseUnit: "unidad" },
+          { id: "b", purchasePrice: packagingPrice, purchaseQuantity: "1", purchaseUnit: "unidad" },
+        ]
+      : [{ id: "a", purchasePrice: packagingPrice, purchaseQuantity: "1", purchaseUnit: "unidad" }];
+    const result = calculateVariableCosts({
+      supplies: [{ id: "ingredient", purchasePrice: ingredientPrice, purchaseQuantity: "1", purchaseUnit: "unidad" }, ...packaging],
+      recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "ingredient", quantity: "1", unit: "unidad" }] },
+      presentations: [{
+        id: "individual",
+        name: "Individual",
+        unitsPerPresentation: "1",
+        packaging: packaging.map(({ id }) => ({ supplyId: id, quantity: "1", unit: "unidad" })),
+      }],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      presentations: [{
+        packagingCost: expectedPackaging,
+        packagingItemsAdjustment: expectedPackagingAdjustment,
+        roundingAdjustment: expectedTotalAdjustment,
+        totalCost: expectedTotal,
       }],
     });
   });

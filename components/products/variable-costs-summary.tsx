@@ -15,6 +15,8 @@ function money(value: string): string {
 }
 
 function calculationValue(value: string): string {
+  if (/^-?\d+\/\d+$/.test(value)) return value;
+
   let fixed: string;
   let decimal: Decimal;
   try {
@@ -114,12 +116,12 @@ export function VariableCostsSummary({
               <dd className="font-semibold">{unitLabel(costs.recipeYield)}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt>Valor interno usado por unidad</dt>
+              <dt>Relación exacta usada por unidad</dt>
               <dd className="font-semibold">{calculationValue(costs.unitCostCalculationValue)}</dd>
             </div>
           </dl>
           <p className="mt-2 text-xs text-fg-muted">
-            Se muestran hasta 8 decimales para lectura. Este valor no es un importe de cobro: el motor conserva mayor precisión para calcular cada presentación.
+            Esta relación no es un importe de cobro: el motor la usa sin aproximaciones para calcular cada presentación.
           </p>
 
           {costs.presentations.map((presentation) => (

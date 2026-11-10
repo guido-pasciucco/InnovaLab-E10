@@ -9,7 +9,7 @@ const costs = {
   ingredientsCost: "10.00",
   recipeYield: "1",
   unitCost: "10.00",
-  unitCostCalculationValue: "1e-7",
+  unitCostCalculationValue: "1/10000000",
   presentations: [
     {
       id: "individual",
@@ -50,8 +50,8 @@ describe("VariableCostsSummary", () => {
   it("uses readable calculation precision, singular units and no raw supply identifier", () => {
     const html = render();
 
-    expect(html).toContain("$ 0,0000001");
-    expect(html).not.toContain("1e-7");
+    expect(html).toContain("1/10000000");
+    expect(html).not.toContain("$ 1e-7,00");
     expect(html).toContain("1 unidad elaborada");
     expect(html).toContain("Insumo de packaging");
     expect(html).not.toContain("7c12dafa-0101-4bde-9ee0-91ed4b2db4b8");
