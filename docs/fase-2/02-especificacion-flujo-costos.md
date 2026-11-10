@@ -62,7 +62,7 @@ El orden de habilitación es bloqueante: no se puede cargar indirectos sin la li
 1. El usuario ingresa al sistema (login existente).
 2. Desde el dashboard entra a **Insumos**.
 3. Da de alta cada insumo con su precio de compra (ej. harina, aceite, sal). Puede ver, corregir y borrar insumos.
-4. La lista queda guardada y es **compartida por todos los productos** del catálogo.
+4. La lista queda guardada y es **compartida por todos los productos** del catálogo: con estos insumos se arman las recetas del bloque 2.
 5. Cuando termina, avanza a **Productos**.
 
 ### Dónde está el usuario
