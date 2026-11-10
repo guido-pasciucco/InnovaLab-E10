@@ -7,11 +7,13 @@ El motor puro `lib/calc/calculateVariableCosts.ts` calcula dos resultados del mi
 
 El catálogo de insumos es único: ingredientes y packaging se referencian por el mismo identificador. Una receta principal, con su rendimiento, se reutiliza para cualquier cantidad de presentaciones comerciales asociadas al producto; no se duplica.
 
-Los valores entran como strings decimales y se calculan con `decimal.js`. Se redondea una sola vez al devolver cada importe, a dos decimales con `ROUND_HALF_UP`. La multiplicación de una presentación usa el valor exacto interno, para evitar que el redondeo del costo unitario acumule diferencias.
+Los valores entran como strings decimales y se calculan con un contexto local de `decimal.js` de 80 dígitos. Se redondea una sola vez al devolver cada importe, a dos decimales con `ROUND_HALF_UP`. Para una presentación el motor multiplica el costo de ingredientes por sus unidades antes de dividir por el rendimiento; así evita que una división periódica como `1 / 3` pierda los centavos al multiplicarse después.
+
+La precisión finita no demuestra exactitud absoluta para entradas decimales arbitrarias: limita el error de divisiones no terminantes a un contexto alto y el único importe autoritativo es el total retornado por el motor. La vista muestra por separado los componentes redondeados y, si su suma no coincide con el total, un ajuste de redondeo explícito. No reasigna silenciosamente esa diferencia a ingredientes ni packaging.
 
 El motor normaliza `unidad`, `g`/`kg` y `ml`/`l`. Normaliza espacios de los identificadores antes de comparar referencias. Rechaza unidades incompatibles, cantidades o rendimientos no positivos, insumos inexistentes y presentaciones sin una cantidad entera positiva. No devuelve un costo si falta un dato indispensable.
 
-La vista reutilizable `components/products/variable-costs-summary.tsx` recibe el resultado exitoso del motor, sin recalcular importes. Distingue costo de elaborar una unidad de costo de vender una presentación y expone el detalle de la receta, el valor decimal usado antes de redondear, las unidades incluidas y cada insumo de packaging. El total del motor es autoritativo.
+La vista reutilizable `components/products/variable-costs-summary.tsx` recibe el resultado exitoso del motor, sin recalcular importes. Distingue costo de elaborar una unidad de costo de vender una presentación y expone el detalle de la receta, el valor interno usado antes de redondear (acotado a ocho decimales para lectura), las unidades incluidas y cada insumo de packaging. El total del motor es autoritativo. Quien la integra debe resolver el estado incompleto o el error `VariableCostsFailure`; el componente recibe únicamente `VariableCostsSuccess`.
 
 ## Límites de esta primera entrega
 

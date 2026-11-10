@@ -1,3 +1,6 @@
+import { useId } from "react";
+import Decimal from "decimal.js";
+
 import type { PresentationVariableCost, VariableCostsSuccess } from "@/lib/calc/calculateVariableCosts";
 import { formatARS } from "@/lib/money/format";
 
@@ -8,13 +11,34 @@ type VariableCostsSummaryProps = {
 };
 
 function money(value: string): string {
-  return formatARS(value) || "$ 0,00";
+  return formatARS(value) ?? "Importe no disponible";
 }
 
-function exactMoney(value: string): string {
-  const [integer, fraction] = value.split(".");
-  const grouped = (integer ?? "0").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `$ ${grouped}${fraction === undefined ? ",00" : `,${fraction}`}`;
+function calculationValue(value: string): string {
+  let fixed: string;
+  let decimal: Decimal;
+  try {
+    decimal = new Decimal(value);
+    if (!decimal.isFinite()) return "Valor no disponible";
+    const decimals = Math.min(Math.max(decimal.decimalPlaces(), 2), 8);
+    fixed = decimal.toFixed(decimals);
+  } catch {
+    return "Valor no disponible";
+  }
+
+  const [integer = "0", fraction = ""] = fixed.split(".");
+  const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const displayedFraction = fraction.padEnd(2, "0");
+  const suffix = decimal.decimalPlaces() > 8 ? "…" : "";
+  return `$ ${grouped},${displayedFraction}${suffix}`;
+}
+
+function unitLabel(quantity: string): string {
+  return `${quantity} ${quantity === "1" ? "unidad" : "unidades"}`;
+}
+
+function madeUnitLabel(quantity: string): string {
+  return `${unitLabel(quantity)} ${quantity === "1" ? "elaborada" : "elaboradas"}`;
 }
 
 function presentationLabel(presentation: PresentationVariableCost): string {
@@ -32,14 +56,16 @@ export function VariableCostsSummary({
   costs,
   supplyNames = {},
 }: VariableCostsSummaryProps) {
+  const headingId = useId();
+
   return (
     <section
-      aria-labelledby="variable-costs-heading"
+      aria-labelledby={headingId}
       className="rounded-[24px] border border-border-default bg-surface p-5 shadow-sm"
     >
       <div>
         <p className="text-xs font-semibold tracking-wide text-fg-muted uppercase">Costos variables</p>
-        <h2 id="variable-costs-heading" className="mt-1 text-xl font-semibold text-fg">
+        <h2 id={headingId} className="mt-1 text-xl font-semibold text-fg">
           {productName}
         </h2>
       </div>
@@ -48,7 +74,7 @@ export function VariableCostsSummary({
         <p className="text-sm font-semibold text-fg">Costo de elaborar una unidad</p>
         <p className="mt-2 text-2xl font-bold text-fg">{money(costs.unitCost)}</p>
         <p className="mt-2 text-sm text-fg-muted">
-          Ingredientes de la receta: {money(costs.ingredientsCost)} ÷ rendimiento: {costs.recipeYield} unidades.
+          Ingredientes de la receta: {money(costs.ingredientsCost)} ÷ rendimiento: {unitLabel(costs.recipeYield)}.
         </p>
       </div>
 
@@ -85,40 +111,49 @@ export function VariableCostsSummary({
             </div>
             <div className="flex justify-between gap-4">
               <dt>Rendimiento</dt>
-              <dd className="font-semibold">{costs.recipeYield} unidades</dd>
+              <dd className="font-semibold">{unitLabel(costs.recipeYield)}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt>Costo exacto usado por unidad</dt>
-              <dd className="font-semibold">{exactMoney(costs.unitCostExact)}</dd>
+              <dt>Valor interno usado por unidad</dt>
+              <dd className="font-semibold">{calculationValue(costs.unitCostCalculationValue)}</dd>
             </div>
           </dl>
+          <p className="mt-2 text-xs text-fg-muted">
+            Se muestran hasta 8 decimales para lectura. El motor conserva mayor precisión para calcular cada presentación.
+          </p>
 
           {costs.presentations.map((presentation) => (
-            <article key={presentation.id} className="mt-5 border-t border-border-default pt-4">
+            <article key={presentation.id} className="mt-5 min-w-0 border-t border-border-default pt-4">
               <h4 className="font-semibold text-fg">{presentation.name}</h4>
               <dl className="mt-2 grid gap-2">
-                <div className="flex justify-between gap-4">
-                  <dt>{presentation.unitsPerPresentation} unidades elaboradas</dt>
-                  <dd>{money(presentation.productCost)}</dd>
+                <div className="flex flex-wrap justify-between gap-2 sm:flex-nowrap sm:gap-4">
+                  <dt className="min-w-0 break-words">{madeUnitLabel(presentation.unitsPerPresentation)}</dt>
+                  <dd className="shrink-0">{money(presentation.productCost)}</dd>
                 </div>
                 {presentation.packaging.length === 0 ? (
-                  <div className="flex justify-between gap-4">
+                  <div className="flex flex-wrap justify-between gap-2 sm:flex-nowrap sm:gap-4">
                     <dt>Packaging</dt>
                     <dd>Sin packaging adicional</dd>
                   </div>
                 ) : (
                   presentation.packaging.map((packaging, index) => (
-                    <div key={`${presentation.id}-${packaging.supplyId}-${index}`} className="flex justify-between gap-4">
-                      <dt>
-                        {supplyNames[packaging.supplyId] ?? packaging.supplyId}: {packaging.quantity} {packaging.unit}
+                    <div key={`${presentation.id}-${packaging.supplyId}-${index}`} className="flex flex-wrap justify-between gap-2 sm:flex-nowrap sm:gap-4">
+                      <dt className="min-w-0 break-words">
+                        {supplyNames[packaging.supplyId] ?? "Insumo de packaging"}: {packaging.quantity} {packaging.unit}
                       </dt>
-                      <dd>{money(packaging.cost)}</dd>
+                      <dd className="shrink-0">{money(packaging.cost)}</dd>
                     </div>
                   ))
                 )}
-                <div className="flex justify-between gap-4 border-t border-border-default pt-2 font-semibold">
+                {presentation.roundingAdjustment !== "0.00" && (
+                  <div className="flex flex-wrap justify-between gap-2 sm:flex-nowrap sm:gap-4">
+                    <dt>Ajuste de redondeo</dt>
+                    <dd className="shrink-0">{money(presentation.roundingAdjustment)}</dd>
+                  </div>
+                )}
+                <div className="flex flex-wrap justify-between gap-2 border-t border-border-default pt-2 font-semibold sm:flex-nowrap sm:gap-4">
                   <dt>Costo variable final</dt>
-                  <dd>{money(presentation.totalCost)}</dd>
+                  <dd className="shrink-0">{money(presentation.totalCost)}</dd>
                 </div>
               </dl>
             </article>

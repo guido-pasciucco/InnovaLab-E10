@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import Decimal from "decimal.js";
 
 import { calculateVariableCosts, type VariableCostsInput } from "./calculateVariableCosts";
 
@@ -34,7 +35,7 @@ describe("calculateVariableCosts", () => {
       ingredientsCost: "24000.00",
       recipeYield: "24",
       unitCost: "1000.00",
-      unitCostExact: "1000",
+      unitCostCalculationValue: "1000",
       presentations: [
         {
           id: "box-6",
@@ -42,6 +43,7 @@ describe("calculateVariableCosts", () => {
           unitsPerPresentation: "6",
           productCost: "6000.00",
           packagingCost: "500.00",
+          roundingAdjustment: "0.00",
           totalCost: "6500.00",
           packaging: [
             { supplyId: "box", quantity: "1", unit: "unidad", cost: "450.00" },
@@ -82,8 +84,8 @@ describe("calculateVariableCosts", () => {
     expect(result).toMatchObject({
       ok: true,
       unitCost: "0.33",
-      unitCostExact: "0.33333333333333333333",
-      presentations: [{ productCost: "1.00", packagingCost: "0.00", totalCost: "1.00" }],
+      unitCostCalculationValue: expect.stringMatching(/^0\.33333333333333333333/),
+      presentations: [{ productCost: "1.00", packagingCost: "0.00", roundingAdjustment: "0.00", totalCost: "1.00" }],
     });
   });
 
@@ -122,6 +124,85 @@ describe("calculateVariableCosts", () => {
     expect(result).toMatchObject({ ok: true, ingredientsCost: "0.01", unitCost: "0.01" });
   });
 
+  it("preserves a recurring division until the final ROUND_HALF_UP total", () => {
+    const result = calculateVariableCosts({
+      supplies: [
+        { id: "ingredient", purchasePrice: "1", purchaseQuantity: "1", purchaseUnit: "unidad" },
+        { id: "package", purchasePrice: "1", purchaseQuantity: "200", purchaseUnit: "unidad" },
+      ],
+      recipe: { yieldQuantity: "3", ingredients: [{ supplyId: "ingredient", quantity: "1", unit: "unidad" }] },
+      presentations: [{
+        id: "pack-18",
+        name: "Pack x18",
+        unitsPerPresentation: "18",
+        packaging: [{ supplyId: "package", quantity: "1", unit: "unidad" }],
+      }],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      presentations: [{ productCost: "6.00", packagingCost: "0.01", roundingAdjustment: "0.00", totalCost: "6.01" }],
+    });
+  });
+
+  it("matches an independent high-precision oracle for recurring ingredients and packaging", () => {
+    const oracleDecimal = Decimal.clone({ precision: 120, rounding: Decimal.ROUND_HALF_UP });
+    const expected = new oracleDecimal("116.13")
+      .times("21")
+      .div("9")
+      .plus("0.945")
+      .toFixed(2, oracleDecimal.ROUND_HALF_UP);
+    const result = calculateVariableCosts({
+      supplies: [
+        { id: "ingredient", purchasePrice: "116.13", purchaseQuantity: "1", purchaseUnit: "unidad" },
+        { id: "package", purchasePrice: "0.945", purchaseQuantity: "1", purchaseUnit: "unidad" },
+      ],
+      recipe: { yieldQuantity: "9", ingredients: [{ supplyId: "ingredient", quantity: "1", unit: "unidad" }] },
+      presentations: [{
+        id: "pack-21",
+        name: "Pack x21",
+        unitsPerPresentation: "21",
+        packaging: [{ supplyId: "package", quantity: "1", unit: "unidad" }],
+      }],
+    });
+
+    expect(expected).toBe("271.92");
+    expect(result).toMatchObject({ ok: true, presentations: [{ totalCost: expected }] });
+  });
+
+  it("keeps exact normalized ingredient and packaging values through nested calculations", () => {
+    const result = calculateVariableCosts({
+      supplies: [
+        { id: "flour", purchasePrice: "12", purchaseQuantity: "1", purchaseUnit: "kg" },
+        { id: "syrup", purchasePrice: "3", purchaseQuantity: "2", purchaseUnit: "l" },
+        { id: "box", purchasePrice: "1", purchaseQuantity: "3", purchaseUnit: "unidad" },
+        { id: "label", purchasePrice: "1", purchaseQuantity: "20", purchaseUnit: "unidad" },
+      ],
+      recipe: {
+        yieldQuantity: "3",
+        ingredients: [
+          { supplyId: "flour", quantity: "250", unit: "g" },
+          { supplyId: "syrup", quantity: "125", unit: "ml" },
+        ],
+      },
+      presentations: [{
+        id: "pack-2",
+        name: "Pack x2",
+        unitsPerPresentation: "2",
+        packaging: [
+          { supplyId: "box", quantity: "1", unit: "unidad" },
+          { supplyId: "label", quantity: "2", unit: "unidad" },
+        ],
+      }],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      ingredientsCost: "3.19",
+      presentations: [{ productCost: "2.13", packagingCost: "0.43", totalCost: "2.56" }],
+    });
+  });
+
   it("uses normalized identifiers without mutating the caller input", () => {
     const input: VariableCostsInput = {
       ...validInput,
@@ -151,8 +232,11 @@ describe("calculateVariableCosts", () => {
     ["INVALID_SUPPLY_ID", { ...validInput, supplies: [{ ...validInput.supplies[0]!, id: " " }] }],
     ["DUPLICATE_SUPPLY_ID", { ...validInput, supplies: [validInput.supplies[0]!, { ...validInput.supplies[1]!, id: " flour " }] }],
     ["MISSING_SUPPLY", { ...validInput, recipe: { ...validInput.recipe, ingredients: [{ supplyId: "missing", quantity: "1", unit: "unidad" }] } }],
+    ["UNSUPPORTED_UNIT", { ...validInput, supplies: [{ ...validInput.supplies[0]!, purchaseUnit: "tonelada" }] }],
     ["UNSUPPORTED_UNIT", { ...validInput, recipe: { ...validInput.recipe, ingredients: [{ supplyId: "flour", quantity: "1", unit: "tonelada" }] } }],
     ["INCOMPATIBLE_UNIT", { ...validInput, recipe: { ...validInput.recipe, ingredients: [{ supplyId: "flour", quantity: "1", unit: "ml" }] } }],
+    ["INVALID_PRESENTATION_UNITS", { ...validInput, presentations: [{ id: "bad", name: "Bad", unitsPerPresentation: "0" }] }],
+    ["INVALID_PRESENTATION_UNITS", { ...validInput, presentations: [{ id: "bad", name: "Bad", unitsPerPresentation: "-1" }] }],
     ["INVALID_PRESENTATION_UNITS", { ...validInput, presentations: [{ id: "bad", name: "Bad", unitsPerPresentation: "1.5" }] }],
     ["INVALID_PRESENTATION_ID", { ...validInput, presentations: [{ id: " ", name: "Bad", unitsPerPresentation: "1" }] }],
     ["DUPLICATE_PRESENTATION_ID", { ...validInput, presentations: [{ id: "pack", name: "One", unitsPerPresentation: "1" }, { id: " pack ", name: "Two", unitsPerPresentation: "2" }] }],

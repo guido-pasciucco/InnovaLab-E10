@@ -8,8 +8,12 @@ import Decimal from "decimal.js";
 // throughout the calculation and are rounded only when returned for display or
 // persistence, with ROUND_HALF_UP to two decimal places.
 
+const CalculationDecimal = Decimal.clone({
+  precision: 80,
+  rounding: Decimal.ROUND_HALF_UP,
+});
 const MONEY_DECIMALS = 2;
-const MONEY_ROUNDING = Decimal.ROUND_HALF_UP;
+const MONEY_ROUNDING = CalculationDecimal.ROUND_HALF_UP;
 
 type UnitFamily = "count" | "mass" | "volume";
 
@@ -19,15 +23,15 @@ type NormalizedUnit = {
 };
 
 const UNITS: Record<string, NormalizedUnit> = {
-  unidad: { family: "count", factor: new Decimal(1) },
-  unidades: { family: "count", factor: new Decimal(1) },
-  ud: { family: "count", factor: new Decimal(1) },
-  uds: { family: "count", factor: new Decimal(1) },
-  g: { family: "mass", factor: new Decimal(1) },
-  gr: { family: "mass", factor: new Decimal(1) },
-  kg: { family: "mass", factor: new Decimal(1000) },
-  ml: { family: "volume", factor: new Decimal(1) },
-  l: { family: "volume", factor: new Decimal(1000) },
+  unidad: { family: "count", factor: new CalculationDecimal(1) },
+  unidades: { family: "count", factor: new CalculationDecimal(1) },
+  ud: { family: "count", factor: new CalculationDecimal(1) },
+  uds: { family: "count", factor: new CalculationDecimal(1) },
+  g: { family: "mass", factor: new CalculationDecimal(1) },
+  gr: { family: "mass", factor: new CalculationDecimal(1) },
+  kg: { family: "mass", factor: new CalculationDecimal(1000) },
+  ml: { family: "volume", factor: new CalculationDecimal(1) },
+  l: { family: "volume", factor: new CalculationDecimal(1000) },
 };
 
 export type SupplyPurchase = {
@@ -89,6 +93,7 @@ export type PresentationVariableCost = {
   unitsPerPresentation: string;
   productCost: string;
   packagingCost: string;
+  roundingAdjustment: string;
   totalCost: string;
   packaging: PackagingVariableCost[];
 };
@@ -106,9 +111,8 @@ export type VariableCostsSuccess = {
   recipeYield: string;
   unitCost: string;
   // Decimal.js value used to calculate presentation product costs. It is not
-  // rounded to money decimals, so UI can explain a total without implying the
-  // displayed unit amount was multiplied after rounding.
-  unitCostExact: string;
+  // a money amount and is intentionally not rounded to two decimals.
+  unitCostCalculationValue: string;
   presentations: PresentationVariableCost[];
 };
 
@@ -123,7 +127,7 @@ function failure(
 
 function positiveDecimal(raw: string): Decimal | undefined {
   try {
-    const value = new Decimal(raw.trim());
+    const value = new CalculationDecimal(raw.trim());
     return value.isFinite() && value.gt(0) ? value : undefined;
   } catch {
     return undefined;
@@ -132,7 +136,7 @@ function positiveDecimal(raw: string): Decimal | undefined {
 
 function nonNegativeDecimal(raw: string): Decimal | undefined {
   try {
-    const value = new Decimal(raw.trim());
+    const value = new CalculationDecimal(raw.trim());
     return value.isFinite() && value.gte(0) ? value : undefined;
   } catch {
     return undefined;
@@ -209,16 +213,18 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
     supplies.set(supplyId, { price, quantity, unit });
   }
 
-  let ingredientsCost = new Decimal(0);
+  let ingredientsCost = new CalculationDecimal(0);
   for (const ingredient of input.recipe.ingredients) {
     const cost = validateUsage(ingredient, supplies);
     if ("ok" in cost) return cost;
     ingredientsCost = ingredientsCost.plus(cost);
   }
 
-  // Keep this unrounded until each output leaves the engine. Multiplying a
-  // displayed $0.33 unit cost by three would otherwise lose a cent.
-  const exactUnitCost = ingredientsCost.div(yieldQuantity);
+  // This value explains the calculation, but it is never multiplied again:
+  // presentation product cost multiplies before dividing by the recipe yield.
+  // With 1 / 3 x 18 this preserves 6 before rounding instead of carrying a
+  // repeating-decimal approximation into the final total.
+  const unitCostCalculationValue = ingredientsCost.div(yieldQuantity);
   const presentationIds = new Set<string>();
   const presentations: PresentationVariableCost[] = [];
 
@@ -237,7 +243,7 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
       return failure("INVALID_PRESENTATION_UNITS", { presentationId });
     }
 
-    let packagingCost = new Decimal(0);
+    let packagingCost = new CalculationDecimal(0);
     const packagingBreakdown: PackagingVariableCost[] = [];
     for (const packaging of presentation.packaging ?? []) {
       const cost = validateUsage(packaging, supplies);
@@ -251,14 +257,26 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
       });
     }
 
-    const productCost = exactUnitCost.times(units);
+    // Postpone the recipe-yield division until after presentation units are
+    // applied. CalculationDecimal's local precision also protects divisions
+    // that cannot terminate in decimal notation. It cannot prove absolute
+    // exactness for arbitrary inputs beyond its configured precision.
+    const productCost = ingredientsCost.times(units).div(yieldQuantity);
+    const totalCost = productCost.plus(packagingCost);
+    const roundedProductCost = money(productCost);
+    const roundedPackagingCost = money(packagingCost);
+    const roundedTotalCost = money(totalCost);
+    const roundingAdjustmentValue = new CalculationDecimal(roundedTotalCost)
+      .minus(roundedProductCost)
+      .minus(roundedPackagingCost);
     presentations.push({
       id: presentationId,
       name: presentation.name.trim(),
       unitsPerPresentation: units.toString(),
-      productCost: money(productCost),
-      packagingCost: money(packagingCost),
-      totalCost: money(productCost.plus(packagingCost)),
+      productCost: roundedProductCost,
+      packagingCost: roundedPackagingCost,
+      roundingAdjustment: roundingAdjustmentValue.isZero() ? "0.00" : money(roundingAdjustmentValue),
+      totalCost: roundedTotalCost,
       packaging: packagingBreakdown,
     });
     presentationIds.add(presentationId);
@@ -268,8 +286,8 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
     ok: true,
     ingredientsCost: money(ingredientsCost),
     recipeYield: yieldQuantity.toString(),
-    unitCost: money(exactUnitCost),
-    unitCostExact: exactUnitCost.toString(),
+    unitCost: money(unitCostCalculationValue),
+    unitCostCalculationValue: unitCostCalculationValue.toString(),
     presentations,
   };
 }
