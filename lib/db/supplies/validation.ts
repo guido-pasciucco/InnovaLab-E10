@@ -1,10 +1,15 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-import { moneyString } from "../formats";
+import { moneyString, quantityString } from "../formats";
 import {
-  supplyNameField,
+  conversionFactorField,
+  minimumUnitField,
   purchasePriceField,
+  purchaseQuantityField,
+  purchaseUnitField,
+  supplyKindField,
+  supplyNameField,
 } from "@/lib/schemas/supplies/fields";
 import { supplies } from "./table";
 
@@ -18,25 +23,32 @@ import { supplies } from "./table";
 // --- Persisted rows: mirror exactly what comes back from the database. ---
 
 export const supplyRowSchema = createSelectSchema(supplies, {
+  kind: supplyKindField,
   purchasePrice: moneyString,
+  purchaseQuantity: quantityString,
+  conversionFactor: quantityString,
 });
 
 // --- Public inputs: insert/update schema minus every server-controlled field. ---
 
-export const createSupplyInputSchema = createInsertSchema(supplies, {
+const supplyInputShape = {
+  kind: supplyKindField,
   name: supplyNameField,
   purchasePrice: purchasePriceField,
-}).omit({
+  purchaseQuantity: purchaseQuantityField,
+  purchaseUnit: purchaseUnitField,
+  minimumUnit: minimumUnitField,
+  conversionFactor: conversionFactorField,
+} as const;
+
+export const createSupplyInputSchema = createInsertSchema(supplies, supplyInputShape).omit({
   id: true,
   userId: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const updateSupplyInputSchema = createInsertSchema(supplies, {
-  name: supplyNameField,
-  purchasePrice: purchasePriceField,
-}).omit({
+export const updateSupplyInputSchema = createInsertSchema(supplies, supplyInputShape).omit({
   id: true,
   userId: true,
   createdAt: true,

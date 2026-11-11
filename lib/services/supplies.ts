@@ -42,8 +42,13 @@ export async function createSupplyService(
     .insert(supplies)
     .values({
       userId,
+      kind: supply.kind,
       name: supply.name,
       purchasePrice: supply.purchasePrice,
+      purchaseQuantity: supply.purchaseQuantity,
+      purchaseUnit: supply.purchaseUnit,
+      minimumUnit: supply.minimumUnit,
+      conversionFactor: supply.conversionFactor,
     })
     .returning();
 
@@ -65,8 +70,13 @@ export async function updateSupplyService(
   const [row] = await db
     .update(supplies)
     .set({
+      kind: supply.kind,
       name: supply.name,
       purchasePrice: supply.purchasePrice,
+      purchaseQuantity: supply.purchaseQuantity,
+      purchaseUnit: supply.purchaseUnit,
+      minimumUnit: supply.minimumUnit,
+      conversionFactor: supply.conversionFactor,
       updatedAt: new Date(),
     })
     .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))

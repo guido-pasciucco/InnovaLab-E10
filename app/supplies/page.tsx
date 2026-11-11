@@ -25,10 +25,10 @@ export default async function SuppliesPage() {
               {userName}
             </p>
             <h1 className="mt-1 text-3xl font-bold text-fg sm:text-4xl">
-              Catálogo de insumos
+              Insumos y packaging
             </h1>
             <p className="mt-2 max-w-xl text-base text-fg-muted">
-              Anotá cada insumo y el precio al que lo compraste.
+              Anotá cada insumo y packaging con el precio y la unidad de compra.
             </p>
           </div>
         </header>

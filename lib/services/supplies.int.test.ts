@@ -1,8 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
 
 import { getDrizzleClient, type Db } from "@/lib/db/client";
-import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
@@ -19,8 +17,13 @@ import {
 // after each test, cascading their supplies rows.
 
 const validInput = {
+  kind: "supply",
   name: "Harina 000",
   purchasePrice: "18750.00",
+  purchaseQuantity: "25",
+  purchaseUnit: "kg",
+  minimumUnit: "g",
+  conversionFactor: "1000",
 } as const;
 
 let db: Db;
@@ -61,11 +64,6 @@ async function makeUser(): Promise<CreatedUser> {
   return user;
 }
 
-async function countSupplies(userId: string): Promise<number> {
-  const rows = await db.select({ id: supplies.id }).from(supplies).where(eq(supplies.userId, userId));
-  return rows.length;
-}
-
 describe("supplies service", () => {
   it("lists empty when the user has no supplies", async () => {
     const user = await makeUser();
@@ -81,8 +79,26 @@ describe("supplies service", () => {
 
     expect(supply.name).toBe(validInput.name);
     expect(supply.purchasePrice).toBe(validInput.purchasePrice);
+    expect(supply.kind).toBe(validInput.kind);
+    expect(supply.purchaseQuantity).toBe("25.0000");
+    expect(supply.purchaseUnit).toBe(validInput.purchaseUnit);
+    expect(supply.minimumUnit).toBe(validInput.minimumUnit);
+    expect(supply.conversionFactor).toBe("1000.0000");
     expect(supply.userId).toBe(user.id);
     expect(supply.id).toBeDefined();
+  });
+
+  it("creates packaging with the same shape as a supply", async () => {
+    const user = await makeUser();
+
+    const supply = await createSupplyService(
+      user.id,
+      { ...validInput, kind: "packaging", name: "Bolsa kraft" },
+      db,
+    );
+
+    expect(supply.kind).toBe("packaging");
+    expect(supply.name).toBe("Bolsa kraft");
   });
 
   it("lists created supplies", async () => {
@@ -99,6 +115,7 @@ describe("supplies service", () => {
     const supply = await createSupplyService(user.id, validInput, db);
 
     const updated = await updateSupplyService(user.id, supply.id, {
+      ...validInput,
       name: "Harina integral",
       purchasePrice: "22000.00",
     }, db);
@@ -106,6 +123,7 @@ describe("supplies service", () => {
     expect(updated).not.toBeNull();
     expect(updated!.name).toBe("Harina integral");
     expect(updated!.purchasePrice).toBe("22000.00");
+    expect(updated!.purchaseQuantity).toBe("25.0000");
   });
 
   it("deletes a supply", async () => {
@@ -145,6 +163,7 @@ describe("supplies service", () => {
     const supply = await createSupplyService(userA.id, validInput, db);
 
     const updated = await updateSupplyService(userB.id, supply.id, {
+      ...validInput,
       name: "Hackeado",
       purchasePrice: "999999.00",
     }, db);

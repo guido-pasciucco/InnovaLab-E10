@@ -120,6 +120,13 @@
       "when": 1794251963546,
       "tag": "20261109191923_create_supplies_table",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794417125438,
+      "tag": "20261111171205_new_shaman",
+      "breakpoints": true
     }
   ]
 }
