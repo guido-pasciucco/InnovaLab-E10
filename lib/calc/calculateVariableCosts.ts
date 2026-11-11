@@ -93,7 +93,21 @@ export type PresentationVariableCost = {
   // Reconciles rounded product and packaging subtotals with the rounded total.
   roundingAdjustment: string;
   totalCost: string;
+  // Exact values are serialized as strings so later modules can calculate
+  // without rebuilding a result from rounded monetary display values.
+  exact: PresentationExactCosts;
   packaging: PackagingVariableCost[];
+};
+
+export type ExactFraction = {
+  numerator: string;
+  denominator: string;
+};
+
+export type PresentationExactCosts = {
+  productCost: ExactFraction;
+  packagingCost: ExactFraction;
+  totalCost: ExactFraction;
 };
 
 export type PackagingVariableCost = {
@@ -101,6 +115,7 @@ export type PackagingVariableCost = {
   quantity: string;
   unit: string;
   cost: string;
+  exactCost: ExactFraction;
 };
 
 export type VariableCostsSuccess = {
@@ -111,6 +126,12 @@ export type VariableCostsSuccess = {
   // Exact rational value used to calculate presentation product costs. It is
   // not a money amount and is intentionally not rounded to two decimals.
   unitCostCalculationValue: string;
+  // Exact source amounts for future calculation modules. Monetary siblings in
+  // this result remain rounded display/persistence values.
+  exact: {
+    ingredientsCost: ExactFraction;
+    unitCost: ExactFraction;
+  };
   presentations: PresentationVariableCost[];
 };
 
@@ -143,6 +164,13 @@ function normalizedId(raw: string): string {
 
 function money(value: Fraction): string {
   return value.toFixed(MONEY_DECIMALS);
+}
+
+function exact(value: Fraction): ExactFraction {
+  return {
+    numerator: value.numerator.toString(),
+    denominator: value.denominator.toString(),
+  };
 }
 
 function validateUsage(
@@ -242,14 +270,21 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
     for (const packaging of presentation.packaging ?? []) {
       const cost = validateUsage(packaging, supplies);
       if ("ok" in cost) return cost;
+      const quantity = positiveDecimal(packaging.quantity);
+      // validateUsage has already established this invariant. Keep the guard
+      // explicit because this value crosses into the public result contract.
+      if (quantity === undefined) {
+        return failure("INVALID_USAGE_QUANTITY", { supplyId: normalizedId(packaging.supplyId) });
+      }
       packagingCost = packagingCost.add(cost);
       packagingBreakdown.push({
         supplyId: normalizedId(packaging.supplyId),
-        quantity: positiveDecimal(packaging.quantity)!.toRatioString(),
+        quantity: quantity.toRatioString(),
         unit: packaging.unit.trim(),
         cost: money(cost),
+        exactCost: exact(cost),
       });
-      roundedPackagingItemsCost = roundedPackagingItemsCost.add(Fraction.fromDecimal(money(cost))!);
+      roundedPackagingItemsCost = roundedPackagingItemsCost.add(cost.round(MONEY_DECIMALS));
     }
 
     // Postpone recipe-yield division until after presentation units. Fraction
@@ -259,11 +294,13 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
     const roundedProductCost = money(productCost);
     const roundedPackagingCost = money(packagingCost);
     const roundedTotalCost = money(totalCost);
-    const packagingItemsAdjustmentValue = Fraction.fromDecimal(roundedPackagingCost)!
-      .subtract(roundedPackagingItemsCost);
-    const roundingAdjustmentValue = Fraction.fromDecimal(roundedTotalCost)!
-      .subtract(Fraction.fromDecimal(roundedProductCost)!)
-      .subtract(Fraction.fromDecimal(roundedPackagingCost)!);
+    const roundedProductCostValue = productCost.round(MONEY_DECIMALS);
+    const roundedPackagingCostValue = packagingCost.round(MONEY_DECIMALS);
+    const roundedTotalCostValue = totalCost.round(MONEY_DECIMALS);
+    const packagingItemsAdjustmentValue = roundedPackagingCostValue.subtract(roundedPackagingItemsCost);
+    const roundingAdjustmentValue = roundedTotalCostValue
+      .subtract(roundedProductCostValue)
+      .subtract(roundedPackagingCostValue);
     presentations.push({
       id: presentationId,
       name: presentation.name.trim(),
@@ -273,6 +310,11 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
       packagingItemsAdjustment: money(packagingItemsAdjustmentValue),
       roundingAdjustment: money(roundingAdjustmentValue),
       totalCost: roundedTotalCost,
+      exact: {
+        productCost: exact(productCost),
+        packagingCost: exact(packagingCost),
+        totalCost: exact(totalCost),
+      },
       packaging: packagingBreakdown,
     });
     presentationIds.add(presentationId);
@@ -284,6 +326,10 @@ export function calculateVariableCosts(input: VariableCostsInput): VariableCosts
     recipeYield: yieldQuantity.toRatioString(),
     unitCost: money(unitCostCalculationValue),
     unitCostCalculationValue: unitCostCalculationValue.toRatioString(),
+    exact: {
+      ingredientsCost: exact(ingredientsCost),
+      unitCost: exact(unitCostCalculationValue),
+    },
     presentations,
   };
 }

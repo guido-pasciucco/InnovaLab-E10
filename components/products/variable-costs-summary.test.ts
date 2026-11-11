@@ -10,6 +10,10 @@ const costs = {
   recipeYield: "1",
   unitCost: "10.00",
   unitCostCalculationValue: "1/10000000",
+  exact: {
+    ingredientsCost: { numerator: "10", denominator: "1" },
+    unitCost: { numerator: "10", denominator: "1" },
+  },
   presentations: [
     {
       id: "individual",
@@ -20,9 +24,14 @@ const costs = {
       packagingItemsAdjustment: "-0.01",
       roundingAdjustment: "0.00",
       totalCost: "10.01",
+      exact: {
+        productCost: { numerator: "10", denominator: "1" },
+        packagingCost: { numerator: "1", denominator: "100" },
+        totalCost: { numerator: "1001", denominator: "100" },
+      },
       packaging: [
-        { supplyId: "7c12dafa-0101-4bde-9ee0-91ed4b2db4b8", quantity: "1", unit: "unidad", cost: "0.01" },
-        { supplyId: "7c12dafa-0101-4bde-9ee0-91ed4b2db4b9", quantity: "1", unit: "unidad", cost: "0.01" },
+        { supplyId: "7c12dafa-0101-4bde-9ee0-91ed4b2db4b8", quantity: "1", unit: "unidad", cost: "0.01", exactCost: { numerator: "1", denominator: "200" } },
+        { supplyId: "7c12dafa-0101-4bde-9ee0-91ed4b2db4b9", quantity: "1", unit: "unidad", cost: "0.01", exactCost: { numerator: "1", denominator: "200" } },
       ],
     },
   ],
@@ -86,5 +95,9 @@ describe("VariableCostsSummary", () => {
 
     expect(ids).toHaveLength(2);
     expect(ids[0]).not.toBe(ids[1]);
+  });
+
+  it("allows long presentation names to wrap in the explanation", () => {
+    expect(render()).toContain('<h4 class="min-w-0 break-words font-semibold text-fg">');
   });
 });

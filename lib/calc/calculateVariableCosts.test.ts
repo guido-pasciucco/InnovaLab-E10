@@ -36,6 +36,10 @@ describe("calculateVariableCosts", () => {
       recipeYield: "24",
       unitCost: "1000.00",
       unitCostCalculationValue: "1000",
+      exact: {
+        ingredientsCost: { numerator: "24000", denominator: "1" },
+        unitCost: { numerator: "1000", denominator: "1" },
+      },
       presentations: [
         {
           id: "box-6",
@@ -46,9 +50,14 @@ describe("calculateVariableCosts", () => {
           packagingItemsAdjustment: "0.00",
           roundingAdjustment: "0.00",
           totalCost: "6500.00",
+          exact: {
+            productCost: { numerator: "6000", denominator: "1" },
+            packagingCost: { numerator: "500", denominator: "1" },
+            totalCost: { numerator: "6500", denominator: "1" },
+          },
           packaging: [
-            { supplyId: "box", quantity: "1", unit: "unidad", cost: "450.00" },
-            { supplyId: "label", quantity: "1", unit: "unidad", cost: "50.00" },
+            { supplyId: "box", quantity: "1", unit: "unidad", cost: "450.00", exactCost: { numerator: "450", denominator: "1" } },
+            { supplyId: "label", quantity: "1", unit: "unidad", cost: "50.00", exactCost: { numerator: "50", denominator: "1" } },
           ],
         },
       ],
@@ -86,7 +95,80 @@ describe("calculateVariableCosts", () => {
       ok: true,
       unitCost: "0.33",
       unitCostCalculationValue: "1/3",
+      exact: { unitCost: { numerator: "1", denominator: "3" } },
       presentations: [{ productCost: "1.00", packagingCost: "0.00", packagingItemsAdjustment: "0.00", roundingAdjustment: "0.00", totalCost: "1.00" }],
+    });
+  });
+
+  it("keeps exact serializable values so a pack x3 never rebuilds from $0.33", () => {
+    const result = calculateVariableCosts({
+      supplies: [{ id: "ingredient", purchasePrice: "1", purchaseQuantity: "1", purchaseUnit: "unidad" }],
+      recipe: { yieldQuantity: "3", ingredients: [{ supplyId: "ingredient", quantity: "1", unit: "unidad" }] },
+      presentations: [{ id: "pack-3", name: "Pack x3", unitsPerPresentation: "3" }],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      unitCost: "0.33",
+      exact: { unitCost: { numerator: "1", denominator: "3" } },
+      presentations: [{
+        totalCost: "1.00",
+        exact: { productCost: { numerator: "1", denominator: "1" }, totalCost: { numerator: "1", denominator: "1" } },
+      }],
+    });
+  });
+
+  it("serializes and recovers exact ingredients, packaging and presentation values", () => {
+    const result = calculateVariableCosts({
+      supplies: [
+        { id: "ingredient", purchasePrice: "1", purchaseQuantity: "1", purchaseUnit: "unidad" },
+        { id: "box", purchasePrice: "1", purchaseQuantity: "200", purchaseUnit: "unidad" },
+      ],
+      recipe: { yieldQuantity: "3", ingredients: [{ supplyId: "ingredient", quantity: "1", unit: "unidad" }] },
+      presentations: [{
+        id: "pack-3",
+        name: "Pack x3",
+        unitsPerPresentation: "3",
+        packaging: [{ supplyId: "box", quantity: "1", unit: "unidad" }],
+      }],
+    });
+    const recovered = JSON.parse(JSON.stringify(result)) as typeof result;
+
+    expect(recovered).toMatchObject({
+      ok: true,
+      exact: {
+        ingredientsCost: { numerator: "1", denominator: "1" },
+        unitCost: { numerator: "1", denominator: "3" },
+      },
+      presentations: [{
+        exact: {
+          productCost: { numerator: "1", denominator: "1" },
+          packagingCost: { numerator: "1", denominator: "200" },
+          totalCost: { numerator: "201", denominator: "200" },
+        },
+        packaging: [{ exactCost: { numerator: "1", denominator: "200" } }],
+      }],
+    });
+  });
+
+  it("accepts the 100-digit input boundary even when internal totals grow beyond it", () => {
+    const maximumPrice = "9".repeat(100);
+    const result = calculateVariableCosts({
+      supplies: [{ id: "ingredient", purchasePrice: maximumPrice, purchaseQuantity: "1", purchaseUnit: "unidad" }],
+      recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "ingredient", quantity: "1", unit: "unidad" }] },
+      presentations: [
+        { id: "individual", name: "Individual", unitsPerPresentation: "1" },
+        { id: "pack-2", name: "Pack x2", unitsPerPresentation: "2" },
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.ingredientsCost).toBe(`${maximumPrice}.00`);
+    expect(result.presentations[1]?.totalCost).toBe(`${BigInt(maximumPrice) * BigInt(2)}.00`);
+    expect(result.presentations[1]?.exact.totalCost).toEqual({
+      numerator: (BigInt(maximumPrice) * BigInt(2)).toString(),
+      denominator: "1",
     });
   });
 

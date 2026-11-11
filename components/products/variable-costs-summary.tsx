@@ -126,7 +126,7 @@ export function VariableCostsSummary({
 
           {costs.presentations.map((presentation) => (
             <article key={presentation.id} className="mt-5 min-w-0 border-t border-border-default pt-4">
-              <h4 className="font-semibold text-fg">{presentation.name}</h4>
+              <h4 className="min-w-0 break-words font-semibold text-fg">{presentation.name}</h4>
               <dl className="mt-2 grid gap-2">
                 <div className="flex flex-wrap justify-between gap-2 sm:flex-nowrap sm:gap-4">
                   <dt className="min-w-0 break-words">{madeUnitLabel(presentation.unitsPerPresentation)}</dt>

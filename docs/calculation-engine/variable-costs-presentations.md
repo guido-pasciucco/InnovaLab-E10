@@ -22,3 +22,18 @@ La vista reutilizable `components/products/variable-costs-summary.tsx` recibe el
 Los contratos de #239 y #240 aún no persisten cantidad y unidad de compra, rendimiento de receta ni presentaciones. Por eso #241 no agrega tablas, migraciones, servicios ni integra la vista en sus catálogos. Un adaptador futuro deberá transformar sus filas persistidas en el contrato puro del motor, recalcular los costos vigentes cuando cambie un precio y decidir cómo conservar snapshots históricos frente a cambios posteriores.
 
 La fase 2 adopta recargo porcentual sobre el costo para precios, pero este motor no calcula precios ni modifica la implementación histórica de margen sobre precio de venta.
+## Contrato de precisión
+
+Cada respuesta exitosa diferencia tres clases de datos:
+
+- Los campos monetarios (`ingredientsCost`, `unitCost`, costos de packaging y de presentación, ajustes y `totalCost`) son strings redondeados a dos decimales para mostrar o persistir como importes monetarios.
+- `exact.ingredientsCost`, `exact.unitCost`, `presentation.exact.productCost`, `presentation.exact.packagingCost`, `presentation.exact.totalCost` y `packaging.exactCost` son el valor autoritativo para cálculos posteriores. Cada uno se serializa como `{ numerator: string, denominator: string }`; nunca como `BigInt` en JSON.
+- El input conserva la fuente de verdad para recálculo: precio, cantidad y unidad de compra, usos de receta, rendimiento, unidades de presentación y packaging. La persistencia de esos datos corresponde a los contratos pendientes de #239 y #240.
+
+Un consumidor posterior no debe multiplicar `unitCost` mostrado (por ejemplo, `$ 0,33`) para reconstruir un pack de tres unidades. Debe usar la fracción exacta transferida o recalcular desde los datos originales; así el resultado conserva `$ 1,00` y nunca `$ 0,99`. Los componentes React solo muestran estos resultados y no contienen fórmulas de dominio.
+
+## Límites de entrada y operaciones internas
+
+Los inputs numéricos aceptan como máximo 100 dígitos entre parte entera y decimal, sin exponentes ni decimales infinitos. Este límite protege la entrada externa: resultados internos válidos pueden tener más de 100 dígitos y no se someten nuevamente a esa validación. Las tablas monetarias existentes usan `numeric(12,2)` (diez dígitos enteros), pero no son todavía el esquema de #239/#240; no se adopta ese límite silenciosamente.
+
+El motor tampoco impone todavía un máximo funcional para cantidad de insumos, ingredientes, presentaciones o materiales de packaging. Los contratos de #239/#240 deberán establecer y validar esos límites en el borde de persistencia, midiendo el crecimiento de colecciones y fracciones para el uso real de Numora.

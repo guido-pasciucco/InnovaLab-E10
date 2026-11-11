@@ -24,6 +24,14 @@ describe("Fraction", () => {
     expect(Fraction.fromDecimal("-0.005")!.toFixed(2)).toBe("-0.01");
   });
 
+  it("rounds an existing fraction without applying external decimal input limits", () => {
+    const maximumInput = Fraction.fromDecimal("9".repeat(100));
+
+    expect(maximumInput?.multiply(Fraction.fromDecimal("2")!).round(2).toFixed(2)).toBe(
+      `${BigInt("9".repeat(100)) * BigInt(2)}.00`,
+    );
+  });
+
   it("rejects invalid and deliberately oversized decimal inputs", () => {
     expect(Fraction.fromDecimal("Infinity")).toBeUndefined();
     expect(Fraction.fromDecimal("1.".padEnd(102, "1"))).toBeUndefined();

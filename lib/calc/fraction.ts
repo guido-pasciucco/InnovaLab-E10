@@ -95,6 +95,25 @@ export class Fraction {
     return this.numerator === ZERO;
   }
 
+  /**
+   * Returns the exact value after ROUND_HALF_UP at the requested decimal
+   * scale. Unlike fromDecimal(), this operates on an already validated
+   * fraction, so derived internal values are not subject to input limits.
+   */
+  round(decimalPlaces: number): Fraction {
+    if (!Number.isSafeInteger(decimalPlaces) || decimalPlaces < 0) {
+      throw new RangeError("Fraction decimal places must be a non-negative safe integer.");
+    }
+
+    const scale = powerOfTen(decimalPlaces);
+    const scaledNumerator = absolute(this.numerator) * scale;
+    let quotient = scaledNumerator / this.denominator;
+    const remainder = scaledNumerator % this.denominator;
+    if (remainder * BigInt(2) >= this.denominator) quotient += ONE;
+
+    return new Fraction(this.numerator < ZERO ? -quotient : quotient, scale);
+  }
+
   /** Exact ratio for explanatory UI; never a truncated periodic decimal. */
   toRatioString(): string {
     return this.denominator === ONE ? this.numerator.toString() : `${this.numerator}/${this.denominator}`;
@@ -102,6 +121,9 @@ export class Fraction {
 
   /** Exact ROUND_HALF_UP conversion without Number or decimal approximation. */
   toFixed(decimalPlaces: number): string {
+    if (!Number.isSafeInteger(decimalPlaces) || decimalPlaces < 0) {
+      throw new RangeError("Fraction decimal places must be a non-negative safe integer.");
+    }
     const scale = powerOfTen(decimalPlaces);
     const scaledNumerator = absolute(this.numerator) * scale;
     let quotient = scaledNumerator / this.denominator;
