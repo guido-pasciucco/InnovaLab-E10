@@ -56,7 +56,7 @@ export function SuppliesTable({
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-border-control">
-            <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
+            <th scope="col" className="min-w-48 px-3 py-3 font-semibold text-fg-muted">
               Nombre
             </th>
             <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
@@ -89,7 +89,7 @@ export function SuppliesTable({
 
             return (
               <tr key={supply.id} className="border-b border-border-control last:border-0">
-                <td className="px-3 py-3 whitespace-nowrap text-fg">{supply.name}</td>
+                <td className="min-w-48 px-3 py-3 text-fg">{supply.name}</td>
                 <td className="px-3 py-3 whitespace-nowrap text-fg">
                   {quantityFormat.format(Number(supply.purchaseQuantity))}{" "}
                   {supply.purchaseUnit}
