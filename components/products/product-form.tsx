@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { useFieldArray, useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -9,7 +10,7 @@ import type {
   ProductItem,
   RecipeSupplyOption,
 } from "@/lib/schemas/products/products";
-import { productFormSchema } from "@/lib/schemas/products/products";
+import { createProductFormSchema } from "@/lib/schemas/products/products";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
@@ -57,13 +58,21 @@ export function ProductForm({
   const isEditing = product !== null;
   const hasSupplies = supplies.length > 0;
 
+  // The catalog snapshot travels with the schema: saving a recipe whose supply
+  // was deleted (or turned into packaging) fails with a field error instead of
+  // storing a dangling id.
+  const schema = useMemo(
+    () => createProductFormSchema(supplies.map((supply) => supply.id)),
+    [supplies],
+  );
+
   const {
     register,
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<ProductFormValues>({
-    resolver: zodResolver(productFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: toDefaultValues(product),
   });
 
@@ -122,7 +131,10 @@ export function ProductForm({
 
           {!hasSupplies && (
             <div className="rounded-[16px] bg-warning-subtle p-4 text-sm text-fg">
-              <p>Todavía no tenés insumos cargados.</p>
+              <p>Todavía no tenés insumos disponibles.</p>
+              <p className="mt-1 text-fg-muted">
+                El packaging no se usa como ingrediente de la receta.
+              </p>
               <Link
                 href="/supplies"
                 className="mt-1 inline-block font-semibold text-link underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
