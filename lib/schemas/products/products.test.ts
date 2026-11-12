@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { productFormSchema } from "./products";
+import {
+  createProductFormSchema,
+  toRecipeSupplyOptions,
+} from "./products";
 
 // Messages are defined once in the schema and shown by RHF in the client.
 // The server will reuse the same field rules when persistence lands.
-function issues(input: unknown) {
-  const result = productFormSchema.safeParse(input);
+const allowedSupplyIds = ["supply-harina", "supply-sal"];
+const schema = createProductFormSchema(allowedSupplyIds);
+
+function issues(input: unknown, target = schema) {
+  const result = target.safeParse(input);
 
   return result.success
     ? []
@@ -20,14 +26,14 @@ const validProduct = {
   recipe: [{ supplyId: "supply-harina", quantity: "250" }],
 };
 
-describe("productFormSchema", () => {
+describe("createProductFormSchema", () => {
   it("accepts a product with a name and one recipe item", () => {
-    expect(productFormSchema.safeParse(validProduct).success).toBe(true);
+    expect(schema.safeParse(validProduct).success).toBe(true);
   });
 
   it("accepts decimal quantities with up to three decimals", () => {
     expect(
-      productFormSchema.safeParse({
+      schema.safeParse({
         ...validProduct,
         recipe: [{ supplyId: "supply-harina", quantity: "0.001" }],
       }).success,
@@ -110,7 +116,7 @@ describe("productFormSchema", () => {
 
   it("accepts different supplies in the recipe", () => {
     expect(
-      productFormSchema.safeParse({
+      schema.safeParse({
         ...validProduct,
         recipe: [
           { supplyId: "supply-harina", quantity: "250" },
@@ -118,5 +124,74 @@ describe("productFormSchema", () => {
         ],
       }).success,
     ).toBe(true);
+  });
+
+  it("rejects a supply id that is not in the catalog", () => {
+    expect(
+      issues({
+        ...validProduct,
+        recipe: [{ supplyId: "supply-fantasma", quantity: "250" }],
+      }),
+    ).toEqual([
+      {
+        path: "recipe.0.supplyId",
+        message: "Ese insumo ya no está disponible en tu catálogo.",
+      },
+    ]);
+  });
+
+  it("rejects a packaging id because packaging is not an ingredient", () => {
+    expect(
+      issues({
+        ...validProduct,
+        recipe: [{ supplyId: "packaging-caja", quantity: "1" }],
+      }),
+    ).toEqual([
+      {
+        path: "recipe.0.supplyId",
+        message: "Ese insumo ya no está disponible en tu catálogo.",
+      },
+    ]);
+  });
+
+  it("keeps rejecting a supply that was removed after the recipe was saved", () => {
+    const savedRecipe = {
+      ...validProduct,
+      recipe: [
+        { supplyId: "supply-harina", quantity: "250" },
+        { supplyId: "supply-eliminado", quantity: "10" },
+      ],
+    };
+
+    // Editing revalidates against the current catalog, not the saved snapshot.
+    expect(issues(savedRecipe, createProductFormSchema(["supply-harina"]))).toEqual([
+      {
+        path: "recipe.1.supplyId",
+        message: "Ese insumo ya no está disponible en tu catálogo.",
+      },
+    ]);
+  });
+});
+
+describe("toRecipeSupplyOptions", () => {
+  it("only offers supplies, never packaging", () => {
+    expect(
+      toRecipeSupplyOptions([
+        { id: "supply-harina", name: "Harina 000", kind: "supply" },
+        { id: "packaging-caja", name: "Caja de 6", kind: "packaging" },
+        { id: "supply-sal", name: "Sal", kind: "supply" },
+      ]),
+    ).toEqual([
+      { id: "supply-harina", name: "Harina 000" },
+      { id: "supply-sal", name: "Sal" },
+    ]);
+  });
+
+  it("treats a catalog with only packaging as an empty ingredient catalog", () => {
+    expect(
+      toRecipeSupplyOptions([
+        { id: "packaging-caja", name: "Caja de 6", kind: "packaging" },
+      ]),
+    ).toEqual([]);
   });
 });

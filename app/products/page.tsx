@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
 import { getProfileSummaryService } from "@/lib/services/profile";
 import { getUserDefaultBusiness, listSuppliesService } from "@/lib/services/supplies";
+import { toRecipeSupplyOptions } from "@/lib/schemas/products/products";
 import { ProductsCatalog } from "@/components/products/products-catalog";
 
 // Protected page: session validated server-side, supplies filtered by user id.
@@ -19,10 +20,9 @@ export default async function ProductsPage() {
 
   const userName = profile.displayName ?? user.email ?? "";
   const businessName = business?.name ?? "";
-  const supplyOptions = supplies.map((supply) => ({
-    id: supply.id,
-    name: supply.name,
-  }));
+  // Packaging shares the supplies table but is not an ingredient: only
+  // kind === "supply" reaches the recipe selector.
+  const supplyOptions = toRecipeSupplyOptions(supplies);
 
   return (
     <main className="min-h-screen bg-surface-tint px-4 py-10 sm:px-6">
