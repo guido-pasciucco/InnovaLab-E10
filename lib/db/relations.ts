@@ -10,6 +10,7 @@ import {
 } from "./calculation/table";
 import { businessCostLines, calcCostLines } from "./costs/table";
 import { profiles } from "./profile/table";
+import { supplies } from "./supplies/table";
 
 // ---------------------------------------------------------------------------
 // Query relations for the ERD tables, using the stable classic `fields` /
@@ -20,6 +21,7 @@ import { profiles } from "./profile/table";
 export const profilesRelations = relations(profiles, ({ many }) => ({
   businesses: many(businesses),
   calculations: many(calculations),
+  supplies: many(supplies),
 }));
 
 export const businessesRelations = relations(businesses, ({ many, one }) => ({
@@ -130,3 +132,10 @@ export const computedResultsRelations = relations(
     }),
   }),
 );
+
+export const suppliesRelations = relations(supplies, ({ one }) => ({
+  user: one(profiles, {
+    fields: [supplies.userId],
+    references: [profiles.id],
+  }),
+}));

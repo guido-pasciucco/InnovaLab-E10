@@ -148,6 +148,12 @@ export const ERROR_CATALOG = {
     message: "The scenario price must be greater than 0",
     logLevel: "silent",
   },
+  SUPPLY_NOT_FOUND: {
+    // Missing, foreign or non-uuid supply id: all look the same.
+    status: 404,
+    message: "Supply not found",
+    logLevel: "silent",
+  },
 
   // Cost catalog
   COST_CATALOG_LINE_NOT_FOUND: {
