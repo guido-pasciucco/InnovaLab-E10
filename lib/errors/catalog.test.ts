@@ -32,6 +32,13 @@ describe("ERROR_CATALOG", () => {
     });
   });
 
+  it("exposes COST_CATALOG_LINE_NOT_FOUND as a silent 404", () => {
+    expect(ERROR_CATALOG.COST_CATALOG_LINE_NOT_FOUND).toMatchObject({
+      status: 404,
+      logLevel: "silent",
+    });
+  });
+
   it("exposes the step 7 scenario codes", () => {
     expect(ERROR_CATALOG.CALC_SCENARIO_NOT_FOUND).toMatchObject({ status: 404, logLevel: "silent" });
     expect(ERROR_CATALOG.CALC_SCENARIO_LIMIT_REACHED).toMatchObject({ status: 409 });

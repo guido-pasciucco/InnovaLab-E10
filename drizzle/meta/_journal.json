@@ -127,6 +127,13 @@
       "when": 1794417125438,
       "tag": "20261111171205_new_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794608408274,
+      "tag": "20261113222008_powerful_orphan",
+      "breakpoints": true
     }
   ]
 }

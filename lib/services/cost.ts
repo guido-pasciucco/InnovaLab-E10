@@ -1,7 +1,6 @@
 import "server-only";
 import type { VerifiedUserId } from "./auth";
 
-import Decimal from "decimal.js";
 import { and, asc, eq } from "drizzle-orm";
 
 import { calculateCostTotals, type CostLine } from "@/lib/calc/calculateCostTotals";
@@ -19,6 +18,7 @@ import {
   type ListCalcCostLinesOptions,
 } from "@/lib/db/costs/validation";
 import { AppError } from "@/lib/errors/app-error";
+import { sumMoney } from "@/lib/money/sum";
 
 import { getDraftCalculationId } from "./calculator";
 import type { Tx } from "./calculations";
@@ -29,18 +29,10 @@ import type { Tx } from "./calculations";
 // no business_cost_lines row. Listing never trusts an id from the client;
 // the draft is resolved from userId.
 
-const MONEY_DECIMALS = 2;
-
 export type CalcCostLineList = {
   lines: CalcCostLine[];
   totalFixed: string;
 };
-
-// Decimal keeps the cent: 0.10 + 0.20 is 0.30.
-export function sumMoney(amounts: string[]): string {
-  const total = amounts.reduce((sum, amount) => sum.plus(amount), new Decimal(0));
-  return total.toFixed(MONEY_DECIMALS);
-}
 
 export async function requireDraftId(userId: VerifiedUserId, db: Db): Promise<string> {
   const draftId = await getDraftCalculationId(userId, db);
