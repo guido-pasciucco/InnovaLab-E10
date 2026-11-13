@@ -1,6 +1,6 @@
 {
-  "id": "d7277c60-da26-4c10-9e96-8a3474cf6ecc",
-  "prevId": "4a5906d4-a0fd-4af9-8999-078883e37e0f",
+  "id": "0b261889-b209-49e7-ba31-f72e0acfc654",
+  "prevId": "b98301f7-8d1c-4f55-9c13-cc0cab81fd82",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -994,6 +994,120 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.supplies": {
+      "name": "supplies",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'supply'"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchase_price": {
+          "name": "purchase_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchase_quantity": {
+          "name": "purchase_quantity",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'1'"
+        },
+        "purchase_unit": {
+          "name": "purchase_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unidad'"
+        },
+        "minimum_unit": {
+          "name": "minimum_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unidad'"
+        },
+        "conversion_factor": {
+          "name": "conversion_factor",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'1'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "supplies_user_id_profiles_id_fk": {
+          "name": "supplies_user_id_profiles_id_fk",
+          "tableFrom": "supplies",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "supplies_purchase_quantity_positive": {
+          "name": "supplies_purchase_quantity_positive",
+          "value": "\"supplies\".\"purchase_quantity\" > 0"
+        },
+        "supplies_conversion_factor_positive": {
+          "name": "supplies_conversion_factor_positive",
+          "value": "\"supplies\".\"conversion_factor\" > 0"
+        },
+        "supplies_kind_valid": {
+          "name": "supplies_kind_valid",
+          "value": "\"supplies\".\"kind\" in ('supply', 'packaging')"
+        }
+      },
       "isRLSEnabled": false
     }
   },
