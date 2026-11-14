@@ -2,54 +2,41 @@
 
 > **Documento de especificación del flujo de usuario** para el modelo multi-producto. Deriva de las issues #239 a #247 y #250.
 >
-> Estructura por bloque: **pasos → dónde está el usuario → huecos → propuesta**. Los huecos son contexto (lo que las issues no definen); las propuestas son una sugerencia a validar con el equipo, no una decisión tomada.
+> Estructura por bloque: **pasos → dónde está el usuario → datos/reglas decididas → huecos → propuesta pendiente**. Los huecos son contexto (lo que las issues no definen); las propuestas pendientes son una sugerencia a validar con el equipo, no una decisión tomada. Las decisiones ya tomadas están en [`04-decisiones.md`](04-decisiones.md).
 
 ---
 
 ## Glosario
 
-Términos de negocio usados en este documento. Cuando un término aparece con negrita en el glosario, se escribe igual en todo el documento.
-
-| Término | Definición |
-| --- | --- |
-| **Insumo** | Material o servicio que se compra y usa en las recetas (harina, aceite, sal). |
-| **Producto** | Bien o servicio que el emprendedor fabrica o vende (pan flauta, facturas). |
-| **Receta** | Lista de insumos con la cantidad que lleva una unidad del producto. |
-| **Compra por cantidad** | El insumo se compró en volumen (bolsa, kilo, litro); el precio de compra se reparte en la unidad mínima. |
-| **Compra por unidad** | El insumo se compró por unidad; el precio ya está en la unidad que usa la receta. |
-| **Unidad mínima** | La menor unidad en que puede expresarse el precio del insumo (ej. el kilo, no la bolsa). |
-| **Costo variable unitario** | Suma de (precio unitario del insumo × cantidad de receta) sobre todos los insumos del producto. |
-| **Capacidad mensual** | Cantidad que se planea fabricar de un producto en el mes; solo sirve para repartir los costos indirectos. |
-| **Costos indirectos del período** | Gastos del mes compartidos por todos los productos (alquiler, servicios); se cargan una sola vez para todo el catálogo. |
-| **Prorrateo** | Reparto de los costos indirectos entre productos según su participación de capacidad. |
-| **Tasa indirecta por unidad** | Porción de los costos indirectos que absorbe una unidad del producto. |
-| **Costo total unitario** | Costo variable unitario + tasa indirecta por unidad. |
-| **Recargo** | Porcentaje que el usuario indica para sumar al costo total y obtener el precio sugerido. |
-| **Precio sugerido** | Costo total unitario × (1 + recargo). |
-| **Contribución unitaria** | Precio sugerido − costo variable unitario. Los costos indirectos no entran en esta cuenta. |
-| **Margen** | Precio sugerido − costo total unitario, leído como porcentaje del costo total. |
-| **Mezcla** | Capacidad del producto ÷ suma de las capacidades de todos los productos. |
-| **Contribución ponderada** | Σ (contribución unitaria × mezcla) sobre todos los productos. |
-| **Cuota** | Unidades de cada producto que hay que vender para cubrir los costos indirectos del período. |
-| **Equilibrio** | Punto en que la contribución de la mezcla cubre los costos indirectos; se expresa en unidades y en pesos. |
-| **Catálogo** | Conjunto de insumos y productos del usuario. |
-| **Lista cerrada** | Estado de la lista de productos que no admite altas nuevas. |
-| **Plan del mes** | *(Propuesto, ver decisión pendiente)* Entidad que agrupa capacidad mensual + costos indirectos + recargo de un período. |
+Los términos de negocio del flujo están en [`glosario.md`](glosario.md). Cuando un término aparece con negrita en el glosario, se escribe igual en este documento.
 
 ---
 
 ## Navegación general
 
-El usuario siempre está parado en el **dashboard del catálogo**, que funciona como hub con cuatro destinos:
+La navegación tiene dos piezas distintas:
+
+- **Menú de navegación**: sección persistente, presente en todas las pantallas del flujo. Es el único camino para cambiar de sección; no desaparece al entrar a un destino.
+- **Página inicial / dashboard**: una vista más del menú (`/dashboard` tentativa). Está **a decidir** si será un dashboard (resumen del estado del catálogo con accesos a cada bloque) o simplemente una página inicial; su contenido no está definido.
+
+Todas las ventanas son accesibles en cualquier momento desde el menú: **no hay pasos obligatorios ni ventanas bloqueadas**. El usuario puede cargar indirectos antes de cerrar la lista, mirar el tablero con datos a medias o saltear secciones.
 
 | Destino | Ruta propuesta | Estado |
 | --- | --- | --- |
+| Página inicial (dashboard?) | `/dashboard` | A decidir: dashboard o página inicial simple |
 | Insumos | `/insumos` | Editable siempre |
 | Productos | `/productos` | Editable hasta cerrar la lista |
-| Costos indirectos | `/costos-indirectos` | Se habilita al cerrar la lista |
+| Costos indirectos | `/costos-indirectos` | Carga única para todo el catálogo |
 | Tablero | `/tablero` | Solo lectura, alimentado por los cálculos guardados |
 
-El orden de habilitación es bloqueante: no se puede cargar indirectos sin la lista de productos cerrada, ni ver el tablero sin indirectos y precios definidos. El dashboard muestra en qué bloque está parado el usuario y qué le falta para avanzar.
+Lo que sí existe son **dependencias de datos**, no bloqueos de interfaz:
+
+- Los **costos indirectos** solo se pueden repartir (prorratear) cuando la lista de productos está cerrada: sin productos cerrados no hay capacidades contra las cuales prorratear.
+- El **tablero** solo muestra resultados cuando existen indirectos, precios y capacidades cargados; con datos a medias muestra lo que haya o un estado vacío.
+
+La página inicial/dashboard no fuerza un orden ni bloquea secciones: todas las ventanas son accesibles desde el menú en cualquier momento. Su contenido está **a decidir** (ver "Decisiones pendientes"). El menú, en cambio, es solo navegación: siempre visible, sin estado.
+
+> **Tipo de navegación: por destinos (hub), no por pasos (wizard).** En cada bloque, la subsección "Pasos" describe la secuencia lógica de la tarea dentro de esa pantalla o el orden natural de uso — no pantallas obligatorias ni un asistente secuencial. El usuario puede entrar a cualquier destino en cualquier momento; lo único que existe son dependencias de datos (ver arriba).
 
 > **Nota:** las rutas definitivas quedan para implementación; en esta especificación se usan nombres en español por consistencia con el resto del flujo.
 
@@ -61,62 +48,23 @@ El orden de habilitación es bloqueante: no se puede cargar indirectos sin la li
 
 1. El usuario ingresa al sistema (login existente).
 2. Desde el dashboard entra a **Insumos**.
-3. Da de alta cada insumo con su precio de compra (ej. harina, aceite, sal). Puede ver, corregir y borrar insumos.
+3. Da de alta cada insumo con su precio de compra, cantidad y unidad de medida (ej. harina, aceite, sal). Puede ver, corregir y borrar insumos.
 4. La lista queda guardada y es **compartida por todos los productos** del catálogo: con estos insumos se arman las recetas del bloque 2.
 5. Cuando termina, avanza a **Productos**.
 
 ### Dónde está el usuario
 
-- **Pantalla:** `/insumos` — "Catálogo de insumos". Header con negocio + usuario, lista editable y botón primario "Ir a productos".
-- **Entra desde:** dashboard (sección Insumos) o desde Productos al agregar un producto nuevo.
-- **Sale hacia:** `/productos` (siguiente bloque) o al dashboard.
+- **Pantalla:** `/insumos` — "Catálogo de insumos". Header con negocio + usuario y lista editable.
+- **Entra desde:** el menú de navegación (destino Insumos, disponible en cualquier momento), la página inicial/dashboard, o desde Productos al agregar un producto nuevo.
+- **Sale hacia:** `/productos` o al dashboard.
 
-### Huecos
+### Datos del insumo
 
-- **Unidades de medida ausentes**: el insumo tiene nombre + precio, pero no unidad de compra ni unidad mínima. El bloque 2 necesita "repartir el precio en la unidad mínima" y eso es imposible sin este dato.
-- **Precio de compra ambiguo**: si el insumo se compra por bolsa de 50 kg, ¿el precio guardado es de la bolsa o del kilo?
-- **Clasificación compra por cantidad / por unidad sin paso definido**: #241 la pide "por ingrediente de la receta", o sea en la línea de receta, pero no dice en qué pantalla ni en qué momento del flujo se captura.
-- **Borrado sin regla de integridad**: las issues no definen si se puede borrar un insumo que ya está en una receta guardada.
-
-### Propuesta
-
-- **Insumo mínimo** (fiel a #239): **nombre + precio de compra**. Las unidades de compra quedan fuera, como dice la issue.
-- **Insumo con unidades de medida** (expande #239): **nombre + precio de compra + unidad de compra + cantidad por envase** (ej. "harina, $25.000, bolsa, 50 kg"). De ahí se deriva el precio por unidad mínima. Requiere confirmar con el equipo porque excede el alcance declarado de la issue.
-- La clasificación **compra por cantidad / por unidad** se captura **en la línea de la receta** (como la ubica #241): cada renglón de la receta elige su modo y su cantidad en unidad mínima. La receta queda autocontenida.
-- Borrado: si el insumo está en alguna receta, se bloquea el borrado y se pide quitarlo de la receta primero.
-
----
-
-## Decisión a definir — ¿el insumo lleva unidades de medida?
-
-> **Estado: pendiente de decisión del equipo.** #239 excluye explícitamente las unidades de compra de su alcance, pero #241 necesita "repartir el precio en la unidad mínima". Sin este dato, el costo variable unitario no se puede calcular.
-
-### Contexto
-
-- **#239** define el insumo como nombre + precio de compra y deja "unidades de compra" fuera de la historia.
-- **#241** pide distinguir compra por cantidad vs. por unidad y "repartir el precio pagado en la unidad mínima", pero no define cuál es esa unidad ni dónde se carga.
-- Ejemplo del problema: si el insumo es "harina, $25.000" sin más datos, no se sabe si eso es una bolsa de 50 kg, una bolsa de 25 kg o un kilo suelto. El costo variable unitario cambia por completo según la respuesta.
-
-### Opción A — Insumo mínimo (lo que dice #239)
-
-- El insumo es solo **nombre + precio de compra**.
-- La unidad mínima y la equivalencia lote ↔ unidad se cargarían **en la línea de la receta** (cada producto declara cómo interpreta el precio del insumo).
-- **Costo:** el mismo insumo puede quedar interpretado distinto en cada receta; el usuario repite el trabajo de conversión por producto; riesgo de inconsistencias entre productos.
-
-### Opción B — Insumo con unidades de medida
-
-- El insumo es **nombre + precio de compra + unidad de compra + cantidad por envase** (ej. "harina, $25.000, bolsa, 50 kg").
-- La unidad mínima se deriva una sola vez y todas las recetas la comparten.
-- **Costo:** excede el alcance declarado de #239; obliga a definir un catálogo de unidades (kg, litro, unidad, docena...) y a validar la equivalencia.
-
-### Impacto en el resto del documento
-
-- Si se elige **A**: el bloque 2 carga la unidad mínima por línea de receta; el costo variable unitario depende de cada producto.
-- Si se elige **B**: el bloque 1 agrega los campos de unidad; el bloque 2 simplifica la línea de receta (solo cantidad en unidad mínima + modo de compra si hace falta).
-
-### Propuesta tentativa
-
-**Opción B.** La conversión lote ↔ unidad es un dato del insumo, no de cada receta: cargarla una vez evita inconsistencias y simplifica la receta. Requiere confirmar con el equipo porque amplía #239.
+- **Campos:** nombre (texto) + precio de compra (monto de esa cantidad completa) + cantidad (número) + unidad de medida (**selección** de un catálogo precargado — no texto libre). El catálogo tiene 4 familias: masa (`g`, `kg`), volumen (`ml`, `L`), longitud (`mm`, `cm`, `m`) y unidad/contable (`unidad`, `par`, `media docena`, `docena`). Ej: "harina, $25.000, 50 kg".
+- El costo por unidad de medida se calcula una sola vez (precio ÷ cantidad) y todas las recetas lo comparten; la conversión a la unidad de la receta es automática **dentro de la misma familia** (la receta no puede mezclar familias).
+- La lista permite **buscar por nombre o unidad de medida**.
+- La clasificación **compra por cantidad / por unidad** se captura en la línea de la receta (bloque 2).
+- **Borrado:** libre en el MVP (ninguna receta referencia insumos todavía); con recetas, se bloquea hasta quitar la referencia.
 
 ---
 
@@ -129,16 +77,18 @@ Para cada producto, dentro de `/productos`:
 1. **Producto y receta**: nombre del producto (pan flauta, facturas) y receta armada eligiendo insumos ya cargados, con la cantidad de cada uno.
 2. **Costo variable unitario**: por cada renglón de la receta se calcula costo = precio unitario del insumo × cantidad. La suma es el costo variable unitario del producto.
 3. **Capacidad mensual**: cuánto se va a fabricar de ese producto. No es lo vendido hoy ni el equilibrio: es la capacidad que después reparte los costos indirectos.
-4. **Decisión de continuar**:
-   - **Sí** → se repite el bloque con un producto nuevo. El usuario **vuelve a la pantalla de insumos ya cargados** para elegir insumos del catálogo compartido (#242 dice "vuelvo a cargar insumos": se interpreta como volver a esa pantalla, no como recargar datos, porque #239 establece que la lista de insumos queda guardada).
-   - **No** → se cierra la lista de productos del catálogo.
+4. **Agregar otro producto o cerrar la lista**: el usuario puede cargar cuantos productos quiera; cada alta vuelve a la lista de insumos ya cargados para elegir del catálogo compartido (#242 dice "vuelvo a cargar insumos": se interpreta como volver a esa pantalla, no como recargar datos, porque #239 establece que la lista de insumos queda guardada). Cuando termina, cierra la lista de productos del catálogo.
 
 ### Dónde está el usuario
 
-- **Pantalla:** `/productos` — lista del catálogo + formulario/wizard de alta de producto (nombre → receta → capacidad).
-- **Entra desde:** dashboard, o desde Insumos con "Ir a productos".
+- **Pantalla:** `/productos` — lista del catálogo + formulario de alta de producto (nombre, receta y capacidad).
+- **Entra desde:** el menú de navegación (destino Productos), el dashboard, o desde Insumos.
 - **Estado visible:** contador de productos cargados y botón "Cerrar lista" habilitado cuando hay al menos un producto con capacidad.
-- **Sale hacia:** al cerrar la lista, `/costos-indirectos` (bloque 3).
+- **Sale hacia:** `/costos-indirectos` cuando el usuario quiera (el prorrateo recién es posible con la lista cerrada), o al dashboard.
+
+### Datos de la receta (decidido — Opción B del insumo)
+
+- **Campos de cada renglón de receta:** insumo del catálogo + modo de compra (por cantidad / por unidad) + cantidad de insumo que usa el producto (ej. "1000 g de harina"). La reducción a la unidad ya no se carga por línea: se deriva de la cantidad y unidad declaradas en el insumo, así todas las recetas comparten la misma lectura del precio.
 
 ### Huecos
 
@@ -147,7 +97,7 @@ Para cada producto, dentro de `/productos`:
 - **Cerrar la lista es un punto de no retorno**: #242 dice que al cerrar "no se pierdan" los productos, pero no dice si se puede reabrir, corregir un producto o borrar uno después de cerrar.
 - **Relación con el cálculo de un solo producto** *(fuera del set de issues: decisión de producto, no un hueco de #239–#247)*: la aplicación actual ya tiene un flujo de cálculo para un único producto. Las issues de fase 2 no mencionan qué pasa con ese flujo.
 
-### Propuesta
+### Propuesta (pendiente de confirmar)
 
 - Receta **siempre por unidad de producto** (la cantidad de insumo que lleva 1 unidad). Es lo que el usuario entiende y lo que el costo variable unitario necesita. Pendiente de confirmar con la planilla #250.
 - Capacidad obligatoria **> 0** para poder cerrar la lista; un producto sin capacidad no puede cerrar el catálogo. **Ojo:** esto es más estricto que las issues — #244 tolera capacidades faltantes ("sin capacidades cargadas no se muestra costo total"). Es una propuesta de endurecimiento, no una regla existente.
@@ -156,45 +106,9 @@ Para cada producto, dentro de `/productos`:
 
 ---
 
-## Decisión a definir — ¿dónde vive la capacidad mensual?
-
-> **Estado: pendiente de decisión del equipo.** Esta sección documenta una bifurcación de diseño detectada al especificar el bloque 2. Las issues #240–#242 la resuelven de una forma; hay una alternativa que cambia la arquitectura del flujo.
-
-### Contexto
-
-La capacidad mensual (cuánto se va a fabricar de cada producto en el mes, issue #242) es hoy el **paso 3 del alta de cada producto**, dentro del loop del bloque 2. Pero es un dato distinto en naturaleza:
-
-- **Producto + receta** = catálogo: qué existe, reutilizable mes a mes.
-- **Capacidad mensual** = plan del mes: cuánto se fabricará *en este período*, junto con los costos indirectos.
-
-### Opción A — Capacidad dentro del alta de producto (lo que dicen las issues)
-
-- La capacidad se carga como paso final de cada producto, dentro del loop del bloque 2.
-- Fiel a la redacción actual de #242.
-- Un solo recorrido: producto → receta → costo variable unitario → capacidad mensual → ¿otro?
-- **Costo:** si el usuario quiere calcular otro mes, debe editar cada producto para cambiar su capacidad. El catálogo y el plan del mes quedan mezclados.
-
-### Opción B — Separar catálogo de plan del mes
-
-- **Bloque 2** queda solo con catálogo: insumos + productos + recetas (permanente, sin capacidad).
-- La capacidad mensual se muda al **bloque 3**, que pasa a ser "plan del mes": capacidad por producto + costos indirectos del período + recargo → cálculos → tablero.
-- El catálogo no se toca entre meses; cada plan/cálculo tiene su propio período, capacidades y costos indirectos.
-- **Costo:** se desvía de la redacción literal de las issues, agrega una entidad nueva ("plan del mes") y un paso más en el flujo.
-
-### Impacto en el resto del documento
-
-- Si se elige **B**: el bloque 2 pierde su paso 3 y su decisión de "cerrar lista" pasa a ser "catálogo completo" (los productos se pueden seguir agregando); el bloque 3 absorbe capacidad + costos indirectos + recargo + cálculos; el tablero pasa a colgar del plan del mes.
-- Si se elige **A**: el documento queda como está y el hueco del "período" (un solo cálculo vigente vs. histórico) sigue abierto.
-
-### Propuesta tentativa
-
-**Opción B.** Separa datos permanentes (catálogo) de datos del período (plan), resuelve de paso el hueco del período y hace natural el histórico futuro. Requiere confirmar con el equipo porque contradice la redacción actual de #242.
-
----
-
 ## Bloque 3 — Costos indirectos, precio y equilibrio
 
-> Solo disponible con la lista de productos cerrada.
+> El prorrateo de los costos indirectos requiere la lista de productos cerrada (necesita las capacidades de todos los productos). La carga en sí se puede hacer antes; lo que no se puede es repartir sin productos cerrados.
 
 ### Pasos
 
@@ -207,7 +121,7 @@ La capacidad mensual (cuánto se va a fabricar de cada producto en el mes, issue
 ### Dónde está el usuario
 
 - **Pantallas:** `/costos-indirectos` (carga única de costos indirectos) → `/precio` o sección dentro del mismo flujo (recargo + resultados por producto) → `/tablero`.
-- **Entra desde:** botón "Cerrar lista" en Productos, o desde el dashboard cuando la lista ya está cerrada.
+- **Entra desde:** el menú de navegación (destino Costos indirectos), el dashboard o Productos, en cualquier momento (ver "Navegación general").
 - **Estado visible:** resumen de costos indirectos cargados, costo total por producto y precio sugerido antes de confirmar.
 
 ### Huecos
@@ -222,7 +136,7 @@ La capacidad mensual (cuánto se va a fabricar de cada producto en el mes, issue
 - **División por cero**: si la contribución ponderada es 0 (todos los precios sugeridos igualan al costo variable unitario) o la suma de capacidades es 0.
 - **Edición post-cálculo**: cambiar un insumo, una capacidad o el recargo después de calcular no tiene flujo definido (¿recalcula todo? ¿avisa?).
 
-### Propuesta
+### Propuesta (pendiente de confirmar)
 
 - **Prorrateo simple por capacidad**: cada gasto se reparte por participación de capacidad (capacidad del producto ÷ suma de capacidades). Descartar la "importancia por gasto" hasta que exista una regla de drivers; si el equipo la quiere, cada gasto declara su driver y el default es capacidad.
 - **Fórmulas propuestas** (a validar con la planilla #250):
@@ -248,7 +162,7 @@ La capacidad mensual (cuánto se va a fabricar de cada producto en el mes, issue
 ### Dónde está el usuario
 
 - **Pantalla:** `/tablero` — solo lectura. No introduce datos nuevos; todo viene de lo guardado en el bloque 3.
-- **Entra desde:** dashboard (sección Tablero) o al finalizar el bloque 3.
+- **Entra desde:** el menú de navegación (destino Tablero) o la página inicial/dashboard, en cualquier momento; con datos incompletos muestra estados vacíos.
 - **Acciones disponibles:** ajustar recargo (vuelve al bloque 3), volver al dashboard. Nada más.
 
 ### Huecos
@@ -258,7 +172,7 @@ La capacidad mensual (cuánto se va a fabricar de cada producto en el mes, issue
 - **Estados vacíos**: sin catálogo cerrado, sin costos indirectos, sin capacidades — qué ve el usuario en cada caso.
 - **Cuotas fraccionarias**: las cuotas pueden dar decimales (ej. 3,7 unidades); no está definido si se muestran exactas, redondeadas o como "unidades vendibles".
 
-### Propuesta
+### Propuesta (pendiente de confirmar)
 
 - Eje X = **unidades totales vendidas de la mezcla** (Σ de cuotas en el equilibrio). Es la única lectura que hace comparable multi-producto.
 - Gráfico: línea de **costos indirectos del período** (constante) vs. línea de **contribución acumulada de la mezcla**; el cruce es el equilibrio en unidades/pesos. Misma lógica del gráfico del cálculo de un solo producto, pero con la mezcla en vez de un solo producto.
@@ -281,17 +195,17 @@ La capacidad mensual (cuánto se va a fabricar de cada producto en el mes, issue
 
 ## Decisiones pendientes
 
-> _Pendiente._ Lista consolidada de los huecos que requieren respuesta del equipo antes de implementar:
+> Las decisiones ya tomadas están centralizadas en [`04-decisiones.md`](04-decisiones.md). Esta lista consolida los huecos que aún requieren respuesta del equipo antes de implementar:
 >
-> 1. Unidades de medida del insumo: ¿mínimo (opción A) o con unidades (opción B)? (sección "Decisión a definir — ¿el insumo lleva unidades de medida?").
-> 2. Base de la receta: ¿por unidad de producto o por lote? (bloque 2).
-> 3. Lista cerrada: ¿definitiva o reabrible? (bloque 2).
-> 4. Capacidad mensual: ¿en el alta de producto (opción A) o en el plan del mes (opción B)? (sección "Decisión a definir").
-> 5. Regla de "importancia de cada gasto" en el prorrateo (bloque 3).
-> 6. Interpretación final de cuota, equilibrio en pesos y prueba de cierre (bloque 3).
-> 7. Recargo global vs. por producto (bloque 3).
-> 8. Modelo de período: ¿un cálculo activo o histórico? (bloque 3).
-> 9. Destino del cálculo de un solo producto ya existente (global).
+> 1. Base de la receta: ¿por unidad de producto o por lote? (bloque 2).
+> 2. Lista cerrada: ¿definitiva o reabrible? (bloque 2).
+> 3. Capacidad mensual: ¿en el alta de producto (opción A) o en el plan del mes (opción B)? (ver `04-decisiones.md`).
+> 4. Regla de "importancia de cada gasto" en el prorrateo (bloque 3).
+> 5. Interpretación final de cuota, equilibrio en pesos y prueba de cierre (bloque 3).
+> 6. Recargo global vs. por producto (bloque 3).
+> 7. Modelo de período: ¿un cálculo activo o histórico? (bloque 3).
+> 8. Destino del cálculo de un solo producto ya existente (global).
+> 9. Página inicial/dashboard: ¿será un dashboard con resumen del estado del catálogo o una página inicial simple? Su contenido está a decidir; afecta la navegación y el MVP.
 > 10. Planilla #250: sin ella no hay oráculo de validación para QA.
 
 ---
