@@ -154,6 +154,18 @@ export const ERROR_CATALOG = {
     message: "Supply not found",
     logLevel: "silent",
   },
+
+  // Help assistant. Disabled is the normal off switch, not a failure.
+  HELP_DISABLED: {
+    status: 404,
+    message: "El asistente de ayuda está apagado",
+    logLevel: "silent",
+  },
+  HELP_UNAVAILABLE: {
+    status: 503,
+    message: "El asistente de ayuda no está disponible",
+    logLevel: "error",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;
