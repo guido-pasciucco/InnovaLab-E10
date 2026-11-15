@@ -30,6 +30,7 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 | `services/` | Lógica de negocio del servidor compartida por Server Actions y Route Handlers (transport-agnostic: recibe valores, devuelve datos planos) | Nueva (acuerdo vigente) | Backend |
 | `supabase/` | Clientes Supabase por runtime (`proxy`, `rsc`) — solo servidor | Activa | Backend |
 | `types/` | Tipos compartidos (p. ej. `FormState` del estado de forms) | Activa | **Backend** (si son del dominio) |
+| `help/` | Asistente de ayuda: configuración, texto de apoyo y pedido al modelo. No lee el cálculo | Activa | **Backend** |
 
 ## Frontera de responsabilidad
 

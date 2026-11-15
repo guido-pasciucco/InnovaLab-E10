@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { HelpWidget } from "@/components/help/help-widget";
+import { isHelpEnabled } from "@/lib/help/config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -73,6 +75,7 @@ export default function RootLayout({
         {/* Wrapper presentacional para evitar duplicar <main> */}
         <div className="relative z-10 flex flex-col min-h-full flex-1">
           {children}
+          <HelpWidget enabled={isHelpEnabled()} />
         </div>
       </body>
     </html>
