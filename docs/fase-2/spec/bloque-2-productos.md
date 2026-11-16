@@ -6,7 +6,7 @@
 
 ## Estado
 
-- **En definición.** Decisiones cerradas hasta ahora: 13 (D1 a D13).
+- **En definición.** Decisiones cerradas hasta ahora: 14 (D1 a D14).
 
 ## Objetivo y alcance (borrador)
 
@@ -97,6 +97,11 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Fuente única:** el precio se carga una vez en la pestaña Packaging; la presentación solo referencia.
 - **Alcance:** la entidad "presentación" todavía no está modelada; esta decisión solo define el vínculo con packaging.
 
+### D14 — UX en `/productos`: capacidad arriba y CVU en vivo
+
+- **Regla:** el campo de capacidad va en el bloque principal del formulario, junto a nombre y rendimiento, visible sin scroll; el CVU se muestra ahí mismo y recalcula en vivo (D4).
+- **Avisos:** capacidad 0/vacía (D9) y errores de renglón (D10) se muestran en el formulario. Los estados vacíos y el contador son detalle de implementación.
+
 ## Modelo de datos (borrador, parcial)
 
 > Solo lo que se va definiendo; incompleto a propósito.
@@ -129,7 +134,7 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 3. ~~**Validaciones de receta**~~ **Resueltas (D10):** estrictas al cargar (familia, cantidad > 0, sin duplicados, insumo válido).
 4. ~~**Ciclo de vida**~~ **Resuelto:** borrado de insumo referenciado (D11) y edición/borrado de producto y receta con borrado lógico (D12).
 5. ~~**Packaging en presentaciones**~~ **Resuelto (D13):** se referencia del catálogo y su costo se suma al de la receta. Queda sin modelar la entidad "presentación" en sí.
-6. **UX/estados en `/productos`:** vacíos, contador, feedback de CVU; ubicación visual del campo de capacidad en el formulario/edición.
+6. ~~**UX/estados en `/productos`**~~ **Resuelto (D14):** capacidad arriba junto a nombre y rendimiento, CVU en vivo. Vacíos y contador son detalle de implementación.
 7. **Formato de `rendimiento` y redondeo/decimales:** entero o decimal, precisión de cálculo y de visualización.
 8. **Planilla #250:** oráculo de validación de fórmulas/números.
 

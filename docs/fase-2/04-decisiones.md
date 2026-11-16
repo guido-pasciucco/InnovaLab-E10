@@ -149,6 +149,12 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 - **Fuente única:** el precio del packaging se carga una sola vez, en la pestaña Packaging del catálogo de insumos; la presentación solo referencia, no vuelve a cargarlo.
 - **Alcance:** esta decisión define el vínculo con packaging; la entidad "presentación" en sí todavía no está modelada en el spec.
 
+#### D14 — UX en `/productos`: capacidad arriba y CVU en vivo
+
+- **Decisión:** el campo de capacidad mensual va en el **bloque principal del formulario**, junto a nombre y rendimiento, visible sin scroll. El CVU se muestra en ese mismo bloque y se recalcula en vivo (D4).
+- **Avisos:** con capacidad 0 o vacía se muestra el aviso de D9; con errores de renglón, los de D10.
+- **Alcance:** los estados vacíos y el contador del listado son detalle de implementación, no requieren decisión de negocio adicional; el listado ya muestra la capacidad cargada (D3).
+
 ## Decisiones pendientes
 
 ### General

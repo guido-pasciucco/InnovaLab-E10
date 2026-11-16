@@ -100,6 +100,7 @@ Para cada producto, dentro de `/productos`:
 - **Validaciones (decididas):** al cargar un renglón se exige insumo existente del catálogo, unidad de la misma familia, cantidad > 0 y un solo renglón por insumo. El error se marca en el formulario y el renglón no entra al cálculo hasta corregirlo.
 - **Ciclo de vida (decidido):** productos y recetas se editan y se borran siempre; el borrado es **lógico** (se marca, no se elimina físicamente) y se puede restaurar. Los snapshots cerrados conservan su copia y no se afectan (D11, D12).
 - **Packaging en presentaciones (decidido):** las presentaciones referencian ítems de packaging del catálogo con cantidad; su costo se suma al de la receta y se normaliza con el rendimiento para el CVU de esa presentación (D13). La entidad "presentación" aún no está modelada.
+- **UX del formulario (decidido):** la capacidad va en el bloque principal, junto a nombre y rendimiento, visible sin scroll; el CVU se muestra ahí y recalcula en vivo. Capacidad 0/vacía y errores de renglón se avisan en el formulario (D14).
 
 ### Huecos
 
