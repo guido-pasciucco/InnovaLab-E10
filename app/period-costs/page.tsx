@@ -1,7 +1,4 @@
-import Link from "next/link";
-
-import { PeriodCostsTable } from "@/components/period-costs/period-costs-table";
-import { formatPeriodLabel } from "@/components/period-costs/period-costs-values";
+import { PeriodCostsScreen } from "@/components/period-costs/period-costs-screen";
 import { requireUser } from "@/lib/auth/require-user";
 import { listPeriodCostsService } from "@/lib/services/business-cost";
 
@@ -20,55 +17,5 @@ export default async function PeriodCostsPage() {
     amountPeriod,
   }));
 
-  return (
-    <main className="min-h-screen bg-surface-tint px-4 py-10 sm:px-6">
-      <div className="mx-auto w-full max-w-3xl space-y-8">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold tracking-wide text-brand-green-700 uppercase">
-              Gastos indirectos
-            </p>
-            <h1 className="mt-1 text-3xl font-bold text-fg sm:text-4xl">
-              Gastos del período
-            </h1>
-            <p className="mt-2 max-w-xl text-base text-fg-muted">
-              Cargalos una sola vez para toda tu lista de productos: no hace falta
-              repetirlos producto por producto.
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            Volver al dashboard
-          </Link>
-        </header>
-
-        <section
-          aria-labelledby="period-costs-heading"
-          className="rounded-[24px] bg-surface p-5 shadow-sm sm:p-6"
-        >
-          <div className="border-b border-border-default pb-4">
-            <h2 id="period-costs-heading" className="text-lg font-semibold text-fg">
-              Gastos de {formatPeriodLabel(period)}
-            </h2>
-            <p className="mt-1 text-sm text-fg-muted">
-              Alquiler, servicios y otros gastos que pagás todos los meses. Quedan
-              guardados una sola vez para toda tu lista de productos.
-            </p>
-          </div>
-
-          <div className="mt-4">
-            {periodLines.length === 0 && (
-              <p className="mb-4 text-sm text-fg-muted">
-                Todavía no cargaste gastos de este mes. Empezá con el alquiler o
-                los servicios.
-              </p>
-            )}
-            <PeriodCostsTable period={period} lines={periodLines} total={total} />
-          </div>
-        </section>
-      </div>
-    </main>
-  );
+  return <PeriodCostsScreen period={period} lines={periodLines} total={total} />;
 }
