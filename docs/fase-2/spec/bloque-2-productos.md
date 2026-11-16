@@ -6,7 +6,7 @@
 
 ## Estado
 
-- **En definición.** Decisiones cerradas hasta ahora: 3 (D1, D2, D3).
+- **En definición.** Decisiones cerradas hasta ahora: 4 (D1, D2, D3, D4).
 
 ## Objetivo y alcance (borrador)
 
@@ -39,11 +39,17 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 
 - **Regla:** la **capacidad mensual** (“¿Cuántas unidades pensás fabricar este mes?”) es un **campo del formulario del producto**, editable siempre (como nombre/receta/rendimiento). No hay pantalla propia para la capacidad ni entidad “plan del mes”.
 - **Listado:** el listado de productos muestra la capacidad cargada.
-- **Edición:** cambiar la capacidad recalcula lo dependiente en vivo (prorrateo, costo total, precio, equilibrio).
+- **Edición:** cambiar la capacidad recalcula lo dependiente en vivo (prorrateo, costo total, precio, equilibrio). Regla generalizada en D4 a cualquier dato editado.
 - **Histórico:** se registra con un botón manual **“Cerrar cálculo”** (snapshot cuando el usuario está conforme), en lugar de “cerrar lista”. **Detalles del snapshot pendientes** (qué congela, inmutabilidad, relación con prorrateo/período, consulta del histórico).
 - **Alineación:** recorrido Insumos → mis productos → crear/editar producto (nombre + receta + rendimiento + capacidad); superset del flujo de las issues #240–#242 sin pantalla dedicada de capacidad.
 - **Limitación aceptada:** la capacidad es un atributo único del producto (no por período); para un mes nuevo se edita cada producto (mitigable a futuro con edición masiva).
 - **Detalle:** comparación de opciones en el doc de decisión capacidad vs plan del período.
+
+### D4 — Recálculo en vivo ante cualquier edición (decisión general)
+
+- **Regla:** no hay un paso de cierre para poder calcular. Cualquier cambio en insumos, receta/rendimiento, capacidad, costos indirectos o recargo recalcula de inmediato todo lo derivado (CVU, prorrateo, costo total, precio y equilibrio), con aviso de qué cambió.
+- **Alcance:** decisión general que aplica también al Bloque 2; productos y catálogo quedan editables siempre. La única dependencia de datos es que el prorrateo necesita capacidades cargadas.
+- **Distinción:** "Cerrar cálculo" es un botón manual que solo genera una foto para el histórico; no habilita ni bloquea el cálculo.
 
 ## Modelo de datos (borrador, parcial)
 

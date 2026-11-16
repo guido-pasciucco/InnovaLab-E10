@@ -33,7 +33,7 @@ Todas las ventanas son accesibles en cualquier momento desde el menú: **no hay 
 
 Lo que sí existe son **dependencias de datos**, no bloqueos de interfaz:
 
-- Los **costos indirectos** se pueden repartir (prorratear) cuando hay capacidades cargadas en los productos: sin capacidades no hay contra qué repartir. La capacidad es editable en vivo y cada cambio recalcula lo dependiente.
+- Los **costos indirectos** se pueden repartir (prorratear) cuando hay capacidades cargadas en los productos: sin capacidades no hay contra qué repartir. No hay cierre de lista: cualquier edición recalcula lo derivado en vivo.
 - El **tablero** solo muestra resultados cuando existen indirectos, precios y capacidades cargados; con datos a medias muestra lo que haya o un estado vacío.
 
 La página inicial/dashboard no fuerza un orden ni bloquea secciones: todas las ventanas son accesibles desde el menú en cualquier momento. Su contenido está **a decidir** (ver "Decisiones pendientes"). El menú, en cambio, es solo navegación: siempre visible, sin estado.
@@ -114,7 +114,9 @@ Para cada producto, dentro de `/productos`:
 
 ## Bloque 3 — Costos indirectos, precio y equilibrio
 
-> El prorrateo de los costos indirectos requiere capacidades cargadas en los productos (necesita la capacidad de cada uno). La carga de indirectos se puede hacer en cualquier momento; lo que no se puede es repartir sin capacidades. No existe cierre de lista: la capacidad es editable en vivo y cada cambio recalcula lo dependiente.
+> El prorrateo de los costos indirectos requiere capacidades cargadas en los productos (necesita la capacidad de cada uno). La carga de indirectos se puede hacer en cualquier momento; lo que no se puede es repartir sin capacidades.
+>
+> **Recálculo en vivo (decidido):** cualquier cambio en insumos, receta/rendimiento, capacidad, costos indirectos o recargo recalcula de inmediato todo lo derivado, con aviso de qué cambió. No hay cierre de lista para calcular; "Cerrar cálculo" solo toma una foto para el histórico.
 
 ### Pasos
 
@@ -140,7 +142,6 @@ Para cada producto, dentro de `/productos`:
 - **Período sin modelo**: los costos indirectos son "del mes" pero no hay campo de período. ¿Un solo cálculo vigente o histórico?
 - **Recargo global o por producto**: #245 dice "cada producto" pero no aclara si el % es uno solo o individual.
 - **División por cero**: si la contribución ponderada es 0 (todos los precios sugeridos igualan al costo variable unitario) o la suma de capacidades es 0.
-- **Edición post-cálculo**: cambiar un insumo, una capacidad o el recargo después de calcular no tiene flujo definido (¿recalcula todo? ¿avisa?).
 
 ### Propuesta (pendiente de confirmar)
 
@@ -152,7 +153,6 @@ Para cada producto, dentro de `/productos`:
   - Prueba de cierre: `Σ (cuotaᵢ × contribuciónᵢ) = costosIndirectosDelPeriodo`
 - **Un solo recargo global** para todos los productos (más simple de explicar); si se necesita por producto, es un campo opcional con default global.
 - **Período como dato del cálculo**: con la opción A (capacidad en el producto, decidida) no hay entidad "plan del mes"; el histórico se registra con el snapshot de **Cerrar cálculo**, cuyos detalles siguen pendientes. Para esta versión puede haber un solo cálculo vigente.
-- Recálculo: cualquier cambio en insumos, capacidades, costos indirectos o recargo **dispara recálculo automático** de todo lo derivado, con aviso de qué cambió.
 
 ---
 

@@ -34,6 +34,14 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 - **Queda afuera deliberadamente:** superficie (m²), tiempo, unidades de envase (caja, bolsa, paquete — coherente con la decisión de no tener "unidad de compra"). Si un rubro los necesita, se agregan como familia/unidades nuevas sin migrar datos.
 - **Catálogo extensible:** se pueden agregar unidades con su equivalencia sin romper datos existentes.
 
+#### D4 — Recálculo en vivo ante cualquier edición
+
+- **Decisión:** no existe un paso de cierre para poder calcular. Cualquier cambio en un dato del flujo — insumos, receta/rendimiento, capacidad, costos indirectos o recargo — dispara de inmediato el recálculo de todo lo derivado (CVU, prorrateo, costo total, precio y equilibrio), con aviso de qué cambió. Productos y catálogo quedan editables siempre.
+- **Alcance:** decisión general que aplica a todos los bloques. La única dependencia de datos es que el prorrateo necesita capacidades cargadas; no requiere un cierre de lista.
+- **Por qué:** el usuario quiere ver el efecto de cada dato en el momento, sin cerrar el catálogo ni rehacer pasos para obtener números.
+- **Distinción:** "Cerrar cálculo" es un botón manual que solo toma una foto para el histórico; no habilita ni bloquea el cálculo en vivo.
+- **Ajusta:** el hueco "Edición post-cálculo" y la propuesta de recálculo automático de la especificación, que pasan a ser decisión tomada.
+
 ### Bloque 1 — Insumos
 
 #### Packaging como pestaña aceptada del catálogo

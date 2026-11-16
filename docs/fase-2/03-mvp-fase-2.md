@@ -6,7 +6,7 @@
 
 ## Regla del MVP en una frase
 
-El usuario puede **entrar, cargar su catálogo de insumos y ver que el resto del flujo existe**, sin que ninguna decisión de negocio pendiente lo bloquee.
+El usuario puede **entrar, cargar su catálogo de insumos y ver que el resto del flujo existe**, sin que ninguna decisión de negocio pendiente lo bloquee. Cada dato que edita recalcula lo dependiente en vivo: no hay que cerrar productos para calcular.
 
 ## Qué entra
 
@@ -14,14 +14,14 @@ El usuario puede **entrar, cargar su catálogo de insumos y ver que el resto del
 | --- | --- | --- |
 | Navegación general | Sí | Menú con destinos visibles (las secciones que aún no existen se muestran como tales, no se ocultan) + página inicial/dashboard con contenido a decidir |
 | Bloque 1 — Insumos | **Completo** | Alta, corrección y borrado de insumos (nombre + precio de compra + cantidad + unidad de medida seleccionable) y de packaging (pestaña del mismo catálogo, diferenciada por `kind`; ver registro de decisiones), lista compartida por todo el catálogo |
-| Bloque 2 — Productos | Parcial | La pantalla `/productos` está prevista; el alta de producto con receta, rendimiento y capacidad ya tiene decisiones tomadas (D1–D3), pero faltan las reglas aún pendientes del bloque |
+| Bloque 2 — Productos | Parcial | La pantalla `/productos` está prevista; el alta de producto con receta, rendimiento y capacidad ya tiene decisiones tomadas (D1–D3) y recálculo en vivo (D4), pero faltan las reglas aún pendientes del bloque |
 | Bloque 3 — Costos indirectos, precio y equilibrio | No | Depende del bloque 2 y de las fórmulas pendientes de validación |
 | Bloque 4 — Tablero | No | Se alimenta del bloque 3 |
 
 ### Por qué este recorte
 
 - **El bloque 1 no tiene decisiones abiertas.** La Opción B (insumo con precio de compra + cantidad + unidad de medida seleccionable del catálogo, sin unidad de compra) ya está decidida y el borrado sin recetas es trivial mientras no existan recetas.
-- **El bloque 2 tiene decisiones tomadas** (D1–D3: rendimiento, renglón sin "modo de compra" y capacidad en el formulario del producto), pero aún quedan reglas pendientes (snapshot "Cerrar cálculo", validaciones, ciclo de vida). El MVP no las resuelve.
+- **El bloque 2 tiene decisiones tomadas** (D1–D3: rendimiento, renglón sin "modo de compra" y capacidad en el formulario del producto; D4: recálculo en vivo), pero aún quedan reglas pendientes (snapshot "Cerrar cálculo", validaciones, ciclo de vida). El MVP no las resuelve.
 - **El bloque 3 hereda las ambigüedades pendientes** (cuota, equilibrio en pesos, "importancia de cada gasto"). Sin la planilla de validación no hay oráculo para validar ninguna fórmula.
 - El MVP deja la arquitectura de navegación y persistencia del catálogo probada con el bloque más simple, para que los bloques siguientes solo agreguen pantallas.
 
@@ -87,7 +87,7 @@ Lo que sí está decidido: existe como destino del menú, no bloquea secciones y
 
 ## Qué queda afuera
 
-- Productos, recetas, costo variable unitario y capacidad mensual: las decisiones (D1–D3) ya están tomadas, pero su implementación queda fuera del MVP.
+- Productos, recetas, costo variable unitario y capacidad mensual: las decisiones (D1–D3, más D4 de recálculo en vivo) ya están tomadas, pero su implementación queda fuera del MVP.
 - Costos indirectos, prorrateo, recargo, precio sugerido, contribución, equilibrio, tablero.
 - Unidades de medida fuera del insumo: la cantidad y la unidad del insumo ya se cargan en el bloque 1 (la unidad se selecciona del catálogo precargado); las unidades de la receta (cantidad usada y su unidad, de la misma familia) llegan con el bloque 2.
 - Histórico de períodos, comparación de escenarios, precio de venta real.
