@@ -6,7 +6,7 @@
 
 ## Estado
 
-- **En definición.** Decisiones cerradas hasta ahora: 8 (D1 a D8).
+- **En definición.** Decisiones cerradas hasta ahora: 9 (D1 a D9).
 
 ## Objetivo y alcance (borrador)
 
@@ -71,6 +71,11 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Regla:** el histórico se consulta en un destino propio del menú, **"Datos históricos"**: lista de cierres por período, detalle de cada foto (D5) y registro de cambios auditados (D6).
 - **Alcance:** solo lectura del histórico; la edición en vivo sigue en `/productos` y en el resto de los bloques (D4).
 
+### D9 — Regla de capacidad: > 0 para habilitar el cálculo
+
+- **Regla:** la capacidad mensual debe ser **> 0** para que el producto entre al prorrateo y muestre costo total, precio sugerido y equilibrio. Si está en 0 o sin cargar, el producto se guarda igual y la pantalla avisa qué falta; al completarla, todo se recalcula en vivo (D4).
+- **CVU:** se calcula siempre (depende de la receta y el rendimiento, no de la capacidad).
+
 ## Modelo de datos (borrador, parcial)
 
 > Solo lo que se va definiendo; incompleto a propósito.
@@ -78,7 +83,7 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Producto**
   - nombre — **pendiente de detallar**
   - receta (1:1 asumido por ahora) — **pendiente**
-  - capacidad mensual (“¿Cuántas unidades pensás fabricar este mes?”) — **definido (D3)**: campo editable en el formulario del producto; su regla (obligatoria, >0, manejo de 0/sin cargar) está pendiente.
+  - capacidad mensual (“¿Cuántas unidades pensás fabricar este mes?”) — **definido (D3 y D9)**: campo editable en el formulario del producto; > 0 para habilitar el cálculo, con aviso si está vacía o en 0.
 - **Receta (del producto)**
   - `rendimiento` (unidades que rinde la receta), > 0, default `1` — **definido (D1)**
   - renglones — **pendiente**
@@ -99,7 +104,7 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 ## Decisiones pendientes (Bloque 2)
 
 1. ~~**“Cerrar cálculo” (snapshot) para histórico**~~ **Resuelto:** alcance (D5), inmutabilidad (D6), relación con prorrateo/período (D7) y consulta en "Datos históricos" (D8).
-2. **Regla de capacidad:** obligatoria > 0 para cerrar/habilitar cálculo y tratamiento de capacidad 0 o sin cargar.
+2. ~~**Regla de capacidad**~~ **Resuelta (D9):** > 0 para habilitar el cálculo; con 0 o sin cargar se guarda igual, avisa y se excluye del prorrateo hasta completarla.
 3. **Validaciones de receta:** compatibilidad de familia/unidad, cantidades válidas, duplicados, insumo inválido.
 4. **Ciclo de vida:** edición/borrado de producto y receta; borrado de insumo referenciado (bloqueado) antes/después de snapshot; efectos de cambios.
 5. **Packaging en presentaciones:** cómo se reutiliza packaging del catálogo de insumos en presentaciones (P12); su alta como pestaña del catálogo ya está decidida.

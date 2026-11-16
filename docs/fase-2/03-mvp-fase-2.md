@@ -21,7 +21,7 @@ El usuario puede **entrar, cargar su catálogo de insumos y ver que el resto del
 ### Por qué este recorte
 
 - **El bloque 1 no tiene decisiones abiertas.** La Opción B (insumo con precio de compra + cantidad + unidad de medida seleccionable del catálogo, sin unidad de compra) ya está decidida y el borrado sin recetas es trivial mientras no existan recetas.
-- **El bloque 2 tiene decisiones tomadas** (D1–D3: rendimiento, renglón sin "modo de compra" y capacidad en el formulario del producto; D4: recálculo en vivo; D5–D8: snapshot y histórico), pero aún quedan reglas pendientes (regla de capacidad, validaciones, ciclo de vida, UX, formato/redondeo). El MVP no las resuelve.
+- **El bloque 2 tiene decisiones tomadas** (D1–D3: rendimiento, renglón sin "modo de compra" y capacidad en el formulario del producto; D4: recálculo en vivo; D5–D8: snapshot y histórico; D9: regla de capacidad), pero aún quedan reglas pendientes (validaciones, ciclo de vida, UX, formato/redondeo). El MVP no las resuelve.
 - **El bloque 3 hereda las ambigüedades pendientes** (cuota, equilibrio en pesos, "importancia de cada gasto"). Sin la planilla de validación no hay oráculo para validar ninguna fórmula.
 - El MVP deja la arquitectura de navegación y persistencia del catálogo probada con el bloque más simple, para que los bloques siguientes solo agreguen pantallas.
 
@@ -96,7 +96,7 @@ Lo que sí está decidido: existe como destino del menú, no bloquea secciones y
 ## Decisiones que el MVP no toma (siguen pendientes)
 
 1. ~~Detalles del snapshot "Cerrar cálculo"~~ **Resueltos** (D5–D8)
-2. Regla de capacidad: obligatoria > 0 y tratamiento de capacidad 0 o sin cargar (bloque 2)
+2. ~~Regla de capacidad~~ **Resuelta (D9)**
 3. Validaciones de receta y formato de `rendimiento`/redondeo (bloque 2)
 4. Regla de "importancia de cada gasto" en el prorrateo (bloque 3)
 5. Interpretación final de cuota, equilibrio en pesos y prueba de cierre (bloque 3)

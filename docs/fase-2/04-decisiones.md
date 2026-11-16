@@ -119,6 +119,12 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 - **Decisión:** el histórico se consulta en un destino propio del menú, **"Datos históricos"**, con la lista de cierres por período, el detalle de cada foto (D5) y el registro de cambios auditados (D6).
 - **Alcance:** solo lectura del histórico; la edición en vivo sigue en `/productos` y en el resto de los bloques (D4).
 
+#### D9 — Regla de capacidad: > 0 para habilitar el cálculo
+
+- **Decisión:** la capacidad mensual debe ser **> 0** para que el producto entre al prorrateo y muestre costo total, precio sugerido y equilibrio. Si está en 0 o sin cargar, el producto **se guarda igual** y la pantalla avisa qué falta; en cuanto se completa, el cálculo se actualiza en vivo (D4).
+- **CVU:** se calcula siempre, porque depende de la receta y el rendimiento, no de la capacidad.
+- **Ajusta:** la propuesta previa de "capacidad > 0 para cerrar la lista" pasa a "habilitar el cálculo": no hay cierre de lista (D4).
+
 ## Decisiones pendientes
 
 ### General
