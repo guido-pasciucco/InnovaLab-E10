@@ -83,7 +83,7 @@ Lo que sí está decidido: existe como destino del menú, no bloquea secciones y
 ### Borrado
 
 - En el MVP se puede borrar cualquier insumo.
-- **Regla pendiente para el bloque 2**: cuando existan recetas, borrar un insumo que está en alguna receta debe bloquearse y pedir quitarlo de la receta primero.
+- **Regla para el bloque 2 (D11)**: cuando existan recetas, borrar un insumo que está en alguna receta se bloquea y pide quitarlo de la receta primero.
 
 ## Qué queda afuera
 

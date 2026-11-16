@@ -65,7 +65,7 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 #### Borrado libre de insumos en el MVP
 
 - **Decisión:** en el MVP se puede borrar cualquier insumo porque ninguna receta los referencia todavía.
-- **Regla pendiente:** cuando existan recetas (bloque 2), el borrado de un insumo referenciado debe bloquearse hasta quitarlo de la receta.
+- **Regla (D11):** cuando existan recetas (bloque 2), el borrado de un insumo referenciado se bloquea hasta quitarlo de la receta.
 
 ### Bloque 2 — Productos y recetas
 
@@ -130,6 +130,12 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 - **Decisión:** al agregar o editar un renglón se valida de inmediato: el insumo existe y pertenece al catálogo del usuario; la unidad usada es de la **misma familia** que la del insumo; la cantidad usada es **> 0**; y no hay otro renglón con el **mismo insumo**.
 - **Efecto:** si hay error, se marca en el formulario y el renglón no entra al cálculo hasta corregirlo; al corregirlo, todo se recalcula en vivo (D4).
 - **Ajusta:** el pendiente "validaciones de receta: compatibilidad de familia/unidad, cantidades válidas, duplicados, insumo inválido".
+
+#### D11 — Borrado de insumo referenciado
+
+- **Decisión:** no se puede borrar un insumo que aparece en un renglón de una **receta viva**. El sistema bloquea la acción, indica qué recetas lo usan y el usuario debe quitarlo de ellas (o borrarlas) primero.
+- **Histórico:** los snapshots conservan su propia copia del insumo (D5), así que borrarlo del catálogo vivo no rompe el histórico; las correcciones sobre la foto quedan auditadas (D6).
+- **Ajusta:** la regla pendiente del Bloque 1 ("cuando existan recetas, el borrado de un insumo referenciado debe bloquearse hasta quitarlo de la receta") pasa a decisión tomada.
 
 ## Decisiones pendientes
 
