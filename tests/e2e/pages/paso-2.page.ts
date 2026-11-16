@@ -12,6 +12,10 @@ export type CostStepOptions = {
   path: string;
   // Accessible name of the amount inputs.
   amountLabel: string;
+  // Caption of the sum under the list. Defaults to paso 2's.
+  subtotalLabel?: string;
+  // Label of the button that opens a new row. Defaults to paso 2's.
+  addLabel?: string;
 };
 
 const FIXED_COSTS_STEP: CostStepOptions = {
@@ -45,8 +49,12 @@ export class Paso2Page {
     this.newConceptInput = this.conceptInputs.last();
     this.newRowDeleteButton = page.getByRole("button", { name: "Eliminar fila", exact: true });
     this.amountInputs = page.getByLabel(step.amountLabel, { exact: true });
-    this.addButton = page.getByRole("button", { name: "Agregar concepto" });
-    this.subtotal = page.getByLabel(/^Subtotal fijos /);
+    this.addButton = page.getByRole("button", {
+      name: step.addLabel ?? "Agregar concepto",
+    });
+    this.subtotal = page.getByLabel(
+      new RegExp(`^${step.subtotalLabel ?? "Subtotal fijos"} `),
+    );
     this.alerts = page.getByRole("main").getByRole("alert");
   }
 
