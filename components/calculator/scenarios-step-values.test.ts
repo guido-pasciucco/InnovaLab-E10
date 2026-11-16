@@ -47,6 +47,7 @@ describe("toScenariosStepValues", () => {
     expect(values.columns?.[0]).toMatchObject({
       name: "Base",
       price: { value: "$5.857,14", delta: null },
+      unitCost: { value: "$4.100", delta: null },
       realMargin: { value: "30 %", delta: null },
       estimatedProfit: { value: "$351.428,57", delta: null },
       breakEvenUnits: { value: "96", delta: null },
@@ -54,10 +55,25 @@ describe("toScenariosStepValues", () => {
     expect(values.columns?.[1]).toMatchObject({
       name: "Precio redondo",
       price: { value: "$5.000" },
+      unitCost: { value: "$4.100" },
       realMargin: { value: "18 %", delta: "12 puntos menos que la base" },
       estimatedProfit: { value: "$180.000", delta: "$171.428,57 menos que la base" },
       breakEvenUnits: { value: "128", delta: "32 más que la base" },
     });
+  });
+
+  it("shows the total cost of each scenario at its own volume", () => {
+    const bigger: CalculatorScenario = { ...roundPrice, volumeOverride: 250 };
+    const scenarios = [base, bigger];
+
+    const values = toScenariosStepValues({
+      scenarios,
+      comparison: compareScenarios(inputs, scenarios),
+    });
+
+    expect(values.status).toBe("ready");
+    // 320.000 / 250 + 2.500 = 3.780: the higher capacity absorbs less fixed cost.
+    expect(values.columns?.[1]).toMatchObject({ name: "Precio redondo", unitCost: { value: "$3.780" } });
   });
 
   it("shows Sin equilibrio and no break-even delta when the price does not cover the variable cost", () => {

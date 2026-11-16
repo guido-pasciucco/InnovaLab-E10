@@ -28,6 +28,7 @@ const MESSAGES = {
 } as const;
 
 const ROWS: { label: string; cell: (column: ScenarioColumn) => ScenarioCell }[] = [
+  { label: "Costo total", cell: (column) => column.unitCost },
   { label: "Precio", cell: (column) => column.price },
   { label: "Margen real", cell: (column) => column.realMargin },
   { label: "Ganancia estimada", cell: (column) => column.estimatedProfit },

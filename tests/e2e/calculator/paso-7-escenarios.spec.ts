@@ -34,6 +34,7 @@ test("step 7 shows the base built from the saved costs and margin", async ({ aut
   await step.expectLoaded();
 
   await expect(step.columnHeaders()).toHaveText(["Base"]);
+  await expect(step.cell("Costo total", 0)).toContainText("$4.100");
   await expect(step.cell("Precio", 0)).toContainText("$5.857,14");
   await expect(step.cell("Margen real", 0)).toContainText("30 %");
   await expect(step.cell("Ganancia estimada", 0)).toContainText("$351.428,57");

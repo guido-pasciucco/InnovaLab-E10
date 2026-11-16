@@ -21,6 +21,10 @@ export type ScenarioCell = {
 
 export type ScenarioColumn = CalculatorScenario & {
   price: ScenarioCell;
+  // Total cost of the scenario's product at its volume: fixed share + variable
+  // unit (lib/calc compareScenarios). It is the #244 "costo total" the user sees
+  // per product, including the re-prorate when the volume changes.
+  unitCost: ScenarioCell;
   realMargin: ScenarioCell;
   estimatedProfit: ScenarioCell;
   breakEvenUnits: ScenarioCell;
@@ -81,6 +85,7 @@ function toColumn(scenario: CalculatorScenario, figures: ScenarioComparison): Sc
   return {
     ...scenario,
     price: { value: money(figures.price), delta: null },
+    unitCost: { value: money(figures.unitCost), delta: null },
     realMargin: {
       value: percentLabel(figures.realMarginPct),
       delta: withDelta(marginDeltaLabel(figures.delta.marginPoints)),
