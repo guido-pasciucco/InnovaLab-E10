@@ -6,7 +6,7 @@
 
 ## Estado
 
-- **En definición.** Decisiones cerradas hasta ahora: 12 (D1 a D12).
+- **En definición.** Decisiones cerradas hasta ahora: 13 (D1 a D13).
 
 ## Objetivo y alcance (borrador)
 
@@ -91,6 +91,12 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Regla:** productos y recetas se pueden editar y borrar siempre. El borrado es **lógico**: el registro se marca como borrado, deja de mostrarse en el catálogo vivo y de entrar en los cálculos, pero se conserva y se puede restaurar.
 - **Efectos:** cualquier cambio recalcula en vivo (D4); los snapshots cerrados no se afectan (D5, D6).
 
+### D13 — Packaging en presentaciones: referencia del catálogo y suma al costo
+
+- **Regla:** las presentaciones seleccionan ítems de packaging del catálogo (mismo `kind`) con cantidad; su costo unitario se suma al de la receta y se normaliza con el rendimiento (D1) para el CVU de esa presentación.
+- **Fuente única:** el precio se carga una vez en la pestaña Packaging; la presentación solo referencia.
+- **Alcance:** la entidad "presentación" todavía no está modelada; esta decisión solo define el vínculo con packaging.
+
 ## Modelo de datos (borrador, parcial)
 
 > Solo lo que se va definiendo; incompleto a propósito.
@@ -122,7 +128,7 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 2. ~~**Regla de capacidad**~~ **Resuelta (D9):** > 0 para habilitar el cálculo; con 0 o sin cargar se guarda igual, avisa y se excluye del prorrateo hasta completarla.
 3. ~~**Validaciones de receta**~~ **Resueltas (D10):** estrictas al cargar (familia, cantidad > 0, sin duplicados, insumo válido).
 4. ~~**Ciclo de vida**~~ **Resuelto:** borrado de insumo referenciado (D11) y edición/borrado de producto y receta con borrado lógico (D12).
-5. **Packaging en presentaciones:** cómo se reutiliza packaging del catálogo de insumos en presentaciones (P12); su alta como pestaña del catálogo ya está decidida.
+5. ~~**Packaging en presentaciones**~~ **Resuelto (D13):** se referencia del catálogo y su costo se suma al de la receta. Queda sin modelar la entidad "presentación" en sí.
 6. **UX/estados en `/productos`:** vacíos, contador, feedback de CVU; ubicación visual del campo de capacidad en el formulario/edición.
 7. **Formato de `rendimiento` y redondeo/decimales:** entero o decimal, precisión de cálculo y de visualización.
 8. **Planilla #250:** oráculo de validación de fórmulas/números.

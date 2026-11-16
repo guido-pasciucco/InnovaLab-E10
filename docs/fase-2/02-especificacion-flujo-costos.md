@@ -99,6 +99,7 @@ Para cada producto, dentro de `/productos`:
 - **Alineación:** el recorrido es Insumos → mis productos → crear/editar producto (nombre + receta + rendimiento + capacidad). La capacidad es un atributo único del producto, no por período: para un mes nuevo se edita cada producto (mitigable a futuro con edición masiva).
 - **Validaciones (decididas):** al cargar un renglón se exige insumo existente del catálogo, unidad de la misma familia, cantidad > 0 y un solo renglón por insumo. El error se marca en el formulario y el renglón no entra al cálculo hasta corregirlo.
 - **Ciclo de vida (decidido):** productos y recetas se editan y se borran siempre; el borrado es **lógico** (se marca, no se elimina físicamente) y se puede restaurar. Los snapshots cerrados conservan su copia y no se afectan (D11, D12).
+- **Packaging en presentaciones (decidido):** las presentaciones referencian ítems de packaging del catálogo con cantidad; su costo se suma al de la receta y se normaliza con el rendimiento para el CVU de esa presentación (D13). La entidad "presentación" aún no está modelada.
 
 ### Huecos
 

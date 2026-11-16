@@ -143,6 +143,12 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 - **Efectos:** cualquier cambio recalcula lo dependiente en vivo (D4). Los snapshots cerrados no se afectan: conservan su propia copia (D5) y las correcciones sobre la foto quedan auditadas (D6).
 - **Ajusta:** el pendiente "ciclo de vida: edición/borrado de producto y receta; efectos de cambios" queda resuelto (el borrado de insumo referenciado ya estaba en D11).
 
+#### D13 — Packaging en presentaciones: referencia del catálogo y suma al costo
+
+- **Decisión:** las presentaciones de un producto seleccionan ítems de **packaging del catálogo** (mismo `kind`) indicando la cantidad. Su costo unitario se suma al costo de la receta y se normaliza con el rendimiento (D1) para obtener el **CVU de esa presentación**.
+- **Fuente única:** el precio del packaging se carga una sola vez, en la pestaña Packaging del catálogo de insumos; la presentación solo referencia, no vuelve a cargarlo.
+- **Alcance:** esta decisión define el vínculo con packaging; la entidad "presentación" en sí todavía no está modelada en el spec.
+
 ## Decisiones pendientes
 
 ### General
