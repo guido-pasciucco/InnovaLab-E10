@@ -13,15 +13,15 @@ El usuario puede **entrar, cargar su catálogo de insumos y ver que el resto del
 | Bloque de la especificación | Entra al MVP | Alcance dentro del bloque |
 | --- | --- | --- |
 | Navegación general | Sí | Menú con destinos visibles (las secciones que aún no existen se muestran como tales, no se ocultan) + página inicial/dashboard con contenido a decidir |
-| Bloque 1 — Insumos | **Completo** | Alta, corrección y borrado de insumos (nombre + precio de compra + cantidad + unidad de medida seleccionable), lista compartida por todo el catálogo |
-| Bloque 2 — Productos | Parcial | Solo la pantalla `/productos` existe y está vacía: el alta de producto con receta depende de decisiones pendientes (base de la receta, capacidad) |
+| Bloque 1 — Insumos | **Completo** | Alta, corrección y borrado de insumos (nombre + precio de compra + cantidad + unidad de medida seleccionable) y de packaging (pestaña del mismo catálogo, diferenciada por `kind`; ver registro de decisiones), lista compartida por todo el catálogo |
+| Bloque 2 — Productos | Parcial | La pantalla `/productos` está prevista; el alta de producto con receta, rendimiento y capacidad ya tiene decisiones tomadas (D1–D3), pero faltan las reglas aún pendientes del bloque |
 | Bloque 3 — Costos indirectos, precio y equilibrio | No | Depende del bloque 2 y de las fórmulas pendientes de validación |
 | Bloque 4 — Tablero | No | Se alimenta del bloque 3 |
 
 ### Por qué este recorte
 
 - **El bloque 1 no tiene decisiones abiertas.** La Opción B (insumo con precio de compra + cantidad + unidad de medida seleccionable del catálogo, sin unidad de compra) ya está decidida y el borrado sin recetas es trivial mientras no existan recetas.
-- **El bloque 2 está frenado por tres decisiones pendientes** (base de la receta, ubicación de la capacidad, cerrar lista). Implementarlo ahora sería codificar una suposición.
+- **El bloque 2 tiene decisiones tomadas** (D1–D3: rendimiento, renglón sin "modo de compra" y capacidad en el formulario del producto), pero aún quedan reglas pendientes (snapshot "Cerrar cálculo", validaciones, ciclo de vida). El MVP no las resuelve.
 - **El bloque 3 hereda las ambigüedades pendientes** (cuota, equilibrio en pesos, "importancia de cada gasto"). Sin la planilla de validación no hay oráculo para validar ninguna fórmula.
 - El MVP deja la arquitectura de navegación y persistencia del catálogo probada con el bloque más simple, para que los bloques siguientes solo agreguen pantallas.
 
@@ -71,6 +71,8 @@ Lo que sí está decidido: existe como destino del menú, no bloquea secciones y
 
 ### Datos del insumo (Opción B, ya decidida)
 
+> **Packaging:** misma carga y reglas que el insumo, en una pestaña separada del mismo catálogo (`kind = 'packaging'`).
+
 - **Nombre** del insumo (texto).
 - **Precio de compra**: monto en ARS de esa cantidad completa, mayor que cero, hasta 2 decimales.
 - **Cantidad**: cuánto producto trae el insumo, como número (ej. 50).
@@ -85,17 +87,17 @@ Lo que sí está decidido: existe como destino del menú, no bloquea secciones y
 
 ## Qué queda afuera
 
-- Productos, recetas, costo variable unitario, capacidad mensual.
+- Productos, recetas, costo variable unitario y capacidad mensual: las decisiones (D1–D3) ya están tomadas, pero su implementación queda fuera del MVP.
 - Costos indirectos, prorrateo, recargo, precio sugerido, contribución, equilibrio, tablero.
-- Unidades de medida fuera del insumo: la cantidad y la unidad del insumo ya se cargan en el bloque 1 (la unidad se selecciona del catálogo precargado); las unidades de la receta (modo de compra, cantidad usada) llegan con el bloque 2.
+- Unidades de medida fuera del insumo: la cantidad y la unidad del insumo ya se cargan en el bloque 1 (la unidad se selecciona del catálogo precargado); las unidades de la receta (cantidad usada y su unidad, de la misma familia) llegan con el bloque 2.
 - Histórico de períodos, comparación de escenarios, precio de venta real.
 - Qué pasa con el cálculo de un solo producto de la fase 1 (decisión de producto aparte).
 
 ## Decisiones que el MVP no toma (siguen pendientes)
 
-1. Base de la receta: ¿por unidad de producto o por lote? (bloque 2)
-2. Lista cerrada: ¿definitiva o reabrible? (bloque 2)
-3. Capacidad mensual: ¿en el alta de producto (opción A) o en el plan del mes (opción B)? (bloque 2/3)
+1. Detalles del snapshot "Cerrar cálculo": qué congela, inmutabilidad y consulta del histórico (bloque 2)
+2. Regla de capacidad: obligatoria > 0 y tratamiento de capacidad 0 o sin cargar (bloque 2)
+3. Validaciones de receta y formato de `rendimiento`/redondeo (bloque 2)
 4. Regla de "importancia de cada gasto" en el prorrateo (bloque 3)
 5. Interpretación final de cuota, equilibrio en pesos y prueba de cierre (bloque 3)
 6. Recargo global vs. por producto (bloque 3)

@@ -112,6 +112,10 @@ Desde P07 comienza el área privada de la aplicación: primero se ve la pantalla
 - «Configuraciones»
 - «Cerrar sesión»
 
+En cuanto al **menú lateral**: la idea es agregar otro apartado llamado **Costos**, donde se va a poder ver: **Costos**, organizada en tres pestañas: «Costos Variables», «Costos Fijos e indirectos» y «Costos totales». (#241–#243–#244)
+
+La intención sería facilitar la consulta y administración de los costos del negocio desde un mismo lugar. En el caso de los costos directos, la información ya se obtiene de las recetas y presentaciones de cada producto, por lo que no debería solicitarse nuevamente su carga.
+
 **Comportamiento**:
 
 - Destacar la sección activa.
@@ -137,13 +141,24 @@ Desde P07 comienza el área privada de la aplicación: primero se ve la pantalla
 - **PARA QUÉ SIRVE**: Reunir los insumos y materiales de packaging que compra el emprendimiento en un catálogo propio. Cada elemento tiene registrado su precio, cantidad y unidad de compra. Luego se reutiliza en las recetas y presentaciones de los productos, sin volver a cargar el mismo precio en cada producto.
 - **QUÉ DEBE VERSE**: Acceso desde la opción «Insumos» del menú lateral y encabezado del catálogo. La pantalla tendrá dos pestañas independientes: «Insumos» y «Packaging». Cada pestaña mostrará su propio listado de elementos, utilizando el mismo diseño de tabla y las mismas funcionalidades de búsqueda, carga, edición y eliminación. Habrá un buscador por nombre o unidad y un botón «Agregar insumo» o «Agregar packaging», según la pestaña. Cada fila mostrará el nombre, la cantidad comprada, la unidad de compra, el precio total pagado, el costo calculado por unidad mínima (por ejemplo, $/g, $/ml o $/unidad) y las acciones «Editar» y «Eliminar».
 - **QUÉ PUEDE HACER**: Consultar los elementos registrados, buscar por nombre o unidad, alternar entre Insumos y Packaging, agregar uno nuevo o editar uno existente mediante el modal P09, y eliminarlo con confirmación. Puede regresar a esta pantalla desde el menú lateral cuando necesite actualizar un precio o consultar sus datos; lo que registre queda guardado para utilizarlo en los productos.
-- **ESTADOS Y MENSAJES**: Catálogo vacío: explicar qué se carga aquí y mostrar un botón para agregar el primer elemento. Búsqueda sin resultados: indicarlo y permitir limpiar el filtro. Mostrar carga, confirmación de guardado o eliminación y errores con opción de reintentar. Si se intenta eliminar un insumo o packaging utilizado por un producto, queda pendiente definir con el equipo qué debe suceder y qué aviso corresponde mostrar.
+- **ESTADOS Y MENSAJES**: Catálogo vacío: explicar qué se carga aquí y mostrar un botón para agregar el primer elemento. Búsqueda sin resultados: indicarlo y permitir limpiar el filtro. Mostrar carga, confirmación de guardado o eliminación y errores con opción de reintentar. **Definido por el equipo**: si la persona usuaria intenta eliminar un insumo asociado a una receta, el sistema debe bloquear la eliminación y mostrar un mensaje explicativo: «No podés eliminar este insumo porque está asociado a uno o más productos. Primero quitá el insumo de las recetas correspondientes». La misma protección debe aplicarse al packaging vinculado a presentaciones comerciales. Esta restricción debe validarse tanto en la interfaz como en el backend para garantizar la integridad de los datos.
 - **CRITERIO UX**: «Insumos» y «Packaging» son pestañas de UNA misma pantalla, no dos pantallas distintas. P09 es el modal para cargar o editar datos. Diferenciar claramente «Precio total pagado por la compra» de «Costo por unidad mínima», que calcula la aplicación. Ejemplo: 25 kg de harina por $18.750 equivalen a $0,75 por gramo. No pedir a la persona usuaria que calcule ese valor ni confundirlo con el precio del producto terminado. Diseñar la tabla también para celular.
 
 #### P09 · Agregar / editar insumo o packaging (modal)
 
 - **PARA QUÉ SIRVE**: Registrar o corregir una compra sin abandonar el catálogo.
-- **QUÉ DEBE VERSE**: Modal contextual; nombre, cantidad comprada, unidad de compra, precio total pagado; vista previa de costo por unidad mínima; «Guardar» y «Cancelar».
+- **QUÉ DEBE VERSE** *(reformulación)*: Modal para agregar o editar un insumo o material de packaging, con los siguientes campos:
+  - **Nombre**: identificación del insumo o material.
+  - **Cantidad comprada**: cantidad total adquirida, expresada numéricamente.
+  - **Unidad de medida**: selector con opciones predefinidas (kg, g, litros, ml, metros, unidades, etc.). El ícono (?) de ayuda explicará que debe seleccionarse la unidad en la que se expresa la cantidad del insumo comprada.
+  - **Precio total pagado**: importe correspondiente a toda la cantidad registrada.
+  - **Costo por unidad mínima**: calculado automáticamente por la aplicación.
+
+  Ejemplo: si el usuario compra una bolsa de harina de 25 kg por $18.750, deberá ingresar: Nombre «Harina», Cantidad «25», Unidad de medida «kg» y Precio «$18.750». La aplicación mostrará automáticamente $0,75/g, es decir, cuánto le cuesta cada gramo de harina.
+
+  **Aclaración UX/UI**: No se solicita la cantidad de bolsas o envases como campo adicional. El usuario registra la cantidad total adquirida y selecciona su unidad de medida. La propuesta es automatizar las equivalencias conocidas para no exigir cálculos manuales. Botones «Guardar» y «Cancelar».
+
+  **Pendiente de validación funcional**: Esta propuesta simplifica el formulario actual del issue #239, que también permite cargar unidad mínima y equivalencia (ambas son correctas pero es información irrelevante para el usuario, PERO muy importante para el sistema). *(Ejemplo visual: ver documento fuente.)*
 - **QUÉ PUEDE HACER**: Guardar, cerrar, volver a la fila de origen.
 - **ESTADOS Y MENSAJES**: Obligatorios; cantidades y precios inválidos; guardando; duplicados; error de servidor.
 - **CRITERIO UX**: Mantener foco y navegación por teclado. Si el precio cambió, informar que podría afectar productos vinculados.
@@ -223,12 +238,13 @@ Desde P07 comienza el área privada de la aplicación: primero se ve la pantalla
 
 #### P17 · Contribución y punto de equilibrio
 
+*(Referencia: #246 y #250, abiertos.)*
+
 - **PARA QUÉ SIRVE**: Explicar cuánto aporta vender cada producto y cuántas ventas cubren los gastos.
 - **QUÉ DEBE VERSE**: Contribución por producto; margen monetario; mezcla/cuota del catálogo; unidades y pesos necesarios para el equilibrio; referencias a productos y período.
 - **QUÉ PUEDE HACER**: Ver desglose; modificar entradas; avanzar al tablero.
 - **ESTADOS Y MENSAJES**: Contribución nula/negativa, faltan datos, división imposible, actualización de resultados, error.
 - **CRITERIO UX**: Por confirmar: cálculo final de mezcla, cuota y equilibrio en pesos. No presentar un resultado positivo cuando la contribución no alcanza.
-- **REFERENCIA**: #246 y #250 (abiertos).
 
 ### D. Resultados y seguimiento
 

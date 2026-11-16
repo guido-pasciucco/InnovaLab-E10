@@ -1,4 +1,6 @@
-# Decisión abierta — Cierre del cálculo y captura del histórico mensual
+# Cierre del cálculo y captura del histórico mensual — análisis previo
+
+> **Estado:** resuelta por la decisión de capacidad mensual y "cerrar cálculo" (opción A refinada): el catálogo es editable siempre, la capacidad vive en el formulario del producto y el histórico se toma con el botón "Cerrar cálculo". Este documento se conserva como registro del análisis previo.
 
 > **Documento de decisión para el equipo.** Plantea dos opciones para dos problemas relacionados: cómo "cerrar" el cálculo de costos de un período sin congelar el catálogo, y cómo ordenar los datos del cálculo frente al catálogo permanente.
 >
