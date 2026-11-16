@@ -137,6 +137,12 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 - **Histórico:** los snapshots conservan su propia copia del insumo (D5), así que borrarlo del catálogo vivo no rompe el histórico; las correcciones sobre la foto quedan auditadas (D6).
 - **Ajusta:** la regla pendiente del Bloque 1 ("cuando existan recetas, el borrado de un insumo referenciado debe bloquearse hasta quitarlo de la receta") pasa a decisión tomada.
 
+#### D12 — Ciclo de vida de producto y receta: edición libre y borrado lógico
+
+- **Decisión:** productos y recetas se pueden editar y borrar siempre. El borrado es **lógico**: el registro se marca como borrado, deja de mostrarse en el catálogo vivo y de entrar en los cálculos, pero no se elimina físicamente y se puede restaurar.
+- **Efectos:** cualquier cambio recalcula lo dependiente en vivo (D4). Los snapshots cerrados no se afectan: conservan su propia copia (D5) y las correcciones sobre la foto quedan auditadas (D6).
+- **Ajusta:** el pendiente "ciclo de vida: edición/borrado de producto y receta; efectos de cambios" queda resuelto (el borrado de insumo referenciado ya estaba en D11).
+
 ## Decisiones pendientes
 
 ### General

@@ -6,7 +6,7 @@
 
 ## Estado
 
-- **En definición.** Decisiones cerradas hasta ahora: 11 (D1 a D11).
+- **En definición.** Decisiones cerradas hasta ahora: 12 (D1 a D12).
 
 ## Objetivo y alcance (borrador)
 
@@ -86,6 +86,11 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Regla:** no se puede borrar un insumo que aparece en una receta viva. El sistema bloquea la acción, indica qué recetas lo usan y hay que quitarlo de ellas (o borrarlas) primero.
 - **Histórico:** los snapshots conservan su copia del insumo (D5), así que el borrado en vivo no rompe el histórico.
 
+### D12 — Ciclo de vida: edición libre y borrado lógico
+
+- **Regla:** productos y recetas se pueden editar y borrar siempre. El borrado es **lógico**: el registro se marca como borrado, deja de mostrarse en el catálogo vivo y de entrar en los cálculos, pero se conserva y se puede restaurar.
+- **Efectos:** cualquier cambio recalcula en vivo (D4); los snapshots cerrados no se afectan (D5, D6).
+
 ## Modelo de datos (borrador, parcial)
 
 > Solo lo que se va definiendo; incompleto a propósito.
@@ -116,7 +121,7 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 1. ~~**“Cerrar cálculo” (snapshot) para histórico**~~ **Resuelto:** alcance (D5), inmutabilidad (D6), relación con prorrateo/período (D7) y consulta en "Datos históricos" (D8).
 2. ~~**Regla de capacidad**~~ **Resuelta (D9):** > 0 para habilitar el cálculo; con 0 o sin cargar se guarda igual, avisa y se excluye del prorrateo hasta completarla.
 3. ~~**Validaciones de receta**~~ **Resueltas (D10):** estrictas al cargar (familia, cantidad > 0, sin duplicados, insumo válido).
-4. **Ciclo de vida:** edición/borrado de producto y receta; efectos de cambios. ~~Borrado de insumo referenciado~~ **Resuelto (D11)**.
+4. ~~**Ciclo de vida**~~ **Resuelto:** borrado de insumo referenciado (D11) y edición/borrado de producto y receta con borrado lógico (D12).
 5. **Packaging en presentaciones:** cómo se reutiliza packaging del catálogo de insumos en presentaciones (P12); su alta como pestaña del catálogo ya está decidida.
 6. **UX/estados en `/productos`:** vacíos, contador, feedback de CVU; ubicación visual del campo de capacidad en el formulario/edición.
 7. **Formato de `rendimiento` y redondeo/decimales:** entero o decimal, precisión de cálculo y de visualización.

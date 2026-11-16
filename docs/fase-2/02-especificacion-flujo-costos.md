@@ -98,6 +98,7 @@ Para cada producto, dentro de `/productos`:
 - **Capacidad mensual:** campo del formulario del producto ("¿Cuántas unidades pensás fabricar este mes?"), editable siempre como nombre, receta y rendimiento. No hay pantalla propia para la capacidad ni entidad "plan del mes". El listado muestra la capacidad; editarla recalcula lo dependiente en vivo. El histórico se registra con un botón manual **"Cerrar cálculo"** (detalles en D5–D8).
 - **Alineación:** el recorrido es Insumos → mis productos → crear/editar producto (nombre + receta + rendimiento + capacidad). La capacidad es un atributo único del producto, no por período: para un mes nuevo se edita cada producto (mitigable a futuro con edición masiva).
 - **Validaciones (decididas):** al cargar un renglón se exige insumo existente del catálogo, unidad de la misma familia, cantidad > 0 y un solo renglón por insumo. El error se marca en el formulario y el renglón no entra al cálculo hasta corregirlo.
+- **Ciclo de vida (decidido):** productos y recetas se editan y se borran siempre; el borrado es **lógico** (se marca, no se elimina físicamente) y se puede restaurar. Los snapshots cerrados conservan su copia y no se afectan (D11, D12).
 
 ### Huecos
 
