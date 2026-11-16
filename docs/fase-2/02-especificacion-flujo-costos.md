@@ -206,7 +206,7 @@ Para cada producto, dentro de `/productos`:
 >
 > 1. ~~Regla de capacidad~~ **Resuelta (D9):** > 0 para habilitar el cálculo; con 0 o sin cargar se guarda igual, avisa y se excluye del prorrateo.
 > 2. ~~Detalles del snapshot "Cerrar cálculo"~~ **Resueltos** (D5–D8: congela todo, editable con auditoría, mes etiquetado con prorrateo en vivo y consulta en "Datos históricos").
-> 3. Formato de `rendimiento` (entero o decimal) y redondeo/decimales (bloque 2).
+> 3. ~~Formato de `rendimiento` y redondeo/decimales~~ **No bloqueante:** lo define la implementación.
 > 4. Regla de "importancia de cada gasto" en el prorrateo (bloque 3).
 > 5. Interpretación final de cuota, equilibrio en pesos y prueba de cierre (bloque 3).
 > 6. Recargo global vs. por producto (bloque 3).

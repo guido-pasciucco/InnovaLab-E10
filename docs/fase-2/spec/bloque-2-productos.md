@@ -24,7 +24,7 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Cálculo:**
   - `costo de la receta = Σ (costo de cada insumo por la cantidad cargada)`
   - `CVU = costo de la receta ÷ rendimiento` (costo variable unitario, siempre expresado por 1 unidad de producto)
-- **Restricciones:** `rendimiento` > 0. Formato (entero/decimal) **pendiente**. No hay base distinta por renglón en esta definición.
+- **Restricciones:** `rendimiento` > 0. Formato (entero/decimal): **no bloqueante**, lo define la implementación. No hay base distinta por renglón en esta definición.
 - **Notas:** permite cargar por tanda/lote (“para N unidades”) sin cálculo manual; el sistema normaliza a unidad. Pendiente de validar con planilla #250.
 
 ### D2 — Renglón de receta: sin “modo de compra”, cantidad usada + unidad de la misma familia
@@ -125,7 +125,7 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Costo por renglón:** `costo del renglón = (precio de compra del insumo / cantidad de compra del insumo) × cantidad usada`, con conversión automática dentro de la **misma familia** de unidades — **definido (D2)**.
 - **Costo de la receta:** `Σ costo de renglones` para el rendimiento declarado.
 - **CVU:** `CVU = costo de la receta ÷ rendimiento` (por 1 unidad de producto) — **definido (D1)**.
-- **Redondeo/decimales:** **pendiente** (moneda, precisión intermedia y final).
+- **Redondeo/decimales:** **no bloqueante** (moneda, precisión intermedia y final); lo define la implementación.
 
 ## Decisiones pendientes (Bloque 2)
 
@@ -135,6 +135,6 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 4. ~~**Ciclo de vida**~~ **Resuelto:** borrado de insumo referenciado (D11) y edición/borrado de producto y receta con borrado lógico (D12).
 5. ~~**Packaging en presentaciones**~~ **Resuelto (D13):** se referencia del catálogo y su costo se suma al de la receta. Queda sin modelar la entidad "presentación" en sí.
 6. ~~**UX/estados en `/productos`**~~ **Resuelto (D14):** capacidad arriba junto a nombre y rendimiento, CVU en vivo. Vacíos y contador son detalle de implementación.
-7. **Formato de `rendimiento` y redondeo/decimales:** entero o decimal, precisión de cálculo y de visualización.
-8. **Planilla #250:** oráculo de validación de fórmulas/números.
+7. ~~**Formato de `rendimiento` y redondeo/decimales**~~ **No bloqueante:** no es decisión de negocio; lo define la implementación.
+8. **Planilla #250 (dependencia externa):** oráculo de validación de fórmulas; no es una decisión de producto. Sigue siendo el bloqueante de QA para D1/D2.
 
