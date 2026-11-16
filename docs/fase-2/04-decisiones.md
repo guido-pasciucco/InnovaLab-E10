@@ -91,12 +91,33 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 #### Capacidad mensual como campo editable en el formulario del producto (opción A refinada)
 
 - **Decisión:** la capacidad mensual es un **campo del producto**, cargado y editable en el mismo formulario donde se define el producto (nombre, receta, rendimiento). **No hay pantalla propia para la capacidad** ni entidad “plan del mes”. El listado de productos muestra la capacidad cargada; editarla recalcula lo dependiente en vivo.
-- **Histórico:** se registra con un botón manual **“Cerrar cálculo”** que genera una foto/snapshot cuando el usuario terminó de cargar y está conforme (reemplaza/modifica el concepto de “cerrar lista”). Enfoque decidido; **detalles del snapshot pendientes** (qué congela, inmutabilidad, relación con prorrateo/período, dónde se consulta el histórico).
+- **Histórico:** se registra con un botón manual **“Cerrar cálculo”** que genera una foto/snapshot cuando el usuario terminó de cargar y está conforme (reemplaza/modifica el concepto de “cerrar lista”). Detalles decididos en D5–D8 (alcance, auditoría, período y consulta).
 - **Recorrido:** Insumos → mis productos → crear/editar producto (nombre + receta + rendimiento + producción mensual, editables siempre); el sistema muestra CVU.
 - **Por qué:** un solo lugar de edición por producto, menos pantallas, encaja con edición en vivo. Limitación aceptada: la capacidad es un atributo único del producto (no por período); para un mes nuevo se edita cada producto (eventualmente mitigable con edición masiva agregada después).
 - **Alineación:** coherente con el recorrido de las issues #240–#242 (capacidad atada al producto); a diferencia de Malena (P13 dedicada o pestaña de P12), acá no hay pantalla separada. Ajusta P13 de la guía de Malena (tanto en A simple como en esta variante).
 - **Ajusta:** pendiente de spec sobre “dónde vive la capacidad” y la discusión previa de “cerrar lista”. Ejemplo de pantalla: campo “Producción mensual — ¿Cuántas unidades pensás fabricar este mes?” dentro del formulario del producto.
 - **Detalle:** comparación de opciones de capacidad en el doc de decisión capacidad vs plan del período.
+
+#### D5 — Snapshot de "Cerrar cálculo": qué congela
+
+- **Decisión:** el snapshot congela **todo el estado del cálculo**: insumos, recetas/rendimiento, capacidades, costos indirectos, recargo y resultados calculados (costo total, precio sugerido, contribución, equilibrio). Es una foto completa y reproducible.
+- **Catálogo en vivo:** sigue editable; la foto es una copia, no un bloqueo.
+
+#### D6 — Snapshot "Cerrar cálculo": editable con auditoría
+
+- **Decisión:** el snapshot se puede corregir, pero **cada cambio queda registrado**: qué campo cambió, valor anterior y nuevo, y cuándo. No es inmutable ni se sobreescribe sin rastro.
+- **Alcance:** la corrección es sobre la copia congelada, no sobre el catálogo en vivo (D4 y D5).
+- **Por qué:** permite arreglar errores de carga sin perder la foto original ni la historia de lo que se calculó.
+
+#### D7 — Snapshot: período etiquetado, prorrateo en vivo
+
+- **Decisión:** cada "Cerrar cálculo" queda asociado a un **período (mes)**. El prorrateo y el resto de los cálculos siguen ejecutándose **en vivo** sobre el catálogo actual (D4); el snapshot es el registro histórico de ese mes, no la base del cálculo.
+- **Ediciones posteriores:** afectan al cálculo en vivo; no alteran el snapshot cerrado salvo una corrección auditada (D6).
+
+#### D8 — Consulta del histórico: pantalla "Datos históricos"
+
+- **Decisión:** el histórico se consulta en un destino propio del menú, **"Datos históricos"**, con la lista de cierres por período, el detalle de cada foto (D5) y el registro de cambios auditados (D6).
+- **Alcance:** solo lectura del histórico; la edición en vivo sigue en `/productos` y en el resto de los bloques (D4).
 
 ## Decisiones pendientes
 
@@ -123,7 +144,7 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 - ~~Base de cálculo de la receta: ¿cantidades por unidad de producto (1 pan) o por lote (1 bandeja de 12)?~~ **Resuelto:** se define `rendimiento` de la receta (default 1) y se normaliza a unidad (`CVU = costo receta ÷ rendimiento`). Ver decisión tomada. Queda pendiente validar con planilla #250.
 - ~~“Modo de compra” en el renglón de receta (por cantidad / por unidad).~~ **Resuelto:** se quita del renglón; el renglón es insumo + cantidad usada + unidad (misma familia) y el costo se calcula con conversión automática. Ver decisión tomada. Queda pendiente validar con planilla #250.
 - ~~¿Dónde vive la capacidad mensual?~~ **Resuelto:** como **campo editable en el formulario del producto** (opción A refinada, sin pantalla propia ni “plan del mes”); histórico vía botón **“Cerrar cálculo”**. Ver decisión tomada.
-- **“Cerrar cálculo” (snapshot) para histórico:** enfoque decidido (botón manual que genera una foto/snapshot cuando el usuario está conforme, en lugar de “cerrar lista”). **Pendiente:** qué congela el snapshot (insumos, recetas/rendimiento, capacidades, gastos indirectos, recargo y resultados), inmutabilidad (¿editable/sobreescribible?), relación con prorrateo/período, y alcance/consulta del histórico (pantalla “Datos históricos”). Ver el detalle comparativo de opciones.
+- ~~“Cerrar cálculo” (snapshot) para histórico~~ **Resuelto:** enfoque decidido (botón manual, en lugar de “cerrar lista”), **alcance (D5: congela todo el estado del cálculo — insumos, recetas/rendimiento, capacidades, indirectos, recargo y resultados)**, **inmutabilidad (D6: editable con auditoría de cambios)** **relación con prorrateo/período (D7: etiquetado por mes, prorrateo en vivo)** y **consulta del histórico (D8: pantalla "Datos históricos" en el menú)**.
 - **Cierre para prorrateo/histórico vs “cerrar lista”:** resuelto en el enfoque (no hay “cerrar lista”; hay edición en vivo + “Cerrar cálculo” manual para un snapshot). Falta la regla concreta de qué ocurre tras el snapshot (el enunciado anterior queda cubierto por el punto de “Cerrar cálculo”).
 - Destino del cálculo de un solo producto ya existente (fase 1): decisión de producto aparte; el catálogo lo reemplazaría.
 

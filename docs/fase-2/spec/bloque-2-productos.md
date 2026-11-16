@@ -6,7 +6,7 @@
 
 ## Estado
 
-- **En definición.** Decisiones cerradas hasta ahora: 4 (D1, D2, D3, D4).
+- **En definición.** Decisiones cerradas hasta ahora: 8 (D1 a D8).
 
 ## Objetivo y alcance (borrador)
 
@@ -40,7 +40,7 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Regla:** la **capacidad mensual** (“¿Cuántas unidades pensás fabricar este mes?”) es un **campo del formulario del producto**, editable siempre (como nombre/receta/rendimiento). No hay pantalla propia para la capacidad ni entidad “plan del mes”.
 - **Listado:** el listado de productos muestra la capacidad cargada.
 - **Edición:** cambiar la capacidad recalcula lo dependiente en vivo (prorrateo, costo total, precio, equilibrio). Regla generalizada en D4 a cualquier dato editado.
-- **Histórico:** se registra con un botón manual **“Cerrar cálculo”** (snapshot cuando el usuario está conforme), en lugar de “cerrar lista”. **Detalles del snapshot pendientes** (qué congela, inmutabilidad, relación con prorrateo/período, consulta del histórico).
+- **Histórico:** se registra con un botón manual **“Cerrar cálculo”** (snapshot cuando el usuario está conforme), en lugar de “cerrar lista”. Detalles decididos en D5–D8 (alcance, auditoría, período y consulta en "Datos históricos").
 - **Alineación:** recorrido Insumos → mis productos → crear/editar producto (nombre + receta + rendimiento + capacidad); superset del flujo de las issues #240–#242 sin pantalla dedicada de capacidad.
 - **Limitación aceptada:** la capacidad es un atributo único del producto (no por período); para un mes nuevo se edita cada producto (mitigable a futuro con edición masiva).
 - **Detalle:** comparación de opciones en el doc de decisión capacidad vs plan del período.
@@ -50,6 +50,26 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Regla:** no hay un paso de cierre para poder calcular. Cualquier cambio en insumos, receta/rendimiento, capacidad, costos indirectos o recargo recalcula de inmediato todo lo derivado (CVU, prorrateo, costo total, precio y equilibrio), con aviso de qué cambió.
 - **Alcance:** decisión general que aplica también al Bloque 2; productos y catálogo quedan editables siempre. La única dependencia de datos es que el prorrateo necesita capacidades cargadas.
 - **Distinción:** "Cerrar cálculo" es un botón manual que solo genera una foto para el histórico; no habilita ni bloquea el cálculo.
+
+### D5 — Snapshot de "Cerrar cálculo": qué congela
+
+- **Regla:** el snapshot congela **todo el estado del cálculo**: insumos, recetas/rendimiento, capacidades, costos indirectos, recargo y resultados calculados (costo total, precio sugerido, contribución, equilibrio). Foto completa y reproducible.
+- **Catálogo en vivo:** sigue editable; la foto es una copia, no un bloqueo (D4).
+
+### D6 — Snapshot "Cerrar cálculo": editable con auditoría
+
+- **Regla:** el snapshot se puede corregir, pero **cada cambio queda registrado**: qué campo cambió, valor anterior y nuevo, y cuándo. No es inmutable ni se sobreescribe sin rastro.
+- **Alcance:** la corrección es sobre la copia congelada, no sobre el catálogo en vivo.
+
+### D7 — Snapshot: período etiquetado, prorrateo en vivo
+
+- **Regla:** cada "Cerrar cálculo" queda asociado a un **período (mes)**. El prorrateo y el resto de los cálculos siguen en vivo sobre el catálogo actual (D4); el snapshot es el registro histórico de ese mes, no la base del cálculo.
+- **Ediciones posteriores:** afectan al cálculo en vivo; no alteran el snapshot cerrado salvo una corrección auditada (D6).
+
+### D8 — Consulta del histórico: pantalla "Datos históricos"
+
+- **Regla:** el histórico se consulta en un destino propio del menú, **"Datos históricos"**: lista de cierres por período, detalle de cada foto (D5) y registro de cambios auditados (D6).
+- **Alcance:** solo lectura del histórico; la edición en vivo sigue en `/productos` y en el resto de los bloques (D4).
 
 ## Modelo de datos (borrador, parcial)
 
@@ -78,7 +98,7 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 
 ## Decisiones pendientes (Bloque 2)
 
-1. **“Cerrar cálculo” (snapshot) para histórico:** qué congela (insumos, recetas/rendimiento, capacidades, indirectos, recargo y resultados), inmutabilidad, relación con prorrateo/período y consulta del histórico (pantalla “Datos históricos”). Ver el detalle comparativo de opciones.
+1. ~~**“Cerrar cálculo” (snapshot) para histórico**~~ **Resuelto:** alcance (D5), inmutabilidad (D6), relación con prorrateo/período (D7) y consulta en "Datos históricos" (D8).
 2. **Regla de capacidad:** obligatoria > 0 para cerrar/habilitar cálculo y tratamiento de capacidad 0 o sin cargar.
 3. **Validaciones de receta:** compatibilidad de familia/unidad, cantidades válidas, duplicados, insumo inválido.
 4. **Ciclo de vida:** edición/borrado de producto y receta; borrado de insumo referenciado (bloqueado) antes/después de snapshot; efectos de cambios.

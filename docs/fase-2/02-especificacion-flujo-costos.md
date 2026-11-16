@@ -101,7 +101,6 @@ Para cada producto, dentro de `/productos`:
 ### Huecos
 
 - **Capacidad parcial o cero**: #244 dice "sin capacidades cargadas no se muestra costo total", pero no define qué pasa si un producto tiene capacidad 0 o si solo algunos la tienen.
-- **Detalles del snapshot "Cerrar cálculo"**: qué congela (insumos, recetas/rendimiento, capacidades, indirectos, recargo y resultados), inmutabilidad, relación con prorrateo/período y consulta del histórico.
 - **Formato de rendimiento y redondeo**: entero o decimal; precisión intermedia y final (moneda).
 - **Relación con el cálculo de un solo producto** *(fuera del set de issues: decisión de producto, no un hueco de #239–#247)*: la aplicación actual ya tiene un flujo de cálculo para un único producto. Las issues de fase 2 no mencionan qué pasa con ese flujo.
 
@@ -204,7 +203,7 @@ Para cada producto, dentro de `/productos`:
 > Las decisiones ya tomadas están centralizadas en el registro de decisiones. Esta lista consolida los huecos que aún requieren respuesta del equipo antes de implementar:
 >
 > 1. Regla de capacidad: obligatoria > 0 y tratamiento de capacidad 0 o sin cargar (bloque 2).
-> 2. Detalles del snapshot "Cerrar cálculo": qué congela, inmutabilidad, relación con prorrateo/período y consulta del histórico (bloque 2).
+> 2. ~~Detalles del snapshot "Cerrar cálculo"~~ **Resueltos** (D5–D8: congela todo, editable con auditoría, mes etiquetado con prorrateo en vivo y consulta en "Datos históricos").
 > 3. Formato de `rendimiento` (entero o decimal) y redondeo/decimales (bloque 2).
 > 4. Regla de "importancia de cada gasto" en el prorrateo (bloque 3).
 > 5. Interpretación final de cuota, equilibrio en pesos y prueba de cierre (bloque 3).
