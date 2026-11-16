@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { requireUser } from "@/lib/auth/require-user";
 import { getUserDefaultBusiness, listSuppliesService } from "@/lib/services/supplies";
 import { getProfileSummaryService } from "@/lib/services/profile";
@@ -31,6 +33,13 @@ export default async function SuppliesPage() {
               Anotá cada insumo y packaging con el precio y la unidad de compra.
             </p>
           </div>
+
+          <Link
+            href="/products"
+            className="inline-flex min-h-11 items-center justify-center self-start rounded-[14px] border border-border-control bg-surface px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            Productos y recetas
+          </Link>
         </header>
 
         <SuppliesCatalog supplies={supplies} />
