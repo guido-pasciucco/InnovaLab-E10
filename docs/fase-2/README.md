@@ -18,6 +18,9 @@
 ### Detalles de decisión
 - `inmutables/preguntas/decision-capacidad-vs-plan-periodo.md`: detalle de la decisión de capacidad mensual como campo editable en el formulario del producto (opción A refinada, sin pantalla propia ni “plan del mes”) y botón “Cerrar cálculo” para snapshot histórico. Mapa de flujos A y B documentado como referencia.
 
+### Alineación con UX/UI
+- `alineacion-malena.md`: diferencias entre la guía de pantallas y las decisiones de la Fase 2, con propuestas de consolidación para los cuatro puntos principales.
+
 ### Referencia / material inmutable o de apoyo
 - `inmutables/analisis-flujo-costos.md`: análisis del flujo y huecos detectados.
 - `inmutables/flujo-del-modelo-calculadora-de-costos-numera.md`: flujo del modelo (NUMERA) y correlación con issues.
