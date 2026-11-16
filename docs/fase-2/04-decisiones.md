@@ -125,6 +125,12 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 - **CVU:** se calcula siempre, porque depende de la receta y el rendimiento, no de la capacidad.
 - **Ajusta:** la propuesta previa de "capacidad > 0 para cerrar la lista" pasa a "habilitar el cálculo": no hay cierre de lista (D4).
 
+#### D10 — Validaciones de receta: estrictas al cargar
+
+- **Decisión:** al agregar o editar un renglón se valida de inmediato: el insumo existe y pertenece al catálogo del usuario; la unidad usada es de la **misma familia** que la del insumo; la cantidad usada es **> 0**; y no hay otro renglón con el **mismo insumo**.
+- **Efecto:** si hay error, se marca en el formulario y el renglón no entra al cálculo hasta corregirlo; al corregirlo, todo se recalcula en vivo (D4).
+- **Ajusta:** el pendiente "validaciones de receta: compatibilidad de familia/unidad, cantidades válidas, duplicados, insumo inválido".
+
 ## Decisiones pendientes
 
 ### General
