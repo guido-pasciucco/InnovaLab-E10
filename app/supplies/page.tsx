@@ -28,7 +28,7 @@ export default async function SuppliesPage() {
               Insumos y packaging
             </h1>
             <p className="mt-2 max-w-xl text-base text-fg-muted">
-              Anotá cada insumo y packaging con el precio y la unidad de compra.
+              Anotá cada insumo y packaging con el precio, la cantidad y la unidad de compra.
             </p>
           </div>
         </header>

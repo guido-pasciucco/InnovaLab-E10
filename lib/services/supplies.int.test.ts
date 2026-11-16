@@ -101,6 +101,57 @@ describe("supplies service", () => {
     expect(supply.name).toBe("Bolsa kraft");
   });
 
+  it("derives the minimum unit and factor from the selected supply unit", async () => {
+    const user = await makeUser();
+
+    const supply = await createSupplyService(
+      user.id,
+      {
+        ...validInput,
+        purchaseUnit: "L",
+        minimumUnit: "L",
+        conversionFactor: "1",
+      },
+      db,
+    );
+
+    expect(supply.purchaseUnit).toBe("L");
+    expect(supply.minimumUnit).toBe("ml");
+    expect(supply.conversionFactor).toBe("1000.0000");
+  });
+
+  it("keeps the technical units of packaging", async () => {
+    const user = await makeUser();
+
+    const supply = await createSupplyService(
+      user.id,
+      {
+        ...validInput,
+        kind: "packaging",
+        name: "Bolsa kraft",
+        purchaseUnit: "caja",
+        minimumUnit: "bolsa",
+        conversionFactor: "100",
+      },
+      db,
+    );
+
+    expect(supply.minimumUnit).toBe("bolsa");
+    expect(supply.conversionFactor).toBe("100.0000");
+  });
+
+  it("capitalizes the first letter of the name", async () => {
+    const user = await makeUser();
+
+    const supply = await createSupplyService(
+      user.id,
+      { ...validInput, name: "harina 000" },
+      db,
+    );
+
+    expect(supply.name).toBe("Harina 000");
+  });
+
   it("lists created supplies", async () => {
     const user = await makeUser();
     await createSupplyService(user.id, validInput, db);

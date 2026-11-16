@@ -1,0 +1,46 @@
+"use client";
+
+import { useId, useState } from "react";
+
+type HelpTooltipProps = {
+  label: string;
+  text: string;
+  align?: "left" | "right";
+};
+
+// Small "?" control used next to form labels. It opens on hover/focus and can
+// also be toggled with a click, which keeps it usable on touch devices.
+export function HelpTooltip({ label, text, align = "left" }: HelpTooltipProps) {
+  const [open, setOpen] = useState(false);
+  const tooltipId = useId();
+
+  return (
+    <span className="relative inline-flex items-center">
+      <button
+        type="button"
+        aria-label={`Ayuda: ${label}`}
+        aria-expanded={open}
+        aria-describedby={open ? tooltipId : undefined}
+        onClick={() => setOpen((current) => !current)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border-control bg-surface text-xs font-bold text-fg-muted hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        ?
+      </button>
+      {open && (
+        <span
+          id={tooltipId}
+          role="tooltip"
+          className={`absolute top-full z-30 mt-1 w-64 max-w-[calc(100vw-3rem)] rounded-[10px] border border-border-control bg-surface p-2 text-left text-xs font-normal text-fg shadow-lg ${
+            align === "right" ? "right-0" : "left-0"
+          }`}
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
