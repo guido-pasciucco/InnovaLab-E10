@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
+import { deleteProduct } from "@/app/products/actions";
 import type {
   ProductItem,
   RecipeSupplyOption,
@@ -19,14 +20,13 @@ export function ProductsCatalog({
   initialProducts,
   supplies,
 }: ProductsCatalogProps) {
-  // UI-only for now (issue #240 frontend). The products live in component
-  // state until the backend persistence contract lands, so every save is
-  // visible immediately but does not survive a reload yet.
   const [products, setProducts] = useState<ProductItem[]>(initialProducts);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ProductItem | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleting, startDelete] = useTransition();
 
   const selectedProduct =
     products.find((product) => product.id === selectedId) ?? null;
@@ -35,6 +35,7 @@ export function ProductsCatalog({
     setEditing(null);
     setShowForm(true);
     setStatus(null);
+    setError(null);
   };
 
   const handleSelect = (product: ProductItem) => {
@@ -42,6 +43,7 @@ export function ProductsCatalog({
     setEditing(null);
     setShowForm(false);
     setStatus(null);
+    setError(null);
   };
 
   const handleEdit = (product: ProductItem) => {
@@ -49,14 +51,16 @@ export function ProductsCatalog({
     setSelectedId(product.id);
     setShowForm(true);
     setStatus(null);
+    setError(null);
   };
 
   const handleCancel = () => {
     setEditing(null);
     setShowForm(false);
+    setError(null);
   };
 
-  const handleSave = (saved: ProductItem) => {
+  const handleSaved = (saved: ProductItem) => {
     setProducts((current) => {
       const exists = current.some((product) => product.id === saved.id);
 
@@ -67,27 +71,49 @@ export function ProductsCatalog({
     setSelectedId(saved.id);
     setEditing(null);
     setShowForm(false);
-    setStatus(`«${saved.name}» y su receta quedaron guardados en esta sesión.`);
+    setError(null);
+    setStatus(`«${saved.name}» y su receta quedaron guardados.`);
   };
 
   const handleDelete = (product: ProductItem) => {
     if (!confirm(`¿Borrar «${product.name}» y su receta?`)) return;
 
-    setProducts((current) =>
-      current.filter((item) => item.id !== product.id),
-    );
+    setStatus(null);
+    setError(null);
 
-    if (selectedId === product.id) setSelectedId(null);
-    if (editing?.id === product.id) {
-      setEditing(null);
-      setShowForm(false);
-    }
+    startDelete(async () => {
+      const result = await deleteProduct(undefined, { id: product.id });
 
-    setStatus(`«${product.name}» se borró de esta pantalla.`);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+
+      setProducts((current) =>
+        current.filter((item) => item.id !== product.id),
+      );
+
+      if (selectedId === product.id) setSelectedId(null);
+      if (editing?.id === product.id) {
+        setEditing(null);
+        setShowForm(false);
+      }
+
+      setStatus(`«${product.name}» se borró del catálogo.`);
+    });
   };
 
   return (
     <div className="space-y-4">
+      {error && (
+        <p
+          role="alert"
+          className="rounded-[16px] bg-danger-subtle px-4 py-3 text-sm font-medium text-danger"
+        >
+          {error}
+        </p>
+      )}
+
       {status && (
         <p
           role="status"
@@ -101,6 +127,7 @@ export function ProductsCatalog({
         <ProductsList
           products={products}
           selectedId={selectedId}
+          busy={isDeleting}
           onNew={handleNew}
           onSelect={handleSelect}
           onEdit={handleEdit}
@@ -113,7 +140,7 @@ export function ProductsCatalog({
               product={editing}
               supplies={supplies}
               onCancel={handleCancel}
-              onSave={handleSave}
+              onSaved={handleSaved}
             />
           ) : selectedProduct ? (
             <ProductRecipe product={selectedProduct} onEdit={handleEdit} />

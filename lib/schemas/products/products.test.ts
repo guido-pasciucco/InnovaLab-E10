@@ -31,11 +31,11 @@ describe("createProductFormSchema", () => {
     expect(schema.safeParse(validProduct).success).toBe(true);
   });
 
-  it("accepts decimal quantities with up to three decimals", () => {
+  it("accepts decimal quantities with up to four decimals", () => {
     expect(
       schema.safeParse({
         ...validProduct,
-        recipe: [{ supplyId: "supply-harina", quantity: "0.001" }],
+        recipe: [{ supplyId: "supply-harina", quantity: "0.0001" }],
       }).success,
     ).toBe(true);
   });
@@ -86,7 +86,7 @@ describe("createProductFormSchema", () => {
     ["abc", "La cantidad debe ser un número."],
     ["0", "La cantidad debe ser mayor que 0."],
     ["-5", "La cantidad debe ser mayor que 0."],
-    ["1.2345", "La cantidad debe tener hasta 3 decimales."],
+    ["1.23456", "La cantidad debe tener hasta 4 decimales."],
     ["12345678901", "La cantidad es demasiado grande."],
   ])("rejects the quantity %j", (quantity, message) => {
     expect(

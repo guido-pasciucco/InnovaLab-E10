@@ -2,8 +2,13 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 import { businessNameField, businessTypeField } from "@/lib/schemas/business/fields";
-import { businesses, products } from "./table";
 import { productNameField } from "@/lib/schemas/calculator-setup/fields";
+import {
+  recipeQuantityField,
+  recipeSupplyIdField,
+} from "@/lib/schemas/products/fields";
+import { quantityString } from "../formats";
+import { businesses, productIngredients, products } from "./table";
 
 // ---------------------------------------------------------------------------
 // Zod schemas derived from the Drizzle tables (server-side persistence, ADR 02).
@@ -18,6 +23,11 @@ import { productNameField } from "@/lib/schemas/calculator-setup/fields";
 export const businessRowSchema = createSelectSchema(businesses);
 
 export const productRowSchema = createSelectSchema(products);
+
+export const productIngredientRowSchema = createSelectSchema(
+  productIngredients,
+  { quantity: quantityString },
+);
 
 // --- Public inputs: insert schema minus every server-controlled field. ---
 
@@ -40,10 +50,40 @@ export const createProductInputSchema = createInsertSchema(products, {
   updatedAt: true,
 });
 
+export const productIngredientInputSchema = z.object({
+  supplyId: recipeSupplyIdField,
+  quantity: recipeQuantityField,
+});
+
+export const saveProductInputSchema = z
+  .object({
+    name: productNameField,
+    recipe: z
+      .array(productIngredientInputSchema)
+      .min(1, { error: "Agregá al menos un insumo a la receta." }),
+  })
+  .superRefine((value, ctx) => {
+    const seen = new Set<string>();
+
+    value.recipe.forEach((item, index) => {
+      if (seen.has(item.supplyId)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Ese insumo ya está en la receta.",
+          path: ["recipe", index, "supplyId"],
+        });
+      }
+
+      seen.add(item.supplyId);
+    });
+  });
+
 // --- Inferred input/row types: single source of truth, no manual interfaces. ---
 
 export type BusinessRow = z.infer<typeof businessRowSchema>;
 export type ProductRow = z.infer<typeof productRowSchema>;
+export type ProductIngredientRow = z.infer<typeof productIngredientRowSchema>;
 
 export type CreateBusinessInput = z.infer<typeof createBusinessInputSchema>;
 export type CreateProductInput = z.infer<typeof createProductInputSchema>;
+export type SaveProductInput = z.infer<typeof saveProductInputSchema>;

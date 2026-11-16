@@ -1,6 +1,18 @@
-import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  check,
+  index,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 import { profiles } from "../profile/table";
+import { supplies } from "../supplies/table";
 
 // ---------------------------------------------------------------------------
 // Server-side persistence (ADR 02): real tables modeled from
@@ -39,9 +51,48 @@ export const products = pgTable("products", {
     .$onUpdate(() => new Date()),
 });
 
+export const productIngredients = pgTable("product_ingredients", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  supplyId: uuid("supply_id")
+    .notNull()
+    // A supply used by a recipe cannot be deleted: the service returns a clear
+    // SUPPLY_IN_USE and this constraint is the last line of defense. Drizzle
+    // cannot model DEFERRABLE, so the custom migration
+    // 20261112224829_product_ingredients_fk_deferrable.sql adds it: the check
+    // waits for commit, letting a profile/business cascade remove the recipe
+    // lines and the supply in one transaction (account deletion) while a direct
+    // supply DELETE still fails.
+    .references(() => supplies.id, { onDelete: "no action" }),
+  // Matches the project's quantity columns (numeric(14,4)); recipe quantities
+  // keep four decimals so the cost engine can work with exact values.
+  quantity: numeric("quantity", { precision: 14, scale: 4 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+}, (table) => [
+  // One row per supply in a recipe: the form rejects duplicates and the
+  // database enforces the same rule under concurrency.
+  uniqueIndex("product_ingredients_product_supply_uq").on(
+    table.productId,
+    table.supplyId,
+  ),
+  // Reverse lookup for the supply-in-use checks (delete / type / unit changes).
+  index("product_ingredients_supply_id_idx").on(table.supplyId),
+  check("product_ingredients_quantity_positive", sql`${table.quantity} > 0`),
+]);
+
 // Single source of truth: row types are inferred from the table definitions,
 // so there is no hand-written entity interface to keep in sync.
 export type Business = typeof businesses.$inferSelect;
 export type NewBusiness = typeof businesses.$inferInsert;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+export type ProductIngredient = typeof productIngredients.$inferSelect;
+export type NewProductIngredient = typeof productIngredients.$inferInsert;

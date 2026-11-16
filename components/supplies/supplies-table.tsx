@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { deleteSupply } from "@/app/insumos/actions";
 import { calculateMinimumUnitPrice } from "@/lib/calc/supplyCost";
@@ -22,12 +22,19 @@ export function SuppliesTable({
   searchActive = false,
 }: SuppliesTableProps) {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const noun = kind === "packaging" ? "packaging" : "insumo";
 
   const handleDelete = (id: string) => {
     if (!confirm("¿Borrar este ítem?")) return;
-    startTransition(() => {
-      void deleteSupply(undefined, { id });
+
+    setError(null);
+    startTransition(async () => {
+      const result = await deleteSupply(undefined, { id });
+
+      if (!result.ok) {
+        setError(result.message);
+      }
     });
   };
 
@@ -52,8 +59,18 @@ export function SuppliesTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-[24px] bg-surface shadow-sm">
-      <table className="w-full text-left text-sm">
+    <div className="space-y-3">
+      {error && (
+        <p
+          role="alert"
+          className="rounded-[16px] bg-danger-subtle px-4 py-3 text-sm font-medium text-danger"
+        >
+          {error}
+        </p>
+      )}
+
+      <div className="overflow-x-auto rounded-[24px] bg-surface shadow-sm">
+        <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-border-control">
             <th scope="col" className="min-w-48 px-3 py-3 font-semibold text-fg-muted">
@@ -127,7 +144,8 @@ export function SuppliesTable({
             );
           })}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

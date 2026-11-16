@@ -5,6 +5,7 @@ import type { ProductItem } from "@/lib/schemas/products/products";
 type ProductsListProps = {
   products: ProductItem[];
   selectedId: string | null;
+  busy?: boolean;
   onNew: () => void;
   onSelect: (product: ProductItem) => void;
   onEdit: (product: ProductItem) => void;
@@ -14,6 +15,7 @@ type ProductsListProps = {
 export function ProductsList({
   products,
   selectedId,
+  busy = false,
   onNew,
   onSelect,
   onEdit,
@@ -28,7 +30,8 @@ export function ProductsList({
         <button
           type="button"
           onClick={onNew}
-          className="min-h-11 rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          disabled={busy}
+          className="min-h-11 rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
         >
           + Nuevo
         </button>
@@ -60,7 +63,8 @@ export function ProductsList({
                     type="button"
                     onClick={() => onSelect(product)}
                     aria-pressed={isSelected}
-                    className="min-w-0 flex-1 rounded-[10px] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                    disabled={busy}
+                    className="min-w-0 flex-1 rounded-[10px] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="block truncate text-base font-semibold text-fg">
                       {product.name}
@@ -76,21 +80,24 @@ export function ProductsList({
                     <button
                       type="button"
                       onClick={() => onSelect(product)}
-                      className="min-h-9 rounded-[10px] border border-border-control px-3 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      disabled={busy}
+                      className="min-h-9 rounded-[10px] border border-border-control px-3 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Ver receta
                     </button>
                     <button
                       type="button"
                       onClick={() => onEdit(product)}
-                      className="min-h-9 rounded-[10px] border border-border-control px-3 py-1 text-sm font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      disabled={busy}
+                      className="min-h-9 rounded-[10px] border border-border-control px-3 py-1 text-sm font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Editar
                     </button>
                     <button
                       type="button"
                       onClick={() => onDelete(product)}
-                      className="min-h-9 rounded-[10px] border border-border-control px-3 py-1 text-sm font-semibold text-danger hover:bg-danger-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      disabled={busy}
+                      className="min-h-9 rounded-[10px] border border-border-control px-3 py-1 text-sm font-semibold text-danger hover:bg-danger-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Borrar
                     </button>

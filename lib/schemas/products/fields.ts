@@ -13,6 +13,14 @@ export const recipeSupplyField = z
   .trim()
   .min(1, { error: "Elegí un insumo de tu catálogo." });
 
+// Server-side rule for the persisted recipe line: the form selects a supply id
+// from the catalog, so the value that reaches the service must be a UUID. The
+// form keeps `recipeSupplyField` because its tests and the selector work with
+// catalog ids as plain strings.
+export const recipeSupplyIdField = z.uuid({
+  error: "Elegí un insumo de tu catálogo.",
+});
+
 // Quantity is a decimal string, never a float: the recipe stores proportions
 // (grams, millilitres, units) and the future cost engine needs exact values.
 // The pipeline exposes one actionable message at a time.
@@ -38,7 +46,7 @@ export const recipeQuantityField = z
     }),
   )
   .pipe(
-    z.string().regex(/^\d+(\.\d{1,3})?$/, {
-      error: "La cantidad debe tener hasta 3 decimales.",
+    z.string().regex(/^\d+(\.\d{1,4})?$/, {
+      error: "La cantidad debe tener hasta 4 decimales.",
     }),
   );

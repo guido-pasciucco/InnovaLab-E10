@@ -127,6 +127,20 @@
       "when": 1794417125438,
       "tag": "20261111171205_new_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794523628443,
+      "tag": "20261112224708_tiresome_pandemic",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794523709938,
+      "tag": "20261112224829_product_ingredients_fk_deferrable",
+      "breakpoints": true
     }
   ]
 }

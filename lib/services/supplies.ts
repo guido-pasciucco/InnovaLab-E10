@@ -2,7 +2,7 @@ import "server-only";
 
 import { and, eq } from "drizzle-orm";
 
-import { businesses } from "@/lib/db/business/table";
+import { businesses, productIngredients } from "@/lib/db/business/table";
 import { supplies } from "@/lib/db/supplies/table";
 import {
   createSupplyInputSchema,
@@ -106,6 +106,26 @@ export async function updateSupplyService(
     });
   }
 
+  // Recipe quantities are stored in the supply's minimum unit. Changing the
+  // kind or the resolved minimum unit would change what those numbers mean, so
+  // the update is blocked while a recipe references the supply. Price, purchase
+  // quantity, purchase unit and conversion factor stay editable when they do
+  // not change the minimum unit: they only feed the cost calculation.
+  const changesRecipeMeaning =
+    supply.kind !== existing.kind || units.minimumUnit !== existing.minimumUnit;
+
+  if (changesRecipeMeaning) {
+    const [used] = await db
+      .select({ id: productIngredients.id })
+      .from(productIngredients)
+      .where(eq(productIngredients.supplyId, supplyId))
+      .limit(1);
+
+    if (used) {
+      throw new AppError("SUPPLY_IN_USE");
+    }
+  }
+
   const [row] = await db
     .update(supplies)
     .set({
@@ -129,6 +149,19 @@ export async function deleteSupplyService(
   supplyId: string,
   db: Db = getDrizzleClient(),
 ): Promise<boolean> {
+  // A recipe owns the quantity, not the supply: deleting the supply would
+  // leave the recipe pointing at nothing. The service returns the friendly
+  // SUPPLY_IN_USE code; the deferrable FK is the last line of defense.
+  const [used] = await db
+    .select({ id: productIngredients.id })
+    .from(productIngredients)
+    .where(eq(productIngredients.supplyId, supplyId))
+    .limit(1);
+
+  if (used) {
+    throw new AppError("SUPPLY_IN_USE");
+  }
+
   const [row] = await db
     .delete(supplies)
     .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))

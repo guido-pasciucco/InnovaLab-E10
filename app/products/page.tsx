@@ -2,20 +2,21 @@ import Link from "next/link";
 
 import { requireUser } from "@/lib/auth/require-user";
 import { getProfileSummaryService } from "@/lib/services/profile";
+import { listProductsService } from "@/lib/services/products";
 import { getUserDefaultBusiness, listSuppliesService } from "@/lib/services/supplies";
 import { toRecipeSupplyOptions } from "@/lib/schemas/products/products";
 import { ProductsCatalog } from "@/components/products/products-catalog";
 
-// Protected page: session validated server-side, supplies filtered by user id.
-// Products still have no persistence service (issue #240 backend), so the
-// catalog starts empty and the client keeps the preview state. When the
-// service lands, replace `initialProducts` with its result.
+// Protected page: session validated server-side, supplies and products filtered
+// by user id. Products always come from the server; the client only keeps the
+// optimistic list while it stays on this screen.
 export default async function ProductsPage() {
   const user = await requireUser();
-  const [profile, business, supplies] = await Promise.all([
+  const [profile, business, supplies, products] = await Promise.all([
     getProfileSummaryService(user.id),
     getUserDefaultBusiness(user.id),
     listSuppliesService(user.id),
+    listProductsService(user.id),
   ]);
 
   const userName = profile.displayName ?? user.email ?? "";
@@ -50,7 +51,7 @@ export default async function ProductsPage() {
           </Link>
         </header>
 
-        <ProductsCatalog initialProducts={[]} supplies={supplyOptions} />
+        <ProductsCatalog initialProducts={products} supplies={supplyOptions} />
       </div>
     </main>
   );

@@ -6,6 +6,7 @@ import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
+import { createProductService, updateProductService } from "./products";
 import {
   createSupplyService,
   deleteSupplyService,
@@ -368,5 +369,100 @@ describe("supplies service", () => {
 
     const rows = await listSuppliesService(userA.id, db);
     expect(rows).toHaveLength(1);
+  });
+
+  it("blocks deleting a supply used by a recipe", async () => {
+    const user = await makeUser();
+    const supply = await createSupplyService(user.id, validInput, db);
+    await createProductService(
+      user.id,
+      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      db,
+    );
+
+    await expect(deleteSupplyService(user.id, supply.id, db)).rejects.toMatchObject({
+      code: "SUPPLY_IN_USE",
+    });
+
+    await expect(listSuppliesService(user.id, db)).resolves.toHaveLength(1);
+  });
+
+  it("blocks changing the minimum unit of a supply used by a recipe", async () => {
+    const user = await makeUser();
+    const supply = await createSupplyService(user.id, validInput, db);
+    await createProductService(
+      user.id,
+      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      db,
+    );
+
+    await expect(
+      updateSupplyService(user.id, supply.id, { ...validInput, minimumUnit: "kg" }, db),
+    ).rejects.toMatchObject({ code: "SUPPLY_IN_USE" });
+  });
+
+  it("blocks changing the kind of a supply used by a recipe", async () => {
+    const user = await makeUser();
+    const supply = await createSupplyService(user.id, validInput, db);
+    await createProductService(
+      user.id,
+      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      db,
+    );
+
+    await expect(
+      updateSupplyService(user.id, supply.id, { ...validInput, kind: "packaging" }, db),
+    ).rejects.toMatchObject({ code: "SUPPLY_IN_USE" });
+  });
+
+  it("allows price and cost changes while the supply is used by a recipe", async () => {
+    const user = await makeUser();
+    const supply = await createSupplyService(user.id, validInput, db);
+    await createProductService(
+      user.id,
+      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      db,
+    );
+
+    const updated = await updateSupplyService(
+      user.id,
+      supply.id,
+      {
+        ...validInput,
+        name: "Harina premium",
+        purchasePrice: "22000.00",
+        conversionFactor: "900",
+      },
+      db,
+    );
+
+    expect(updated).not.toBeNull();
+    expect(updated!.name).toBe("Harina premium");
+    expect(updated!.purchasePrice).toBe("22000.00");
+    expect(updated!.conversionFactor).toBe("900.0000");
+  });
+
+  it("releases a supply after the recipe stops using it", async () => {
+    const user = await makeUser();
+    const used = await createSupplyService(user.id, validInput, db);
+    const other = await createSupplyService(
+      user.id,
+      { ...validInput, name: "Harina integral" },
+      db,
+    );
+    const product = await createProductService(
+      user.id,
+      { name: "Pan flauta", recipe: [{ supplyId: used.id, quantity: "250" }] },
+      db,
+    );
+
+    await updateProductService(
+      user.id,
+      product.id,
+      { name: "Pan flauta", recipe: [{ supplyId: other.id, quantity: "250" }] },
+      db,
+    );
+
+    await expect(deleteSupplyService(user.id, used.id, db)).resolves.toBe(true);
   });
 });

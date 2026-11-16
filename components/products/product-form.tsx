@@ -1,16 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { useFieldArray, useForm, type FieldErrors } from "react-hook-form";
+import { useActionState, useEffect, useMemo, useRef, type FormEvent } from "react";
+import {
+  useFieldArray,
+  useForm,
+  type FieldErrors,
+  type Path,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { saveProduct } from "@/app/products/actions";
 import type {
   ProductFormValues,
   ProductItem,
   RecipeSupplyOption,
 } from "@/lib/schemas/products/products";
 import { createProductFormSchema } from "@/lib/schemas/products/products";
+import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
+import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
@@ -19,8 +27,11 @@ type ProductFormProps = {
   product: ProductItem | null;
   supplies: RecipeSupplyOption[];
   onCancel: () => void;
-  onSave: (product: ProductItem) => void;
+  onSaved: (product: ProductItem) => void;
 };
+
+// Fields the server may flag; module-level so the reference stays stable.
+const SERVER_FIELDS: readonly Path<ProductFormValues>[] = ["name", "recipe"];
 
 // Empty row used when the form opens or the user adds another ingredient.
 function emptyRecipeRow(): ProductFormValues["recipe"][number] {
@@ -53,10 +64,11 @@ export function ProductForm({
   product,
   supplies,
   onCancel,
-  onSave,
+  onSaved,
 }: ProductFormProps) {
   const isEditing = product !== null;
   const hasSupplies = supplies.length > 0;
+  const [state, submitAction, isPending] = useActionState(saveProduct, undefined);
 
   // The catalog snapshot travels with the schema: saving a recipe whose supply
   // was deleted (or turned into packaging) fails with a field error instead of
@@ -70,6 +82,7 @@ export function ProductForm({
     register,
     control,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(schema),
@@ -81,22 +94,36 @@ export function ProductForm({
     name: "recipe",
   });
 
-  const supplyNameById = new Map(supplies.map((supply) => [supply.id, supply.name]));
-  const arrayMessage = recipeArrayMessage(errors);
+  const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
+  const isSubmittingRef = useRef(false);
 
-  const onSubmit = (values: ProductFormValues) => {
-    const recipe = values.recipe.map((item) => ({
-      supplyId: item.supplyId,
-      supplyName: supplyNameById.get(item.supplyId) ?? "",
-      quantity: item.quantity.trim(),
-    }));
+  useEffect(() => {
+    if (!isPending && isSubmittingRef.current) {
+      isSubmittingRef.current = false;
+    }
+  }, [isPending]);
 
-    onSave({
-      id: product?.id ?? crypto.randomUUID(),
-      name: values.name.trim(),
-      recipe,
+  // Once the server confirms the save, hand the persisted product back to the
+  // catalog so it can replace its local row without a full reload.
+  useEffect(() => {
+    if (state?.ok) onSaved(state.data);
+  }, [state, onSaved]);
+
+  const handleSubmitAction = (values: ProductFormValues) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
+    dispatchInTransition(submitAction)({
+      ...values,
+      ...(product ? { id: product.id } : {}),
     });
   };
+
+  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    void handleSubmit(handleSubmitAction)(event);
+  };
+
+  const arrayMessage = recipeArrayMessage(errors);
 
   return (
     <section className="rounded-[24px] bg-surface p-5 shadow-sm">
@@ -111,14 +138,17 @@ export function ProductForm({
         </div>
       </div>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        noValidate
-        className="mt-4 flex flex-col gap-4"
-      >
+      <form onSubmit={handleFormSubmit} noValidate className="mt-4 flex flex-col gap-4">
+        {state && !state.ok && !hasServerFieldErrors && (
+          <p role="alert" className="text-sm text-danger">
+            {state.message}
+          </p>
+        )}
+
         <TextField
           label="Nombre del producto"
           placeholder="Pan flauta"
+          disabled={isPending}
           error={errors.name?.message}
           {...register("name")}
         />
@@ -152,7 +182,7 @@ export function ProductForm({
               <div className="grid gap-3 sm:grid-cols-[1fr_140px_auto] sm:items-start">
                 <SelectField
                   label="Insumo"
-                  disabled={!hasSupplies}
+                  disabled={!hasSupplies || isPending}
                   error={errors.recipe?.[index]?.supplyId?.message}
                   {...register(`recipe.${index}.supplyId`)}
                 >
@@ -168,7 +198,7 @@ export function ProductForm({
                   label="Cantidad"
                   placeholder="250"
                   inputMode="decimal"
-                  disabled={!hasSupplies}
+                  disabled={!hasSupplies || isPending}
                   error={errors.recipe?.[index]?.quantity?.message}
                   {...register(`recipe.${index}.quantity`)}
                 />
@@ -176,7 +206,7 @@ export function ProductForm({
                 <button
                   type="button"
                   onClick={() => remove(index)}
-                  disabled={fields.length === 1}
+                  disabled={fields.length === 1 || isPending}
                   className="min-h-11 rounded-[10px] border border-border-control px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50 sm:mt-7"
                 >
                   Quitar
@@ -194,7 +224,7 @@ export function ProductForm({
           <button
             type="button"
             onClick={() => append(emptyRecipeRow())}
-            disabled={!hasSupplies}
+            disabled={!hasSupplies || isPending}
             className="min-h-11 self-start rounded-[10px] border border-border-control bg-surface px-4 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
           >
             + Agregar insumo
@@ -205,22 +235,26 @@ export function ProductForm({
           <PrimaryButton
             type="submit"
             className="flex-1"
-            disabled={!hasSupplies}
+            disabled={!hasSupplies || isPending}
           >
-            {isEditing ? "Guardar cambios" : "Guardar producto"}
+            {isPending
+              ? "Guardando…"
+              : isEditing
+                ? "Guardar cambios"
+                : "Guardar producto"}
           </PrimaryButton>
           <button
             type="button"
             onClick={onCancel}
-            className="min-h-11 flex-1 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-base font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            disabled={isPending}
+            className="min-h-11 flex-1 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-base font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancelar
           </button>
         </div>
 
         <p className="text-xs text-fg-muted">
-          Vista previa de la pantalla: el guardado definitivo se conecta con el
-          backend de la issue #240.
+          La receta se guarda junto con el producto.
         </p>
       </form>
     </section>
