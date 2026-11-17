@@ -34,6 +34,18 @@ describe("formatMoneyTyping", () => {
   it("accepts an already formatted value", () => {
     expect(formatMoneyTyping("20.000,50")).toBe("20.000,50");
   });
+
+  it("treats a dot with up to two decimals as a decimal separator", () => {
+    expect(formatMoneyTyping("20000.50")).toBe("20.000,50");
+    expect(formatMoneyTyping("1234.5")).toBe("1.234,5");
+    expect(formatMoneyTyping("0.99")).toBe("0,99");
+    expect(formatMoneyTyping(".5")).toBe("0,5");
+  });
+
+  it("keeps dots with three digits as thousands separators", () => {
+    expect(formatMoneyTyping("20.000")).toBe("20.000");
+    expect(formatMoneyTyping("1.234.567")).toBe("1.234.567");
+  });
 });
 
 describe("parseMoneyInput", () => {
@@ -47,6 +59,13 @@ describe("parseMoneyInput", () => {
   it("ignores extra separators and limits cents", () => {
     expect(parseMoneyInput("20.000,505")).toBe("20000.50");
     expect(parseMoneyInput("1.234.567")).toBe("1234567");
+  });
+
+  it("treats a dot with up to two decimals as a decimal separator", () => {
+    expect(parseMoneyInput("20000.50")).toBe("20000.50");
+    expect(parseMoneyInput("1234.5")).toBe("1234.5");
+    expect(parseMoneyInput("0.99")).toBe("0.99");
+    expect(parseMoneyInput(".5")).toBe("0.5");
   });
 });
 
