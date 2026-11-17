@@ -1,6 +1,8 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { ZodError } from "zod";
 
 import { getDrizzleClient, type Db } from "@/lib/db/client";
+import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
@@ -64,6 +66,27 @@ async function makeUser(): Promise<CreatedUser> {
   return user;
 }
 
+// Rows created before the catalog rollout may hold a free-text unit. New
+// supplies cannot be created with one anymore, so tests insert it directly.
+async function insertLegacySupply(userId: string) {
+  const [row] = await db
+    .insert(supplies)
+    .values({
+      userId,
+      kind: "supply",
+      name: "Harina vieja",
+      purchasePrice: "1000.00",
+      purchaseQuantity: "1",
+      purchaseUnit: "bolsa",
+      minimumUnit: "unidad",
+      conversionFactor: "1",
+    })
+    .returning();
+
+  if (!row) throw new Error("insertLegacySupply: no row returned");
+  return row;
+}
+
 describe("supplies service", () => {
   it("lists empty when the user has no supplies", async () => {
     const user = await makeUser();
@@ -117,6 +140,31 @@ describe("supplies service", () => {
 
     expect(supply.purchaseUnit).toBe("L");
     expect(supply.minimumUnit).toBe("ml");
+    expect(supply.conversionFactor).toBe("1000.0000");
+  });
+
+  it("rejects a purchase unit outside the catalog when creating a supply", async () => {
+    const user = await makeUser();
+
+    await expect(
+      createSupplyService(user.id, { ...validInput, purchaseUnit: "caja" }, db),
+    ).rejects.toBeInstanceOf(ZodError);
+  });
+
+  it("derives the technical units even if the payload manipulates them", async () => {
+    const user = await makeUser();
+
+    const supply = await createSupplyService(
+      user.id,
+      {
+        ...validInput,
+        minimumUnit: "caja",
+        conversionFactor: "999",
+      },
+      db,
+    );
+
+    expect(supply.minimumUnit).toBe("g");
     expect(supply.conversionFactor).toBe("1000.0000");
   });
 
@@ -175,6 +223,91 @@ describe("supplies service", () => {
     expect(updated!.name).toBe("Harina integral");
     expect(updated!.purchasePrice).toBe("22000.00");
     expect(updated!.purchaseQuantity).toBe("25.0000");
+  });
+
+  it("preserves a legacy unit and ignores manipulated technical values on edit", async () => {
+    const user = await makeUser();
+    const legacy = await insertLegacySupply(user.id);
+
+    const updated = await updateSupplyService(
+      user.id,
+      legacy.id,
+      {
+        kind: "supply",
+        name: "Harina vieja",
+        purchasePrice: "2000.00",
+        purchaseQuantity: "1",
+        purchaseUnit: "bolsa",
+        minimumUnit: "caja",
+        conversionFactor: "999",
+      },
+      db,
+    );
+
+    expect(updated).not.toBeNull();
+    expect(updated!.purchaseUnit).toBe("bolsa");
+    expect(updated!.minimumUnit).toBe("unidad");
+    expect(updated!.conversionFactor).toBe("1.0000");
+  });
+
+  it("rejects changing a legacy unit to another unknown unit", async () => {
+    const user = await makeUser();
+    const legacy = await insertLegacySupply(user.id);
+
+    await expect(
+      updateSupplyService(
+        user.id,
+        legacy.id,
+        { ...validInput, name: "Harina vieja", purchaseUnit: "caja" },
+        db,
+      ),
+    ).rejects.toMatchObject({
+      code: "VALIDATION",
+      details: {
+        fieldErrors: {
+          purchaseUnit: ["Elegí una unidad de compra del catálogo."],
+        },
+      },
+    });
+  });
+
+  it("migrates a legacy unit when the edit picks a catalog unit", async () => {
+    const user = await makeUser();
+    const legacy = await insertLegacySupply(user.id);
+
+    const updated = await updateSupplyService(
+      user.id,
+      legacy.id,
+      {
+        ...validInput,
+        name: "Harina vieja",
+        purchaseUnit: "kg",
+        minimumUnit: "caja",
+        conversionFactor: "999",
+      },
+      db,
+    );
+
+    expect(updated).not.toBeNull();
+    expect(updated!.purchaseUnit).toBe("kg");
+    expect(updated!.minimumUnit).toBe("g");
+    expect(updated!.conversionFactor).toBe("1000.0000");
+  });
+
+  it("rejects an unknown unit when editing a supply that uses the catalog", async () => {
+    const user = await makeUser();
+    const supply = await createSupplyService(user.id, validInput, db);
+
+    await expect(
+      updateSupplyService(user.id, supply.id, { ...validInput, purchaseUnit: "caja" }, db),
+    ).rejects.toMatchObject({
+      code: "VALIDATION",
+      details: {
+        fieldErrors: {
+          purchaseUnit: ["Elegí una unidad de compra del catálogo."],
+        },
+      },
+    });
   });
 
   it("deletes a supply", async () => {

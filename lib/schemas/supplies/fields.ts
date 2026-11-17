@@ -31,6 +31,11 @@ export const purchaseUnitField = z
   .min(1, { error: "Escribí la unidad de compra (ej: kg, caja, docena)." })
   .max(40, { error: "La unidad de compra debe tener como máximo 40 caracteres." });
 
+// Supplies use the closed catalog; packaging keeps its free-text unit. The
+// message is shared by the create gate and the edit service.
+export const SUPPLY_UNIT_CATALOG_MESSAGE =
+  "Elegí una unidad de compra del catálogo.";
+
 export const minimumUnitField = z
   .string({ error: "Escribí la unidad mínima (ej: g, ml, unidad)." })
   .trim()

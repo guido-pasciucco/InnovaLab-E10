@@ -106,20 +106,72 @@ export type SupplyUnits = {
   conversionFactor: string;
 };
 
+export type SupplyUnitState = {
+  kind: string;
+  purchaseUnit: string;
+  minimumUnit: string;
+  conversionFactor: string;
+};
+
+export type ResolvedSupplyUnits = SupplyUnits & {
+  purchaseUnit: string;
+};
+
 // Supplies derive their technical columns from the selected catalog unit.
-// Packaging keeps whatever the user entered.
+// Packaging keeps whatever the user entered. A supply outside the catalog
+// returns null: callers must decide whether it is a legacy row being preserved
+// or a new/manipulated unit to reject.
 export function resolveSupplyUnits(
   kind: string,
   purchaseUnit: string,
   fallback: SupplyUnits,
-): SupplyUnits {
+): SupplyUnits | null {
   if (kind !== "supply") return fallback;
 
   const unit = getSupplyUnit(purchaseUnit);
-  if (!unit) return fallback;
+  if (!unit) return null;
 
   return {
     minimumUnit: unit.minimumUnit,
     conversionFactor: unit.factor,
+  };
+}
+
+// Resolves an edit against the row that is actually stored. A legacy supply
+// may keep a unit outside the catalog only when the payload repeats that same
+// stored value; its technical columns come from the row, never from the
+// payload. Any other unknown unit is rejected (null). Packaging keeps the
+// existing free-text behaviour.
+export function resolveSupplyUnitsForUpdate(
+  existing: SupplyUnitState,
+  input: SupplyUnitState,
+): ResolvedSupplyUnits | null {
+  if (input.kind !== "supply") {
+    return {
+      purchaseUnit: input.purchaseUnit,
+      minimumUnit: input.minimumUnit,
+      conversionFactor: input.conversionFactor,
+    };
+  }
+
+  const unit = getSupplyUnit(input.purchaseUnit);
+  if (unit) {
+    return {
+      purchaseUnit: unit.value,
+      minimumUnit: unit.minimumUnit,
+      conversionFactor: unit.factor,
+    };
+  }
+
+  const keepsStoredLegacyUnit =
+    existing.kind === "supply" &&
+    input.purchaseUnit === existing.purchaseUnit;
+
+  if (!keepsStoredLegacyUnit) return null;
+
+  return {
+    purchaseUnit: existing.purchaseUnit,
+    minimumUnit: existing.minimumUnit,
+    conversionFactor: existing.conversionFactor,
   };
 }

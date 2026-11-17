@@ -11,7 +11,12 @@ import {
 } from "@/lib/db/supplies/validation";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
-import { resolveSupplyUnits } from "@/lib/schemas/supplies/units";
+import { SUPPLY_UNIT_CATALOG_MESSAGE } from "@/lib/schemas/supplies/fields";
+import {
+  getSupplyUnit,
+  resolveSupplyUnits,
+  resolveSupplyUnitsForUpdate,
+} from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
 
 // Supply catalog persistence (ADR 0005: the catalog lives server-side only).
@@ -38,10 +43,20 @@ export async function createSupplyService(
   db: Db = getDrizzleClient(),
 ): Promise<SupplyRow> {
   const supply = createSupplyInputSchema.parse(input);
-  const units = resolveSupplyUnits(supply.kind, supply.purchaseUnit, {
+  const unit = getSupplyUnit(supply.purchaseUnit);
+  const purchaseUnit =
+    supply.kind === "supply" ? (unit?.value ?? supply.purchaseUnit) : supply.purchaseUnit;
+  const units = resolveSupplyUnits(supply.kind, purchaseUnit, {
     minimumUnit: supply.minimumUnit,
     conversionFactor: supply.conversionFactor,
   });
+
+  if (!units) {
+    throw new AppError("VALIDATION", {
+      formErrors: [],
+      fieldErrors: { purchaseUnit: [SUPPLY_UNIT_CATALOG_MESSAGE] },
+    });
+  }
 
   const [row] = await db
     .insert(supplies)
@@ -51,7 +66,7 @@ export async function createSupplyService(
       name: supply.name,
       purchasePrice: supply.purchasePrice,
       purchaseQuantity: supply.purchaseQuantity,
-      purchaseUnit: supply.purchaseUnit,
+      purchaseUnit,
       minimumUnit: units.minimumUnit,
       conversionFactor: units.conversionFactor,
     })
@@ -71,10 +86,25 @@ export async function updateSupplyService(
   db: Db = getDrizzleClient(),
 ): Promise<SupplyRow | null> {
   const supply = updateSupplyInputSchema.parse(input);
-  const units = resolveSupplyUnits(supply.kind, supply.purchaseUnit, {
-    minimumUnit: supply.minimumUnit,
-    conversionFactor: supply.conversionFactor,
-  });
+
+  const [existing] = await db
+    .select()
+    .from(supplies)
+    .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
+    .limit(1);
+
+  if (!existing) {
+    return null;
+  }
+
+  const units = resolveSupplyUnitsForUpdate(existing, supply);
+
+  if (!units) {
+    throw new AppError("VALIDATION", {
+      formErrors: [],
+      fieldErrors: { purchaseUnit: [SUPPLY_UNIT_CATALOG_MESSAGE] },
+    });
+  }
 
   const [row] = await db
     .update(supplies)
@@ -83,7 +113,7 @@ export async function updateSupplyService(
       name: supply.name,
       purchasePrice: supply.purchasePrice,
       purchaseQuantity: supply.purchaseQuantity,
-      purchaseUnit: supply.purchaseUnit,
+      purchaseUnit: units.purchaseUnit,
       minimumUnit: units.minimumUnit,
       conversionFactor: units.conversionFactor,
       updatedAt: new Date(),

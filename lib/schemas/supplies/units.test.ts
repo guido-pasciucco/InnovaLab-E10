@@ -4,6 +4,7 @@ import {
   canonicalSupplyUnit,
   getSupplyUnit,
   resolveSupplyUnits,
+  resolveSupplyUnitsForUpdate,
   SUPPLY_UNITS,
 } from "./units";
 
@@ -75,17 +76,126 @@ describe("supply units catalog", () => {
     ).toEqual({ minimumUnit: "kg", conversionFactor: "1" });
   });
 
-  it("keeps the fallback when an existing supply has an unknown unit", () => {
+  it("returns null when a supply uses a unit outside the catalog", () => {
     expect(
       resolveSupplyUnits("supply", "bolsa", {
         minimumUnit: "unidad",
         conversionFactor: "1",
       }),
-    ).toEqual({ minimumUnit: "unidad", conversionFactor: "1" });
+    ).toBeNull();
   });
 
   it("exposes a unique value per catalog entry", () => {
     const values = SUPPLY_UNITS.map((unit) => unit.value);
     expect(new Set(values).size).toBe(values.length);
+  });
+});
+
+describe("resolveSupplyUnitsForUpdate", () => {
+  const storedLegacy = {
+    kind: "supply",
+    purchaseUnit: "bolsa",
+    minimumUnit: "unidad",
+    conversionFactor: "1",
+  };
+
+  it("keeps a stored legacy unit and ignores manipulated technical values", () => {
+    expect(
+      resolveSupplyUnitsForUpdate(storedLegacy, {
+        kind: "supply",
+        purchaseUnit: "bolsa",
+        minimumUnit: "caja",
+        conversionFactor: "999",
+      }),
+    ).toEqual({
+      purchaseUnit: "bolsa",
+      minimumUnit: "unidad",
+      conversionFactor: "1",
+    });
+  });
+
+  it("rejects changing a legacy unit to another unknown unit", () => {
+    expect(
+      resolveSupplyUnitsForUpdate(storedLegacy, {
+        ...storedLegacy,
+        purchaseUnit: "caja",
+      }),
+    ).toBeNull();
+  });
+
+  it("rejects an unknown unit when the stored supply already uses the catalog", () => {
+    expect(
+      resolveSupplyUnitsForUpdate(
+        {
+          kind: "supply",
+          purchaseUnit: "kg",
+          minimumUnit: "g",
+          conversionFactor: "1000",
+        },
+        {
+          kind: "supply",
+          purchaseUnit: "caja",
+          minimumUnit: "g",
+          conversionFactor: "1000",
+        },
+      ),
+    ).toBeNull();
+  });
+
+  it("migrates a legacy unit to the catalog and derives its technical values", () => {
+    expect(
+      resolveSupplyUnitsForUpdate(storedLegacy, {
+        ...storedLegacy,
+        purchaseUnit: "kg",
+        minimumUnit: "caja",
+        conversionFactor: "999",
+      }),
+    ).toEqual({
+      purchaseUnit: "kg",
+      minimumUnit: "g",
+      conversionFactor: "1000",
+    });
+  });
+
+  it("does not treat a packaging row as a legacy supply", () => {
+    expect(
+      resolveSupplyUnitsForUpdate(
+        {
+          kind: "packaging",
+          purchaseUnit: "bolsa",
+          minimumUnit: "unidad",
+          conversionFactor: "1",
+        },
+        {
+          kind: "supply",
+          purchaseUnit: "bolsa",
+          minimumUnit: "unidad",
+          conversionFactor: "1",
+        },
+      ),
+    ).toBeNull();
+  });
+
+  it("keeps packaging free-text units and technical values", () => {
+    expect(
+      resolveSupplyUnitsForUpdate(
+        {
+          kind: "packaging",
+          purchaseUnit: "caja",
+          minimumUnit: "bolsa",
+          conversionFactor: "100",
+        },
+        {
+          kind: "packaging",
+          purchaseUnit: "caja",
+          minimumUnit: "bolsa",
+          conversionFactor: "100",
+        },
+      ),
+    ).toEqual({
+      purchaseUnit: "caja",
+      minimumUnit: "bolsa",
+      conversionFactor: "100",
+    });
   });
 });
