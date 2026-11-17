@@ -149,6 +149,19 @@ export async function deleteSupplyService(
   supplyId: string,
   db: Db = getDrizzleClient(),
 ): Promise<boolean> {
+  // Check ownership before looking at recipes: otherwise the difference
+  // between SUPPLY_IN_USE and false would reveal whether another user's supply
+  // is used in a recipe.
+  const [existing] = await db
+    .select({ id: supplies.id })
+    .from(supplies)
+    .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
+    .limit(1);
+
+  if (!existing) {
+    return false;
+  }
+
   // A recipe owns the quantity, not the supply: deleting the supply would
   // leave the recipe pointing at nothing. The service returns the friendly
   // SUPPLY_IN_USE code; the deferrable FK is the last line of defense.

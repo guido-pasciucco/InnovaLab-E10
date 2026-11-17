@@ -371,6 +371,22 @@ describe("supplies service", () => {
     expect(rows).toHaveLength(1);
   });
 
+  it("does not reveal whether another user's supply is used by a recipe", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    const supply = await createSupplyService(userA.id, validInput, db);
+    await createProductService(
+      userA.id,
+      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      db,
+    );
+
+    await expect(deleteSupplyService(userB.id, supply.id, db)).resolves.toBe(false);
+
+    const rows = await listSuppliesService(userA.id, db);
+    expect(rows).toHaveLength(1);
+  });
+
   it("blocks deleting a supply used by a recipe", async () => {
     const user = await makeUser();
     const supply = await createSupplyService(user.id, validInput, db);
