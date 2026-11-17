@@ -8,8 +8,9 @@ type HelpTooltipProps = {
   align?: "left" | "right";
 };
 
-// Small "?" control used next to form labels. It opens on hover/focus and can
-// also be toggled with a click, which keeps it usable on touch devices.
+// Small "?" control used next to form labels. It opens on hover for mouse and
+// on focus for keyboard; touch and pen toggle it on pointer-down, so the first
+// tap opens it instead of being cancelled by the focus event.
 export function HelpTooltip({ label, text, align = "left" }: HelpTooltipProps) {
   const [open, setOpen] = useState(false);
   const tooltipId = useId();
@@ -21,9 +22,17 @@ export function HelpTooltip({ label, text, align = "left" }: HelpTooltipProps) {
         aria-label={`Ayuda: ${label}`}
         aria-expanded={open}
         aria-describedby={open ? tooltipId : undefined}
-        onClick={() => setOpen((current) => !current)}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
+        onPointerEnter={(event) => {
+          if (event.pointerType === "mouse") setOpen(true);
+        }}
+        onPointerLeave={(event) => {
+          if (event.pointerType === "mouse") setOpen(false);
+        }}
+        onPointerDown={(event) => {
+          if (event.pointerType !== "mouse") {
+            setOpen((current) => !current);
+          }
+        }}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border-control bg-surface text-xs font-bold text-fg-muted hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
