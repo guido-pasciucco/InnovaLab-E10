@@ -22,12 +22,12 @@ export const saveSupply = handleActionErrors(async (_prev, data: SaveSupplyPaylo
   if (id) {
     const supply = await updateSupplyService(user.id, id, input);
     if (!supply) throw new AppError("SUPPLY_NOT_FOUND");
-    revalidatePath("/supplies");
+    revalidatePath("/insumos");
     return supply;
   }
 
   const supply = await createSupplyService(user.id, input);
-  revalidatePath("/supplies");
+  revalidatePath("/insumos");
   return supply;
 });
 
@@ -35,6 +35,6 @@ export const deleteSupply = handleActionErrors(async (_prev, data: { id: string 
   const user = await requireUser();
   const deleted = await deleteSupplyService(user.id, data.id);
   if (!deleted) throw new AppError("SUPPLY_NOT_FOUND");
-  revalidatePath("/supplies");
+  revalidatePath("/insumos");
   return { deleted: true as const };
 });

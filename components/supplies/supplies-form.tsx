@@ -5,7 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Path } from "react-hook-form";
 
-import { saveSupply } from "@/app/supplies/actions";
+import { saveSupply } from "@/app/insumos/actions";
 import {
   calculateMinimumUnitPrice,
   calculateMinimumUnits,
@@ -238,14 +238,14 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
         />
         {displayKind === "supply" ? (
           <SelectField
-            label="Unidad de compra"
+            label="Unidad de medida"
             disabled={isPending}
             error={errors.purchaseUnit?.message}
             help={
               <HelpTooltip
-                label="Unidad de compra"
+                label="Unidad de medida"
                 align="right"
-                text="Elegí la unidad en la que compraste. El sistema calcula automáticamente la unidad mínima y el costo."
+                text="Elegí la unidad de medida del insumo. El sistema calcula automáticamente el costo por unidad."
               />
             }
             {...register("purchaseUnit")}

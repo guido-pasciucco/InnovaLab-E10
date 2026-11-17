@@ -43,6 +43,12 @@ export default async function DashboardPage() {
           </div>
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
             <Link
+              href="/insumos"
+              className="inline-flex min-h-11 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Gestionar insumos
+            </Link>
+            <Link
               href="/"
               className="inline-flex min-h-11 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
