@@ -98,11 +98,11 @@
 
 ---
 
-## Lo que falta definir (detalles sobre el snapshot)
+## Lo que faltaba definir (detalles sobre el snapshot) — RESUELTO
 
-1. Definición de **“Cerrar cálculo”**: qué congela el snapshot (insumos, recetas/rendimiento, capacidades, costos indirectos, recargo y resultados calculados: costo total, precio sugerido, contribución, equilibrio, etc.), inmutabilidad (¿editable/sobreescribible o inmutable?), relación con el prorrateo y con la edición en vivo.
-2. ¿Se busca soporte real de **varios períodos/histórico** (con consulta de meses anteriores) en esta versión, o un solo cálculo vigente con edición en vivo y snapshot puntual?
-3. ¿Dónde se consulta el histórico (pantalla “Datos históricos” del menú) y qué muestra?
+1. **“Cerrar cálculo” (D5–D8):** qué congela (todo el estado del cálculo: insumos, recetas/rendimiento, capacidades, indirectos, recargo y resultados — costo total, precio sugerido, contribución, equilibrio), inmutabilidad (editable con auditoría: campo, valor anterior/nuevo y cuándo), relación con el prorrateo y la edición en vivo (el snapshot queda etiquetado por mes; prorrateo sigue en vivo) y consulta del histórico (pantalla “Datos históricos” en el menú).
+2. **Períodos/histórico:** un solo cálculo vigente editable en vivo (D4) + cierres como fotos por mes, en lugar de la entidad “plan del mes”.
+3. **Consulta:** “Datos históricos” — lista de cierres por período; detalle de la foto y registro de cambios auditados.
 
 ## Estado actual / decisión
 

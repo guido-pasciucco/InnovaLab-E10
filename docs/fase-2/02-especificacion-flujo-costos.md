@@ -184,7 +184,7 @@ Para cada producto, dentro de `/productos`:
 - Eje X = **unidades totales vendidas de la mezcla** (Σ de cuotas en el equilibrio). Es la única lectura que hace comparable multi-producto.
 - Gráfico: línea de **costos indirectos del período** (constante) vs. línea de **contribución acumulada de la mezcla**; el cruce es el equilibrio en unidades/pesos. Misma lógica del gráfico del cálculo de un solo producto, pero con la mezcla en vez de un solo producto.
 - Cuotas mostradas con **2 decimales** + texto "≈ N unidades" para la lectura práctica.
-- Estados vacíos con mensaje y CTA al bloque que falta (ej. "Cerrá la lista de productos para ver el tablero").
+- Estados vacíos con mensaje y CTA al bloque que falta (ej. "Completá los datos para ver el tablero").
 
 ---
 

@@ -6,7 +6,10 @@
 
 ## Estado
 
-- **En definición.** Decisiones cerradas hasta ahora: 14 (D1 a D14).
+- **En definición.** Decisiones cerradas: 14 (D1 a D14).
+  - **D4 (recálculo en vivo) y D5–D8 (snapshot “Cerrar cálculo”)** son decisiones **transversales** del flujo completo (costos, precio y tablero), no exclusivas del Bloque 2; se documentan en el registro de decisiones a nivel general y el Bloque 2 las consume.
+  - Las decisiones propias del Bloque 2: D1, D2, D3, D9, D10, D11, D12 y D14 vigentes; **D13 (presentaciones/packaging) descartada de momento**, pendiente de comprensión y validación con Malena.
+- Última actualización: 2026-11-17.
 
 ## Objetivo y alcance (borrador)
 
@@ -40,33 +43,33 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 - **Regla:** la **capacidad mensual** (“¿Cuántas unidades pensás fabricar este mes?”) es un **campo del formulario del producto**, editable siempre (como nombre/receta/rendimiento). No hay pantalla propia para la capacidad ni entidad “plan del mes”.
 - **Listado:** el listado de productos muestra la capacidad cargada.
 - **Edición:** cambiar la capacidad recalcula lo dependiente en vivo (prorrateo, costo total, precio, equilibrio). Regla generalizada en D4 a cualquier dato editado.
-- **Histórico:** se registra con un botón manual **“Cerrar cálculo”** (snapshot cuando el usuario está conforme), en lugar de “cerrar lista”. Detalles decididos en D5–D8 (alcance, auditoría, período y consulta en "Datos históricos").
+- **Histórico:** se registra con un botón manual **“Cerrar cálculo”** (snapshot cuando el usuario está conforme), en lugar de “cerrar lista”. **Mecanismo transversal** (no propio del Bloque 2): aplica al flujo completo (costos indirectos, precio, tablero); sus detalles están registrados a nivel general (D5–D8).
 - **Alineación:** recorrido Insumos → mis productos → crear/editar producto (nombre + receta + rendimiento + capacidad); superset del flujo de las issues #240–#242 sin pantalla dedicada de capacidad.
 - **Limitación aceptada:** la capacidad es un atributo único del producto (no por período); para un mes nuevo se edita cada producto (mitigable a futuro con edición masiva).
 - **Detalle:** comparación de opciones en el doc de decisión capacidad vs plan del período.
 
-### D4 — Recálculo en vivo ante cualquier edición (decisión general)
+### D4 — Recálculo en vivo ante cualquier edición (transversal — aplica al flujo completo)
 
 - **Regla:** no hay un paso de cierre para poder calcular. Cualquier cambio en insumos, receta/rendimiento, capacidad, costos indirectos o recargo recalcula de inmediato todo lo derivado (CVU, prorrateo, costo total, precio y equilibrio), con aviso de qué cambió.
 - **Alcance:** decisión general que aplica también al Bloque 2; productos y catálogo quedan editables siempre. La única dependencia de datos es que el prorrateo necesita capacidades cargadas.
 - **Distinción:** "Cerrar cálculo" es un botón manual que solo genera una foto para el histórico; no habilita ni bloquea el cálculo.
 
-### D5 — Snapshot de "Cerrar cálculo": qué congela
+### D5 — Snapshot de "Cerrar cálculo": qué congela (transversal)
 
 - **Regla:** el snapshot congela **todo el estado del cálculo**: insumos, recetas/rendimiento, capacidades, costos indirectos, recargo y resultados calculados (costo total, precio sugerido, contribución, equilibrio). Foto completa y reproducible.
 - **Catálogo en vivo:** sigue editable; la foto es una copia, no un bloqueo (D4).
 
-### D6 — Snapshot "Cerrar cálculo": editable con auditoría
+### D6 — Snapshot "Cerrar cálculo": editable con auditoría (transversal)
 
 - **Regla:** el snapshot se puede corregir, pero **cada cambio queda registrado**: qué campo cambió, valor anterior y nuevo, y cuándo. No es inmutable ni se sobreescribe sin rastro.
 - **Alcance:** la corrección es sobre la copia congelada, no sobre el catálogo en vivo.
 
-### D7 — Snapshot: período etiquetado, prorrateo en vivo
+### D7 — Snapshot: período etiquetado, prorrateo en vivo (transversal)
 
 - **Regla:** cada "Cerrar cálculo" queda asociado a un **período (mes)**. El prorrateo y el resto de los cálculos siguen en vivo sobre el catálogo actual (D4); el snapshot es el registro histórico de ese mes, no la base del cálculo.
 - **Ediciones posteriores:** afectan al cálculo en vivo; no alteran el snapshot cerrado salvo una corrección auditada (D6).
 
-### D8 — Consulta del histórico: pantalla "Datos históricos"
+### D8 — Consulta del histórico: pantalla "Datos históricos" (transversal)
 
 - **Regla:** el histórico se consulta en un destino propio del menú, **"Datos históricos"**: lista de cierres por período, detalle de cada foto (D5) y registro de cambios auditados (D6).
 - **Alcance:** solo lectura del histórico; la edición en vivo sigue en `/productos` y en el resto de los bloques (D4).
@@ -93,9 +96,11 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 
 ### D13 — Packaging en presentaciones: referencia del catálogo y suma al costo
 
-- **Regla:** las presentaciones seleccionan ítems de packaging del catálogo (mismo `kind`) con cantidad; su costo unitario se suma al de la receta y se normaliza con el rendimiento (D1) para el CVU de esa presentación.
+> **Descartada de momento (pendiente de comprensión y validación con Malena).** Alejandro todavía no termina de entender el modelo de presentaciones/packaging; queda sin confirmar. No se usa como decisión vigente.
+
+- **Regla (propuesta previa, sin vigencia):** las presentaciones seleccionan ítems de packaging del catálogo (mismo `kind`) con cantidad; su costo unitario se suma al de la receta y se normaliza con el rendimiento (D1) para el CVU de esa presentación.
 - **Fuente única:** el precio se carga una vez en la pestaña Packaging; la presentación solo referencia.
-- **Alcance:** la entidad "presentación" todavía no está modelada; esta decisión solo define el vínculo con packaging.
+- **Alcance:** la entidad "presentación" todavía no está modelada.
 
 ### D14 — UX en `/productos`: capacidad arriba y CVU en vivo
 
@@ -112,7 +117,8 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
   - capacidad mensual (“¿Cuántas unidades pensás fabricar este mes?”) — **definido (D3 y D9)**: campo editable en el formulario del producto; > 0 para habilitar el cálculo, con aviso si está vacía o en 0.
 - **Receta (del producto)**
   - `rendimiento` (unidades que rinde la receta), > 0, default `1` — **definido (D1)**
-  - renglones — **pendiente**
+  - renglones — **definido (D2)**
+  - presentaciones — **no modelada**: la entidad “presentación” queda fuera por ahora (el vínculo con packaging está definido en D13)
 - **Renglón de receta** — **definido (D2)**
   - insumo (referencia al catálogo compartido de insumos)
   - cantidad usada
@@ -129,11 +135,11 @@ Permitir definir, por cada producto del catálogo, su **receta** (insumos y cant
 
 ## Decisiones pendientes (Bloque 2)
 
-1. ~~**“Cerrar cálculo” (snapshot) para histórico**~~ **Resuelto:** alcance (D5), inmutabilidad (D6), relación con prorrateo/período (D7) y consulta en "Datos históricos" (D8).
+1. ~~**“Cerrar cálculo” (snapshot) para histórico**~~ **Resuelto (transversal, D5–D8):** alcance (congela todo el estado del cálculo), inmutabilidad (editable con auditoría), relación con prorrateo/período (etiquetado por mes, prorrateo en vivo) y consulta (“Datos históricos”). No es propia del Bloque 2; registrada a nivel general.
 2. ~~**Regla de capacidad**~~ **Resuelta (D9):** > 0 para habilitar el cálculo; con 0 o sin cargar se guarda igual, avisa y se excluye del prorrateo hasta completarla.
 3. ~~**Validaciones de receta**~~ **Resueltas (D10):** estrictas al cargar (familia, cantidad > 0, sin duplicados, insumo válido).
 4. ~~**Ciclo de vida**~~ **Resuelto:** borrado de insumo referenciado (D11) y edición/borrado de producto y receta con borrado lógico (D12).
-5. ~~**Packaging en presentaciones**~~ **Resuelto (D13):** se referencia del catálogo y su costo se suma al de la receta. Queda sin modelar la entidad "presentación" en sí.
+5. ~~**Packaging en presentaciones**~~ **Descartada de momento (pendiente de comprensión y validación con Malena):** el vínculo packaging→presentación (D13) y el modo en que se expresa la presentación quedan sin confirmar. No hay decisión vigente de presentaciones.
 6. ~~**UX/estados en `/productos`**~~ **Resuelto (D14):** capacidad arriba junto a nombre y rendimiento, CVU en vivo. Vacíos y contador son detalle de implementación.
 7. ~~**Formato de `rendimiento` y redondeo/decimales**~~ **No bloqueante:** no es decisión de negocio; lo define la implementación.
 8. **Planilla #250 (dependencia externa):** oráculo de validación de fórmulas; no es una decisión de producto. Sigue siendo el bloqueante de QA para D1/D2.

@@ -14,7 +14,7 @@ El usuario puede **entrar, cargar su catálogo de insumos y ver que el resto del
 | --- | --- | --- |
 | Navegación general | Sí | Menú con destinos visibles (las secciones que aún no existen se muestran como tales, no se ocultan) + página inicial/dashboard con contenido a decidir |
 | Bloque 1 — Insumos | **Completo** | Alta, corrección y borrado de insumos (nombre + precio de compra + cantidad + unidad de medida seleccionable) y de packaging (pestaña del mismo catálogo, diferenciada por `kind`; ver registro de decisiones), lista compartida por todo el catálogo |
-| Bloque 2 — Productos | Parcial | La pantalla `/productos` está prevista; el alta de producto con receta, rendimiento y capacidad ya tiene decisiones tomadas (D1–D3) y recálculo en vivo (D4), pero faltan las reglas aún pendientes del bloque |
+| Bloque 2 — Productos | Parcial | La pantalla `/productos` está prevista; el formato de cálculo ya tiene decisiones tomadas (D1–D14) y recálculo en vivo (D4), pero su implementación queda fuera del MVP |
 | Bloque 3 — Costos indirectos, precio y equilibrio | No | Depende del bloque 2 y de las fórmulas pendientes de validación |
 | Bloque 4 — Tablero | No | Se alimenta del bloque 3 |
 

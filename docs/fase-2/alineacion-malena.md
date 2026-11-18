@@ -87,6 +87,14 @@ Los destinos decididos por Alejandro son los del flujo de costos: página inicia
 
 El riesgo es construir **dos lugares para cargar lo mismo**. Si "Costos Variables" se implementa como formulario, se duplicate lo que ya se carga en la receta (D2) y en las presentaciones (D13). Si "Costos totales" se implementa como pantalla de carga, se duplica un resultado que ya produce el cálculo.
 
+### Posición de Alejandro frente al menú lateral de Malena
+
+- Las opciones generales que propone Malena (Inicio, Insumos con Packaging, Productos con presentaciones, Tablero/Tabla de resultados, Datos históricos, Configuraciones, Cerrar sesión) **le parecen bien**.
+- **Datos históricos:** le gusta la opción; reservarla en el menú está bien; su alcance funcional se define aparte (alineado con D5–D8).
+- **Configuraciones:** todavía no está claro para qué serviría; queda como opción a definir con el equipo.
+- Las opciones restantes le parecen adecuadas.
+- El **alcance del menú** (todo el producto vs solo las rutas del catálogo de la fase 2) sigue siendo una decisión pendiente en el registro de Alejandro.
+
 ### Propuesta de consolidación
 
 Mapear las tres pestañas propuestas por Malena a conceptos que ya existen en las decisiones de Alejandro, y decidir cuáles necesitan destino propio:
