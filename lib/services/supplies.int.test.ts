@@ -412,8 +412,10 @@ describe("supplies service", () => {
       db,
     );
 
+    // The minimum unit is derived from the purchase unit: kg (g) -> L (ml)
+    // changes what the recipe quantity means and must be blocked.
     await expect(
-      updateSupplyService(user.id, supply.id, { ...validInput, minimumUnit: "kg" }, db),
+      updateSupplyService(user.id, supply.id, { ...validInput, purchaseUnit: "L" }, db),
     ).rejects.toMatchObject({ code: "SUPPLY_IN_USE" });
   });
 
@@ -447,6 +449,7 @@ describe("supplies service", () => {
         ...validInput,
         name: "Harina premium",
         purchasePrice: "22000.00",
+        purchaseUnit: "g",
         conversionFactor: "900",
       },
       db,
@@ -455,7 +458,7 @@ describe("supplies service", () => {
     expect(updated).not.toBeNull();
     expect(updated!.name).toBe("Harina premium");
     expect(updated!.purchasePrice).toBe("22000.00");
-    expect(updated!.conversionFactor).toBe("900.0000");
+    expect(updated!.conversionFactor).toBe("1.0000");
   });
 
   it("releases a supply after the recipe stops using it", async () => {
