@@ -38,11 +38,14 @@ type TextFieldProps = Omit<ComponentPropsWithRef<"input">, "className"> & {
   id: string;
   label: string;
   error?: string;
+  hint?: string;
   icon?: ReactNode;
 };
 
-export function TextField({ label, error, icon, id, ...props }: TextFieldProps) {
+export function TextField({ label, error, hint, icon, id, ...props }: TextFieldProps) {
   const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+  const describedBy = [hint ? hintId : undefined, error ? errorId : undefined].filter(Boolean).join(" ");
 
   return (
     <div className="flex flex-col gap-1">
@@ -53,10 +56,15 @@ export function TextField({ label, error, icon, id, ...props }: TextFieldProps) 
           {...props}
           id={id}
           aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
+          aria-describedby={describedBy || undefined}
           className={fieldInputClassName(Boolean(error), icon ? "pl-10 pr-3" : "px-3")}
         />
       </div>
+      {hint && (
+        <p id={hintId} className="text-[10px] text-fg-muted lg:text-[13px]">
+          {hint}
+        </p>
+      )}
       {error && <FieldError id={errorId}>{error}</FieldError>}
     </div>
   );

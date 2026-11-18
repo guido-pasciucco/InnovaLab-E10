@@ -60,6 +60,7 @@ export function PasswordInput({
           type="button"
           onClick={() => setShow((visible) => !visible)}
           aria-pressed={show}
+          aria-controls={id}
           aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
           disabled={disabled}
           className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-accent-glow"
