@@ -43,6 +43,8 @@ export default async function ProductsPage() {
             </p>
           </div>
 
+          {/* Temporary navigation back to the dashboard and across catalogs,
+              pending the UX/UI redesign. */}
           <div className="flex flex-col gap-3 self-start sm:flex-row sm:items-center">
             <Link
               href="/dashboard"

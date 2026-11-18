@@ -111,6 +111,8 @@ export default async function DashboardPage() {
           </div>
         </section>
 
+        {/* Temporary navigation: catalog entry points pending the UX/UI
+            redesign; keep these routes reachable until the new nav ships. */}
         <section aria-label="Catálogos">
           <h2 className="mb-3 text-lg font-semibold text-fg">Catálogos Fase 2</h2>
           <div className="grid gap-4 sm:grid-cols-2">
