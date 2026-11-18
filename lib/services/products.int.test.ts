@@ -1,0 +1,282 @@
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { ZodError } from "zod/v4";
+
+import { getDrizzleClient, type Db } from "@/lib/db/client";
+
+import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
+import { loadTestEnv } from "../../tests/support/test-env";
+import {
+  createProductService,
+  deleteProductService,
+  getProductService,
+  listProductsService,
+  updateProductService,
+} from "./products";
+import { createSupplyService } from "./supplies";
+
+// Integration tests against the local Supabase stack (.env.test URLs are
+// local-only; loadTestEnv throws otherwise). One db client per file, closed in
+// afterAll; users are removed after each test, cascading their business,
+// products, recipe lines and supplies.
+
+type SupplyInput = {
+  kind: "supply" | "packaging";
+  name: string;
+  purchasePrice: string;
+  purchaseQuantity: string;
+  purchaseUnit: string;
+  minimumUnit: string;
+  conversionFactor: string;
+};
+
+const validSupply: SupplyInput = {
+  kind: "supply",
+  name: "Harina 000",
+  purchasePrice: "18750.00",
+  purchaseQuantity: "25",
+  purchaseUnit: "kg",
+  minimumUnit: "g",
+  conversionFactor: "1000",
+};
+
+const MISSING_ID = "00000000-0000-0000-0000-000000000000";
+
+let db: Db;
+const users: CreatedUser[] = [];
+
+beforeAll(() => {
+  process.env.DATABASE_URL = loadTestEnv().DATABASE_URL;
+  globalThis.__drizzleClient = undefined;
+  db = getDrizzleClient();
+});
+
+afterAll(async () => {
+  try {
+    if (db) await db.$client.end();
+  } finally {
+    globalThis.__drizzleClient = undefined;
+  }
+});
+
+afterEach(async () => {
+  const results = await Promise.allSettled(users.map((user) => deleteUser(user.id)));
+  users.length = 0;
+  const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+  if (failures.length > 0) {
+    throw new AggregateError(
+      failures.map((f) => f.reason),
+      `cleanup failed for ${failures.length} user(s)`,
+    );
+  }
+});
+
+async function makeUser(): Promise<CreatedUser> {
+  const user = await createUser();
+  users.push(user);
+  return user;
+}
+
+async function makeSupply(
+  userId: CreatedUser["id"],
+  overrides: Partial<typeof validSupply> = {},
+) {
+  return createSupplyService(userId, { ...validSupply, ...overrides }, db);
+}
+
+async function makeProduct(userId: CreatedUser["id"], supplyId: string) {
+  return createProductService(
+    userId,
+    {
+      name: "Pan flauta",
+      recipe: [{ supplyId, quantity: "250" }],
+    },
+    db,
+  );
+}
+
+describe("products service", () => {
+  it("lists empty when the user has no products", async () => {
+    const user = await makeUser();
+
+    await expect(listProductsService(user.id, db)).resolves.toEqual([]);
+  });
+
+  it("creates a product with its recipe and returns the selected supply", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    const product = await createProductService(
+      user.id,
+      {
+        name: "Pan flauta",
+        recipe: [{ supplyId: supply.id, quantity: "250" }],
+      },
+      db,
+    );
+
+    expect(product.name).toBe("Pan flauta");
+    expect(product.recipe).toEqual([
+      {
+        supplyId: supply.id,
+        supplyName: supply.name,
+        quantity: "250",
+      },
+    ]);
+  });
+
+  it("lists created products with their recipe", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+    await makeProduct(user.id, supply.id);
+
+    const rows = await listProductsService(user.id, db);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].name).toBe("Pan flauta");
+    expect(rows[0].recipe).toEqual([
+      {
+        supplyId: supply.id,
+        supplyName: supply.name,
+        quantity: "250",
+      },
+    ]);
+  });
+
+  it("gets a product only for its owner", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    const supply = await makeSupply(userA.id);
+    const product = await makeProduct(userA.id, supply.id);
+
+    expect(await getProductService(userA.id, product.id, db)).toEqual(product);
+    expect(await getProductService(userB.id, product.id, db)).toBeNull();
+  });
+
+  it("updates the name and replaces the recipe", async () => {
+    const user = await makeUser();
+    const flour = await makeSupply(user.id, { name: "Harina 000" });
+    const wholeFlour = await makeSupply(user.id, { name: "Harina integral" });
+    const product = await makeProduct(user.id, flour.id);
+
+    const updated = await updateProductService(
+      user.id,
+      product.id,
+      {
+        name: "Pan integral",
+        recipe: [{ supplyId: wholeFlour.id, quantity: "0.5" }],
+      },
+      db,
+    );
+
+    expect(updated).not.toBeNull();
+    expect(updated!.name).toBe("Pan integral");
+    expect(updated!.recipe).toEqual([
+      {
+        supplyId: wholeFlour.id,
+        supplyName: wholeFlour.name,
+        quantity: "0.5",
+      },
+    ]);
+  });
+
+  it("rejects packaging as a recipe ingredient", async () => {
+    const user = await makeUser();
+    const packaging = await makeSupply(user.id, {
+      kind: "packaging",
+      name: "Bolsa kraft",
+    });
+
+    await expect(makeProduct(user.id, packaging.id)).rejects.toMatchObject({
+      code: "SUPPLY_NOT_INGREDIENT",
+    });
+  });
+
+  it("rejects a supply owned by another user", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    const supply = await makeSupply(userA.id);
+
+    await expect(makeProduct(userB.id, supply.id)).rejects.toMatchObject({
+      code: "SUPPLY_NOT_FOUND",
+    });
+  });
+
+  it("rejects a missing supply", async () => {
+    const user = await makeUser();
+
+    await expect(makeProduct(user.id, MISSING_ID)).rejects.toMatchObject({
+      code: "SUPPLY_NOT_FOUND",
+    });
+  });
+
+  it("rejects a duplicated supply before writing the product", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    await expect(
+      createProductService(
+        user.id,
+        {
+          name: "Pan flauta",
+          recipe: [
+            { supplyId: supply.id, quantity: "250" },
+            { supplyId: supply.id, quantity: "100" },
+          ],
+        },
+        db,
+      ),
+    ).rejects.toBeInstanceOf(ZodError);
+
+    await expect(listProductsService(user.id, db)).resolves.toHaveLength(0);
+  });
+
+  it("soft deletes a product and hides it from the list", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+    const product = await makeProduct(user.id, supply.id);
+
+    expect(await deleteProductService(user.id, product.id, db)).toBe(true);
+    await expect(listProductsService(user.id, db)).resolves.toHaveLength(0);
+    expect(await getProductService(user.id, product.id, db)).toBeNull();
+  });
+
+  it("keeps products isolated by owner", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    const supply = await makeSupply(userA.id);
+    await makeProduct(userA.id, supply.id);
+
+    await expect(listProductsService(userB.id, db)).resolves.toHaveLength(0);
+  });
+
+  it("update of another user's product returns null", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    const supply = await makeSupply(userA.id);
+    const product = await makeProduct(userA.id, supply.id);
+
+    const updated = await updateProductService(
+      userB.id,
+      product.id,
+      {
+        name: "Hackeado",
+        recipe: [{ supplyId: supply.id, quantity: "1" }],
+      },
+      db,
+    );
+
+    expect(updated).toBeNull();
+    const rows = await listProductsService(userA.id, db);
+    expect(rows[0].name).toBe("Pan flauta");
+  });
+
+  it("delete of another user's product returns false", async () => {
+    const userA = await makeUser();
+    const userB = await makeUser();
+    const supply = await makeSupply(userA.id);
+    const product = await makeProduct(userA.id, supply.id);
+
+    expect(await deleteProductService(userB.id, product.id, db)).toBe(false);
+    await expect(listProductsService(userA.id, db)).resolves.toHaveLength(1);
+  });
+});

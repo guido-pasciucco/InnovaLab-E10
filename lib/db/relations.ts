@@ -1,6 +1,10 @@
 import { relations } from "drizzle-orm";
 
-import { businesses, products } from "./business/table";
+import {
+  businesses,
+  productIngredients,
+  products,
+} from "./business/table";
 import {
   calculations,
   computedResults,
@@ -10,6 +14,7 @@ import {
 } from "./calculation/table";
 import { businessCostLines, calcCostLines } from "./costs/table";
 import { profiles } from "./profile/table";
+import { supplies } from "./supplies/table";
 
 // ---------------------------------------------------------------------------
 // Query relations for the ERD tables, using the stable classic `fields` /
@@ -20,6 +25,7 @@ import { profiles } from "./profile/table";
 export const profilesRelations = relations(profiles, ({ many }) => ({
   businesses: many(businesses),
   calculations: many(calculations),
+  supplies: many(supplies),
 }));
 
 export const businessesRelations = relations(businesses, ({ many, one }) => ({
@@ -37,8 +43,23 @@ export const productsRelations = relations(products, ({ many, one }) => ({
     fields: [products.businessId],
     references: [businesses.id],
   }),
+  ingredients: many(productIngredients),
   calculations: many(calculations),
 }));
+
+export const productIngredientsRelations = relations(
+  productIngredients,
+  ({ one }) => ({
+    product: one(products, {
+      fields: [productIngredients.productId],
+      references: [products.id],
+    }),
+    supply: one(supplies, {
+      fields: [productIngredients.supplyId],
+      references: [supplies.id],
+    }),
+  }),
+);
 
 export const businessCostLinesRelations = relations(
   businessCostLines,
@@ -130,3 +151,11 @@ export const computedResultsRelations = relations(
     }),
   }),
 );
+
+export const suppliesRelations = relations(supplies, ({ many, one }) => ({
+  user: one(profiles, {
+    fields: [supplies.userId],
+    references: [profiles.id],
+  }),
+  ingredients: many(productIngredients),
+}));

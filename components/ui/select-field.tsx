@@ -1,15 +1,17 @@
 "use client";
 
-import { useId, type ComponentPropsWithRef } from "react";
+import { useId, type ComponentPropsWithRef, type ReactNode } from "react";
 
 export type SelectFieldProps = ComponentPropsWithRef<"select"> & {
   label: string;
   error?: string;
+  help?: ReactNode;
 };
 
 export function SelectField({
   label,
   error,
+  help,
   id,
   className = "",
   "aria-describedby": describedBy,
@@ -22,9 +24,12 @@ export function SelectField({
 
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <label htmlFor={selectId} className="text-base font-semibold text-fg">
-        {label}
-      </label>
+      <div className="flex items-center gap-1.5">
+        <label htmlFor={selectId} className="text-base font-semibold text-fg">
+          {label}
+        </label>
+        {help}
+      </div>
       <select
         {...props}
         id={selectId}
