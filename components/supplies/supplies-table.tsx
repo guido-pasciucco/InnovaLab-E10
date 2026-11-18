@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 
-import { deleteSupply } from "@/app/supplies/actions";
+import { deleteSupply } from "@/app/insumos/actions";
 import { calculateMinimumUnitPrice } from "@/lib/calc/supplyCost";
 import type { SupplyKind } from "@/lib/schemas/supplies/fields";
 import type { SupplyItem } from "@/lib/schemas/supplies/supplies";

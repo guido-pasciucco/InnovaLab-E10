@@ -44,6 +44,30 @@ describe("createSupplyInputSchema", () => {
     expect("userId" in result.data).toBe(false);
   });
 
+  it("rejects a purchase unit outside the catalog for a new supply", () => {
+    expect(
+      fieldErrors(createSupplyInputSchema, { ...validInput, purchaseUnit: "caja" }),
+    ).toEqual({
+      purchaseUnit: ["Elegí una unidad de compra del catálogo."],
+    });
+  });
+
+  it("accepts a catalog alias for a new supply", () => {
+    expect(
+      createSupplyInputSchema.safeParse({ ...validInput, purchaseUnit: "kilo" }).success,
+    ).toBe(true);
+  });
+
+  it("keeps free-text purchase units for packaging", () => {
+    expect(
+      createSupplyInputSchema.safeParse({
+        ...validInput,
+        kind: "packaging",
+        purchaseUnit: "caja",
+      }).success,
+    ).toBe(true);
+  });
+
   it.each([
     { field: "kind", value: "otro", message: "Elegí si es un insumo o packaging." },
     { field: "name", value: "", message: "Escribí el nombre del insumo." },
@@ -74,6 +98,12 @@ describe("createSupplyInputSchema", () => {
 describe("updateSupplyInputSchema", () => {
   it("accepts a complete valid supply", () => {
     expect(updateSupplyInputSchema.safeParse(validInput).success).toBe(true);
+  });
+
+  it("accepts an unknown unit so the service can compare it with the stored row", () => {
+    expect(
+      updateSupplyInputSchema.safeParse({ ...validInput, purchaseUnit: "bolsa" }).success,
+    ).toBe(true);
   });
 
   it("drops the server-controlled fields", () => {
