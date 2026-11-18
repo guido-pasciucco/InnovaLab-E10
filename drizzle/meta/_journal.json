@@ -113,6 +113,34 @@
       "when": 1794093584060,
       "tag": "20261107231944_revoke-public-rest-api",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794251963546,
+      "tag": "20261109191923_create_supplies_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794417125438,
+      "tag": "20261111171205_new_shaman",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794523628443,
+      "tag": "20261112224708_tiresome_pandemic",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794523709938,
+      "tag": "20261112224829_product_ingredients_fk_deferrable",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createBusinessInputSchema, createProductInputSchema } from "./validation";
+import {
+  createBusinessInputSchema,
+  createProductInputSchema,
+  saveProductInputSchema,
+} from "./validation";
 
 // DB tests cover shared-field wiring and removal of server-controlled fields.
 function fieldErrors(schema: z.ZodType, input: unknown) {
@@ -20,6 +24,11 @@ const validProduct = {
   name: "Vela aromática",
   skuOrSlug: "vela-aromatica",
   isActive: true,
+};
+
+const validRecipeProduct = {
+  name: "Pan flauta",
+  recipe: [{ supplyId: SERVER_ID, quantity: "250" }],
 };
 
 describe("createBusinessInputSchema", () => {
@@ -104,5 +113,90 @@ describe("createProductInputSchema", () => {
     expect(result).not.toHaveProperty("businessId");
     expect(result).not.toHaveProperty("createdAt");
     expect(result).not.toHaveProperty("updatedAt");
+  });
+});
+
+describe("saveProductInputSchema", () => {
+  it("accepts a product with a name and one valid recipe line", () => {
+    const result = saveProductInputSchema.safeParse(validRecipeProduct);
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a whitespace-only name with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        name: "   ",
+      }),
+    ).toEqual({ name: ["Escribí el nombre de tu producto."] });
+  });
+
+  it("requires at least one recipe line", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [],
+      }),
+    ).toEqual({ recipe: ["Agregá al menos un insumo a la receta."] });
+  });
+
+  it("rejects a supply id that is not a uuid with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [{ supplyId: "supply-harina", quantity: "250" }],
+      }),
+    ).toEqual({ recipe: ["Elegí un insumo de tu catálogo."] });
+  });
+
+  it("rejects a zero quantity with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [{ supplyId: SERVER_ID, quantity: "0" }],
+      }),
+    ).toEqual({ recipe: ["La cantidad debe ser mayor que 0."] });
+  });
+
+  it("accepts a quantity with up to four decimals", () => {
+    const result = saveProductInputSchema.safeParse({
+      ...validRecipeProduct,
+      recipe: [{ supplyId: SERVER_ID, quantity: "0.0001" }],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a quantity with more than four decimals with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [{ supplyId: SERVER_ID, quantity: "0.00001" }],
+      }),
+    ).toEqual({ recipe: ["La cantidad debe tener hasta 4 decimales."] });
+  });
+
+  it("rejects the same supply twice in one recipe", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [
+          { supplyId: SERVER_ID, quantity: "250" },
+          { supplyId: SERVER_ID, quantity: "100" },
+        ],
+      }),
+    ).toEqual({ recipe: ["Ese insumo ya está en la receta."] });
+  });
+
+  it("drops server-controlled fields when the input carries them", () => {
+    const result = saveProductInputSchema.parse({
+      ...validRecipeProduct,
+      id: SERVER_ID,
+      businessId: SERVER_ID,
+    });
+
+    expect(result).not.toHaveProperty("id");
+    expect(result).not.toHaveProperty("businessId");
   });
 });
