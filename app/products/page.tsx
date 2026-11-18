@@ -43,12 +43,20 @@ export default async function ProductsPage() {
             </p>
           </div>
 
-          <Link
-            href="/supplies"
-            className="inline-flex min-h-11 items-center justify-center self-start rounded-[14px] border border-border-control bg-surface px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            Catálogo de insumos
-          </Link>
+          <div className="flex flex-col gap-3 self-start sm:flex-row sm:items-center">
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-11 items-center justify-center rounded-[14px] border border-border-control bg-surface px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Volver al dashboard
+            </Link>
+            <Link
+              href="/insumos"
+              className="inline-flex min-h-11 items-center justify-center rounded-[14px] border border-border-control bg-surface px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Catálogo de insumos
+            </Link>
+          </div>
         </header>
 
         <ProductsCatalog initialProducts={products} supplies={supplyOptions} />

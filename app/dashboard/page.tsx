@@ -10,7 +10,7 @@ const dateFormat = new Intl.DateTimeFormat("es-AR", { dateStyle: "medium" });
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-[24px] bg-surface p-5 shadow-sm">
+    <div className="rounded-3xl bg-surface p-5 shadow-sm">
       <p className="text-xs font-semibold tracking-wide text-fg-muted uppercase">{label}</p>
       <p className="mt-3 text-3xl font-bold text-fg">{value}</p>
       {hint && <p className="mt-2 text-sm text-fg-muted">{hint}</p>}
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
 
         <section
           aria-label="Perfil"
-          className="flex items-center justify-between gap-4 rounded-[24px] bg-surface p-5 shadow-sm"
+          className="flex items-center justify-between gap-4 rounded-3xl bg-surface p-5 shadow-sm"
         >
           <div className="flex min-w-0 items-center gap-4">
             <span
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
             value={furthest > 0 ? `Paso ${furthest} de ${TOTAL_STEPS}` : "—"}
             hint={furthest > 0 ? "Entre todos tus cálculos" : "Todavía sin cálculos"}
           />
-          <div className="rounded-[24px] bg-action-primary-pressed p-5 text-white shadow-sm">
+          <div className="rounded-3xl bg-action-primary-pressed p-5 text-white shadow-sm">
             <p className="text-xs font-semibold tracking-wide uppercase opacity-80">
               Último cálculo
             </p>
@@ -108,6 +108,42 @@ export default async function DashboardPage() {
             <p className="mt-2 text-sm opacity-80">
               {latest ? `Actualizado ${dateFormat.format(latest.updatedAt)}` : "Empezá uno nuevo"}
             </p>
+          </div>
+        </section>
+
+        <section aria-label="Catálogos">
+          <h2 className="mb-3 text-lg font-semibold text-fg">Catálogos Fase 2</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Link
+              href="/insumos"
+              className="rounded-3xl bg-brand-green-50 p-5 shadow-sm transition hover:bg-brand-green-100 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <span
+                className="flex size-10 items-center justify-center rounded-xl bg-brand-green-700 text-lg font-bold text-white"
+                aria-hidden="true"
+              >
+                I
+              </span>
+              <p className="mt-3 text-lg font-semibold text-brand-green-700">Insumos y packaging</p>
+              <p className="mt-2 text-sm text-fg-muted">
+                Cargá precios, cantidades y unidades de cada insumo o envase.
+              </p>
+            </Link>
+            <Link
+              href="/products"
+              className="rounded-3xl bg-brand-tile p-5 shadow-sm transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <span
+                className="flex size-10 items-center justify-center rounded-xl bg-brand-glyph/20 text-lg font-bold text-brand-glyph"
+                aria-hidden="true"
+              >
+                P
+              </span>
+              <p className="mt-3 text-lg font-semibold text-on-brand">Productos</p>
+              <p className="mt-2 text-sm text-on-brand-muted">
+                Armá la receta de cada producto con los insumos del catálogo.
+              </p>
+            </Link>
           </div>
         </section>
 
