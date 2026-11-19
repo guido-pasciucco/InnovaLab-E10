@@ -377,7 +377,11 @@ describe("supplies service", () => {
     const supply = await createSupplyService(userA.id, validInput, db);
     await createProductService(
       userA.id,
-      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      {
+        name: "Pan flauta",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: supply.id, quantity: "250" }],
+      },
       db,
     );
 
@@ -392,7 +396,11 @@ describe("supplies service", () => {
     const supply = await createSupplyService(user.id, validInput, db);
     await createProductService(
       user.id,
-      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      {
+        name: "Pan flauta",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: supply.id, quantity: "250" }],
+      },
       db,
     );
 
@@ -408,7 +416,11 @@ describe("supplies service", () => {
     const supply = await createSupplyService(user.id, validInput, db);
     await createProductService(
       user.id,
-      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      {
+        name: "Pan flauta",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: supply.id, quantity: "250" }],
+      },
       db,
     );
 
@@ -424,7 +436,11 @@ describe("supplies service", () => {
     const supply = await createSupplyService(user.id, validInput, db);
     await createProductService(
       user.id,
-      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      {
+        name: "Pan flauta",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: supply.id, quantity: "250" }],
+      },
       db,
     );
 
@@ -438,7 +454,11 @@ describe("supplies service", () => {
     const supply = await createSupplyService(user.id, validInput, db);
     await createProductService(
       user.id,
-      { name: "Pan flauta", recipe: [{ supplyId: supply.id, quantity: "250" }] },
+      {
+        name: "Pan flauta",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: supply.id, quantity: "250" }],
+      },
       db,
     );
 
@@ -471,14 +491,22 @@ describe("supplies service", () => {
     );
     const product = await createProductService(
       user.id,
-      { name: "Pan flauta", recipe: [{ supplyId: used.id, quantity: "250" }] },
+      {
+        name: "Pan flauta",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: used.id, quantity: "250" }],
+      },
       db,
     );
 
     await updateProductService(
       user.id,
       product.id,
-      { name: "Pan flauta", recipe: [{ supplyId: other.id, quantity: "250" }] },
+      {
+        name: "Pan flauta",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: other.id, quantity: "250" }],
+      },
       db,
     );
 
