@@ -60,7 +60,7 @@ export type CatalogVariableCostsAdapterResult =
   | CatalogVariableCostsAdapterFailure
   | CatalogVariableCostsAdapterSuccess;
 
-type UnitFamily = "count" | "mass" | "volume";
+type UnitFamily = "count" | "mass" | "volume" | "length";
 
 const CATALOG_UNITS: Record<string, { family: UnitFamily; canonical: string }> = {
   unidad: { family: "count", canonical: "unidad" },
@@ -74,6 +74,9 @@ const CATALOG_UNITS: Record<string, { family: UnitFamily; canonical: string }> =
   kg: { family: "mass", canonical: "g" },
   ml: { family: "volume", canonical: "ml" },
   l: { family: "volume", canonical: "ml" },
+  mm: { family: "length", canonical: "mm" },
+  cm: { family: "length", canonical: "mm" },
+  m: { family: "length", canonical: "mm" },
 };
 
 function failure(

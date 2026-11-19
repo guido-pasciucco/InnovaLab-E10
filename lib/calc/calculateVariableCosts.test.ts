@@ -84,6 +84,29 @@ describe("calculateVariableCosts", () => {
     expect(result).toMatchObject({ ok: true, ingredientsCost: "375.00", unitCost: "37.50" });
   });
 
+  it.each([
+    ["mm", "1000"],
+    ["cm", "100"],
+    ["m", "1"],
+  ] as const)("calculates an exact length cost when purchased in %s", (purchaseUnit, purchaseQuantity) => {
+    const result = calculateVariableCosts({
+      supplies: [{ id: "wire", purchasePrice: "10", purchaseQuantity, purchaseUnit }],
+      recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "wire", quantity: "500", unit: "mm" }] },
+      presentations: [],
+    });
+
+    expect(result).toMatchObject({ ok: true, ingredientsCost: "5.00", unitCost: "5.00" });
+  });
+
+  it("rejects a length usage against a mass supply", () => {
+    const result = calculateVariableCosts({
+      supplies: [{ id: "flour", purchasePrice: "10", purchaseQuantity: "1", purchaseUnit: "kg" }],
+      recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "flour", quantity: "1", unit: "mm" }] },
+      presentations: [],
+    });
+
+    expect(result).toMatchObject({ ok: false, code: "INCOMPATIBLE_UNIT" });
+  });
   it("keeps full precision until a presentation total leaves the engine", () => {
     const result = calculateVariableCosts({
       supplies: [{ id: "ingredient", purchasePrice: "1", purchaseQuantity: "1", purchaseUnit: "unidad" }],

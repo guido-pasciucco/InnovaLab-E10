@@ -44,6 +44,23 @@ describe("deriveProductVariableCosts", () => {
     });
   });
 
+  it("does not omit a missing ingredient from a mixed recipe", () => {
+    expect(
+      deriveProductVariableCosts(
+        {
+          ...recipe,
+          recipe: [
+            ...recipe.recipe,
+            { supplyId: "missing", supplyName: "No existe", quantity: "1" },
+          ],
+        },
+        [supply],
+      ),
+    ).toEqual({
+      variableCosts: null,
+      variableCostsUnavailableCode: "MISSING_INGREDIENT_SUPPLY",
+    });
+  });
   it("calculates unaffected products when another product has incompatible data", () => {
     const valid = deriveProductVariableCosts(recipe, [supply]);
     const incompatible = deriveProductVariableCosts(recipe, [
@@ -54,6 +71,17 @@ describe("deriveProductVariableCosts", () => {
     expect(incompatible.variableCostsUnavailableCode).toBe("UNSUPPORTED_MINIMUM_UNIT");
   });
 
+  it("ignores an unrelated incompatible catalog row", () => {
+    expect(
+      deriveProductVariableCosts(recipe, [
+        supply,
+        { ...supply, id: "legacy", minimumUnit: "legacy-unit" },
+      ]),
+    ).toMatchObject({
+      variableCosts: { unitCost: "1.00" },
+      variableCostsUnavailableCode: null,
+    });
+  });
   it("propagates unexpected malformed catalog values", () => {
     expect(() =>
       deriveProductVariableCosts(recipe, [{ ...supply, purchasePrice: null as unknown as string }]),

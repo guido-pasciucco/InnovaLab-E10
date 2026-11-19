@@ -95,6 +95,27 @@ describe("adaptCatalogVariableCosts", () => {
     expect(input.supplies[0]).toMatchObject({ purchaseQuantity: "12", purchaseUnit: "unidad" });
   });
 
+  it.each([
+    ["mm", "1", "1"],
+    ["cm", "10", "10"],
+    ["m", "1000", "1000"],
+  ] as const)("converts %s to the exact millimetre base", (purchaseUnit, factor, purchaseQuantity) => {
+    const input = adapted({
+      catalog: [{
+        id: "wire",
+        kind: "supply",
+        purchasePrice: "10",
+        purchaseQuantity: "1",
+        purchaseUnit,
+        minimumUnit: "mm",
+        conversionFactor: factor,
+      }],
+      recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "wire", quantity: "1", unit: "mm" }] },
+      presentations: [],
+    });
+
+    expect(input.supplies[0]).toMatchObject({ purchaseQuantity, purchaseUnit: "mm" });
+  });
   it("accepts a custom package label only with an explicit canonical equivalence", () => {
     const input = adapted({
       ...validSource,
@@ -139,6 +160,24 @@ describe("adaptCatalogVariableCosts", () => {
     if (result.ok) expect(result.presentations[0]?.totalCost).toBe("1.00");
   });
 
+  it("rejects a missing ingredient instead of calculating a partial recipe", () => {
+    const result = adaptCatalogVariableCosts({
+      ...validSource,
+      recipe: {
+        ...validSource.recipe,
+        ingredients: [
+          ...validSource.recipe.ingredients,
+          { supplyId: "missing", quantity: "1", unit: "g" },
+        ],
+      },
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      code: "MISSING_INGREDIENT_SUPPLY",
+      details: { supplyId: "missing" },
+    });
+  });
   it("rejects packaging as a recipe ingredient", () => {
     const result = adaptCatalogVariableCosts({
       ...validSource,

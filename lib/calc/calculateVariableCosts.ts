@@ -10,7 +10,7 @@ import { Fraction } from "./fraction";
 
 const MONEY_DECIMALS = 2;
 
-type UnitFamily = "count" | "mass" | "volume";
+type UnitFamily = "count" | "mass" | "volume" | "length";
 
 type NormalizedUnit = {
   family: UnitFamily;
@@ -27,6 +27,9 @@ const UNITS: Record<string, NormalizedUnit> = {
   kg: { family: "mass", factor: Fraction.fromDecimal("1000")! },
   ml: { family: "volume", factor: Fraction.fromDecimal("1")! },
   l: { family: "volume", factor: Fraction.fromDecimal("1000")! },
+  mm: { family: "length", factor: Fraction.fromDecimal("1")! },
+  cm: { family: "length", factor: Fraction.fromDecimal("10")! },
+  m: { family: "length", factor: Fraction.fromDecimal("1000")! },
 };
 
 export type SupplyPurchase = {

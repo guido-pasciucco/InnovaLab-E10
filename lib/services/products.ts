@@ -58,14 +58,22 @@ export function deriveProductVariableCosts(
   }
   const catalogById = new Map(catalog.map((supply) => [supply.id, supply]));
   const adapted = adaptCatalogVariableCosts({
+    // Keep only catalog rows referenced by this product, but preserve every
+    // recipe line below. A missing ingredient then becomes
+    // MISSING_INGREDIENT_SUPPLY without unrelated legacy catalog rows blocking
+    // an otherwise valid product.
     catalog: product.recipe.flatMap((ingredient) => {
       const supply = catalogById.get(ingredient.supplyId);
-      return supply ? [{ id: supply.id, kind: supply.kind, purchasePrice: supply.purchasePrice, purchaseQuantity: supply.purchaseQuantity, purchaseUnit: supply.purchaseUnit, minimumUnit: supply.minimumUnit, conversionFactor: supply.conversionFactor }] : [];
+      return supply ? [supply] : [];
     }),
-    recipe: { yieldQuantity: product.yieldQuantity, ingredients: product.recipe.flatMap((ingredient) => {
-      const supply = catalogById.get(ingredient.supplyId);
-      return supply ? [{ supplyId: ingredient.supplyId, quantity: ingredient.quantity, unit: supply.minimumUnit }] : [];
-    }) },
+    recipe: {
+      yieldQuantity: product.yieldQuantity,
+      ingredients: product.recipe.map((ingredient) => ({
+        supplyId: ingredient.supplyId,
+        quantity: ingredient.quantity,
+        unit: catalogById.get(ingredient.supplyId)?.minimumUnit ?? "",
+      })),
+    },
     presentations: [],
   });
   if (!adapted.ok) {
