@@ -28,6 +28,13 @@ test("guarda la unidad de una línea de receta y la muestra", async ({
   await authedPage.getByRole("button", { name: "Guardar producto" }).click();
 
   await expect(
+    authedPage.getByRole("status").filter({ hasText: "quedaron guardados" }),
+  ).toBeVisible();
+  await authedPage
+    .getByRole("button", { name: "Ver receta de Pan flauta" })
+    .click();
+
+  await expect(
     authedPage.getByRole("heading", { name: "Pan flauta" }),
   ).toBeVisible();
   await expect(

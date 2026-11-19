@@ -1,54 +1,66 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { deleteProduct } from "@/app/products/actions";
 import type {
   ProductItem,
   RecipeSupplyOption,
 } from "@/lib/schemas/products/products";
+import { CatalogModal } from "@/components/ui/catalog-modal";
+import { normalizeForSearch } from "@/components/ui/normalize-search";
 import { ProductForm } from "./product-form";
 import { ProductRecipe } from "./product-recipe";
-import { ProductsList } from "./products-list";
+import { ProductsTable } from "./products-table";
 
 type ProductsCatalogProps = {
   initialProducts: ProductItem[];
   supplies: RecipeSupplyOption[];
 };
 
+// Client wrapper that mirrors the supplies catalog: the section owns the list,
+// the search and the modals, so the form never renders inline below the table.
 export function ProductsCatalog({
   initialProducts,
   supplies,
 }: ProductsCatalogProps) {
   const [products, setProducts] = useState<ProductItem[]>(initialProducts);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ProductItem | null>(null);
+  const [viewing, setViewing] = useState<ProductItem | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, startDelete] = useTransition();
 
-  const selectedProduct =
-    products.find((product) => product.id === selectedId) ?? null;
+  const query = normalizeForSearch(search);
+  const filtered = useMemo(() => {
+    if (!query) return products;
+
+    return products.filter((product) =>
+      [product.name, ...product.recipe.map((item) => item.supplyName)].some(
+        (value) => normalizeForSearch(value).includes(query),
+      ),
+    );
+  }, [products, query]);
 
   const handleNew = () => {
     setEditing(null);
+    setViewing(null);
     setShowForm(true);
     setStatus(null);
     setError(null);
   };
 
-  const handleSelect = (product: ProductItem) => {
-    setSelectedId(product.id);
-    setEditing(null);
-    setShowForm(false);
+  const handleView = (product: ProductItem) => {
+    setViewing(product);
     setStatus(null);
     setError(null);
   };
 
   const handleEdit = (product: ProductItem) => {
     setEditing(product);
-    setSelectedId(product.id);
+    setViewing(null);
     setShowForm(true);
     setStatus(null);
     setError(null);
@@ -68,7 +80,7 @@ export function ProductsCatalog({
         ? current.map((product) => (product.id === saved.id ? saved : product))
         : [...current, saved];
     });
-    setSelectedId(saved.id);
+    setViewing((current) => (current?.id === saved.id ? saved : current));
     setEditing(null);
     setShowForm(false);
     setError(null);
@@ -92,8 +104,8 @@ export function ProductsCatalog({
       setProducts((current) =>
         current.filter((item) => item.id !== product.id),
       );
+      setViewing((current) => (current?.id === product.id ? null : current));
 
-      if (selectedId === product.id) setSelectedId(null);
       if (editing?.id === product.id) {
         setEditing(null);
         setShowForm(false);
@@ -102,6 +114,8 @@ export function ProductsCatalog({
       setStatus(`«${product.name}» se borró del catálogo.`);
     });
   };
+
+  const formTitle = `${editing ? "Editar" : "Nuevo"} producto`;
 
   return (
     <div className="space-y-4">
@@ -123,40 +137,70 @@ export function ProductsCatalog({
         </p>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
-        <ProductsList
-          products={products}
-          selectedId={selectedId}
+      <section aria-label="Lista de productos" className="min-w-0 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold text-fg">
+            Productos ({products.length})
+          </h2>
+          <button
+            type="button"
+            onClick={handleNew}
+            disabled={isDeleting}
+            className="min-h-11 shrink-0 rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            + Nuevo
+          </button>
+        </div>
+
+        {products.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="products-search" className="text-sm font-semibold text-fg-muted">
+              Buscar
+            </label>
+            <input
+              id="products-search"
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Nombre del producto o insumo…"
+              className="min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-4 py-2 text-base text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            />
+          </div>
+        )}
+
+        <ProductsTable
+          products={filtered}
           busy={isDeleting}
-          onNew={handleNew}
-          onSelect={handleSelect}
+          searchActive={query !== ""}
+          onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
+      </section>
 
-        <aside aria-label="Detalle del producto" className="lg:sticky lg:top-6 lg:self-start">
-          {showForm ? (
-            <ProductForm
-              product={editing}
-              supplies={supplies}
-              onCancel={handleCancel}
-              onSaved={handleSaved}
-            />
-          ) : selectedProduct ? (
-            <ProductRecipe product={selectedProduct} onEdit={handleEdit} />
-          ) : (
-            <section className="rounded-[24px] bg-surface p-6 text-center shadow-sm">
-              <p className="text-base font-semibold text-fg">
-                Elegí un producto para ver su receta
-              </p>
-              <p className="mt-2 text-sm text-fg-muted">
-                También podés crear uno nuevo y armar la receta con los insumos
-                que ya cargaste.
-              </p>
-            </section>
-          )}
-        </aside>
-      </div>
+      {showForm && (
+        <CatalogModal title={formTitle} onClose={handleCancel} size="lg">
+          <ProductForm
+            product={editing}
+            supplies={supplies}
+            onCancel={handleCancel}
+            onSaved={handleSaved}
+          />
+        </CatalogModal>
+      )}
+
+      {viewing && (
+        <CatalogModal
+          title={viewing.name}
+          onClose={() => setViewing(null)}
+          size="lg"
+        >
+          <ProductRecipe
+            product={viewing}
+            onEdit={() => handleEdit(viewing)}
+          />
+        </CatalogModal>
+      )}
     </div>
   );
 }
