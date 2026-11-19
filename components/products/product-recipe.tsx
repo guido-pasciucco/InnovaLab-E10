@@ -39,6 +39,9 @@ export function ProductRecipe({ product, onEdit }: ProductRecipeProps) {
               <th scope="col" className="px-4 py-3 text-right font-semibold text-fg-muted">
                 Cantidad
               </th>
+              <th scope="col" className="px-4 py-3 font-semibold text-fg-muted">
+                Unidad
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -51,6 +54,7 @@ export function ProductRecipe({ product, onEdit }: ProductRecipeProps) {
                 <td className="px-4 py-3 text-right font-semibold text-fg">
                   {item.quantity}
                 </td>
+                <td className="px-4 py-3 text-fg-muted">{item.unit}</td>
               </tr>
             ))}
           </tbody>

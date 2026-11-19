@@ -66,6 +66,10 @@ export const productIngredients = pgTable("product_ingredients", {
     // lines and the supply in one transaction (account deletion) while a direct
     // supply DELETE still fails.
     .references(() => supplies.id, { onDelete: "no action" }),
+  // Unit chosen for this line. It must belong to the supply's family; the
+  // service validates it before writing. Legacy rows may keep a free-text unit
+  // when their supply predates the catalog.
+  unit: text("unit").notNull(),
   // Matches the project's quantity columns (numeric(14,4)); recipe quantities
   // keep four decimals so the cost engine can work with exact values.
   quantity: numeric("quantity", { precision: 14, scale: 4 }).notNull(),
@@ -86,6 +90,7 @@ export const productIngredients = pgTable("product_ingredients", {
   // Reverse lookup for the supply-in-use checks (delete / type / unit changes).
   index("product_ingredients_supply_id_idx").on(table.supplyId),
   check("product_ingredients_quantity_positive", sql`${table.quantity} > 0`),
+  check("product_ingredients_unit_not_empty", sql`length(btrim(${table.unit})) > 0`),
 ]);
 
 // Single source of truth: row types are inferred from the table definitions,

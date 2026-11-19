@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  createProductFormSchema,
-  toRecipeSupplyOptions,
-} from "./products";
+import type { RecipeSupplyOption } from "./products";
+import { createProductFormSchema, toRecipeSupplyOptions } from "./products";
 
 // Messages are defined once in the schema and shown by RHF in the client.
-// The server will reuse the same field rules when persistence lands.
-const allowedSupplyIds = ["supply-harina", "supply-sal"];
-const schema = createProductFormSchema(allowedSupplyIds);
+// The server reuses the same field rules when persistence lands.
+const supplyOptions: RecipeSupplyOption[] = [
+  { id: "supply-harina", name: "Harina 000", family: "mass", defaultUnit: "g" },
+  { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g" },
+];
+const schema = createProductFormSchema(supplyOptions);
 
 function issues(input: unknown, target = schema) {
   const result = target.safeParse(input);
@@ -23,7 +24,7 @@ function issues(input: unknown, target = schema) {
 
 const validProduct = {
   name: "Pan flauta",
-  recipe: [{ supplyId: "supply-harina", quantity: "250" }],
+  recipe: [{ supplyId: "supply-harina", quantity: "250", unit: "g" }],
 };
 
 describe("createProductFormSchema", () => {
@@ -35,7 +36,16 @@ describe("createProductFormSchema", () => {
     expect(
       schema.safeParse({
         ...validProduct,
-        recipe: [{ supplyId: "supply-harina", quantity: "0.0001" }],
+        recipe: [{ supplyId: "supply-harina", quantity: "0.0001", unit: "g" }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts another unit from the supply family", () => {
+    expect(
+      schema.safeParse({
+        ...validProduct,
+        recipe: [{ supplyId: "supply-harina", quantity: "0.25", unit: "kg" }],
       }).success,
     ).toBe(true);
   });
@@ -71,12 +81,108 @@ describe("createProductFormSchema", () => {
     expect(
       issues({
         ...validProduct,
-        recipe: [{ supplyId: "", quantity: "250" }],
+        recipe: [{ supplyId: "", quantity: "250", unit: "g" }],
       }),
     ).toEqual([
       {
         path: "recipe.0.supplyId",
         message: "Elegí un insumo de tu catálogo.",
+      },
+    ]);
+  });
+
+  it("rejects an empty unit", () => {
+    expect(
+      issues({
+        ...validProduct,
+        recipe: [{ supplyId: "supply-harina", quantity: "250", unit: "" }],
+      }),
+    ).toEqual([
+      {
+        path: "recipe.0.unit",
+        message: "Elegí la unidad de medida del insumo.",
+      },
+    ]);
+  });
+
+  it("rejects a unit longer than 40 characters", () => {
+    expect(
+      issues({
+        ...validProduct,
+        recipe: [
+          {
+            supplyId: "supply-harina",
+            quantity: "250",
+            unit: "x".repeat(41),
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        path: "recipe.0.unit",
+        message: "La unidad de medida debe tener como máximo 40 caracteres.",
+      },
+    ]);
+  });
+
+  it("rejects a catalog unit from another family", () => {
+    expect(
+      issues({
+        ...validProduct,
+        recipe: [{ supplyId: "supply-harina", quantity: "1", unit: "L" }],
+      }),
+    ).toEqual([
+      {
+        path: "recipe.0.unit",
+        message: "Elegí una unidad de medida de la misma familia que el insumo.",
+      },
+    ]);
+  });
+
+  it("rejects a free-text unit for a supply that already uses the catalog", () => {
+    expect(
+      issues({
+        ...validProduct,
+        recipe: [{ supplyId: "supply-harina", quantity: "1", unit: "bolsa" }],
+      }),
+    ).toEqual([
+      {
+        path: "recipe.0.unit",
+        message: "Elegí una unidad de medida de la misma familia que el insumo.",
+      },
+    ]);
+  });
+
+  it("keeps a legacy unit while the line repeats the supply's stored unit", () => {
+    const legacyOptions: RecipeSupplyOption[] = [
+      { id: "supply-legacy", name: "Harina", family: null, defaultUnit: "bolsa" },
+    ];
+
+    expect(
+      createProductFormSchema(legacyOptions).safeParse({
+        ...validProduct,
+        recipe: [{ supplyId: "supply-legacy", quantity: "1", unit: "bolsa" }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects changing a legacy unit to another free-text value", () => {
+    const legacyOptions: RecipeSupplyOption[] = [
+      { id: "supply-legacy", name: "Harina", family: null, defaultUnit: "bolsa" },
+    ];
+
+    expect(
+      issues(
+        {
+          ...validProduct,
+          recipe: [{ supplyId: "supply-legacy", quantity: "1", unit: "caja" }],
+        },
+        createProductFormSchema(legacyOptions),
+      ),
+    ).toEqual([
+      {
+        path: "recipe.0.unit",
+        message: "Elegí una unidad de medida de la misma familia que el insumo.",
       },
     ]);
   });
@@ -92,7 +198,7 @@ describe("createProductFormSchema", () => {
     expect(
       issues({
         ...validProduct,
-        recipe: [{ supplyId: "supply-harina", quantity }],
+        recipe: [{ supplyId: "supply-harina", quantity, unit: "g" }],
       }),
     ).toEqual([{ path: "recipe.0.quantity", message }]);
   });
@@ -102,8 +208,8 @@ describe("createProductFormSchema", () => {
       issues({
         ...validProduct,
         recipe: [
-          { supplyId: "supply-harina", quantity: "250" },
-          { supplyId: "supply-harina", quantity: "100" },
+          { supplyId: "supply-harina", quantity: "250", unit: "g" },
+          { supplyId: "supply-harina", quantity: "100", unit: "g" },
         ],
       }),
     ).toEqual([
@@ -119,8 +225,8 @@ describe("createProductFormSchema", () => {
       schema.safeParse({
         ...validProduct,
         recipe: [
-          { supplyId: "supply-harina", quantity: "250" },
-          { supplyId: "supply-sal", quantity: "5" },
+          { supplyId: "supply-harina", quantity: "250", unit: "g" },
+          { supplyId: "supply-sal", quantity: "5", unit: "g" },
         ],
       }).success,
     ).toBe(true);
@@ -130,7 +236,7 @@ describe("createProductFormSchema", () => {
     expect(
       issues({
         ...validProduct,
-        recipe: [{ supplyId: "supply-fantasma", quantity: "250" }],
+        recipe: [{ supplyId: "supply-fantasma", quantity: "250", unit: "g" }],
       }),
     ).toEqual([
       {
@@ -144,7 +250,7 @@ describe("createProductFormSchema", () => {
     expect(
       issues({
         ...validProduct,
-        recipe: [{ supplyId: "packaging-caja", quantity: "1" }],
+        recipe: [{ supplyId: "packaging-caja", quantity: "1", unit: "unidad" }],
       }),
     ).toEqual([
       {
@@ -158,13 +264,15 @@ describe("createProductFormSchema", () => {
     const savedRecipe = {
       ...validProduct,
       recipe: [
-        { supplyId: "supply-harina", quantity: "250" },
-        { supplyId: "supply-eliminado", quantity: "10" },
+        { supplyId: "supply-harina", quantity: "250", unit: "g" },
+        { supplyId: "supply-eliminado", quantity: "10", unit: "g" },
       ],
     };
 
     // Editing revalidates against the current catalog, not the saved snapshot.
-    expect(issues(savedRecipe, createProductFormSchema(["supply-harina"]))).toEqual([
+    expect(
+      issues(savedRecipe, createProductFormSchema([supplyOptions[0]])),
+    ).toEqual([
       {
         path: "recipe.1.supplyId",
         message: "Ese insumo ya no está disponible en tu catálogo.",
@@ -177,21 +285,92 @@ describe("toRecipeSupplyOptions", () => {
   it("only offers supplies, never packaging", () => {
     expect(
       toRecipeSupplyOptions([
-        { id: "supply-harina", name: "Harina 000", kind: "supply" },
-        { id: "packaging-caja", name: "Caja de 6", kind: "packaging" },
-        { id: "supply-sal", name: "Sal", kind: "supply" },
+        {
+          id: "supply-harina",
+          name: "Harina 000",
+          kind: "supply",
+          purchaseUnit: "kg",
+          minimumUnit: "g",
+        },
+        {
+          id: "packaging-caja",
+          name: "Caja de 6",
+          kind: "packaging",
+          purchaseUnit: "caja",
+          minimumUnit: "unidad",
+        },
+        {
+          id: "supply-sal",
+          name: "Sal",
+          kind: "supply",
+          purchaseUnit: "kg",
+          minimumUnit: "g",
+        },
       ]),
     ).toEqual([
-      { id: "supply-harina", name: "Harina 000" },
-      { id: "supply-sal", name: "Sal" },
+      {
+        id: "supply-harina",
+        name: "Harina 000",
+        family: "mass",
+        defaultUnit: "g",
+      },
+      { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g" },
     ]);
   });
 
   it("treats a catalog with only packaging as an empty ingredient catalog", () => {
     expect(
       toRecipeSupplyOptions([
-        { id: "packaging-caja", name: "Caja de 6", kind: "packaging" },
+        {
+          id: "packaging-caja",
+          name: "Caja de 6",
+          kind: "packaging",
+          purchaseUnit: "caja",
+          minimumUnit: "unidad",
+        },
       ]),
     ).toEqual([]);
+  });
+
+  it("keeps a legacy minimum unit and leaves its family unknown", () => {
+    expect(
+      toRecipeSupplyOptions([
+        {
+          id: "supply-legacy",
+          name: "Harina",
+          kind: "supply",
+          purchaseUnit: "bolsa",
+          minimumUnit: "bolsa",
+        },
+      ]),
+    ).toEqual([
+      {
+        id: "supply-legacy",
+        name: "Harina",
+        family: null,
+        defaultUnit: "bolsa",
+      },
+    ]);
+  });
+
+  it("infers the family from the minimum unit when the purchase unit is legacy", () => {
+    expect(
+      toRecipeSupplyOptions([
+        {
+          id: "supply-legacy",
+          name: "Harina",
+          kind: "supply",
+          purchaseUnit: "bolsa",
+          minimumUnit: "g",
+        },
+      ]),
+    ).toEqual([
+      {
+        id: "supply-legacy",
+        name: "Harina",
+        family: "mass",
+        defaultUnit: "g",
+      },
+    ]);
   });
 });

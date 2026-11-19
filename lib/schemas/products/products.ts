@@ -1,7 +1,18 @@
 import { z } from "zod";
 
 import { productNameField } from "@/lib/schemas/calculator-setup/fields";
-import { recipeQuantityField, recipeSupplyField } from "./fields";
+import {
+  canonicalSupplyUnit,
+  getSupplyUnit,
+  resolveSupplyFamily,
+  type SupplyUnitFamily,
+} from "@/lib/schemas/supplies/units";
+import {
+  recipeQuantityField,
+  recipeSupplyField,
+  recipeUnitField,
+  RECIPE_UNIT_FAMILY_MESSAGE,
+} from "./fields";
 
 // Form contract (client only): RHF validates with it before submitting. The
 // server validates with lib/db/business/validation.ts; both contracts compose
@@ -11,12 +22,14 @@ import { recipeQuantityField, recipeSupplyField } from "./fields";
 // capacity stay out of this story.
 //
 // The recipe only accepts supplies that are available in the current catalog:
-// the form builds the schema with `createProductFormSchema(allowedSupplyIds)`,
-// so packaging rows and deleted ids are rejected before saving.
+// the form builds the schema with `createProductFormSchema(supplies)`, so
+// packaging rows, deleted ids and units from another family are rejected
+// before saving.
 
 export const recipeItemSchema = z.object({
   supplyId: recipeSupplyField,
   quantity: recipeQuantityField,
+  unit: recipeUnitField,
 });
 
 const productFormObjectSchema = z.object({
@@ -29,18 +42,36 @@ const productFormObjectSchema = z.object({
 // Image of the recipe selector: only insumos are ingredients, packaging never
 // is. Filtering here (instead of in the page) keeps the regression covered by
 // a pure unit test and gives the page a single mapping function.
+//
+// The default unit is the supply's minimum unit, which is also the unit of the
+// migrated recipe rows. Users can switch to any other catalog unit in the same
+// family (for example g → kg) and the service converts for costing.
 export function toRecipeSupplyOptions(
-  supplies: readonly { id: string; name: string; kind: string }[],
+  supplies: readonly {
+    id: string;
+    name: string;
+    kind: string;
+    purchaseUnit: string;
+    minimumUnit: string;
+  }[],
 ): RecipeSupplyOption[] {
   return supplies
     .filter((supply) => supply.kind === "supply")
-    .map((supply) => ({ id: supply.id, name: supply.name }));
+    .map((supply) => ({
+      id: supply.id,
+      name: supply.name,
+      family: resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit),
+      defaultUnit: canonicalSupplyUnit(supply.minimumUnit || supply.purchaseUnit),
+    }));
 }
 
 // The form owns the catalog snapshot, so validation can reject ids that are no
-// longer available (deleted, or packaging) and still detect duplicates.
-export function createProductFormSchema(allowedSupplyIds: readonly string[]) {
-  const allowed = new Set(allowedSupplyIds);
+// longer available (deleted, or packaging), detect duplicates, and keep each
+// line inside the selected supply's unit family.
+export function createProductFormSchema(
+  supplies: readonly RecipeSupplyOption[],
+) {
+  const available = new Map(supplies.map((supply) => [supply.id, supply]));
 
   return productFormObjectSchema.superRefine((value, ctx) => {
     const seen = new Set<string>();
@@ -50,7 +81,9 @@ export function createProductFormSchema(allowedSupplyIds: readonly string[]) {
       // duplicate error on top of it.
       if (!item.supplyId) return;
 
-      if (!allowed.has(item.supplyId)) {
+      const supply = available.get(item.supplyId);
+
+      if (!supply) {
         ctx.addIssue({
           code: "custom",
           message: "Ese insumo ya no está disponible en tu catálogo.",
@@ -68,6 +101,32 @@ export function createProductFormSchema(allowedSupplyIds: readonly string[]) {
       }
 
       seen.add(item.supplyId);
+
+      // The unit rule already reports empty or overlong values.
+      if (!item.unit || item.unit.length > 40) return;
+
+      const catalogUnit = getSupplyUnit(item.unit);
+      const keepsLegacyUnit =
+        catalogUnit === null &&
+        supply.family === null &&
+        item.unit === supply.defaultUnit;
+
+      if (!catalogUnit && !keepsLegacyUnit) {
+        ctx.addIssue({
+          code: "custom",
+          message: RECIPE_UNIT_FAMILY_MESSAGE,
+          path: ["recipe", index, "unit"],
+        });
+        return;
+      }
+
+      if (catalogUnit && supply.family !== catalogUnit.family) {
+        ctx.addIssue({
+          code: "custom",
+          message: RECIPE_UNIT_FAMILY_MESSAGE,
+          path: ["recipe", index, "unit"],
+        });
+      }
     });
   });
 }
@@ -82,6 +141,7 @@ export type ProductRecipeItem = {
   supplyId: string;
   supplyName: string;
   quantity: string;
+  unit: string;
 };
 
 export type ProductItem = {
@@ -94,4 +154,6 @@ export type ProductItem = {
 export type RecipeSupplyOption = {
   id: string;
   name: string;
+  family: SupplyUnitFamily | null;
+  defaultUnit: string;
 };

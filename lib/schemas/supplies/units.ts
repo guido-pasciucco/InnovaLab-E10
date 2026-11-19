@@ -18,10 +18,12 @@ export const SUPPLY_UNIT_VALUES = [
 
 export type SupplyUnitValue = (typeof SUPPLY_UNIT_VALUES)[number];
 
+export type SupplyUnitFamily = "mass" | "volume" | "length" | "count";
+
 export type SupplyUnitDefinition = {
   value: SupplyUnitValue;
   label: string;
-  family: "mass" | "volume" | "length" | "count";
+  family: SupplyUnitFamily;
   minimumUnit: string;
   factor: string;
 };
@@ -99,6 +101,26 @@ export function getSupplyUnit(value: string): SupplyUnitDefinition | null {
 
 export function canonicalSupplyUnit(value: string): string {
   return getSupplyUnit(value)?.value ?? value.trim();
+}
+
+export function getSupplyUnitFamily(value: string): SupplyUnitFamily | null {
+  return getSupplyUnit(value)?.family ?? null;
+}
+
+export function getSupplyUnitsForFamily(
+  family: SupplyUnitFamily,
+): readonly SupplyUnitDefinition[] {
+  return SUPPLY_UNITS.filter((unit) => unit.family === family);
+}
+
+// A legacy supply may have a free-text purchase unit but a catalog minimum
+// unit (for example, "bolsa" bought in g). The minimum unit is enough to infer
+// the family; both unknown means the row predates the catalog entirely.
+export function resolveSupplyFamily(
+  purchaseUnit: string,
+  minimumUnit: string,
+): SupplyUnitFamily | null {
+  return getSupplyUnitFamily(purchaseUnit) ?? getSupplyUnitFamily(minimumUnit);
 }
 
 export type SupplyUnits = {
