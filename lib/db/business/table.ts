@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  integer,
   index,
   numeric,
   pgTable,
@@ -41,6 +42,8 @@ export const products = pgTable("products", {
     .references(() => businesses.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   skuOrSlug: text("sku_or_slug"),
+  // Historical products can lack this source datum. New product writes require it.
+  yieldQuantity: integer("yield_quantity"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-const MAX_SAFE_YIELD = BigInt(Number.MAX_SAFE_INTEGER);
+// products.yield_quantity is PostgreSQL integer, so this boundary must match
+// the persisted representation rather than JavaScript's larger safe integer.
+const MAX_YIELD = BigInt(2_147_483_647);
 const integerShape = /^-?\d+$/;
 
 /**
@@ -8,15 +10,15 @@ const integerShape = /^-?\d+$/;
  * crosses the form boundary and later feeds the exact calculation engine.
  */
 export const recipeYieldField = z
-  .string({ error: "Indicá cuántas unidades obtenés con esta receta." })
+  .string({ error: "IndicÃ¡ cuÃ¡ntas unidades obtenÃ©s con esta receta." })
   .trim()
-  .min(1, { error: "Indicá cuántas unidades obtenés con esta receta." })
+  .min(1, { error: "IndicÃ¡ cuÃ¡ntas unidades obtenÃ©s con esta receta." })
   .pipe(z.string().regex(integerShape, {
-    error: "El rendimiento debe ser un número entero.",
+    error: "El rendimiento debe ser un nÃºmero entero.",
   }))
   .refine((value) => !integerShape.test(value) || BigInt(value) > BigInt(0), {
     error: "El rendimiento debe ser mayor que 0.",
   })
-  .refine((value) => !integerShape.test(value) || BigInt(value) <= MAX_SAFE_YIELD, {
-    error: "El rendimiento supera el máximo permitido.",
+  .refine((value) => !integerShape.test(value) || BigInt(value) <= MAX_YIELD, {
+    error: "El rendimiento supera el mÃ¡ximo permitido.",
   });

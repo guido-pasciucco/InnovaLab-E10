@@ -15,22 +15,22 @@ function render(overrides: Partial<React.ComponentProps<typeof RecipeYieldField>
 
 describe("RecipeYieldField", () => {
   it("uses the current product name in the question", () => {
-    expect(render()).toContain("¿Cuántas unidades de Alfajor de maicena obtenés con esta receta?");
+    expect(render()).toContain("Â¿CuÃ¡ntas unidades de Alfajor de maicena obtenÃ©s con esta receta?");
   });
 
   it("uses the generic question without a product name", () => {
-    expect(render({ productName: "" })).toContain("¿Cuántas unidades obtenés con esta receta?");
+    expect(render({ productName: "" })).toContain("Â¿CuÃ¡ntas unidades obtenÃ©s con esta receta?");
   });
 
   it("updates the label when the product name changes", () => {
-    expect(recipeYieldLabel("Pizza napolitana")).toBe("¿Cuántas unidades de Pizza napolitana obtenés con esta receta?");
-    expect(recipeYieldLabel("Remera estampada")).toBe("¿Cuántas unidades de Remera estampada obtenés con esta receta?");
+    expect(recipeYieldLabel("Pizza napolitana")).toBe("Â¿CuÃ¡ntas unidades de Pizza napolitana obtenÃ©s con esta receta?");
+    expect(recipeYieldLabel("Remera estampada")).toBe("Â¿CuÃ¡ntas unidades de Remera estampada obtenÃ©s con esta receta?");
   });
 
   it("normalizes whitespace for the label without changing the supplied name", () => {
     const name = "  Alfajor   de maicena  ";
 
-    expect(recipeYieldLabel(name)).toBe("¿Cuántas unidades de Alfajor de maicena obtenés con esta receta?");
+    expect(recipeYieldLabel(name)).toBe("Â¿CuÃ¡ntas unidades de Alfajor de maicena obtenÃ©s con esta receta?");
     expect(name).toBe("  Alfajor   de maicena  ");
   });
 

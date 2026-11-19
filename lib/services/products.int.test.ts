@@ -1,7 +1,9 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ZodError } from "zod/v4";
+import { eq } from "drizzle-orm";
 
 import { getDrizzleClient, type Db } from "@/lib/db/client";
+import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
@@ -12,7 +14,7 @@ import {
   listProductsService,
   updateProductService,
 } from "./products";
-import { createSupplyService } from "./supplies";
+import { createSupplyService, updateSupplyService } from "./supplies";
 
 // Integration tests against the local Supabase stack (.env.test URLs are
 // local-only; loadTestEnv throws otherwise). One db client per file, closed in
@@ -88,6 +90,7 @@ async function makeProduct(userId: CreatedUser["id"], supplyId: string) {
     userId,
     {
       name: "Pan flauta",
+      yieldQuantity: "12",
       recipe: [{ supplyId, quantity: "250" }],
     },
     db,
@@ -109,6 +112,7 @@ describe("products service", () => {
       user.id,
       {
         name: "Pan flauta",
+        yieldQuantity: "12",
         recipe: [{ supplyId: supply.id, quantity: "250" }],
       },
       db,
@@ -142,6 +146,74 @@ describe("products service", () => {
     ]);
   });
 
+  it("persists yield and recalculates the current exact unit cost after a price change", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+    const product = await makeProduct(user.id, supply.id);
+
+    expect(product.yieldQuantity).toBe("12");
+    expect(product.variableCosts?.ingredientsCost).toBe("187.50");
+    expect(product.variableCosts?.unitCost).toBe("15.63");
+
+    await updateSupplyService(
+      user.id,
+      supply.id,
+      { ...validSupply, purchasePrice: "37500.00" },
+      db,
+    );
+
+    const reread = await getProductService(user.id, product.id, db);
+    expect(reread?.variableCosts?.ingredientsCost).toBe("375.00");
+    expect(reread?.variableCosts?.unitCost).toBe("31.25");
+  });
+
+  it("recalculates the unit cost after changing the persisted yield", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+    const product = await makeProduct(user.id, supply.id);
+
+    const updated = await updateProductService(
+      user.id,
+      product.id,
+      {
+        name: "Pan flauta",
+        yieldQuantity: "24",
+        recipe: [{ supplyId: supply.id, quantity: "250" }],
+      },
+      db,
+    );
+
+    expect(updated?.yieldQuantity).toBe("24");
+    expect(updated?.variableCosts?.unitCost).toBe("7.81");
+    expect((await getProductService(user.id, product.id, db))?.variableCosts?.unitCost).toBe("7.81");
+  });
+
+  it("keeps valid products visible when a historical catalog row is incompatible", async () => {
+    const user = await makeUser();
+    const validSupply = await makeSupply(user.id, { name: "Harina válida" });
+    const legacySupply = await makeSupply(user.id, { name: "Harina histórica" });
+    const validProduct = await makeProduct(user.id, validSupply.id);
+    const legacyProduct = await makeProduct(user.id, legacySupply.id);
+
+    // Simulates a row created before the current unit catalogue. Product writes
+    // cannot create this state, but the listing must remain resilient to it.
+    await db
+      .update(supplies)
+      .set({ minimumUnit: "legacy-unit" })
+      .where(eq(supplies.id, legacySupply.id));
+
+    const rows = await listProductsService(user.id, db);
+    const valid = rows.find((row) => row.id === validProduct.id);
+    const legacy = rows.find((row) => row.id === legacyProduct.id);
+
+    expect(valid?.variableCosts?.unitCost).toBe("15.63");
+    expect(valid?.variableCostsUnavailableCode).toBeNull();
+    expect(legacy).toMatchObject({
+      variableCosts: null,
+      variableCostsUnavailableCode: "UNSUPPORTED_MINIMUM_UNIT",
+    });
+  });
+
   it("gets a product only for its owner", async () => {
     const userA = await makeUser();
     const userB = await makeUser();
@@ -163,6 +235,7 @@ describe("products service", () => {
       product.id,
       {
         name: "Pan integral",
+        yieldQuantity: "10",
         recipe: [{ supplyId: wholeFlour.id, quantity: "0.5" }],
       },
       db,
@@ -218,6 +291,7 @@ describe("products service", () => {
         user.id,
         {
           name: "Pan flauta",
+          yieldQuantity: "12",
           recipe: [
             { supplyId: supply.id, quantity: "250" },
             { supplyId: supply.id, quantity: "100" },
@@ -260,6 +334,7 @@ describe("products service", () => {
       product.id,
       {
         name: "Hackeado",
+        yieldQuantity: "1",
         recipe: [{ supplyId: supply.id, quantity: "1" }],
       },
       db,

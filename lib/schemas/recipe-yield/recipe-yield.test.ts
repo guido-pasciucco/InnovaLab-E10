@@ -33,12 +33,12 @@ function calculateWithYield(yieldQuantity: string) {
 
 describe("recipeYieldSchema", () => {
   it.each([
-    ["", "Indicá cuántas unidades obtenés con esta receta."],
+    ["", "IndicÃ¡ cuÃ¡ntas unidades obtenÃ©s con esta receta."],
     ["0", "El rendimiento debe ser mayor que 0."],
     ["-1", "El rendimiento debe ser mayor que 0."],
-    ["1.5", "El rendimiento debe ser un número entero."],
-    ["uno", "El rendimiento debe ser un número entero."],
-    ["9007199254740992", "El rendimiento supera el máximo permitido."],
+    ["1.5", "El rendimiento debe ser un nÃºmero entero."],
+    ["uno", "El rendimiento debe ser un nÃºmero entero."],
+    ["2147483648", "El rendimiento supera el mÃ¡ximo permitido."],
   ])("rejects %j with the public message", (yieldQuantity, message) => {
     const result = recipeYieldSchema.safeParse({ yieldQuantity });
 
@@ -49,6 +49,9 @@ describe("recipeYieldSchema", () => {
   it("accepts a positive integer and returns its explicit string representation", () => {
     expect(recipeYieldSchema.parse(validYield)).toEqual(validYield);
     expect(recipeYieldSchema.parse({ yieldQuantity: "24" })).toEqual({ yieldQuantity: "24" });
+    expect(recipeYieldSchema.parse({ yieldQuantity: "2147483647" })).toEqual({
+      yieldQuantity: "2147483647",
+    });
   });
 
   it("passes yield 1 to the real engine without changing the recipe cost", () => {

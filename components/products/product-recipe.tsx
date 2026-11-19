@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProductItem } from "@/lib/schemas/products/products";
+import { VariableCostsSummary } from "./variable-costs-summary";
 
 type ProductRecipeProps = {
   product: ProductItem;
@@ -57,6 +58,21 @@ export function ProductRecipe({ product, onEdit }: ProductRecipeProps) {
         </table>
       </div>
 
+      <p className="mt-3 text-sm text-fg-muted">
+        {product.yieldQuantity === null
+          ? "Este producto histórico todavía no tiene rendimiento; no se calcula un costo variable."
+          : `Rendimiento de la receta: ${product.yieldQuantity} ${product.yieldQuantity === "1" ? "unidad." : "unidades."}`}
+      </p>
+      {product.variableCosts && (
+        <div className="mt-5">
+          <VariableCostsSummary productName={product.name} costs={product.variableCosts} />
+        </div>
+      )}
+      {product.variableCostsUnavailableCode !== null && (
+        <p role="status" className="mt-3 text-sm text-fg-muted">
+          No se puede calcular el costo variable con los datos históricos actuales.
+        </p>
+      )}
       <p className="mt-3 text-sm text-fg-muted">
         {product.recipe.length === 1
           ? "La receta usa 1 insumo de tu catálogo."

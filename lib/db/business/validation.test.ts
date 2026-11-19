@@ -28,6 +28,7 @@ const validProduct = {
 
 const validRecipeProduct = {
   name: "Pan flauta",
+  yieldQuantity: "12",
   recipe: [{ supplyId: SERVER_ID, quantity: "250" }],
 };
 
@@ -122,6 +123,21 @@ describe("saveProductInputSchema", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it.each(["1", "2147483647"])("accepts the persisted yield boundary %s", (yieldQuantity) => {
+    expect(
+      saveProductInputSchema.safeParse({ ...validRecipeProduct, yieldQuantity }).success,
+    ).toBe(true);
+  });
+
+  it.each(["0", "-1", "1.5", "uno", "2147483648"])(
+    "rejects an invalid persisted yield %s",
+    (yieldQuantity) => {
+      expect(
+        saveProductInputSchema.safeParse({ ...validRecipeProduct, yieldQuantity }).success,
+      ).toBe(false);
+    },
+  );
 
   it("rejects a whitespace-only name with the shared message", () => {
     expect(

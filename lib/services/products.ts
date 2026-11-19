@@ -1,6 +1,13 @@
 import "server-only";
 
 import { and, eq, inArray } from "drizzle-orm";
+import {
+  adaptCatalogVariableCosts,
+  type CatalogSupply,
+} from "@/lib/calc/adaptCatalogVariableCosts";
+import {
+  calculateVariableCosts,
+} from "@/lib/calc/calculateVariableCosts";
 
 import {
   businesses,
@@ -28,6 +35,49 @@ import { getOrCreateDefaultBusiness, type Tx } from "./calculations";
 
 type RecipeInput = { supplyId: string; quantity: string };
 
+function toYieldQuantity(value: number | null): string | null {
+  return value === null ? null : String(value);
+}
+
+export type ProductVariableCostsState = Pick<
+  ProductItem,
+  "variableCosts" | "variableCostsUnavailableCode"
+>;
+
+/**
+ * Computes the current catalog cost from persisted source values. Domain
+ * failures are represented explicitly; unexpected exceptions intentionally
+ * propagate to preserve database and infrastructure failure semantics.
+ */
+export function deriveProductVariableCosts(
+  product: Pick<ProductItem, "yieldQuantity" | "recipe">,
+  catalog: readonly CatalogSupply[],
+): ProductVariableCostsState {
+  if (product.yieldQuantity === null || product.recipe.length === 0) {
+    return { variableCosts: null, variableCostsUnavailableCode: null };
+  }
+  const catalogById = new Map(catalog.map((supply) => [supply.id, supply]));
+  const adapted = adaptCatalogVariableCosts({
+    catalog: product.recipe.flatMap((ingredient) => {
+      const supply = catalogById.get(ingredient.supplyId);
+      return supply ? [{ id: supply.id, kind: supply.kind, purchasePrice: supply.purchasePrice, purchaseQuantity: supply.purchaseQuantity, purchaseUnit: supply.purchaseUnit, minimumUnit: supply.minimumUnit, conversionFactor: supply.conversionFactor }] : [];
+    }),
+    recipe: { yieldQuantity: product.yieldQuantity, ingredients: product.recipe.flatMap((ingredient) => {
+      const supply = catalogById.get(ingredient.supplyId);
+      return supply ? [{ supplyId: ingredient.supplyId, quantity: ingredient.quantity, unit: supply.minimumUnit }] : [];
+    }) },
+    presentations: [],
+  });
+  if (!adapted.ok) {
+    return { variableCosts: null, variableCostsUnavailableCode: adapted.code };
+  }
+  const result = calculateVariableCosts(adapted.input);
+  if (!result.ok) {
+    return { variableCosts: null, variableCostsUnavailableCode: result.code };
+  }
+  return { variableCosts: result, variableCostsUnavailableCode: null };
+}
+
 // numeric(14,4) always returns four decimals ("250.0000"). The recipe form
 // accepts up to four and must be able to round-trip the saved value, so the API
 // trims trailing zeros without changing the stored precision.
@@ -46,6 +96,9 @@ function toProductItem(
   return {
     id: product.id,
     name: product.name,
+    yieldQuantity: toYieldQuantity(product.yieldQuantity),
+    variableCosts: null,
+    variableCostsUnavailableCode: null,
     recipe: ingredients.map((ingredient) => ({
       supplyId: ingredient.supplyId,
       supplyName: supplyNames.get(ingredient.supplyId) ?? "",
@@ -116,6 +169,7 @@ export async function listProductsService(
   }
 
   const productIds = productRows.map(({ product }) => product.id);
+  const catalog = await db.select().from(supplies).where(eq(supplies.userId, userId));
   const ingredientRows = await db
     .select({
       ingredient: productIngredients,
@@ -138,11 +192,17 @@ export async function listProductsService(
     recipesByProduct.set(ingredient.productId, recipe);
   }
 
-  return productRows.map(({ product }) => ({
+  return productRows.map(({ product }) => {
+    const item: ProductItem = {
     id: product.id,
     name: product.name,
+    yieldQuantity: toYieldQuantity(product.yieldQuantity),
     recipe: recipesByProduct.get(product.id) ?? [],
-  }));
+    variableCosts: null,
+    variableCostsUnavailableCode: null,
+    };
+    return { ...item, ...deriveProductVariableCosts(item, catalog) };
+  });
 }
 
 export async function getProductService(
@@ -167,11 +227,16 @@ export async function getProductService(
     return null;
   }
 
-  return {
+  const item: ProductItem = {
     id: row.product.id,
     name: row.product.name,
+    yieldQuantity: toYieldQuantity(row.product.yieldQuantity),
+    variableCosts: null,
+    variableCostsUnavailableCode: null,
     recipe: await mapRecipeRows(db, productId),
   };
+  const catalog = await db.select().from(supplies).where(eq(supplies.userId, userId));
+  return { ...item, ...deriveProductVariableCosts(item, catalog) };
 }
 
 export async function createProductService(
@@ -187,7 +252,7 @@ export async function createProductService(
 
     const [product] = await tx
       .insert(products)
-      .values({ name: data.name, businessId: business.id })
+      .values({ name: data.name, yieldQuantity: Number(data.yieldQuantity), businessId: business.id })
       .returning();
 
     if (!product) {
@@ -207,7 +272,9 @@ export async function createProductService(
       )
       .returning();
 
-    return toProductItem(product, ingredients, supplyNames);
+    const item = toProductItem(product, ingredients, supplyNames);
+    const catalog = await tx.select().from(supplies).where(eq(supplies.userId, userId));
+    return { ...item, ...deriveProductVariableCosts(item, catalog) };
   });
 }
 
@@ -241,7 +308,7 @@ export async function updateProductService(
 
     const [product] = await tx
       .update(products)
-      .set({ name: data.name, updatedAt: new Date() })
+      .set({ name: data.name, yieldQuantity: Number(data.yieldQuantity), updatedAt: new Date() })
       .where(eq(products.id, productId))
       .returning();
 
@@ -266,7 +333,9 @@ export async function updateProductService(
       )
       .returning();
 
-    return toProductItem(product, ingredients, supplyNames);
+    const item = toProductItem(product, ingredients, supplyNames);
+    const catalog = await tx.select().from(supplies).where(eq(supplies.userId, userId));
+    return { ...item, ...deriveProductVariableCosts(item, catalog) };
   });
 }
 

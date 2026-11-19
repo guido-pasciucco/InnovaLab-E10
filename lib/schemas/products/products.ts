@@ -2,6 +2,9 @@ import { z } from "zod";
 
 import { productNameField } from "@/lib/schemas/calculator-setup/fields";
 import { recipeQuantityField, recipeSupplyField } from "./fields";
+import { recipeYieldField } from "../recipe-yield/fields";
+import type { CatalogVariableCostsAdapterErrorCode } from "@/lib/calc/adaptCatalogVariableCosts";
+import type { VariableCostsErrorCode, VariableCostsSuccess } from "@/lib/calc/calculateVariableCosts";
 
 // Form contract (client only): RHF validates with it before submitting. The
 // server validates with lib/db/business/validation.ts; both contracts compose
@@ -21,6 +24,7 @@ export const recipeItemSchema = z.object({
 
 const productFormObjectSchema = z.object({
   name: productNameField,
+  yieldQuantity: recipeYieldField,
   recipe: z
     .array(recipeItemSchema)
     .min(1, { error: "Agregá al menos un insumo a la receta." }),
@@ -87,7 +91,17 @@ export type ProductRecipeItem = {
 export type ProductItem = {
   id: string;
   name: string;
+  yieldQuantity: string | null;
   recipe: ProductRecipeItem[];
+  // Calculated from current persisted catalog data; never reconstructed from
+  // rounded display amounts and intentionally not stored as a mutable snapshot.
+  variableCosts: VariableCostsSuccess | null;
+  // A typed domain incompatibility in a historical catalog row is distinct
+  // from a zero cost. Unexpected service and database failures still throw.
+  variableCostsUnavailableCode:
+    | CatalogVariableCostsAdapterErrorCode
+    | VariableCostsErrorCode
+    | null;
 };
 
 // Minimal shape the recipe selector needs from the supply catalog.

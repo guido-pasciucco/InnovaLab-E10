@@ -23,6 +23,7 @@ function issues(input: unknown, target = schema) {
 
 const validProduct = {
   name: "Pan flauta",
+  yieldQuantity: "12",
   recipe: [{ supplyId: "supply-harina", quantity: "250" }],
 };
 
@@ -38,6 +39,16 @@ describe("createProductFormSchema", () => {
         recipe: [{ supplyId: "supply-harina", quantity: "0.0001" }],
       }).success,
     ).toBe(true);
+  });
+
+  it.each([
+    ["", "Indicá cuántas unidades obtenés con esta receta."],
+    ["0", "El rendimiento debe ser mayor que 0."],
+    ["1.5", "El rendimiento debe ser un número entero."],
+  ])("rejects invalid yield %j", (yieldQuantity, message) => {
+    expect(issues({ ...validProduct, yieldQuantity })).toEqual([
+      { path: "yieldQuantity", message },
+    ]);
   });
 
   it("rejects an empty name", () => {

@@ -7,6 +7,7 @@ import {
   recipeQuantityField,
   recipeSupplyIdField,
 } from "@/lib/schemas/products/fields";
+import { recipeYieldField } from "@/lib/schemas/recipe-yield/fields";
 import { quantityString } from "../formats";
 import { businesses, productIngredients, products } from "./table";
 
@@ -58,6 +59,7 @@ export const productIngredientInputSchema = z.object({
 export const saveProductInputSchema = z
   .object({
     name: productNameField,
+    yieldQuantity: recipeYieldField,
     recipe: z
       .array(productIngredientInputSchema)
       .min(1, { error: "Agregá al menos un insumo a la receta." }),

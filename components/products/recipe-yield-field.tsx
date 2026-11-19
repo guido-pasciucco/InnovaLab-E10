@@ -17,8 +17,8 @@ export function recipeYieldLabel(productName?: string | null): string {
   const normalizedName = productName?.trim().replace(/\s+/g, " ");
 
   return normalizedName
-    ? `øCu·ntas unidades de ${normalizedName} obtenÈs con esta receta?`
-    : "øCu·ntas unidades obtenÈs con esta receta?";
+    ? `¬øCu√°ntas unidades de ${normalizedName} obten√©s con esta receta?`
+    : "¬øCu√°ntas unidades obten√©s con esta receta?";
 }
 
 /**
@@ -56,7 +56,7 @@ export function RecipeYieldField({
         aria-describedby={helpId}
       />
       <p id={helpId} className="mt-2 text-sm text-fg-muted">
-        Indic· cu·ntos productos terminados obtenÈs usando las cantidades de esta receta.
+        Indic√° cu√°ntos productos terminados obten√©s usando las cantidades de esta receta.
       </p>
     </section>
   );
