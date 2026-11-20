@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   canonicalSupplyUnit,
   getSupplyUnit,
+  getSupplyUnitFamily,
+  getSupplyUnitsForFamily,
+  resolveSupplyFamily,
   resolveSupplyUnits,
   resolveSupplyUnitsForUpdate,
   SUPPLY_UNITS,
@@ -58,6 +61,28 @@ describe("supply units catalog", () => {
   it("returns null for units outside the catalog", () => {
     expect(getSupplyUnit("caja")).toBeNull();
     expect(getSupplyUnit("")).toBeNull();
+  });
+
+  it("exposes the family and the units inside it", () => {
+    expect(getSupplyUnitFamily("KILOS")).toBe("mass");
+    expect(getSupplyUnitFamily("litro")).toBe("volume");
+    expect(getSupplyUnitFamily("caja")).toBeNull();
+
+    expect(getSupplyUnitsForFamily("mass").map((unit) => unit.value)).toEqual([
+      "g",
+      "kg",
+    ]);
+    expect(getSupplyUnitsForFamily("volume").map((unit) => unit.value)).toEqual([
+      "ml",
+      "L",
+    ]);
+  });
+
+  it("infers the supply family from purchase unit or minimum unit", () => {
+    expect(resolveSupplyFamily("kg", "g")).toBe("mass");
+    expect(resolveSupplyFamily("bolsa", "g")).toBe("mass");
+    expect(resolveSupplyFamily("bolsa", "unidad")).toBe("count");
+    expect(resolveSupplyFamily("bolsa", "caja")).toBeNull();
   });
 
   it("derives units for supplies and preserves them for packaging", () => {

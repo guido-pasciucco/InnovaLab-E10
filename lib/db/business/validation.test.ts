@@ -28,7 +28,7 @@ const validProduct = {
 
 const validRecipeProduct = {
   name: "Pan flauta",
-  recipe: [{ supplyId: SERVER_ID, quantity: "250" }],
+  recipe: [{ supplyId: SERVER_ID, quantity: "250", unit: "g" }],
 };
 
 describe("createBusinessInputSchema", () => {
@@ -145,16 +145,38 @@ describe("saveProductInputSchema", () => {
     expect(
       fieldErrors(saveProductInputSchema, {
         ...validRecipeProduct,
-        recipe: [{ supplyId: "supply-harina", quantity: "250" }],
+        recipe: [{ supplyId: "supply-harina", quantity: "250", unit: "g" }],
       }),
     ).toEqual({ recipe: ["Elegí un insumo de tu catálogo."] });
+  });
+
+  it("rejects an empty unit with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [{ supplyId: SERVER_ID, quantity: "250", unit: " " }],
+      }),
+    ).toEqual({ recipe: ["Elegí la unidad de medida del insumo."] });
+  });
+
+  it("rejects a unit longer than 40 characters with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [
+          { supplyId: SERVER_ID, quantity: "250", unit: "x".repeat(41) },
+        ],
+      }),
+    ).toEqual({
+      recipe: ["La unidad de medida debe tener como máximo 40 caracteres."],
+    });
   });
 
   it("rejects a zero quantity with the shared message", () => {
     expect(
       fieldErrors(saveProductInputSchema, {
         ...validRecipeProduct,
-        recipe: [{ supplyId: SERVER_ID, quantity: "0" }],
+        recipe: [{ supplyId: SERVER_ID, quantity: "0", unit: "g" }],
       }),
     ).toEqual({ recipe: ["La cantidad debe ser mayor que 0."] });
   });
@@ -162,7 +184,7 @@ describe("saveProductInputSchema", () => {
   it("accepts a quantity with up to four decimals", () => {
     const result = saveProductInputSchema.safeParse({
       ...validRecipeProduct,
-      recipe: [{ supplyId: SERVER_ID, quantity: "0.0001" }],
+      recipe: [{ supplyId: SERVER_ID, quantity: "0.0001", unit: "g" }],
     });
 
     expect(result.success).toBe(true);
@@ -172,7 +194,7 @@ describe("saveProductInputSchema", () => {
     expect(
       fieldErrors(saveProductInputSchema, {
         ...validRecipeProduct,
-        recipe: [{ supplyId: SERVER_ID, quantity: "0.00001" }],
+        recipe: [{ supplyId: SERVER_ID, quantity: "0.00001", unit: "g" }],
       }),
     ).toEqual({ recipe: ["La cantidad debe tener hasta 4 decimales."] });
   });
@@ -182,8 +204,8 @@ describe("saveProductInputSchema", () => {
       fieldErrors(saveProductInputSchema, {
         ...validRecipeProduct,
         recipe: [
-          { supplyId: SERVER_ID, quantity: "250" },
-          { supplyId: SERVER_ID, quantity: "100" },
+          { supplyId: SERVER_ID, quantity: "250", unit: "g" },
+          { supplyId: SERVER_ID, quantity: "100", unit: "g" },
         ],
       }),
     ).toEqual({ recipe: ["Ese insumo ya está en la receta."] });

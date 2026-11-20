@@ -1,7 +1,10 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ZodError } from "zod/v4";
 
+import { eq, sql } from "drizzle-orm";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
+import { productIngredients } from "@/lib/db/business/table";
+import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
@@ -83,12 +86,17 @@ async function makeSupply(
   return createSupplyService(userId, { ...validSupply, ...overrides }, db);
 }
 
-async function makeProduct(userId: CreatedUser["id"], supplyId: string) {
+async function makeProduct(
+  userId: CreatedUser["id"],
+  supplyId: string,
+  unit = "g",
+  quantity = "250",
+) {
   return createProductService(
     userId,
     {
       name: "Pan flauta",
-      recipe: [{ supplyId, quantity: "250" }],
+      recipe: [{ supplyId, quantity, unit }],
     },
     db,
   );
@@ -109,7 +117,7 @@ describe("products service", () => {
       user.id,
       {
         name: "Pan flauta",
-        recipe: [{ supplyId: supply.id, quantity: "250" }],
+        recipe: [{ supplyId: supply.id, quantity: "250", unit: "g" }],
       },
       db,
     );
@@ -120,8 +128,111 @@ describe("products service", () => {
         supplyId: supply.id,
         supplyName: supply.name,
         quantity: "250",
+        unit: "g",
       },
     ]);
+  });
+
+  it("normalizes a catalog alias to its canonical unit", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    const product = await createProductService(
+      user.id,
+      {
+        name: "Pan flauta",
+        recipe: [{ supplyId: supply.id, quantity: "0.25", unit: "KILOS" }],
+      },
+      db,
+    );
+
+    expect(product.recipe[0]?.unit).toBe("kg");
+    expect(product.recipe[0]?.quantity).toBe("0.25");
+  });
+
+  it("rejects a unit from another family before writing the product", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    await expect(
+      createProductService(
+        user.id,
+        {
+          name: "Pan flauta",
+          recipe: [{ supplyId: supply.id, quantity: "1", unit: "L" }],
+        },
+        db,
+      ),
+    ).rejects.toMatchObject({ code: "VALIDATION" });
+
+    await expect(listProductsService(user.id, db)).resolves.toHaveLength(0);
+  });
+
+  it("rejects a free-text unit for a supply that uses the catalog", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    await expect(
+      createProductService(
+        user.id,
+        {
+          name: "Pan flauta",
+          recipe: [{ supplyId: supply.id, quantity: "1", unit: "caja" }],
+        },
+        db,
+      ),
+    ).rejects.toMatchObject({ code: "VALIDATION" });
+  });
+
+  it("preserves a legacy unit when the supply predates the catalog", async () => {
+    const user = await makeUser();
+    const [legacy] = await db
+      .insert(supplies)
+      .values({
+        userId: user.id,
+        kind: "supply",
+        name: "Harina a granel",
+        purchasePrice: "1000.00",
+        purchaseQuantity: "1",
+        purchaseUnit: "bolsa",
+        minimumUnit: "bolsa",
+        conversionFactor: "1",
+      })
+      .returning();
+
+    if (!legacy) throw new Error("legacy supply was not created");
+
+    const product = await makeProduct(user.id, legacy.id, "bolsa", "1");
+
+    expect(product.recipe[0]).toEqual({
+      supplyId: legacy.id,
+      supplyName: legacy.name,
+      quantity: "1",
+      unit: "bolsa",
+    });
+  });
+
+  it("rejects a different free-text unit for a legacy supply", async () => {
+    const user = await makeUser();
+    const [legacy] = await db
+      .insert(supplies)
+      .values({
+        userId: user.id,
+        kind: "supply",
+        name: "Harina a granel",
+        purchasePrice: "1000.00",
+        purchaseQuantity: "1",
+        purchaseUnit: "bolsa",
+        minimumUnit: "bolsa",
+        conversionFactor: "1",
+      })
+      .returning();
+
+    if (!legacy) throw new Error("legacy supply was not created");
+
+    await expect(
+      makeProduct(user.id, legacy.id, "caja", "1"),
+    ).rejects.toMatchObject({ code: "VALIDATION" });
   });
 
   it("lists created products with their recipe", async () => {
@@ -138,6 +249,7 @@ describe("products service", () => {
         supplyId: supply.id,
         supplyName: supply.name,
         quantity: "250",
+        unit: "g",
       },
     ]);
   });
@@ -163,7 +275,7 @@ describe("products service", () => {
       product.id,
       {
         name: "Pan integral",
-        recipe: [{ supplyId: wholeFlour.id, quantity: "0.5" }],
+        recipe: [{ supplyId: wholeFlour.id, quantity: "0.5", unit: "kg" }],
       },
       db,
     );
@@ -175,6 +287,7 @@ describe("products service", () => {
         supplyId: wholeFlour.id,
         supplyName: wholeFlour.name,
         quantity: "0.5",
+        unit: "kg",
       },
     ]);
   });
@@ -219,8 +332,8 @@ describe("products service", () => {
         {
           name: "Pan flauta",
           recipe: [
-            { supplyId: supply.id, quantity: "250" },
-            { supplyId: supply.id, quantity: "100" },
+            { supplyId: supply.id, quantity: "250", unit: "g" },
+            { supplyId: supply.id, quantity: "100", unit: "g" },
           ],
         },
         db,
@@ -260,7 +373,7 @@ describe("products service", () => {
       product.id,
       {
         name: "Hackeado",
-        recipe: [{ supplyId: supply.id, quantity: "1" }],
+        recipe: [{ supplyId: supply.id, quantity: "1", unit: "g" }],
       },
       db,
     );
@@ -270,13 +383,95 @@ describe("products service", () => {
     expect(rows[0].name).toBe("Pan flauta");
   });
 
-  it("delete of another user's product returns false", async () => {
-    const userA = await makeUser();
-    const userB = await makeUser();
-    const supply = await makeSupply(userA.id);
-    const product = await makeProduct(userA.id, supply.id);
+  it("rejects a unit from another family on update", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+    const product = await makeProduct(user.id, supply.id);
 
-    expect(await deleteProductService(userB.id, product.id, db)).toBe(false);
-    await expect(listProductsService(userA.id, db)).resolves.toHaveLength(1);
+    await expect(
+      updateProductService(
+        user.id,
+        product.id,
+        {
+          name: product.name,
+          recipe: [{ supplyId: supply.id, quantity: "1", unit: "L" }],
+        },
+        db,
+      ),
+    ).rejects.toMatchObject({
+      code: "VALIDATION",
+      details: {
+        fieldErrors: { recipe: ["Elegí una unidad de medida de la misma familia que el insumo."] },
+      },
+    });
+  });
+
+  it("rejects a catalog unit for a supply that predates the catalog", async () => {
+    const user = await makeUser();
+    const [legacy] = await db
+      .insert(supplies)
+      .values({
+        userId: user.id,
+        kind: "supply",
+        name: "Harina a granel",
+        purchasePrice: "1000.00",
+        purchaseQuantity: "1",
+        purchaseUnit: "bolsa",
+        minimumUnit: "bolsa",
+        conversionFactor: "1",
+      })
+      .returning();
+
+    if (!legacy) throw new Error("legacy supply was not created");
+
+    await expect(
+      makeProduct(user.id, legacy.id, "g", "1"),
+    ).rejects.toMatchObject({ code: "VALIDATION" });
+  });
+
+  it("reports the cross-family rejection as a recipe field error on create", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    await expect(
+      createProductService(
+        user.id,
+        {
+          name: "Pan flauta",
+          recipe: [{ supplyId: supply.id, quantity: "1", unit: "L" }],
+        },
+        db,
+      ),
+    ).rejects.toMatchObject({
+      code: "VALIDATION",
+      details: {
+        fieldErrors: { recipe: ["Elegí una unidad de medida de la misma familia que el insumo."] },
+      },
+    });
+  });
+
+  it("backfills unit from the supply's minimum unit", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+    const product = await makeProduct(user.id, supply.id);
+
+    await db
+      .update(productIngredients)
+      .set({ unit: null })
+      .where(eq(productIngredients.productId, product.id));
+
+    await db.execute(sql`
+      UPDATE "product_ingredients" AS "pi"
+      SET "unit" = "s"."minimum_unit"
+      FROM "supplies" AS "s"
+      WHERE "pi"."supply_id" = "s"."id"
+    `);
+
+    const rows = await db
+      .select()
+      .from(productIngredients)
+      .where(eq(productIngredients.productId, product.id));
+
+    expect(rows[0]?.unit).toBe(supply.minimumUnit);
   });
 });

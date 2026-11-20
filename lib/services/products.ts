@@ -13,10 +13,16 @@ import { saveProductInputSchema } from "@/lib/db/business/validation";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { supplies } from "@/lib/db/supplies/table";
 import { AppError } from "@/lib/errors/app-error";
+import { RECIPE_UNIT_FAMILY_MESSAGE } from "@/lib/schemas/products/fields";
 import type {
   ProductItem,
   ProductRecipeItem,
 } from "@/lib/schemas/products/products";
+import {
+  getSupplyUnit,
+  isRecipeUnitAllowed,
+  resolveSupplyFamily,
+} from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
 import { getOrCreateDefaultBusiness, type Tx } from "./calculations";
 
@@ -26,7 +32,15 @@ import { getOrCreateDefaultBusiness, type Tx } from "./calculations";
 // never with the client form contract. It throws (ZodError, AppError); doors
 // translate. No try/catch.
 
-type RecipeInput = { supplyId: string; quantity: string };
+type RecipeInput = { supplyId: string; quantity: string; unit: string };
+
+type RecipeSupply = {
+  name: string;
+  purchaseUnit: string;
+  minimumUnit: string;
+};
+
+type ResolvedRecipeLine = RecipeInput;
 
 // numeric(14,4) always returns four decimals ("250.0000"). The recipe form
 // accepts up to four and must be able to round-trip the saved value, so the API
@@ -41,15 +55,16 @@ function toFormQuantity(value: string): string {
 function toProductItem(
   product: Product,
   ingredients: ProductIngredient[],
-  supplyNames: Map<string, string>,
+  suppliesById: Map<string, RecipeSupply>,
 ): ProductItem {
   return {
     id: product.id,
     name: product.name,
     recipe: ingredients.map((ingredient) => ({
       supplyId: ingredient.supplyId,
-      supplyName: supplyNames.get(ingredient.supplyId) ?? "",
+      supplyName: suppliesById.get(ingredient.supplyId)?.name ?? "",
       quantity: toFormQuantity(ingredient.quantity),
+      unit: ingredient.unit ?? "",
     })),
   };
 }
@@ -72,6 +87,7 @@ async function mapRecipeRows(
     supplyId: ingredient.supplyId,
     supplyName,
     quantity: toFormQuantity(ingredient.quantity),
+    unit: ingredient.unit ?? "",
   }));
 }
 
@@ -81,11 +97,17 @@ async function resolveRecipeSupplies(
   userId: VerifiedUserId,
   recipe: readonly RecipeInput[],
   db: Db | Tx,
-): Promise<Map<string, string>> {
+): Promise<Map<string, RecipeSupply>> {
   const ids = [...new Set(recipe.map((item) => item.supplyId))];
 
   const rows = await db
-    .select({ id: supplies.id, name: supplies.name, kind: supplies.kind })
+    .select({
+      id: supplies.id,
+      name: supplies.name,
+      kind: supplies.kind,
+      purchaseUnit: supplies.purchaseUnit,
+      minimumUnit: supplies.minimumUnit,
+    })
     .from(supplies)
     .where(and(eq(supplies.userId, userId), inArray(supplies.id, ids)));
 
@@ -97,7 +119,56 @@ async function resolveRecipeSupplies(
     throw new AppError("SUPPLY_NOT_INGREDIENT");
   }
 
-  return new Map(rows.map((row) => [row.id, row.name]));
+  return new Map(
+    rows.map((row) => [
+      row.id,
+      {
+        name: row.name,
+        purchaseUnit: row.purchaseUnit,
+        minimumUnit: row.minimumUnit,
+      },
+    ]),
+  );
+}
+
+function invalidRecipeUnit(): never {
+  throw new AppError("VALIDATION", {
+    formErrors: [],
+    fieldErrors: { recipe: [RECIPE_UNIT_FAMILY_MESSAGE] },
+  });
+}
+
+// Keeps catalog units canonical and preserves a legacy unit only when the
+// supply itself predates the catalog and the line repeats its stored minimum
+// unit. Mixing families (kg → L) and arbitrary free text are rejected.
+function resolveRecipeUnits(
+  recipe: readonly RecipeInput[],
+  suppliesById: Map<string, RecipeSupply>,
+): ResolvedRecipeLine[] {
+  return recipe.map((item) => {
+    const supply = suppliesById.get(item.supplyId);
+
+    if (!supply) {
+      throw new AppError("SUPPLY_NOT_FOUND");
+    }
+
+    const unit = getSupplyUnit(item.unit);
+    const family = resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit);
+
+    if (unit) {
+      if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
+        invalidRecipeUnit();
+      }
+
+      return { ...item, unit: unit.value };
+    }
+
+    if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
+      invalidRecipeUnit();
+    }
+
+    return { ...item, unit: supply.minimumUnit };
+  });
 }
 
 export async function listProductsService(
@@ -134,6 +205,7 @@ export async function listProductsService(
       supplyId: ingredient.supplyId,
       supplyName,
       quantity: toFormQuantity(ingredient.quantity),
+      unit: ingredient.unit ?? "",
     });
     recipesByProduct.set(ingredient.productId, recipe);
   }
@@ -182,7 +254,8 @@ export async function createProductService(
   const data = saveProductInputSchema.parse(input);
 
   return db.transaction(async (tx) => {
-    const supplyNames = await resolveRecipeSupplies(userId, data.recipe, tx);
+    const suppliesById = await resolveRecipeSupplies(userId, data.recipe, tx);
+    const recipe = resolveRecipeUnits(data.recipe, suppliesById);
     const business = await getOrCreateDefaultBusiness(tx, userId);
 
     const [product] = await tx
@@ -199,15 +272,16 @@ export async function createProductService(
     const ingredients = await tx
       .insert(productIngredients)
       .values(
-        data.recipe.map((item) => ({
+        recipe.map((item) => ({
           productId: product.id,
           supplyId: item.supplyId,
           quantity: item.quantity,
+          unit: item.unit,
         })),
       )
       .returning();
 
-    return toProductItem(product, ingredients, supplyNames);
+    return toProductItem(product, ingredients, suppliesById);
   });
 }
 
@@ -237,7 +311,8 @@ export async function updateProductService(
       return null;
     }
 
-    const supplyNames = await resolveRecipeSupplies(userId, data.recipe, tx);
+    const suppliesById = await resolveRecipeSupplies(userId, data.recipe, tx);
+    const recipe = resolveRecipeUnits(data.recipe, suppliesById);
 
     const [product] = await tx
       .update(products)
@@ -258,15 +333,16 @@ export async function updateProductService(
     const ingredients = await tx
       .insert(productIngredients)
       .values(
-        data.recipe.map((item) => ({
+        recipe.map((item) => ({
           productId: product.id,
           supplyId: item.supplyId,
           quantity: item.quantity,
+          unit: item.unit,
         })),
       )
       .returning();
 
-    return toProductItem(product, ingredients, supplyNames);
+    return toProductItem(product, ingredients, suppliesById);
   });
 }
 

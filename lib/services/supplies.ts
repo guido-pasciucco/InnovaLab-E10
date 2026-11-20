@@ -106,11 +106,12 @@ export async function updateSupplyService(
     });
   }
 
-  // Recipe quantities are stored in the supply's minimum unit. Changing the
-  // kind or the resolved minimum unit would change what those numbers mean, so
-  // the update is blocked while a recipe references the supply. Price, purchase
-  // quantity, purchase unit and conversion factor stay editable when they do
-  // not change the minimum unit: they only feed the cost calculation.
+  // Each recipe line stores its own unit, but that unit must stay in the
+  // supply's family. Changing the kind or the resolved minimum unit changes the
+  // family (or the meaning of legacy rows), so the update is blocked while a
+  // recipe references the supply. Price, purchase quantity, purchase unit
+  // within the same family and conversion factor stay editable: they only feed
+  // the cost calculation.
   const changesRecipeMeaning =
     supply.kind !== existing.kind || units.minimumUnit !== existing.minimumUnit;
 

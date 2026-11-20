@@ -18,10 +18,12 @@ export const SUPPLY_UNIT_VALUES = [
 
 export type SupplyUnitValue = (typeof SUPPLY_UNIT_VALUES)[number];
 
+export type SupplyUnitFamily = "mass" | "volume" | "length" | "count";
+
 export type SupplyUnitDefinition = {
   value: SupplyUnitValue;
   label: string;
-  family: "mass" | "volume" | "length" | "count";
+  family: SupplyUnitFamily;
   minimumUnit: string;
   factor: string;
 };
@@ -99,6 +101,49 @@ export function getSupplyUnit(value: string): SupplyUnitDefinition | null {
 
 export function canonicalSupplyUnit(value: string): string {
   return getSupplyUnit(value)?.value ?? value.trim();
+}
+
+export function getSupplyUnitFamily(value: string): SupplyUnitFamily | null {
+  return getSupplyUnit(value)?.family ?? null;
+}
+
+export function getSupplyUnitsForFamily(
+  family: SupplyUnitFamily,
+): readonly SupplyUnitDefinition[] {
+  return SUPPLY_UNITS.filter((unit) => unit.family === family);
+}
+
+// A legacy supply may have a free-text purchase unit but a catalog minimum
+// unit (for example, "bolsa" bought in g). The minimum unit is enough to infer
+// the family; both unknown means the row predates the catalog entirely.
+export function resolveSupplyFamily(
+  purchaseUnit: string,
+  minimumUnit: string,
+): SupplyUnitFamily | null {
+  return getSupplyUnitFamily(purchaseUnit) ?? getSupplyUnitFamily(minimumUnit);
+}
+
+// Single source of truth for whether a recipe line's unit is valid for a given
+// supply. Used by both the form (to decide which stored values stay visible) and
+// the service (to validate before writing), so the two cannot diverge.
+export function isRecipeUnitAllowed(
+  supply: { family: SupplyUnitFamily | null; minimumUnit: string },
+  unit: string,
+): boolean {
+  const trimmed = unit.trim();
+  if (trimmed === "") return false;
+
+  const catalogUnit = getSupplyUnit(trimmed);
+  if (catalogUnit) {
+    return supply.family !== null && catalogUnit.family === supply.family;
+  }
+
+  // Legacy free-text unit: only when the supply predates the catalog and the line
+  // repeats its stored (canonicalized) minimum unit.
+  return (
+    supply.family === null &&
+    canonicalSupplyUnit(trimmed) === canonicalSupplyUnit(supply.minimumUnit)
+  );
 }
 
 export type SupplyUnits = {

@@ -6,6 +6,7 @@ import { productNameField } from "@/lib/schemas/calculator-setup/fields";
 import {
   recipeQuantityField,
   recipeSupplyIdField,
+  recipeUnitField,
 } from "@/lib/schemas/products/fields";
 import { quantityString } from "../formats";
 import { businesses, productIngredients, products } from "./table";
@@ -53,6 +54,7 @@ export const createProductInputSchema = createInsertSchema(products, {
 export const productIngredientInputSchema = z.object({
   supplyId: recipeSupplyIdField,
   quantity: recipeQuantityField,
+  unit: recipeUnitField,
 });
 
 export const saveProductInputSchema = z
