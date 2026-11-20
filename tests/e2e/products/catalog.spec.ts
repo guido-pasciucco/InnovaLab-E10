@@ -55,6 +55,9 @@ test("busca productos por nombre y por insumo de la receta", async ({
     .getByRole("combobox", { name: "Unidad de medida" })
     .selectOption("kg");
   await authedPage.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(
+    authedPage.getByRole("cell", { name: "Sal fina", exact: true }),
+  ).toBeVisible();
 
   async function createProduct(name: string, supply: string) {
     await authedPage.goto("/products");
@@ -97,5 +100,77 @@ test("busca productos por nombre y por insumo de la receta", async ({
   await search.fill("zzzz");
   await expect(
     authedPage.getByText("No encontramos productos con esa búsqueda."),
+  ).toBeVisible();
+});
+
+test("edita y borra un producto desde las acciones de la fila", async ({
+  authedPage,
+}) => {
+  // Arrange: un insumo y un producto con receta.
+  await authedPage.goto("/insumos");
+  await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
+  await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
+  await authedPage
+    .getByRole("textbox", { name: "Precio de compra" })
+    .fill("18750");
+  await authedPage
+    .getByRole("combobox", { name: "Unidad de medida" })
+    .selectOption("kg");
+  await authedPage.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(
+    authedPage.getByRole("cell", { name: "Harina 000", exact: true }),
+  ).toBeVisible();
+
+  await authedPage.goto("/products");
+  await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
+  const created = authedPage.getByRole("dialog", { name: "Nuevo producto" });
+  await created.getByLabel("Nombre del producto").fill("Pan flauta");
+  await created.getByLabel("Insumo").selectOption({ label: "Harina 000" });
+  await created.getByLabel("Cantidad").fill("100");
+  await created.getByLabel("Unidad").selectOption("g");
+  await created.getByRole("button", { name: "Guardar producto" }).click();
+  await expect(
+    authedPage.getByRole("status").filter({ hasText: "quedaron guardados" }),
+  ).toBeVisible();
+
+  // Editar desde la fila: el modal abre con los datos y reemplaza la fila.
+  await authedPage.getByRole("button", { name: "Editar Pan flauta" }).click();
+  const edit = authedPage.getByRole("dialog", { name: "Editar producto" });
+  await expect(edit.getByLabel("Nombre del producto")).toHaveValue(
+    "Pan flauta",
+  );
+  await edit.getByLabel("Nombre del producto").fill("Pan de campo");
+  await edit.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(edit).toHaveCount(0);
+  await expect(
+    authedPage.getByRole("cell", { name: "Pan de campo", exact: true }),
+  ).toBeVisible();
+  await expect(
+    authedPage.getByRole("cell", { name: "Pan flauta", exact: true }),
+  ).toHaveCount(0);
+
+  // "Editar receta" desde el detalle pasa al formulario de edición.
+  await authedPage
+    .getByRole("button", { name: "Ver receta de Pan de campo" })
+    .click();
+  await authedPage.getByRole("button", { name: "Editar receta" }).click();
+  const editFromDetail = authedPage.getByRole("dialog", {
+    name: "Editar producto",
+  });
+  await expect(editFromDetail).toBeVisible();
+  await expect(
+    editFromDetail.getByLabel("Nombre del producto"),
+  ).toHaveValue("Pan de campo");
+  await editFromDetail.getByRole("button", { name: "Cancelar" }).click();
+  await expect(authedPage.getByRole("dialog")).toHaveCount(0);
+
+  // Borrar desde la fila: confirma, avisa y vuelve al estado vacío.
+  authedPage.once("dialog", (confirmDialog) => confirmDialog.accept());
+  await authedPage.getByRole("button", { name: "Borrar Pan de campo" }).click();
+  await expect(
+    authedPage.getByRole("status").filter({ hasText: "se borró del catálogo" }),
+  ).toBeVisible();
+  await expect(
+    authedPage.getByText("Todavía no cargaste ningún producto."),
   ).toBeVisible();
 });
