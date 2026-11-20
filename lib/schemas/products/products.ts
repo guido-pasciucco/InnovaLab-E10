@@ -159,6 +159,7 @@ export type ProductItem = {
     | CatalogVariableCostsAdapterErrorCode
     | VariableCostsErrorCode
     | "UNSUPPORTED_RECIPE_UNIT"
+    | "MISSING_YIELD"
     | null;
 };
 

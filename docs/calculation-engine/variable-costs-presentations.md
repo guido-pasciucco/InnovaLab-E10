@@ -37,3 +37,24 @@ Un consumidor posterior no debe multiplicar `unitCost` mostrado (por ejemplo, `$
 Los inputs numéricos aceptan como máximo 100 dígitos entre parte entera y decimal, sin exponentes ni decimales infinitos. Este límite protege la entrada externa: resultados internos válidos pueden tener más de 100 dígitos y no se someten nuevamente a esa validación. Las tablas monetarias existentes usan `numeric(12,2)` (diez dígitos enteros), pero no son todavía el esquema de #239/#240; no se adopta ese límite silenciosamente.
 
 El motor tampoco impone todavía un máximo funcional para cantidad de insumos, ingredientes, presentaciones o materiales de packaging. Los contratos de #239/#240 deberán establecer y validar esos límites en el borde de persistencia, midiendo el crecimiento de colecciones y fracciones para el uso real de Numora.
+
+## CVU vigente persistido
+
+El producto puede conservar un costo variable vigente derivado de su receta,
+rendimiento y catálogo actuales. El importe monetario se guarda únicamente para
+mostrar (`numeric(14,2)` con el redondeo exacto ya producido por el motor). Los
+campos que consuman ese costo para otro cálculo deben usar el par racional
+`numerator`/`denominator`, nunca reconstruirlo desde el importe mostrado.
+
+La escritura de producto, ingredientes, rendimiento y CVU ocurre en una sola
+transacción. Un costo cero queda en estado `ready`; `pending` no inventa un
+costo para productos históricos, y `unavailable` representa un error tipado de
+datos conocidos. Los errores inesperados se propagan.
+
+El recálculo futuro iniciado por una modificación de insumo compartirá este
+protocolo: bloquear primero los insumos involucrados por id ascendente y luego
+los productos afectados por id ascendente; leer los datos después de adquirir
+los bloqueos y persistir todos los CVU en la misma transacción. Así se evita
+confirmar un resultado calculado con un precio o una receta ya reemplazados.
+La creación de insumos no dispara recálculos. Los snapshots históricos siguen
+siendo una responsabilidad separada.

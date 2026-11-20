@@ -43,6 +43,25 @@ describe("deriveProductVariableCosts", () => {
     });
   });
 
+  it("keeps a periodic unit cost exact for the persistence boundary", () => {
+    const result = deriveProductVariableCosts(
+      { ...recipe, yieldQuantity: "3" },
+      [supply],
+    );
+
+    expect(result).toMatchObject({
+      variableCosts: {
+        ingredientsCost: "1.00",
+        unitCost: "0.33",
+        exact: {
+          ingredientsCost: { numerator: "1", denominator: "1" },
+          unitCost: { numerator: "1", denominator: "3" },
+        },
+      },
+      variableCostsUnavailableCode: null,
+    });
+  });
+
   it("keeps historical products without yield distinct from zero cost", () => {
     expect(deriveProductVariableCosts({ ...recipe, yieldQuantity: null }, [supply])).toEqual({
       variableCosts: null,

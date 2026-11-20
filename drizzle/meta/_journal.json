@@ -162,6 +162,13 @@
                         "when":  1795185507389,
                         "tag":  "20261120143827_thin_namorita",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  23,
+                        "version":  "7",
+                        "when":  1795204232002,
+                        "tag":  "20261120195031_massive_glorian",
+                        "breakpoints":  true
                     }
                 ]
 }

@@ -48,6 +48,15 @@ export const createProductInputSchema = createInsertSchema(products, {
 }).omit({
   id: true,
   businessId: true,
+  variableCostStatus: true,
+  variableCostUnitAmount: true,
+  variableCostUnitNumerator: true,
+  variableCostUnitDenominator: true,
+  variableCostRecipeAmount: true,
+  variableCostRecipeNumerator: true,
+  variableCostRecipeDenominator: true,
+  variableCostUnavailableCode: true,
+  variableCostCalculatedAt: true,
   createdAt: true,
   updatedAt: true,
 });
