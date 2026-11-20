@@ -100,7 +100,6 @@ export function ProductForm({
   onCancel,
   onSaved,
 }: ProductFormProps) {
-  const isEditing = product !== null;
   const hasSupplies = supplies.length > 0;
   const [state, submitAction, isPending] = useActionState(saveProduct, undefined);
 
@@ -299,11 +298,7 @@ export function ProductForm({
           type="submit"
           disabled={!hasSupplies || isPending}
         >
-          {isPending
-            ? "Guardando…"
-            : isEditing
-              ? "Guardar cambios"
-              : "Guardar producto"}
+          {isPending ? "Guardando…" : "Guardar"}
         </PrimaryButton>
         <button
           type="button"

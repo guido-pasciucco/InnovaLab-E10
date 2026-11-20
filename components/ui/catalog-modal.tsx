@@ -6,7 +6,8 @@ type CatalogModalProps = {
   title: string;
   onClose: () => void;
   children: ReactNode;
-  // "md" fits a short form; "lg" is for forms that stack several fieldsets.
+  // "md" fits a short form; "lg" is for wide content such as multi-row forms or
+  // detail tables.
   size?: "md" | "lg";
 };
 
@@ -17,8 +18,9 @@ const SIZE_CLASS = {
 
 // Accessible dialog shared by both catalogs (Insumos and Productos) so create,
 // edit and detail views look and behave the same. It closes on Escape, backdrop
-// click and the close button, and locks background scrolling while open. Kept as
-// a client component so the content stays mounted only while visible.
+// click and the close button, and locks background scrolling while open. It has
+// no open/closed prop: the parent renders it conditionally, so its content only
+// mounts while the dialog is visible.
 export function CatalogModal({
   title,
   onClose,

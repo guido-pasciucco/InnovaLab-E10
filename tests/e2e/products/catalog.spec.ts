@@ -67,16 +67,18 @@ test("busca productos por nombre y por insumo de la receta", async ({
     await dialog.getByLabel("Insumo").selectOption({ label: supply });
     await dialog.getByLabel("Cantidad").fill("100");
     await dialog.getByLabel("Unidad").selectOption("g");
-    await dialog.getByRole("button", { name: "Guardar producto" }).click();
+    await dialog.getByRole("button", { name: "Guardar", exact: true }).click();
     await expect(
-      authedPage.getByRole("status").filter({ hasText: "quedaron guardados" }),
+      authedPage.getByRole("status").filter({
+        hasText: "Producto guardado en tu catálogo.",
+      }),
     ).toBeVisible();
   }
 
   await createProduct("Pan flauta", "Harina 000");
-  await createProduct("Pizza", "Sal fina");
+  await createProduct("Pizza rústica", "Sal fina");
 
-  // Búsqueda por nombre de producto (sin acentos).
+  // Búsqueda por nombre de producto, sin distinguir mayúsculas.
   await authedPage.goto("/products");
   const search = authedPage.getByLabel("Buscar");
   await search.fill("pan");
@@ -84,13 +86,25 @@ test("busca productos por nombre y por insumo de la receta", async ({
     authedPage.getByRole("cell", { name: "Pan flauta", exact: true }),
   ).toBeVisible();
   await expect(
-    authedPage.getByRole("cell", { name: "Pizza", exact: true }),
+    authedPage.getByRole("cell", { name: "Pizza rústica", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    authedPage.getByRole("heading", { name: "Productos (1)" }),
+  ).toBeVisible();
+
+  // Búsqueda sin acentos sobre un nombre con tilde.
+  await search.fill("rustica");
+  await expect(
+    authedPage.getByRole("cell", { name: "Pizza rústica", exact: true }),
+  ).toBeVisible();
+  await expect(
+    authedPage.getByRole("cell", { name: "Pan flauta", exact: true }),
   ).toHaveCount(0);
 
   // Búsqueda por insumo de la receta.
   await search.fill("sal");
   await expect(
-    authedPage.getByRole("cell", { name: "Pizza", exact: true }),
+    authedPage.getByRole("cell", { name: "Pizza rústica", exact: true }),
   ).toBeVisible();
   await expect(
     authedPage.getByRole("cell", { name: "Pan flauta", exact: true }),
@@ -100,6 +114,9 @@ test("busca productos por nombre y por insumo de la receta", async ({
   await search.fill("zzzz");
   await expect(
     authedPage.getByText("No encontramos productos con esa búsqueda."),
+  ).toBeVisible();
+  await expect(
+    authedPage.getByRole("heading", { name: "Productos (0)" }),
   ).toBeVisible();
 });
 
@@ -128,9 +145,11 @@ test("edita y borra un producto desde las acciones de la fila", async ({
   await created.getByLabel("Insumo").selectOption({ label: "Harina 000" });
   await created.getByLabel("Cantidad").fill("100");
   await created.getByLabel("Unidad").selectOption("g");
-  await created.getByRole("button", { name: "Guardar producto" }).click();
+  await created.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(
-    authedPage.getByRole("status").filter({ hasText: "quedaron guardados" }),
+    authedPage.getByRole("status").filter({
+      hasText: "Producto guardado en tu catálogo.",
+    }),
   ).toBeVisible();
 
   // Editar desde la fila: el modal abre con los datos y reemplaza la fila.
@@ -140,8 +159,11 @@ test("edita y borra un producto desde las acciones de la fila", async ({
     "Pan flauta",
   );
   await edit.getByLabel("Nombre del producto").fill("Pan de campo");
-  await edit.getByRole("button", { name: "Guardar cambios" }).click();
+  await edit.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(edit).toHaveCount(0);
+  await expect(
+    authedPage.getByRole("status").filter({ hasText: "Producto actualizado." }),
+  ).toBeVisible();
   await expect(
     authedPage.getByRole("cell", { name: "Pan de campo", exact: true }),
   ).toBeVisible();

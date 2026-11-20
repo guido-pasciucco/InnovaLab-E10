@@ -26,7 +26,7 @@ export function ProductsCatalog({
 }: ProductsCatalogProps) {
   const [products, setProducts] = useState<ProductItem[]>(initialProducts);
   const [editing, setEditing] = useState<ProductItem | null>(null);
-  const [viewing, setViewing] = useState<ProductItem | null>(null);
+  const [viewingId, setViewingId] = useState<ProductItem["id"] | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -44,23 +44,27 @@ export function ProductsCatalog({
     );
   }, [products, query]);
 
+  // Derived from the list so the detail always shows the saved version and
+  // closes on its own when the product is deleted.
+  const viewing = products.find((product) => product.id === viewingId) ?? null;
+
   const handleNew = () => {
     setEditing(null);
-    setViewing(null);
+    setViewingId(null);
     setShowForm(true);
     setStatus(null);
     setError(null);
   };
 
   const handleView = (product: ProductItem) => {
-    setViewing(product);
+    setViewingId(product.id);
     setStatus(null);
     setError(null);
   };
 
   const handleEdit = (product: ProductItem) => {
     setEditing(product);
-    setViewing(null);
+    setViewingId(null);
     setShowForm(true);
     setStatus(null);
     setError(null);
@@ -80,11 +84,10 @@ export function ProductsCatalog({
         ? current.map((product) => (product.id === saved.id ? saved : product))
         : [...current, saved];
     });
-    setViewing((current) => (current?.id === saved.id ? saved : current));
     setEditing(null);
     setShowForm(false);
     setError(null);
-    setStatus(`«${saved.name}» y su receta quedaron guardados.`);
+    setStatus(editing ? "Producto actualizado." : "Producto guardado en tu catálogo.");
   };
 
   const handleDelete = (product: ProductItem) => {
@@ -104,7 +107,6 @@ export function ProductsCatalog({
       setProducts((current) =>
         current.filter((item) => item.id !== product.id),
       );
-      setViewing((current) => (current?.id === product.id ? null : current));
 
       if (editing?.id === product.id) {
         setEditing(null);
@@ -140,7 +142,7 @@ export function ProductsCatalog({
       <section aria-label="Lista de productos" className="min-w-0 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-fg">
-            Productos ({query ? filtered.length : products.length})
+            Productos ({filtered.length})
           </h2>
           <button
             type="button"
@@ -192,7 +194,7 @@ export function ProductsCatalog({
       {viewing && (
         <CatalogModal
           title={viewing.name}
-          onClose={() => setViewing(null)}
+          onClose={() => setViewingId(null)}
           size="lg"
         >
           <ProductRecipe
