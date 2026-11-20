@@ -29,7 +29,7 @@ test("guarda, edita y muestra la capacidad mensual del producto", async ({
   await dialog.getByLabel("Nombre del producto").fill("Pan flauta");
   await dialog.getByLabel("Insumo").selectOption({ label: "Harina 000" });
   await dialog.getByLabel("Cantidad").fill("250");
-  await dialog.getByLabel("Unidad").selectOption("g");
+  await dialog.getByLabel("Unidad", { exact: true }).selectOption("g");
 
   // The warning is live: it shows while the capacity is empty and disappears
   // as soon as a positive value is typed, before saving.

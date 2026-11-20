@@ -66,7 +66,7 @@ test("busca productos por nombre y por insumo de la receta", async ({
     await dialog.getByLabel("Nombre del producto").fill(name);
     await dialog.getByLabel("Insumo").selectOption({ label: supply });
     await dialog.getByLabel("Cantidad").fill("100");
-    await dialog.getByLabel("Unidad").selectOption("g");
+    await dialog.getByLabel("Unidad", { exact: true }).selectOption("g");
     await dialog.getByRole("button", { name: "Guardar", exact: true }).click();
     await expect(
       authedPage.getByRole("status").filter({
@@ -144,7 +144,7 @@ test("edita y borra un producto desde las acciones de la fila", async ({
   await created.getByLabel("Nombre del producto").fill("Pan flauta");
   await created.getByLabel("Insumo").selectOption({ label: "Harina 000" });
   await created.getByLabel("Cantidad").fill("100");
-  await created.getByLabel("Unidad").selectOption("g");
+  await created.getByLabel("Unidad", { exact: true }).selectOption("g");
   await created.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(
     authedPage.getByRole("status").filter({
