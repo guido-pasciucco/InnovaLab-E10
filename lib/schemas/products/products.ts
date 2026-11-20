@@ -62,6 +62,7 @@ export function toRecipeSupplyOptions(
       name: supply.name,
       family: resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit),
       defaultUnit: canonicalSupplyUnit(supply.minimumUnit || supply.purchaseUnit),
+      minimumUnit: supply.minimumUnit,
     }));
 }
 
@@ -156,4 +157,5 @@ export type RecipeSupplyOption = {
   name: string;
   family: SupplyUnitFamily | null;
   defaultUnit: string;
+  minimumUnit: string;
 };

@@ -20,6 +20,7 @@ import type {
 } from "@/lib/schemas/products/products";
 import {
   getSupplyUnit,
+  isRecipeUnitAllowed,
   resolveSupplyFamily,
 } from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
@@ -63,7 +64,7 @@ function toProductItem(
       supplyId: ingredient.supplyId,
       supplyName: suppliesById.get(ingredient.supplyId)?.name ?? "",
       quantity: toFormQuantity(ingredient.quantity),
-      unit: ingredient.unit,
+      unit: ingredient.unit ?? "",
     })),
   };
 }
@@ -86,7 +87,7 @@ async function mapRecipeRows(
     supplyId: ingredient.supplyId,
     supplyName,
     quantity: toFormQuantity(ingredient.quantity),
-    unit: ingredient.unit,
+    unit: ingredient.unit ?? "",
   }));
 }
 
@@ -155,17 +156,14 @@ function resolveRecipeUnits(
     const family = resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit);
 
     if (unit) {
-      if (family === null || unit.family !== family) {
+      if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
         invalidRecipeUnit();
       }
 
       return { ...item, unit: unit.value };
     }
 
-    const keepsLegacyUnit =
-      family === null && item.unit === supply.minimumUnit;
-
-    if (!keepsLegacyUnit) {
+    if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
       invalidRecipeUnit();
     }
 
@@ -207,7 +205,7 @@ export async function listProductsService(
       supplyId: ingredient.supplyId,
       supplyName,
       quantity: toFormQuantity(ingredient.quantity),
-      unit: ingredient.unit,
+      unit: ingredient.unit ?? "",
     });
     recipesByProduct.set(ingredient.productId, recipe);
   }

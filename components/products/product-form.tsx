@@ -21,6 +21,7 @@ import { createProductFormSchema } from "@/lib/schemas/products/products";
 import {
   getSupplyUnit,
   getSupplyUnitsForFamily,
+  isRecipeUnitAllowed,
 } from "@/lib/schemas/supplies/units";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
@@ -85,14 +86,10 @@ function recipeUnitOptions(
 
   if (
     currentUnit &&
-    supply.family !== null &&
-    !options.some((option) => option.value === currentUnit)
+    !options.some((option) => option.value === currentUnit) &&
+    isRecipeUnitAllowed(supply, currentUnit)
   ) {
-    const catalogUnit = getSupplyUnit(currentUnit);
-
-    if (catalogUnit?.family === supply.family) {
-      options.push({ value: currentUnit, label: `${currentUnit} (actual)` });
-    }
+    options.push({ value: currentUnit, label: `${currentUnit} (actual)` });
   }
 
   return options;

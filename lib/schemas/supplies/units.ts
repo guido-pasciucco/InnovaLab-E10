@@ -123,6 +123,29 @@ export function resolveSupplyFamily(
   return getSupplyUnitFamily(purchaseUnit) ?? getSupplyUnitFamily(minimumUnit);
 }
 
+// Single source of truth for whether a recipe line's unit is valid for a given
+// supply. Used by both the form (to decide which stored values stay visible) and
+// the service (to validate before writing), so the two cannot diverge.
+export function isRecipeUnitAllowed(
+  supply: { family: SupplyUnitFamily | null; minimumUnit: string },
+  unit: string,
+): boolean {
+  const trimmed = unit.trim();
+  if (trimmed === "") return false;
+
+  const catalogUnit = getSupplyUnit(trimmed);
+  if (catalogUnit) {
+    return supply.family !== null && catalogUnit.family === supply.family;
+  }
+
+  // Legacy free-text unit: only when the supply predates the catalog and the line
+  // repeats its stored (canonicalized) minimum unit.
+  return (
+    supply.family === null &&
+    canonicalSupplyUnit(trimmed) === canonicalSupplyUnit(supply.minimumUnit)
+  );
+}
+
 export type SupplyUnits = {
   minimumUnit: string;
   conversionFactor: string;

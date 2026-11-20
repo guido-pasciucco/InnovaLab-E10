@@ -6,8 +6,8 @@ import { createProductFormSchema, toRecipeSupplyOptions } from "./products";
 // Messages are defined once in the schema and shown by RHF in the client.
 // The server reuses the same field rules when persistence lands.
 const supplyOptions: RecipeSupplyOption[] = [
-  { id: "supply-harina", name: "Harina 000", family: "mass", defaultUnit: "g" },
-  { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g" },
+  { id: "supply-harina", name: "Harina 000", family: "mass", defaultUnit: "g", minimumUnit: "g" },
+  { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g", minimumUnit: "g" },
 ];
 const schema = createProductFormSchema(supplyOptions);
 
@@ -155,7 +155,7 @@ describe("createProductFormSchema", () => {
 
   it("keeps a legacy unit while the line repeats the supply's stored unit", () => {
     const legacyOptions: RecipeSupplyOption[] = [
-      { id: "supply-legacy", name: "Harina", family: null, defaultUnit: "bolsa" },
+      { id: "supply-legacy", name: "Harina", family: null, defaultUnit: "bolsa", minimumUnit: "bolsa" },
     ];
 
     expect(
@@ -168,7 +168,7 @@ describe("createProductFormSchema", () => {
 
   it("rejects changing a legacy unit to another free-text value", () => {
     const legacyOptions: RecipeSupplyOption[] = [
-      { id: "supply-legacy", name: "Harina", family: null, defaultUnit: "bolsa" },
+      { id: "supply-legacy", name: "Harina", family: null, defaultUnit: "bolsa", minimumUnit: "bolsa" },
     ];
 
     expect(
@@ -313,8 +313,9 @@ describe("toRecipeSupplyOptions", () => {
         name: "Harina 000",
         family: "mass",
         defaultUnit: "g",
+        minimumUnit: "g",
       },
-      { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g" },
+      { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g", minimumUnit: "g" },
     ]);
   });
 
@@ -349,6 +350,7 @@ describe("toRecipeSupplyOptions", () => {
         name: "Harina",
         family: null,
         defaultUnit: "bolsa",
+        minimumUnit: "bolsa",
       },
     ]);
   });
@@ -370,6 +372,7 @@ describe("toRecipeSupplyOptions", () => {
         name: "Harina",
         family: "mass",
         defaultUnit: "g",
+        minimumUnit: "g",
       },
     ]);
   });
