@@ -91,11 +91,13 @@ async function makeProduct(
   supplyId: string,
   unit = "g",
   quantity = "250",
+  monthlyCapacity: string | number | null = null,
 ) {
   return createProductService(
     userId,
     {
       name: "Pan flauta",
+      monthlyCapacity,
       recipe: [{ supplyId, quantity, unit }],
     },
     db,
@@ -123,6 +125,7 @@ describe("products service", () => {
     );
 
     expect(product.name).toBe("Pan flauta");
+    expect(product.monthlyCapacity).toBeNull();
     expect(product.recipe).toEqual([
       {
         supplyId: supply.id,
@@ -131,6 +134,46 @@ describe("products service", () => {
         unit: "g",
       },
     ]);
+  });
+
+  it("creates a product with its monthly capacity", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    const product = await makeProduct(user.id, supply.id, "g", "250", "120");
+
+    expect(product.monthlyCapacity).toBe(120);
+    const rows = await listProductsService(user.id, db);
+    expect(rows[0]?.monthlyCapacity).toBe(120);
+  });
+
+  it("stores a zero monthly capacity as zero", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    const product = await makeProduct(user.id, supply.id, "g", "250", "0");
+
+    expect(product.monthlyCapacity).toBe(0);
+  });
+
+  it("stores an empty monthly capacity as null", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    const product = await makeProduct(user.id, supply.id, "g", "250", "");
+
+    expect(product.monthlyCapacity).toBeNull();
+  });
+
+  it("rejects a negative monthly capacity before writing the product", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+
+    await expect(
+      makeProduct(user.id, supply.id, "g", "250", "-5"),
+    ).rejects.toBeInstanceOf(ZodError);
+
+    await expect(listProductsService(user.id, db)).resolves.toHaveLength(0);
   });
 
   it("normalizes a catalog alias to its canonical unit", async () => {
@@ -292,6 +335,56 @@ describe("products service", () => {
     ]);
   });
 
+  it("persists the changed monthly capacity", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+    const product = await makeProduct(user.id, supply.id, "g", "250", "120");
+
+    const updated = await updateProductService(
+      user.id,
+      product.id,
+      {
+        name: product.name,
+        monthlyCapacity: "200",
+        recipe: product.recipe.map((item) => ({
+          supplyId: item.supplyId,
+          quantity: item.quantity,
+          unit: item.unit,
+        })),
+      },
+      db,
+    );
+
+    expect(updated?.monthlyCapacity).toBe(200);
+    const rows = await listProductsService(user.id, db);
+    expect(rows[0]?.monthlyCapacity).toBe(200);
+  });
+
+  it("clears the monthly capacity when the update sends it empty", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id);
+    const product = await makeProduct(user.id, supply.id, "g", "250", "120");
+
+    const updated = await updateProductService(
+      user.id,
+      product.id,
+      {
+        name: product.name,
+        monthlyCapacity: "",
+        recipe: product.recipe.map((item) => ({
+          supplyId: item.supplyId,
+          quantity: item.quantity,
+          unit: item.unit,
+        })),
+      },
+      db,
+    );
+
+    expect(updated?.monthlyCapacity).toBeNull();
+    const rows = await listProductsService(user.id, db);
+    expect(rows[0]?.monthlyCapacity).toBeNull();
+  });
+
   it("rejects packaging as a recipe ingredient", async () => {
     const user = await makeUser();
     const packaging = await makeSupply(user.id, {
@@ -366,13 +459,14 @@ describe("products service", () => {
     const userA = await makeUser();
     const userB = await makeUser();
     const supply = await makeSupply(userA.id);
-    const product = await makeProduct(userA.id, supply.id);
+    const product = await makeProduct(userA.id, supply.id, "g", "250", "120");
 
     const updated = await updateProductService(
       userB.id,
       product.id,
       {
         name: "Hackeado",
+        monthlyCapacity: "999",
         recipe: [{ supplyId: supply.id, quantity: "1", unit: "g" }],
       },
       db,
@@ -381,6 +475,7 @@ describe("products service", () => {
     expect(updated).toBeNull();
     const rows = await listProductsService(userA.id, db);
     expect(rows[0].name).toBe("Pan flauta");
+    expect(rows[0].monthlyCapacity).toBe(120);
   });
 
   it("rejects a unit from another family on update", async () => {

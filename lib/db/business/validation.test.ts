@@ -23,11 +23,13 @@ const validBusiness = {
 const validProduct = {
   name: "Vela aromática",
   skuOrSlug: "vela-aromatica",
+  monthlyCapacity: "120",
   isActive: true,
 };
 
 const validRecipeProduct = {
   name: "Pan flauta",
+  monthlyCapacity: "120",
   recipe: [{ supplyId: SERVER_ID, quantity: "250", unit: "g" }],
 };
 
@@ -98,6 +100,20 @@ describe("createProductInputSchema", () => {
     });
   });
 
+  it.each(["-5", "abc", "2.5"])(
+    "rejects the monthly capacity %j with the shared message",
+    (monthlyCapacity) => {
+      expect(
+        fieldErrors(createProductInputSchema, {
+          ...validProduct,
+          monthlyCapacity,
+        }),
+      ).toEqual({
+        monthlyCapacity: ["Ingresá un número entero de unidades, 0 o mayor."],
+      });
+    },
+  );
+
   it("drops server-controlled fields when the input carries them", () => {
     const input = {
       ...validProduct,
@@ -122,6 +138,38 @@ describe("saveProductInputSchema", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("normalizes the monthly capacity to an integer", () => {
+    const result = saveProductInputSchema.parse(validRecipeProduct);
+
+    expect(result.monthlyCapacity).toBe(120);
+  });
+
+  it.each(["", "   "])(
+    "stores an empty monthly capacity %j as null",
+    (monthlyCapacity) => {
+      const result = saveProductInputSchema.parse({
+        ...validRecipeProduct,
+        monthlyCapacity,
+      });
+
+      expect(result.monthlyCapacity).toBeNull();
+    },
+  );
+
+  it.each(["-5", "abc", "2.5", "1e3"])(
+    "rejects the monthly capacity %j with the shared message",
+    (monthlyCapacity) => {
+      expect(
+        fieldErrors(saveProductInputSchema, {
+          ...validRecipeProduct,
+          monthlyCapacity,
+        }),
+      ).toEqual({
+        monthlyCapacity: ["Ingresá un número entero de unidades, 0 o mayor."],
+      });
+    },
+  );
 
   it("rejects a whitespace-only name with the shared message", () => {
     expect(

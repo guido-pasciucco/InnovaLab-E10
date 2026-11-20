@@ -8,6 +8,7 @@ import {
   type SupplyUnitFamily,
 } from "@/lib/schemas/supplies/units";
 import {
+  monthlyCapacityField,
   recipeQuantityField,
   recipeSupplyField,
   recipeUnitField,
@@ -18,8 +19,8 @@ import {
 // server validates with lib/db/business/validation.ts; both contracts compose
 // the same field rules from ./fields.ts (and productNameField).
 //
-// Scope of issue #240: name + recipe. Purchase unit, unit cost and monthly
-// capacity stay out of this story.
+// Scope of issue #240 was name + recipe; #269 added the monthly capacity as one
+// more editable field. Purchase unit and unit cost still stay out of this story.
 //
 // The recipe only accepts supplies that are available in the current catalog:
 // the form builds the schema with `createProductFormSchema(supplies)`, so
@@ -34,6 +35,7 @@ export const recipeItemSchema = z.object({
 
 const productFormObjectSchema = z.object({
   name: productNameField,
+  monthlyCapacity: monthlyCapacityField,
   recipe: z
     .array(recipeItemSchema)
     .min(1, { error: "Agregá al menos un insumo a la receta." }),
@@ -133,8 +135,9 @@ export function createProductFormSchema(
 }
 
 // Single source of truth: types are inferred from the schema, no hand-written
-// interface to keep in sync.
-export type ProductFormValues = z.infer<typeof productFormObjectSchema>;
+// interface to keep in sync. The form type is the input side because the
+// capacity travels as text while the user types; the server rule parses it.
+export type ProductFormValues = z.input<typeof productFormObjectSchema>;
 
 // Shape the client needs to list, edit and show a saved recipe. The supply
 // name is a snapshot for the UI, filled by the service join.
@@ -148,6 +151,7 @@ export type ProductRecipeItem = {
 export type ProductItem = {
   id: string;
   name: string;
+  monthlyCapacity: number | null;
   recipe: ProductRecipeItem[];
 };
 

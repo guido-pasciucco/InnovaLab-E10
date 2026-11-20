@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   index,
+  integer,
   numeric,
   pgTable,
   text,
@@ -41,6 +42,10 @@ export const products = pgTable("products", {
     .references(() => businesses.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   skuOrSlug: text("sku_or_slug"),
+  // How many units the business plans to make in the month (#269). One number
+  // per product, independent of the calculation period. NULL means "not
+  // loaded" and is stored instead of 0 so the UI can tell empty from zero.
+  monthlyCapacity: integer("monthly_capacity"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -49,7 +54,9 @@ export const products = pgTable("products", {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+}, (table) => [
+  check("products_monthly_capacity_non_negative", sql`${table.monthlyCapacity} >= 0`),
+]);
 
 export const productIngredients = pgTable("product_ingredients", {
   id: uuid("id").defaultRandom().primaryKey(),

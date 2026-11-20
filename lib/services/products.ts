@@ -60,6 +60,7 @@ function toProductItem(
   return {
     id: product.id,
     name: product.name,
+    monthlyCapacity: product.monthlyCapacity,
     recipe: ingredients.map((ingredient) => ({
       supplyId: ingredient.supplyId,
       supplyName: suppliesById.get(ingredient.supplyId)?.name ?? "",
@@ -213,6 +214,7 @@ export async function listProductsService(
   return productRows.map(({ product }) => ({
     id: product.id,
     name: product.name,
+    monthlyCapacity: product.monthlyCapacity,
     recipe: recipesByProduct.get(product.id) ?? [],
   }));
 }
@@ -242,6 +244,7 @@ export async function getProductService(
   return {
     id: row.product.id,
     name: row.product.name,
+    monthlyCapacity: row.product.monthlyCapacity,
     recipe: await mapRecipeRows(db, productId),
   };
 }
@@ -260,7 +263,11 @@ export async function createProductService(
 
     const [product] = await tx
       .insert(products)
-      .values({ name: data.name, businessId: business.id })
+      .values({
+        name: data.name,
+        monthlyCapacity: data.monthlyCapacity,
+        businessId: business.id,
+      })
       .returning();
 
     if (!product) {
@@ -316,7 +323,11 @@ export async function updateProductService(
 
     const [product] = await tx
       .update(products)
-      .set({ name: data.name, updatedAt: new Date() })
+      .set({
+        name: data.name,
+        monthlyCapacity: data.monthlyCapacity,
+        updatedAt: new Date(),
+      })
       .where(eq(products.id, productId))
       .returning();
 
