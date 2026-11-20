@@ -19,7 +19,6 @@ import type {
 } from "@/lib/schemas/products/products";
 import { createProductFormSchema } from "@/lib/schemas/products/products";
 import {
-  getSupplyUnit,
   getSupplyUnitsForFamily,
   isRecipeUnitAllowed,
 } from "@/lib/schemas/supplies/units";

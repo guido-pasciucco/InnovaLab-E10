@@ -140,7 +140,7 @@ export function ProductsCatalog({
       <section aria-label="Lista de productos" className="min-w-0 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-fg">
-            Productos ({products.length})
+            Productos ({query ? filtered.length : products.length})
           </h2>
           <button
             type="button"
