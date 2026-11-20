@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 
 import type { CatalogSupply } from "@/lib/calc/adaptCatalogVariableCosts";
 import { deriveProductVariableCosts } from "./products";
@@ -15,8 +15,23 @@ const supply: CatalogSupply = {
 
 const recipe = {
   yieldQuantity: "1",
-  recipe: [{ supplyId: "flour", supplyName: "Harina", quantity: "1" }],
+  recipe: [{ supplyId: "flour", supplyName: "Harina", quantity: "1", unit: "g" }],
 };
+
+function catalogSupply(
+  id: string,
+  purchaseUnit: string,
+  minimumUnit: string,
+  conversionFactor: string,
+): CatalogSupply {
+  return {
+    ...supply,
+    id,
+    purchaseUnit,
+    minimumUnit,
+    conversionFactor,
+  };
+}
 
 describe("deriveProductVariableCosts", () => {
   it("returns an exact calculable result for a valid product, including a real zero cost", () => {
@@ -51,7 +66,7 @@ describe("deriveProductVariableCosts", () => {
           ...recipe,
           recipe: [
             ...recipe.recipe,
-            { supplyId: "missing", supplyName: "No existe", quantity: "1" },
+            { supplyId: "missing", supplyName: "No existe", quantity: "1", unit: "g" },
           ],
         },
         [supply],
@@ -82,6 +97,36 @@ describe("deriveProductVariableCosts", () => {
       variableCostsUnavailableCode: null,
     });
   });
+
+  it.each([
+    ["mass", catalogSupply("mass", "kg", "g", "1000"), "kg", "0.5", "0.50"],
+    ["volume", catalogSupply("volume", "L", "ml", "1000"), "L", "0.5", "0.50"],
+    ["length", catalogSupply("length", "m", "mm", "1000"), "cm", "50", "0.50"],
+    ["count", catalogSupply("count", "docena", "unidad", "12"), "docena", "0.5", "0.50"],
+  ])(
+    "uses the persisted %s recipe unit and converts it exactly to the catalog minimum unit",
+    (_family, catalogEntry, unit, quantity, expected) => {
+      const result = deriveProductVariableCosts(
+        {
+          yieldQuantity: "1",
+          recipe: [
+            {
+              supplyId: catalogEntry.id,
+              supplyName: "Insumo",
+              quantity,
+              unit,
+            },
+          ],
+        },
+        [catalogEntry],
+      );
+
+      expect(result).toMatchObject({
+        variableCosts: { ingredientsCost: expected, unitCost: expected },
+        variableCostsUnavailableCode: null,
+      });
+    },
+  );
   it("propagates unexpected malformed catalog values", () => {
     expect(() =>
       deriveProductVariableCosts(recipe, [{ ...supply, purchasePrice: null as unknown as string }]),

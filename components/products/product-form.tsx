@@ -18,6 +18,10 @@ import type {
   RecipeSupplyOption,
 } from "@/lib/schemas/products/products";
 import { createProductFormSchema } from "@/lib/schemas/products/products";
+import {
+  getSupplyUnitsForFamily,
+  isRecipeUnitAllowed,
+} from "@/lib/schemas/supplies/units";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { PrimaryButton } from "@/components/ui/primary-button";
@@ -37,7 +41,7 @@ const SERVER_FIELDS: readonly Path<ProductFormValues>[] = ["name", "yieldQuantit
 
 // Empty row used when the form opens or the user adds another ingredient.
 function emptyRecipeRow(): ProductFormValues["recipe"][number] {
-  return { supplyId: "", quantity: "" };
+  return { supplyId: "", quantity: "", unit: "" };
 }
 
 function toDefaultValues(product: ProductItem | null): ProductFormValues {
@@ -51,6 +55,7 @@ function toDefaultValues(product: ProductItem | null): ProductFormValues {
     recipe: product.recipe.map((item) => ({
       supplyId: item.supplyId,
       quantity: item.quantity,
+      unit: item.unit,
     })),
   };
 }
@@ -63,30 +68,58 @@ function recipeArrayMessage(errors: FieldErrors<ProductFormValues>): string | un
   return recipe?.message ?? recipe?.root?.message;
 }
 
+// Catalog units of the selected supply's family, plus the stored value when it
+// predates the catalog (legacy rows must stay visible and editable).
+function recipeUnitOptions(
+  supply: RecipeSupplyOption | undefined,
+  currentUnit: string,
+): { value: string; label: string }[] {
+  if (!supply) return [];
+
+  const options = supply.family
+    ? getSupplyUnitsForFamily(supply.family).map((unit) => ({
+        value: unit.value,
+        label: unit.label,
+      }))
+    : supply.defaultUnit
+      ? [{ value: supply.defaultUnit, label: `${supply.defaultUnit} (actual)` }]
+      : [];
+
+  if (
+    currentUnit &&
+    !options.some((option) => option.value === currentUnit) &&
+    isRecipeUnitAllowed(supply, currentUnit)
+  ) {
+    options.push({ value: currentUnit, label: `${currentUnit} (actual)` });
+  }
+
+  return options;
+}
+
 export function ProductForm({
   product,
   supplies,
   onCancel,
   onSaved,
 }: ProductFormProps) {
-  const isEditing = product !== null;
   const hasSupplies = supplies.length > 0;
   const [state, submitAction, isPending] = useActionState(saveProduct, undefined);
 
   // The catalog snapshot travels with the schema: saving a recipe whose supply
   // was deleted (or turned into packaging) fails with a field error instead of
-  // storing a dangling id.
-  const schema = useMemo(
-    () => createProductFormSchema(supplies.map((supply) => supply.id)),
+  // storing a dangling id. The unit selector also uses this snapshot.
+  const suppliesById = useMemo(
+    () => new Map(supplies.map((supply) => [supply.id, supply])),
     [supplies],
   );
+  const schema = useMemo(() => createProductFormSchema(supplies), [supplies]);
 
   const {
     register,
     control,
     handleSubmit,
-    setValue,
     setError,
+    setValue,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(schema),
@@ -97,8 +130,11 @@ export function ProductForm({
     control,
     name: "recipe",
   });
+
   const productName = useWatch({ control, name: "name" });
   const yieldQuantity = useWatch({ control, name: "yieldQuantity" });
+
+  const recipeValues = useWatch({ control, name: "recipe" });
 
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
   const isSubmittingRef = useRef(false);
@@ -132,65 +168,73 @@ export function ProductForm({
   const arrayMessage = recipeArrayMessage(errors);
 
   return (
-    <section className="rounded-[24px] bg-surface p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold text-fg">
-            {isEditing ? "Editar producto" : "Nuevo producto"}
-          </h3>
-          <p className="mt-1 text-sm text-fg-muted">
-            Ponele un nombre y armá la receta con los insumos de tu catálogo.
-          </p>
-        </div>
-      </div>
+    <form onSubmit={handleFormSubmit} noValidate className="flex flex-col gap-4">
+      {state && !state.ok && !hasServerFieldErrors && (
+        <p role="alert" className="text-sm text-danger">
+          {state.message}
+        </p>
+      )}
 
-      <form onSubmit={handleFormSubmit} noValidate className="mt-4 flex flex-col gap-4">
-        {state && !state.ok && !hasServerFieldErrors && (
-          <p role="alert" className="text-sm text-danger">
-            {state.message}
-          </p>
+      <TextField
+        label="Nombre del producto"
+        placeholder="Pan flauta"
+        disabled={isPending}
+        error={errors.name?.message}
+        {...register("name")}
+      />
+
+      <fieldset className="flex flex-col gap-3">
+        <legend className="text-base font-semibold text-fg">Receta</legend>
+        <p className="text-sm text-fg-muted">
+          Elegí los insumos que ya cargaste y anotá la cantidad y la unidad de
+          cada uno.
+        </p>
+
+        {!hasSupplies && (
+          <div className="rounded-[16px] bg-warning-subtle p-4 text-sm text-fg">
+            <p>Todavía no tenés insumos disponibles.</p>
+            <p className="mt-1 text-fg-muted">
+              El packaging no se usa como ingrediente de la receta.
+            </p>
+            <Link
+              href="/insumos"
+              className="mt-1 inline-block font-semibold text-link underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Cargá tu catálogo de insumos
+            </Link>
+          </div>
         )}
 
-        <TextField
-          label="Nombre del producto"
-          placeholder="Pan flauta"
-          disabled={isPending}
-          error={errors.name?.message}
-          {...register("name")}
-        />
+        {fields.map((field, index) => {
+          const selectedSupply = suppliesById.get(
+            recipeValues?.[index]?.supplyId ?? "",
+          );
+          const unitOptions = recipeUnitOptions(
+            selectedSupply,
+            recipeValues?.[index]?.unit ?? "",
+          );
+          const supplyField = register(`recipe.${index}.supplyId`);
 
-        <fieldset className="flex flex-col gap-3">
-          <legend className="text-base font-semibold text-fg">Receta</legend>
-          <p className="text-sm text-fg-muted">
-            Elegí los insumos que ya cargaste y anotá la cantidad de cada uno.
-          </p>
-
-          {!hasSupplies && (
-            <div className="rounded-[16px] bg-warning-subtle p-4 text-sm text-fg">
-              <p>Todavía no tenés insumos disponibles.</p>
-              <p className="mt-1 text-fg-muted">
-                El packaging no se usa como ingrediente de la receta.
-              </p>
-              <Link
-                href="/supplies"
-                className="mt-1 inline-block font-semibold text-link underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-              >
-                Cargá tu catálogo de insumos
-              </Link>
-            </div>
-          )}
-
-          {fields.map((field, index) => (
+          return (
             <div
               key={field.id}
               className="rounded-[16px] border border-border-default bg-surface-tint p-3"
             >
-              <div className="grid gap-3 sm:grid-cols-[1fr_140px_auto] sm:items-start">
+              <div className="grid gap-3 sm:grid-cols-[1fr_110px_150px_auto] sm:items-start">
                 <SelectField
                   label="Insumo"
                   disabled={!hasSupplies || isPending}
                   error={errors.recipe?.[index]?.supplyId?.message}
-                  {...register(`recipe.${index}.supplyId`)}
+                  {...supplyField}
+                  onChange={(event) => {
+                    supplyField.onChange(event);
+                    const nextSupply = suppliesById.get(event.target.value);
+                    setValue(
+                      `recipe.${index}.unit`,
+                      nextSupply?.defaultUnit ?? "",
+                      { shouldValidate: false },
+                    );
+                  }}
                 >
                   <option value="">Elegí un insumo</option>
                   {supplies.map((supply) => (
@@ -209,6 +253,22 @@ export function ProductForm({
                   {...register(`recipe.${index}.quantity`)}
                 />
 
+                <SelectField
+                  label="Unidad"
+                  disabled={!selectedSupply || isPending}
+                  error={errors.recipe?.[index]?.unit?.message}
+                  {...register(`recipe.${index}.unit`)}
+                >
+                  <option value="">
+                    {selectedSupply ? "Elegí la unidad" : "Elegí un insumo"}
+                  </option>
+                  {unitOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </SelectField>
+
                 <button
                   type="button"
                   onClick={() => remove(index)}
@@ -219,58 +279,53 @@ export function ProductForm({
                 </button>
               </div>
             </div>
-          ))}
+          );
+        })}
 
-          {arrayMessage && (
-            <p role="alert" className="text-sm text-danger">
-              {arrayMessage}
-            </p>
-          )}
+        {arrayMessage && (
+          <p role="alert" className="text-sm text-danger">
+            {arrayMessage}
+          </p>
+        )}
 
-          <button
-            type="button"
-            onClick={() => append(emptyRecipeRow())}
-            disabled={!hasSupplies || isPending}
-            className="min-h-11 self-start rounded-[10px] border border-border-control bg-surface px-4 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            + Agregar insumo
-          </button>
-        </fieldset>
+        <button
+          type="button"
+          onClick={() => append(emptyRecipeRow())}
+          disabled={!hasSupplies || isPending}
+          className="min-h-11 self-start rounded-[10px] border border-border-control bg-surface px-4 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          + Agregar insumo
+        </button>
+      </fieldset>
 
-        <RecipeYieldField
-          productName={productName}
-          value={yieldQuantity}
-          onChange={(value) => setValue("yieldQuantity", value, { shouldValidate: true })}
-          error={errors.yieldQuantity?.message}
+      <RecipeYieldField
+        productName={productName}
+        value={yieldQuantity}
+        onChange={(value) => setValue("yieldQuantity", value, { shouldValidate: true })}
+        error={errors.yieldQuantity?.message}
+        disabled={isPending}
+      />
+
+      <div className="flex gap-3">
+        <PrimaryButton
+          type="submit"
+          disabled={!hasSupplies || isPending}
+        >
+          {isPending ? "Guardando…" : "Guardar"}
+        </PrimaryButton>
+        <button
+          type="button"
+          onClick={onCancel}
           disabled={isPending}
-        />
+          className="min-h-11 flex-1 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-base font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+      </div>
 
-        <div className="flex gap-3">
-          <PrimaryButton
-            type="submit"
-            className="flex-1"
-            disabled={!hasSupplies || isPending}
-          >
-            {isPending
-              ? "Guardando…"
-              : isEditing
-                ? "Guardar cambios"
-                : "Guardar producto"}
-          </PrimaryButton>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isPending}
-            className="min-h-11 flex-1 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-base font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-        </div>
-
-        <p className="text-xs text-fg-muted">
-          La receta se guarda junto con el producto.
-        </p>
-      </form>
-    </section>
+      <p className="text-xs text-fg-muted">
+        La receta se guarda junto con el producto.
+      </p>
+    </form>
   );
 }

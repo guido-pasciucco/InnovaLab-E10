@@ -21,6 +21,22 @@ export const recipeSupplyIdField = z.uuid({
   error: "Elegí un insumo de tu catálogo.",
 });
 
+// Every recipe line stores its own unit. New lines must use the catalog; a
+// legacy line whose supply had a free-text minimum unit may keep that exact
+// value, so the rule only requires a non-empty string here. The service checks
+// the catalog family against the supply before writing.
+export const RECIPE_UNIT_REQUIRED_MESSAGE = "Elegí la unidad de medida del insumo.";
+export const RECIPE_UNIT_FAMILY_MESSAGE =
+  "Elegí una unidad de medida de la misma familia que el insumo.";
+
+export const recipeUnitField = z
+  .string({ error: RECIPE_UNIT_REQUIRED_MESSAGE })
+  .trim()
+  .min(1, { error: RECIPE_UNIT_REQUIRED_MESSAGE })
+  .max(40, {
+    error: "La unidad de medida debe tener como máximo 40 caracteres.",
+  });
+
 // Quantity is a decimal string, never a float: the recipe stores proportions
 // (grams, millilitres, units) and the future cost engine needs exact values.
 // The pipeline exposes one actionable message at a time.

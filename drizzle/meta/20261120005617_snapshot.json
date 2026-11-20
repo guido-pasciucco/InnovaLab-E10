@@ -1,6 +1,6 @@
 {
-  "id": "e1983f48-bb88-4a02-99e3-5cca3d36de62",
-  "prevId": "41d80c5a-c8d3-4e6c-bcb7-63451dbe0aaa",
+  "id": "108c8569-fdba-45f5-8bad-95166e009b94",
+  "prevId": "b16a7bfd-27d4-44bc-b7b5-66bde0e8cfd6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -85,6 +85,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "quantity": {
           "name": "quantity",
@@ -180,6 +186,10 @@
         "product_ingredients_quantity_positive": {
           "name": "product_ingredients_quantity_positive",
           "value": "\"product_ingredients\".\"quantity\" > 0"
+        },
+        "product_ingredients_unit_not_empty": {
+          "name": "product_ingredients_unit_not_empty",
+          "value": "length(btrim(\"product_ingredients\".\"unit\")) > 0"
         }
       },
       "isRLSEnabled": false
@@ -210,12 +220,6 @@
         "sku_or_slug": {
           "name": "sku_or_slug",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "yield_quantity": {
-          "name": "yield_quantity",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -260,12 +264,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "products_yield_quantity_positive": {
-          "name": "products_yield_quantity_positive",
-          "value": "\"products\".\"yield_quantity\" IS NULL OR \"products\".\"yield_quantity\" > 0"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.active_calculations": {

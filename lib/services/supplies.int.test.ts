@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+﻿import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ZodError } from "zod";
 
 import { getDrizzleClient, type Db } from "@/lib/db/client";
@@ -380,7 +380,7 @@ describe("supplies service", () => {
       {
         name: "Pan flauta",
         yieldQuantity: "12",
-        recipe: [{ supplyId: supply.id, quantity: "250" }],
+        recipe: [{ supplyId: supply.id, quantity: "250", unit: "g" }],
       },
       db,
     );
@@ -399,7 +399,7 @@ describe("supplies service", () => {
       {
         name: "Pan flauta",
         yieldQuantity: "12",
-        recipe: [{ supplyId: supply.id, quantity: "250" }],
+        recipe: [{ supplyId: supply.id, quantity: "250", unit: "g" }],
       },
       db,
     );
@@ -419,7 +419,7 @@ describe("supplies service", () => {
       {
         name: "Pan flauta",
         yieldQuantity: "12",
-        recipe: [{ supplyId: supply.id, quantity: "250" }],
+        recipe: [{ supplyId: supply.id, quantity: "250", unit: "g" }],
       },
       db,
     );
@@ -439,7 +439,7 @@ describe("supplies service", () => {
       {
         name: "Pan flauta",
         yieldQuantity: "12",
-        recipe: [{ supplyId: supply.id, quantity: "250" }],
+        recipe: [{ supplyId: supply.id, quantity: "250", unit: "g" }],
       },
       db,
     );
@@ -457,7 +457,7 @@ describe("supplies service", () => {
       {
         name: "Pan flauta",
         yieldQuantity: "12",
-        recipe: [{ supplyId: supply.id, quantity: "250" }],
+        recipe: [{ supplyId: supply.id, quantity: "250", unit: "g" }],
       },
       db,
     );
@@ -494,7 +494,7 @@ describe("supplies service", () => {
       {
         name: "Pan flauta",
         yieldQuantity: "12",
-        recipe: [{ supplyId: used.id, quantity: "250" }],
+        recipe: [{ supplyId: used.id, quantity: "250", unit: "g" }],
       },
       db,
     );
@@ -505,7 +505,7 @@ describe("supplies service", () => {
       {
         name: "Pan flauta",
         yieldQuantity: "12",
-        recipe: [{ supplyId: other.id, quantity: "250" }],
+        recipe: [{ supplyId: other.id, quantity: "250", unit: "g" }],
       },
       db,
     );

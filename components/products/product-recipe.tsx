@@ -1,44 +1,30 @@
 "use client";
 
 import type { ProductItem } from "@/lib/schemas/products/products";
-import { VariableCostsSummary } from "./variable-costs-summary";
+import { formatARS } from "@/lib/money/format";
 
 type ProductRecipeProps = {
   product: ProductItem;
-  onEdit: (product: ProductItem) => void;
+  onEdit: () => void;
 };
 
+// Detail view of a saved recipe. It renders inside the shared catalog modal, so
+// it keeps the same table pattern as the list and offers the edit shortcut.
 export function ProductRecipe({ product, onEdit }: ProductRecipeProps) {
   return (
-    <section
-      aria-label={`Receta de ${product.name}`}
-      className="rounded-[24px] bg-surface p-5 shadow-sm"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold tracking-wide text-fg-muted uppercase">
-            Receta guardada
-          </p>
-          <h3 className="mt-1 text-lg font-semibold text-fg">{product.name}</h3>
-        </div>
-        <button
-          type="button"
-          onClick={() => onEdit(product)}
-          className="min-h-9 rounded-[10px] border border-border-control px-3 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-        >
-          Editar
-        </button>
-      </div>
-
-      <div className="mt-4 overflow-x-auto rounded-[16px] border border-border-default">
+    <section aria-label={`Receta de ${product.name}`} className="space-y-3">
+      <div className="overflow-x-auto rounded-[16px] border border-border-control">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="bg-surface-tint">
-              <th scope="col" className="px-4 py-3 font-semibold text-fg-muted">
+            <tr className="border-b border-border-control">
+              <th scope="col" className="px-3 py-3 font-semibold text-fg-muted">
                 Insumo
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-fg-muted">
+              <th scope="col" className="px-3 py-3 text-right font-semibold text-fg-muted">
                 Cantidad
+              </th>
+              <th scope="col" className="px-3 py-3 font-semibold text-fg-muted">
+                Unidad
               </th>
             </tr>
           </thead>
@@ -46,38 +32,57 @@ export function ProductRecipe({ product, onEdit }: ProductRecipeProps) {
             {product.recipe.map((item) => (
               <tr
                 key={item.supplyId}
-                className="border-t border-border-default last:border-b-0"
+                className="border-b border-border-control last:border-0"
               >
-                <td className="px-4 py-3 text-fg">{item.supplyName}</td>
-                <td className="px-4 py-3 text-right font-semibold text-fg">
+                <td className="px-3 py-3 text-fg">{item.supplyName}</td>
+                <td className="px-3 py-3 text-right font-semibold text-fg">
                   {item.quantity}
                 </td>
+                <td className="px-3 py-3 text-fg-muted">{item.unit}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <p className="mt-3 text-sm text-fg-muted">
+      <p className="text-sm text-fg-muted">
         {product.yieldQuantity === null
           ? "Este producto histórico todavía no tiene rendimiento; no se calcula un costo variable."
           : `Rendimiento de la receta: ${product.yieldQuantity} ${product.yieldQuantity === "1" ? "unidad." : "unidades."}`}
       </p>
       {product.variableCosts && (
-        <div className="mt-5">
-          <VariableCostsSummary productName={product.name} costs={product.variableCosts} />
-        </div>
+        <dl className="grid gap-2 rounded-[16px] border border-border-control bg-surface-tint p-3 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-fg-muted">Costo de ingredientes</dt>
+            <dd className="font-semibold text-fg">{formatARS(product.variableCosts.ingredientsCost) || "Importe no disponible"}</dd>
+          </div>
+          <div>
+            <dt className="text-fg-muted">Costo variable por unidad</dt>
+            <dd className="font-semibold text-fg">{formatARS(product.variableCosts.unitCost) || "Importe no disponible"}</dd>
+          </div>
+        </dl>
       )}
       {product.variableCostsUnavailableCode !== null && (
-        <p role="status" className="mt-3 text-sm text-fg-muted">
-          No se puede calcular el costo variable con los datos históricos actuales.
+        <p role="status" className="text-sm text-fg-muted">
+          No se puede calcular el costo variable con los datos actuales de la receta.
         </p>
       )}
-      <p className="mt-3 text-sm text-fg-muted">
+
+      <p className="text-sm text-fg-muted">
         {product.recipe.length === 1
           ? "La receta usa 1 insumo de tu catálogo."
           : `La receta usa ${product.recipe.length} insumos de tu catálogo.`}
       </p>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="min-h-11 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          Editar receta
+        </button>
+      </div>
     </section>
   );
 }

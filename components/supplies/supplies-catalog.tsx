@@ -4,23 +4,14 @@ import { useMemo, useState } from "react";
 
 import type { SupplyKind } from "@/lib/schemas/supplies/fields";
 import type { SupplyItem } from "@/lib/schemas/supplies/supplies";
+import { CatalogModal } from "@/components/ui/catalog-modal";
+import { normalizeForSearch } from "@/components/ui/normalize-search";
 import { SuppliesForm } from "./supplies-form";
-import { SuppliesModal } from "./supplies-modal";
 import { SuppliesTable } from "./supplies-table";
 
 type SuppliesCatalogProps = {
   supplies: SupplyItem[];
 };
-
-// Accent-insensitive, case-insensitive search so "harina" finds "Harina" and
-// "azucar" finds "Azúcar".
-function normalize(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
 
 const TAB_BASE =
   "min-h-10 rounded-[10px] px-4 py-1.5 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
@@ -41,14 +32,14 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
     [supplies],
   );
 
-  const query = normalize(search);
+  const query = normalizeForSearch(search);
   const filtered = useMemo(() => {
     const byKind = supplies.filter((supply) => supply.kind === activeKind);
     if (!query) return byKind;
 
     return byKind.filter((supply) =>
       [supply.name, supply.purchaseUnit, supply.minimumUnit].some((value) =>
-        normalize(value).includes(query),
+        normalizeForSearch(value).includes(query),
       ),
     );
   }, [supplies, activeKind, query]);
@@ -159,14 +150,14 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
       </section>
 
       {showForm && (
-        <SuppliesModal title={formTitle} onClose={handleCancel}>
+        <CatalogModal title={formTitle} onClose={handleCancel}>
           <SuppliesForm
             kind={formKind}
             supply={editing}
             onCancel={handleCancel}
             onSaved={handleSaved}
           />
-        </SuppliesModal>
+        </CatalogModal>
       )}
     </div>
   );

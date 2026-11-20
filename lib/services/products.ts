@@ -5,9 +5,8 @@ import {
   adaptCatalogVariableCosts,
   type CatalogSupply,
 } from "@/lib/calc/adaptCatalogVariableCosts";
-import {
-  calculateVariableCosts,
-} from "@/lib/calc/calculateVariableCosts";
+import { calculateVariableCosts } from "@/lib/calc/calculateVariableCosts";
+import { convertRecipeQuantityToMinimumUnits } from "@/lib/calc/recipeUnits";
 
 import {
   businesses,
@@ -20,10 +19,16 @@ import { saveProductInputSchema } from "@/lib/db/business/validation";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { supplies } from "@/lib/db/supplies/table";
 import { AppError } from "@/lib/errors/app-error";
+import { RECIPE_UNIT_FAMILY_MESSAGE } from "@/lib/schemas/products/fields";
 import type {
   ProductItem,
   ProductRecipeItem,
 } from "@/lib/schemas/products/products";
+import {
+  getSupplyUnit,
+  isRecipeUnitAllowed,
+  resolveSupplyFamily,
+} from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
 import { getOrCreateDefaultBusiness, type Tx } from "./calculations";
 
@@ -33,7 +38,15 @@ import { getOrCreateDefaultBusiness, type Tx } from "./calculations";
 // never with the client form contract. It throws (ZodError, AppError); doors
 // translate. No try/catch.
 
-type RecipeInput = { supplyId: string; quantity: string };
+type RecipeInput = { supplyId: string; quantity: string; unit: string };
+
+type RecipeSupply = {
+  name: string;
+  purchaseUnit: string;
+  minimumUnit: string;
+};
+
+type ResolvedRecipeLine = RecipeInput;
 
 function toYieldQuantity(value: number | null): string | null {
   return value === null ? null : String(value);
@@ -44,11 +57,7 @@ export type ProductVariableCostsState = Pick<
   "variableCosts" | "variableCostsUnavailableCode"
 >;
 
-/**
- * Computes the current catalog cost from persisted source values. Domain
- * failures are represented explicitly; unexpected exceptions intentionally
- * propagate to preserve database and infrastructure failure semantics.
- */
+/** Computes a current cost from source records without using rounded output. */
 export function deriveProductVariableCosts(
   product: Pick<ProductItem, "yieldQuantity" | "recipe">,
   catalog: readonly CatalogSupply[],
@@ -56,34 +65,51 @@ export function deriveProductVariableCosts(
   if (product.yieldQuantity === null || product.recipe.length === 0) {
     return { variableCosts: null, variableCostsUnavailableCode: null };
   }
+
   const catalogById = new Map(catalog.map((supply) => [supply.id, supply]));
+  const normalizedRecipe = product.recipe.map((ingredient) => {
+    const supply = catalogById.get(ingredient.supplyId);
+    if (!supply) return ingredient;
+
+    const quantity = convertRecipeQuantityToMinimumUnits(
+      ingredient.quantity,
+      ingredient.unit,
+    );
+    if (quantity === null) return null;
+
+    return { ...ingredient, quantity, unit: supply.minimumUnit };
+  });
+
+  if (normalizedRecipe.some((ingredient) => ingredient === null)) {
+    return { variableCosts: null, variableCostsUnavailableCode: "UNSUPPORTED_RECIPE_UNIT" };
+  }
+
+  const recipeForCost = normalizedRecipe as ProductItem["recipe"];
+
   const adapted = adaptCatalogVariableCosts({
-    // Keep only catalog rows referenced by this product, but preserve every
-    // recipe line below. A missing ingredient then becomes
-    // MISSING_INGREDIENT_SUPPLY without unrelated legacy catalog rows blocking
-    // an otherwise valid product.
     catalog: product.recipe.flatMap((ingredient) => {
       const supply = catalogById.get(ingredient.supplyId);
       return supply ? [supply] : [];
     }),
     recipe: {
       yieldQuantity: product.yieldQuantity,
-      ingredients: product.recipe.map((ingredient) => ({
+      ingredients: recipeForCost.map((ingredient) => ({
         supplyId: ingredient.supplyId,
         quantity: ingredient.quantity,
-        unit: catalogById.get(ingredient.supplyId)?.minimumUnit ?? "",
+        unit: ingredient.unit,
       })),
     },
     presentations: [],
   });
+
   if (!adapted.ok) {
     return { variableCosts: null, variableCostsUnavailableCode: adapted.code };
   }
+
   const result = calculateVariableCosts(adapted.input);
-  if (!result.ok) {
-    return { variableCosts: null, variableCostsUnavailableCode: result.code };
-  }
-  return { variableCosts: result, variableCostsUnavailableCode: null };
+  return result.ok
+    ? { variableCosts: result, variableCostsUnavailableCode: null }
+    : { variableCosts: null, variableCostsUnavailableCode: result.code };
 }
 
 // numeric(14,4) always returns four decimals ("250.0000"). The recipe form
@@ -99,7 +125,7 @@ function toFormQuantity(value: string): string {
 function toProductItem(
   product: Product,
   ingredients: ProductIngredient[],
-  supplyNames: Map<string, string>,
+  suppliesById: Map<string, RecipeSupply>,
 ): ProductItem {
   return {
     id: product.id,
@@ -109,8 +135,9 @@ function toProductItem(
     variableCostsUnavailableCode: null,
     recipe: ingredients.map((ingredient) => ({
       supplyId: ingredient.supplyId,
-      supplyName: supplyNames.get(ingredient.supplyId) ?? "",
+      supplyName: suppliesById.get(ingredient.supplyId)?.name ?? "",
       quantity: toFormQuantity(ingredient.quantity),
+      unit: ingredient.unit ?? "",
     })),
   };
 }
@@ -133,6 +160,7 @@ async function mapRecipeRows(
     supplyId: ingredient.supplyId,
     supplyName,
     quantity: toFormQuantity(ingredient.quantity),
+    unit: ingredient.unit ?? "",
   }));
 }
 
@@ -142,11 +170,17 @@ async function resolveRecipeSupplies(
   userId: VerifiedUserId,
   recipe: readonly RecipeInput[],
   db: Db | Tx,
-): Promise<Map<string, string>> {
+): Promise<Map<string, RecipeSupply>> {
   const ids = [...new Set(recipe.map((item) => item.supplyId))];
 
   const rows = await db
-    .select({ id: supplies.id, name: supplies.name, kind: supplies.kind })
+    .select({
+      id: supplies.id,
+      name: supplies.name,
+      kind: supplies.kind,
+      purchaseUnit: supplies.purchaseUnit,
+      minimumUnit: supplies.minimumUnit,
+    })
     .from(supplies)
     .where(and(eq(supplies.userId, userId), inArray(supplies.id, ids)));
 
@@ -158,7 +192,56 @@ async function resolveRecipeSupplies(
     throw new AppError("SUPPLY_NOT_INGREDIENT");
   }
 
-  return new Map(rows.map((row) => [row.id, row.name]));
+  return new Map(
+    rows.map((row) => [
+      row.id,
+      {
+        name: row.name,
+        purchaseUnit: row.purchaseUnit,
+        minimumUnit: row.minimumUnit,
+      },
+    ]),
+  );
+}
+
+function invalidRecipeUnit(): never {
+  throw new AppError("VALIDATION", {
+    formErrors: [],
+    fieldErrors: { recipe: [RECIPE_UNIT_FAMILY_MESSAGE] },
+  });
+}
+
+// Keeps catalog units canonical and preserves a legacy unit only when the
+// supply itself predates the catalog and the line repeats its stored minimum
+// unit. Mixing families (kg → L) and arbitrary free text are rejected.
+function resolveRecipeUnits(
+  recipe: readonly RecipeInput[],
+  suppliesById: Map<string, RecipeSupply>,
+): ResolvedRecipeLine[] {
+  return recipe.map((item) => {
+    const supply = suppliesById.get(item.supplyId);
+
+    if (!supply) {
+      throw new AppError("SUPPLY_NOT_FOUND");
+    }
+
+    const unit = getSupplyUnit(item.unit);
+    const family = resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit);
+
+    if (unit) {
+      if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
+        invalidRecipeUnit();
+      }
+
+      return { ...item, unit: unit.value };
+    }
+
+    if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
+      invalidRecipeUnit();
+    }
+
+    return { ...item, unit: supply.minimumUnit };
+  });
 }
 
 export async function listProductsService(
@@ -196,18 +279,19 @@ export async function listProductsService(
       supplyId: ingredient.supplyId,
       supplyName,
       quantity: toFormQuantity(ingredient.quantity),
+      unit: ingredient.unit ?? "",
     });
     recipesByProduct.set(ingredient.productId, recipe);
   }
 
   return productRows.map(({ product }) => {
     const item: ProductItem = {
-    id: product.id,
-    name: product.name,
-    yieldQuantity: toYieldQuantity(product.yieldQuantity),
-    recipe: recipesByProduct.get(product.id) ?? [],
-    variableCosts: null,
-    variableCostsUnavailableCode: null,
+      id: product.id,
+      name: product.name,
+      yieldQuantity: toYieldQuantity(product.yieldQuantity),
+      recipe: recipesByProduct.get(product.id) ?? [],
+      variableCosts: null,
+      variableCostsUnavailableCode: null,
     };
     return { ...item, ...deriveProductVariableCosts(item, catalog) };
   });
@@ -255,7 +339,8 @@ export async function createProductService(
   const data = saveProductInputSchema.parse(input);
 
   return db.transaction(async (tx) => {
-    const supplyNames = await resolveRecipeSupplies(userId, data.recipe, tx);
+    const suppliesById = await resolveRecipeSupplies(userId, data.recipe, tx);
+    const recipe = resolveRecipeUnits(data.recipe, suppliesById);
     const business = await getOrCreateDefaultBusiness(tx, userId);
 
     const [product] = await tx
@@ -272,15 +357,16 @@ export async function createProductService(
     const ingredients = await tx
       .insert(productIngredients)
       .values(
-        data.recipe.map((item) => ({
+        recipe.map((item) => ({
           productId: product.id,
           supplyId: item.supplyId,
           quantity: item.quantity,
+          unit: item.unit,
         })),
       )
       .returning();
 
-    const item = toProductItem(product, ingredients, supplyNames);
+    const item = toProductItem(product, ingredients, suppliesById);
     const catalog = await tx.select().from(supplies).where(eq(supplies.userId, userId));
     return { ...item, ...deriveProductVariableCosts(item, catalog) };
   });
@@ -312,7 +398,8 @@ export async function updateProductService(
       return null;
     }
 
-    const supplyNames = await resolveRecipeSupplies(userId, data.recipe, tx);
+    const suppliesById = await resolveRecipeSupplies(userId, data.recipe, tx);
+    const recipe = resolveRecipeUnits(data.recipe, suppliesById);
 
     const [product] = await tx
       .update(products)
@@ -333,15 +420,16 @@ export async function updateProductService(
     const ingredients = await tx
       .insert(productIngredients)
       .values(
-        data.recipe.map((item) => ({
+        recipe.map((item) => ({
           productId: product.id,
           supplyId: item.supplyId,
           quantity: item.quantity,
+          unit: item.unit,
         })),
       )
       .returning();
 
-    const item = toProductItem(product, ingredients, supplyNames);
+    const item = toProductItem(product, ingredients, suppliesById);
     const catalog = await tx.select().from(supplies).where(eq(supplies.userId, userId));
     return { ...item, ...deriveProductVariableCosts(item, catalog) };
   });
