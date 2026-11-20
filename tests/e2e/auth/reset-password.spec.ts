@@ -195,14 +195,33 @@ test("password rules, show/hide toggles and the confirm match are enforced", asy
   await expect(page).toHaveURL("/update-password");
 });
 
-test("submitting without a recovery session asks for a new link", async ({
+test("an anonymous visitor is sent back to request a new link", async ({
   page,
   updatePasswordPage,
+  resetPasswordPage,
 }) => {
-  // Arrange: /update-password renders without a session; the Server Action
-  // must refuse to update a password for an anonymous caller.
+  // Act: without a recovery session the page must not render the form, so
+  // no password ever reaches the server (BUG-006).
   await updatePasswordPage.goto();
+
+  // Assert
+  await expect(page).toHaveURL("/reset-password?error=AUTH_SESSION_MISSING");
+  await expect(resetPasswordPage.errorAlert).toHaveText(SESSION_MISSING_MESSAGE);
+  await expect(updatePasswordPage.passwordInput).toHaveCount(0);
+});
+
+test("a session that expires after the form loads asks for a new link", async ({
+  page,
+  context,
+  user,
+  resetPasswordPage,
+  updatePasswordPage,
+}) => {
+  // Arrange: the guard only runs on render, so the Server Action must still
+  // refuse a caller whose session is gone by the time they submit.
+  await openResetLink(page, resetPasswordPage, user);
   await expect(updatePasswordPage.heading).toBeVisible();
+  await context.clearCookies();
 
   // Act
   await updatePasswordPage.setPassword(faker.internet.password({ length: 16 }));
@@ -235,7 +254,8 @@ test("the confirm route never redirects off-site", async ({ page }) => {
 });
 
 test("the dev-only error preview control never ships in production", async ({
-  page,
+  // Signed in: /update-password only renders inside a session.
+  authedPage: page,
   resetPasswordPage,
   updatePasswordPage,
 }) => {

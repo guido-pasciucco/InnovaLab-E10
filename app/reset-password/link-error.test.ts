@@ -14,6 +14,12 @@ describe("linkErrorMessage", () => {
     );
   });
 
+  it("explains an expired session (sent by the /update-password guard)", () => {
+    expect(linkErrorMessage("AUTH_SESSION_MISSING")).toBe(
+      "Tu sesión venció. Pedí un enlace nuevo para continuar.",
+    );
+  });
+
   it.each([undefined, "", "INTERNAL", "<script>", ["AUTH_LINK_INVALID", "x"]])(
     "shows nothing for %j (only known link errors are rendered)",
     (code) => {
