@@ -25,7 +25,16 @@ test("guarda la unidad de una línea de receta y la muestra", async ({
   await authedPage.getByLabel("Insumo").selectOption({ label: "Harina 000" });
   await authedPage.getByLabel("Cantidad").fill("250");
   await authedPage.getByLabel("Unidad").selectOption("kg");
-  await authedPage.getByRole("button", { name: "Guardar producto" }).click();
+  await authedPage.getByRole("button", { name: "Guardar", exact: true }).click();
+
+  await expect(
+    authedPage.getByRole("status").filter({
+      hasText: "Producto guardado en tu catálogo.",
+    }),
+  ).toBeVisible();
+  await authedPage
+    .getByRole("button", { name: "Ver receta de Pan flauta" })
+    .click();
 
   await expect(
     authedPage.getByRole("heading", { name: "Pan flauta" }),

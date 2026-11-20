@@ -2,17 +2,31 @@
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
-type SuppliesModalProps = {
+type CatalogModalProps = {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  // "md" fits a short form; "lg" is for wide content such as multi-row forms or
+  // detail tables.
+  size?: "md" | "lg";
 };
 
-// Accessible dialog used by the catalog for both create and edit. It closes on
-// Escape, backdrop click and the close button, and locks background scrolling
-// while open. Kept as a client component so the form stays mounted only while
-// the modal is visible.
-export function SuppliesModal({ title, onClose, children }: SuppliesModalProps) {
+const SIZE_CLASS = {
+  md: "max-w-lg",
+  lg: "max-w-2xl",
+} as const;
+
+// Accessible dialog shared by both catalogs (Insumos and Productos) so create,
+// edit and detail views look and behave the same. It closes on Escape, backdrop
+// click and the close button, and locks background scrolling while open. It has
+// no open/closed prop: the parent renders it conditionally, so its content only
+// mounts while the dialog is visible.
+export function CatalogModal({
+  title,
+  onClose,
+  children,
+  size = "md",
+}: CatalogModalProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
@@ -48,7 +62,7 @@ export function SuppliesModal({ title, onClose, children }: SuppliesModalProps) 
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[24px] bg-surface p-5 shadow-xl"
+        className={`max-h-[90vh] w-full overflow-y-auto rounded-[24px] bg-surface p-5 shadow-xl ${SIZE_CLASS[size]}`}
       >
         <div className="flex items-start justify-between gap-4">
           <h2 id={titleId} className="text-lg font-semibold text-fg">
