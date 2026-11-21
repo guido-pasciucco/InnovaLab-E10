@@ -155,6 +155,34 @@
       "when": 1795136177935,
       "tag": "20261120005617_odd_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795234298154,
+      "tag": "20261121041138_supplier_registry",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795234941700,
+      "tag": "20261121042221_tenders",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795235297906,
+      "tag": "20261121042817_tender_offers",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795235793555,
+      "tag": "20261121043633_tender_purchases",
+      "breakpoints": true
     }
   ]
 }

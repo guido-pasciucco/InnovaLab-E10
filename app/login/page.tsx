@@ -1,4 +1,5 @@
 import { linkErrorMessage } from "@/app/reset-password/link-error";
+import { safeNextPath } from "@/lib/safe-next-path";
 import { AuthHeroPanel } from "@/components/auth/auth-hero-panel";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 
@@ -13,7 +14,11 @@ type LoginPageProps = {
 // /auth/confirm sends users back here with `?error=<code>` when the signup
 // confirmation link could not be exchanged for a session.
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const linkError = linkErrorMessage((await searchParams).error);
+  const params = await searchParams;
+  const linkError = linkErrorMessage(params.error);
+  // Where to continue after signing in (e.g. back to a supplier invite link).
+  // Sanitized so it can only point inside the app.
+  const next = safeNextPath(typeof params.next === "string" ? params.next : null, "/dashboard");
 
   return (
     <AuthPageShell
@@ -37,7 +42,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           {linkError}
         </p>
       )}
-      <LoginForm />
+      <LoginForm next={next} />
     </AuthPageShell>
   );
 }

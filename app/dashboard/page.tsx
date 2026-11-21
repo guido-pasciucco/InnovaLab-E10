@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getHomePathService } from "@/lib/services/suppliers";
+import { listTenderNoticesService } from "@/lib/services/tenders";
+import { TenderNotices } from "@/components/tenders/notices";
 import { CalculationList, NewCalculationButton } from "@/components/dashboard/calculation-list";
 import { TOTAL_STEPS } from "@/components/calculator/wizard/wizard-steps";
 import { requireUser } from "@/lib/auth/require-user";
@@ -22,9 +26,13 @@ function StatCard({ label, value, hint }: { label: string; value: string; hint?:
 // piece of data below is read from the DB, filtered by the session user id.
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [profile, calculations] = await Promise.all([
+  // A supplier account without a business of its own belongs in the supplier
+  // panel (docs/licitaciones, annex 03), not in the emprendedor dashboard.
+  if ((await getHomePathService(user.id)) === "/proveedor") redirect("/proveedor");
+  const [profile, calculations, tenderNotices] = await Promise.all([
     getProfileSummaryService(user.id),
     listUserCalculationsService(user.id),
+    listTenderNoticesService(user.id),
   ]);
 
   const furthest = calculations.reduce((max, c) => Math.max(max, c.currentStep), 0);
@@ -144,6 +152,32 @@ export default async function DashboardPage() {
               <p className="mt-3 text-lg font-semibold text-on-brand">Productos</p>
               <p className="mt-2 text-sm text-on-brand-muted">
                 Armá la receta de cada producto con los insumos del catálogo.
+              </p>
+            </Link>
+          </div>
+        </section>
+
+        <TenderNotices notices={tenderNotices} />
+
+        <section aria-label="Compras">
+          <h2 className="mb-3 text-lg font-semibold text-fg">Compras de insumos</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Link
+              href="/licitaciones"
+              className="rounded-3xl bg-surface p-5 shadow-sm transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <p className="text-lg font-semibold text-brand-green-700">Licitaciones</p>
+              <p className="mt-2 text-sm text-fg-muted">
+                Pedí precios a tus proveedores por rondas y compará las ofertas.
+              </p>
+            </Link>
+            <Link
+              href="/proveedores"
+              className="rounded-3xl bg-surface p-5 shadow-sm transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <p className="text-lg font-semibold text-brand-green-700">Proveedores</p>
+              <p className="mt-2 text-sm text-fg-muted">
+                Invitá a tus proveedores con un enlace personal.
               </p>
             </Link>
           </div>

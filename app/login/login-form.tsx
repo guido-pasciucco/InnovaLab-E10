@@ -76,7 +76,8 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-export default function LoginForm() {
+// `next` arrives already sanitized by the page (safeNextPath).
+export default function LoginForm({ next = "/dashboard" }: { next?: string }) {
   const router = useRouter();
   const { action, transportError, clearTransportError } = useTransportAwareAction(login);
   const [state, submitAction, pending] = useActionState(action, initialState);
@@ -93,10 +94,10 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (state?.ok) {
-      router.push("/dashboard");
+      router.push(next);
       router.refresh();
     }
-  }, [state, router]);
+  }, [state, router, next]);
 
   // A transport failure wins over the server message: the request never
   // arrived, so the previous state is not meaningful anymore.
