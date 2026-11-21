@@ -45,3 +45,4 @@ El diagrama es del 17 de noviembre de 2026. Estas decisiones, registradas en [Es
 | --- | --- |
 | DD-01 (21 nov 2026) | Se confirma para la primera versión: el proveedor entra solo por el enlace de un emprendedor y no hay registro público. |
 | ES-07 (21 nov 2026) | La nota *Al publicar* cambia: no se invita solo a quienes venden ese insumo, sino que aparecen todos los proveedores registrados preseleccionados, con sus rubros a la vista, y el emprendedor quita a los que no van. |
+| ES-08 (21 nov 2026) | La nota *Queda ligado a un emprendedor* cambia: el proveedor tiene una sola cuenta y, si otro emprendedor lo invita, entra con ella y queda vinculado también a él, sin registrarse otra vez. El dashboard unificado muestra las licitaciones de todos sus emprendedores. |

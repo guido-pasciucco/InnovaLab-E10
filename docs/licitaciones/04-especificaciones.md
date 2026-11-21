@@ -23,7 +23,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-05 | Cotización por canasta o por ítem | Decidida (21 nov 2026) |
 | ES-06 | Qué habilita la negociación | Decidida (21 nov 2026) |
 | ES-07 | Qué proveedores "venden ese insumo" | Decidida (21 nov 2026) |
-| ES-08 | Proveedor ligado a un emprendedor vs. dashboard unificado | Abierta |
+| ES-08 | Proveedor ligado a un emprendedor vs. dashboard unificado | Decidida (21 nov 2026) |
 | ES-09 | Enlace de registro: vencimiento y verificación | Abierta |
 | ES-10 | Canal de las notificaciones | Abierta |
 | ES-11 | Orden de compra y nota de agradecimiento en la primera versión | Abierta |
@@ -31,19 +31,6 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-13 | Insumo sin ofertas dentro de una canasta | Decidida (21 nov 2026) |
 
 ## Abiertas
-
-### ES-08. Proveedor ligado a un emprendedor vs. dashboard unificado
-
-- **Estado:** Abierta
-- **Fuentes:** RN-05; diagrama de registro (notas *Queda ligado a un emprendedor* y *Dashboard*).
-- **Qué dicen las reglas de negocio:**
-  - **RN-05:** "Participan solo proveedores registrados con ese emprendedor. […]"
-  - **RN-07:** "Ningún proveedor ve el precio de compra de referencia del emprendedor, su catálogo ni sus recetas."
-  - Las reglas no dicen si un proveedor puede estar registrado con más de un emprendedor.
-- **Contexto:** la nota del registro dice que el proveedor queda ligado a un emprendedor y, para trabajar con otro, se registra otra vez. La tarea final habla de un dashboard unificado de emprendedores.
-- **A definir:** si un mismo proveedor (mismo CUIT) tiene una cuenta por emprendedor o una sola cuenta que ve las licitaciones de todos los emprendedores con los que se registró.
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-09. Enlace de registro: vencimiento y verificación
 
@@ -295,6 +282,34 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Ejemplo:** la panadería tiene 4 proveedores: Molino A (harinas), Distribuidora B (lácteos), C (envases) y D (mayorista). Publica una canasta de harina y manteca. Aparecen los 4 tildados y el emprendedor destilda a C. A cotiza solo la harina, B solo la manteca y D las dos.
 - **Qué no decide:** si la aplicación recuerda a quién destildó el emprendedor la vez anterior para el mismo insumo.
 - **Reglas que cambia:** RN-05.
+- **Fecha:** 21 de noviembre de 2026.
+
+### ES-08. Proveedor ligado a un emprendedor vs. dashboard unificado
+
+- **Estado:** Decidida
+- **Fuentes:** RN-05, RN-07; diagrama de registro (notas *Queda ligado a un emprendedor* y *Dashboard*).
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **RN-05:** "Participan solo proveedores registrados con ese emprendedor. […]"
+  - **RN-07:** "Ningún proveedor ve el precio de compra de referencia del emprendedor, su catálogo ni sus recetas."
+  - Las reglas no decían si un proveedor puede estar registrado con más de un emprendedor.
+- **Contexto:** la nota del registro dice que el proveedor queda ligado a un emprendedor y, para trabajar con otro, se registra otra vez. La tarea final del mismo diagrama habla de un dashboard unificado de emprendedores.
+- **Opciones consideradas:**
+  1. Una cuenta por emprendedor: datos duplicados, varios usuarios para la misma persona, y contradice el dashboard unificado.
+  2. Una cuenta, varios vínculos: el proveedor tiene una sola cuenta y queda vinculado a cada emprendedor que lo invita.
+- **Decisión:** opción 2.
+
+  | Tema | Decisión |
+  | --- | --- |
+  | Datos del proveedor | Se cargan una sola vez: negocio, CUIT, contacto y rubros. |
+  | Nuevo emprendedor | Abre el enlace del nuevo emprendedor, entra con su cuenta y queda vinculado, sin volver a cargar sus datos. |
+  | Qué licitaciones ve | Solo las de los emprendedores con los que está vinculado, separadas por emprendedor. |
+  | Confidencialidad | Ningún emprendedor ve con qué otros emprendedores trabaja el proveedor. |
+- **Por qué:** evita duplicar datos y usuarios, resuelve la contradicción del diagrama a favor del dashboard unificado y mantiene la confidencialidad entre emprendedores.
+- **Ejemplo:** el lunes Molino A se registra con Panadería Don José. El jueves Pastelería Lola le manda su enlace; Molino A lo abre, entra con su mismo mail y queda vinculado también a Lola. En su panel ve las licitaciones de las dos, cada una con su nombre. Don José no sabe que le vende a Lola, y Lola no sabe que le vende a Don José.
+- **Qué no decide:**
+  - Si el proveedor puede desvincularse de un emprendedor, o el emprendedor quitar a un proveedor de su lista.
+  - Si los términos y los avisos se aceptan una sola vez o con cada emprendedor.
+- **Reglas que cambia:** agrega RN-22.
 - **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla

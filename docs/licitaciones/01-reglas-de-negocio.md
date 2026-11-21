@@ -40,6 +40,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | RN-06 | Los proveedores no se conocen entre sí. Cada uno ve únicamente en su interfaz lo ya definido: términos de la licitación (hora de inicio y fin, insumos, cantidades, precio de partida y precio objetivo vigente) y su propia oferta. No recibe señales de su posición ni de cuántos compiten. |
 | RN-07 | Ningún proveedor ve el precio de compra de referencia del emprendedor, su catálogo ni sus recetas. |
 | RN-08 | El emprendedor ve la identidad de los proveedores, que los datos del registro hacen posible. El emprendedor ve todas las ofertas con la identidad de cada proveedor desde el inicio. |
+| RN-22 | Un proveedor tiene una sola cuenta y puede estar vinculado a varios emprendedores. Cada emprendedor lo vincula con su propio enlace; si el proveedor ya tiene cuenta, entra con ella y no vuelve a cargar sus datos. Ve solo las licitaciones de los emprendedores con los que está vinculado, separadas por emprendedor, y ningún emprendedor ve con qué otros emprendedores trabaja. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 
 ### C. Rondas
 
@@ -176,3 +177,9 @@ Al publicar se preseleccionan todos los proveedores registrados, no solo los que
 
 - **Texto anterior:** "Participan solo proveedores registrados con ese emprendedor. Al publicar, se invita a todos los proveedores registrados que venden ese insumo y antes de publicar, el emprendedor puede quitar de esa lista a quienes no quiere invitar."
 - **Texto nuevo:** "Participan solo proveedores registrados con ese emprendedor. Al publicar, aparecen todos los proveedores registrados con ese emprendedor, ya preseleccionados y con los rubros que declararon a la vista. Antes de publicar, el emprendedor puede quitar de esa lista a quienes no quiere invitar; solo los que quedan reciben la invitación."
+
+### 21 de noviembre de 2026 — nueva RN-22 (ES-08)
+
+Un proveedor tiene una sola cuenta y puede trabajar con varios emprendedores. No reemplaza texto anterior de las reglas; reemplaza la nota *Queda ligado a un emprendedor* del diagrama de registro.
+
+- **RN-22** (nueva, en *B. Participación y confidencialidad*): "Un proveedor tiene una sola cuenta y puede estar vinculado a varios emprendedores. Cada emprendedor lo vincula con su propio enlace; si el proveedor ya tiene cuenta, entra con ella y no vuelve a cargar sus datos. Ve solo las licitaciones de los emprendedores con los que está vinculado, separadas por emprendedor, y ningún emprendedor ve con qué otros emprendedores trabaja."
