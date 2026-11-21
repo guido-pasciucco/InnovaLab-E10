@@ -59,6 +59,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | RN-19 | Al cierre, cada insumo sin ninguna oferta queda desierto por separado y el resto de la licitación sigue normal. Si ningún insumo recibió ofertas, la licitación entera queda desierta y no se arma cuadro comparativo. Lo desierto queda guardado en el historial y el emprendedor puede publicar una licitación nueva para esos insumos. *(Agregada y modificada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-13 | Al cierre, la aplicación arma un cuadro comparativo por insumo con la última oferta de cada proveedor, la diferencia contra el precio de partida y contra el último precio registrado del insumo. |
 | RN-14 | El emprendedor decide con qué proveedor contacta para comprar cada insumo. Puede repartir la compra por ítem y negociar. Las ofertas son de referencia (no vinculantes) y no obligan a ninguna de las partes. |
+| RN-21 | Cuando el emprendedor elige negociar con un proveedor, la aplicación le avisa a ese proveedor y le comparte el contacto del emprendedor. La negociación sigue fuera de la aplicación, y su inicio queda registrado en el historial. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-15 | Con lo acordado, la aplicación puede generar una orden de compra por proveedor, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo. |
 | RN-16 | Si el emprendedor lo ordena, la aplicación envía a los proveedores no elegidos una nota de agradecimiento idéntica para todos, sin revelar precios ni resultados, y les avisa de próxima licitación cuando se publique por medio de mail. Puede existir consentimiento del proveedor y registro de la respuesta. |
 
@@ -162,3 +163,9 @@ El aviso y la licitación desierta pasan a aplicarse insumo por insumo.
 - **RN-18, texto nuevo:** "Si al terminar la primera ronda uno o más insumos no recibieron ninguna oferta, la aplicación avisa al emprendedor una sola vez cuáles son. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelar la licitación entera. No puede sumar proveedores ni quitar insumos: para eso, la cancela y publica una nueva."
 - **RN-19, texto anterior:** "Si la licitación cierra sin ninguna oferta, queda desierta: no se arma cuadro comparativo, queda guardada en el historial y el emprendedor puede publicar otra."
 - **RN-19, texto nuevo:** "Al cierre, cada insumo sin ninguna oferta queda desierto por separado y el resto de la licitación sigue normal. Si ningún insumo recibió ofertas, la licitación entera queda desierta y no se arma cuadro comparativo. Lo desierto queda guardado en el historial y el emprendedor puede publicar una licitación nueva para esos insumos."
+
+### 21 de noviembre de 2026 — nueva RN-21 (ES-06)
+
+Se define qué pasa al elegir negociar. No reemplaza texto anterior; RN-08 queda igual.
+
+- **RN-21** (nueva, en *D. Cierre y compra*): "Cuando el emprendedor elige negociar con un proveedor, la aplicación le avisa a ese proveedor y le comparte el contacto del emprendedor. La negociación sigue fuera de la aplicación, y su inicio queda registrado en el historial."

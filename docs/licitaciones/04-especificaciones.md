@@ -20,7 +20,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-03 | Duración de la licitación y de las rondas | Decidida (20 nov 2026) |
 | ES-04 | Aviso cuando nadie oferta | Decidida (21 nov 2026) |
 | ES-05 | Cotización por canasta o por ítem | Decidida (21 nov 2026) |
-| ES-06 | Qué habilita la negociación | Abierta |
+| ES-06 | Qué habilita la negociación | Decidida (21 nov 2026) |
 | ES-07 | Qué proveedores "venden ese insumo" | Abierta |
 | ES-08 | Proveedor ligado a un emprendedor vs. dashboard unificado | Abierta |
 | ES-09 | Enlace de registro: vencimiento y verificación | Abierta |
@@ -30,18 +30,6 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-13 | Insumo sin ofertas dentro de una canasta | Decidida (21 nov 2026) |
 
 ## Abiertas
-
-### ES-06. Qué habilita la negociación
-
-- **Estado:** Abierta
-- **Fuentes:** RN-08, RN-14; diagrama de compra (tarea *Habilita datos del proveedor*).
-- **Qué dicen las reglas de negocio:**
-  - **RN-08:** "El emprendedor ve la identidad de los proveedores, que los datos del registro hacen posible. El emprendedor ve todas las ofertas con la identidad de cada proveedor desde el inicio."
-  - **RN-14:** "El emprendedor decide con qué proveedor contacta para comprar cada insumo. Puede repartir la compra por ítem y negociar. Las ofertas son de referencia (no vinculantes) y no obligan a ninguna de las partes."
-- **Contexto:** RN-08 dice que el emprendedor ve la identidad de cada proveedor desde el inicio. El diagrama, en cambio, habilita los datos del proveedor recién cuando el emprendedor elige negociar.
-- **A definir:** qué ve el emprendedor antes de negociar (nombre, contacto completo) y qué se habilita al negociar, y para quién (para el emprendedor o para el proveedor).
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-07. Qué proveedores "venden ese insumo"
 
@@ -275,6 +263,29 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Por qué:** reutiliza las reglas de ES-04 sin inventar nada nuevo, y un insumo sin ofertas no le arruina al emprendedor la compra del resto de la canasta.
 - **Ejemplo:** canasta con harina, azúcar y manteca. A las 16:00 termina la primera ronda y llega el aviso: "La manteca todavía no tiene ofertas." El emprendedor la deja seguir. Al cierre, la manteca sigue sin ofertas y queda desierta. El cuadro comparativo muestra la harina y el azúcar, el emprendedor compra esos dos y después publica una licitación solo para la manteca.
 - **Reglas que cambia:** RN-18 y RN-19.
+- **Fecha:** 21 de noviembre de 2026.
+
+### ES-06. Qué habilita la negociación
+
+- **Estado:** Decidida
+- **Fuentes:** RN-08, RN-14, RN-17; diagrama de compra (tarea *Habilita datos del proveedor*).
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **RN-08:** "El emprendedor ve la identidad de los proveedores, que los datos del registro hacen posible. El emprendedor ve todas las ofertas con la identidad de cada proveedor desde el inicio."
+  - **RN-14:** "El emprendedor decide con qué proveedor contacta para comprar cada insumo. Puede repartir la compra por ítem y negociar. Las ofertas son de referencia (no vinculantes) y no obligan a ninguna de las partes."
+  - **RN-17:** "Se guarda de forma inmodificable todo el proceso (ofertas, rondas, % de baja, decisiones y órdenes de compra, si las hubiera), con fecha y hora. […]"
+- **Contexto:** RN-08 dice que el emprendedor ve la identidad de cada proveedor desde el inicio. El diagrama, en cambio, habilita los datos del proveedor recién cuando el emprendedor elige negociar. El emprendedor ya conoce a sus proveedores, porque los invitó él con su enlace de registro.
+- **Opciones consideradas:**
+  1. Todo desde el inicio y negociación por fuera, sin que la aplicación haga nada: el proveedor no se entera desde la aplicación y no queda registro.
+  2. Contacto del proveedor recién al negociar: esconde al emprendedor datos de gente que él invitó y contradice RN-08.
+  3. El emprendedor ve todo desde el inicio, y al elegir negociar la aplicación avisa al proveedor, le pasa el contacto del emprendedor y lo registra en el historial.
+- **Decisión:** opción 3. RN-08 queda como está: el emprendedor ve los datos y las ofertas de cada proveedor desde el inicio. Cuando elige negociar con un proveedor, la aplicación le avisa a ese proveedor y le comparte el contacto del emprendedor. La negociación sigue fuera de la aplicación, y el inicio de la negociación queda registrado en el historial.
+- **Por qué:** respeta RN-08, le da un sentido concreto al paso *Habilita datos del proveedor* del diagrama (avisar al proveedor y darle el contacto) y deja rastro en el historial, como pide RN-17.
+- **Ejemplo:** el proveedor B ofertó la manteca a $4.000. El emprendedor toca "Negociar con B". A B le llega: "Panadería Don José quiere negociar la manteca", con el teléfono y el mail del emprendedor. Se ponen de acuerdo por WhatsApp. En el historial queda: "21/11 18:30, inició negociación con B por manteca".
+- **Qué no decide:**
+  - Por qué canal le llega el aviso al proveedor (ES-10).
+  - Si el emprendedor puede negociar a la vez con varios proveedores por el mismo insumo.
+  - Si el proveedor recibe algún aviso cuando el emprendedor confirma sin negociar.
+- **Reglas que cambia:** agrega RN-21.
 - **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla
