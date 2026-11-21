@@ -8,6 +8,7 @@ import { createRscSupabaseClient } from "@/lib/supabase/rsc";
 
 const DEFAULT_NEXT = "/update-password";
 const SIGNUP_NEXT = "/auth/account-created";
+const SUPPLIER_SIGNUP_NEXT_PREFIX = "/proveedores/invitacion/";
 
 // Landing route of auth email links (signup confirmation and password reset). Exchanges the link
 // params for a session, which the cookies() adapter writes onto this
@@ -32,7 +33,14 @@ export async function GET(request: NextRequest) {
     failure = toAppError(err, "AUTH_UNAVAILABLE").code;
   }
 
+  // The supplier signup (docs/licitaciones RN-23) confirms the email and then
+  // continues to its invite's completion route: on failure it is a signup too.
+  // Opened on another device, the code exchange fails although the email is
+  // confirmed, so /login keeps `next` to finish the supplier signup.
+  const isSupplierSignup = next.startsWith(SUPPLIER_SIGNUP_NEXT_PREFIX);
+
   // redirect() throws, so it stays outside the try.
+  if (failure && isSupplierSignup) redirect(`/login?error=${failure}&next=${encodeURIComponent(next)}`);
   if (failure) redirect(`${next === SIGNUP_NEXT ? "/login" : "/reset-password"}?error=${failure}`);
   redirect(next);
 }

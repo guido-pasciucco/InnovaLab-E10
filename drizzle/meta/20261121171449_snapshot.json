@@ -1,5 +1,5 @@
 {
-  "id": "d4fe58e2-dd16-418b-9f7a-1aa0ba4a67d6",
+  "id": "2f9d648f-7678-483b-8273-07bd31300cfe",
   "prevId": "4e0f7518-16c2-4fa0-9cd2-ff774573cc31",
   "version": "7",
   "dialect": "postgresql",
@@ -917,13 +917,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "period": {
-          "name": "period",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "to_char(now(), 'YYYY-MM')"
-        },
         "concept": {
           "name": "concept",
           "type": "text",
@@ -969,29 +962,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "business_cost_lines_business_period_idx": {
-          "name": "business_cost_lines_business_period_idx",
-          "columns": [
-            {
-              "expression": "business_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "period",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "business_cost_lines_business_id_businesses_id_fk": {
           "name": "business_cost_lines_business_id_businesses_id_fk",
@@ -1215,6 +1186,313 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.supplier_invites": {
+      "name": "supplier_invites",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "used_at": {
+          "name": "used_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "used_by_supplier_user_id": {
+          "name": "used_by_supplier_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "supplier_invites_owner_idx": {
+          "name": "supplier_invites_owner_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "supplier_invites_owner_user_id_profiles_id_fk": {
+          "name": "supplier_invites_owner_user_id_profiles_id_fk",
+          "tableFrom": "supplier_invites",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "supplier_invites_used_by_supplier_user_id_suppliers_user_id_fk": {
+          "name": "supplier_invites_used_by_supplier_user_id_suppliers_user_id_fk",
+          "tableFrom": "supplier_invites",
+          "tableTo": "suppliers",
+          "columnsFrom": [
+            "used_by_supplier_user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "supplier_invites_token_hash_unique": {
+          "name": "supplier_invites_token_hash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token_hash"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.supplier_links": {
+      "name": "supplier_links",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supplier_user_id": {
+          "name": "supplier_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "supplier_links_supplier_idx": {
+          "name": "supplier_links_supplier_idx",
+          "columns": [
+            {
+              "expression": "supplier_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "supplier_links_owner_user_id_profiles_id_fk": {
+          "name": "supplier_links_owner_user_id_profiles_id_fk",
+          "tableFrom": "supplier_links",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "supplier_links_supplier_user_id_suppliers_user_id_fk": {
+          "name": "supplier_links_supplier_user_id_suppliers_user_id_fk",
+          "tableFrom": "supplier_links",
+          "tableTo": "suppliers",
+          "columnsFrom": [
+            "supplier_user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "supplier_links_owner_supplier_uq": {
+          "name": "supplier_links_owner_supplier_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "owner_user_id",
+            "supplier_user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.suppliers": {
+      "name": "suppliers",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "business_name": {
+          "name": "business_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cuit": {
+          "name": "cuit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contact_name": {
+          "name": "contact_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "categories": {
+          "name": "categories",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "terms_accepted_at": {
+          "name": "terms_accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "suppliers_user_id_profiles_id_fk": {
+          "name": "suppliers_user_id_profiles_id_fk",
+          "tableFrom": "suppliers",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "suppliers_cuit_unique": {
+          "name": "suppliers_cuit_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "cuit"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "suppliers_cuit_format": {
+          "name": "suppliers_cuit_format",
+          "value": "\"suppliers\".\"cuit\" ~ '^[0-9]{11}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.supplies": {
       "name": "supplies",
       "schema": "",
@@ -1325,6 +1603,862 @@
         "supplies_kind_valid": {
           "name": "supplies_kind_valid",
           "value": "\"supplies\".\"kind\" in ('supply', 'packaging')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.purchase_order_lines": {
+      "name": "purchase_order_lines",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "order_id": {
+          "name": "order_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tender_item_id": {
+          "name": "tender_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supply_name": {
+          "name": "supply_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_price": {
+          "name": "unit_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "line_total": {
+          "name": "line_total",
+          "type": "numeric(14, 2)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "purchase_order_lines_order_idx": {
+          "name": "purchase_order_lines_order_idx",
+          "columns": [
+            {
+              "expression": "order_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "purchase_order_lines_order_id_purchase_orders_id_fk": {
+          "name": "purchase_order_lines_order_id_purchase_orders_id_fk",
+          "tableFrom": "purchase_order_lines",
+          "tableTo": "purchase_orders",
+          "columnsFrom": [
+            "order_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "purchase_order_lines_tender_item_id_tender_items_id_fk": {
+          "name": "purchase_order_lines_tender_item_id_tender_items_id_fk",
+          "tableFrom": "purchase_order_lines",
+          "tableTo": "tender_items",
+          "columnsFrom": [
+            "tender_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.purchase_orders": {
+      "name": "purchase_orders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tender_id": {
+          "name": "tender_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "delivery_terms": {
+          "name": "delivery_terms",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_terms": {
+          "name": "payment_terms",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total": {
+          "name": "total",
+          "type": "numeric(14, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issued_at": {
+          "name": "issued_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "purchase_orders_owner_user_id_profiles_id_fk": {
+          "name": "purchase_orders_owner_user_id_profiles_id_fk",
+          "tableFrom": "purchase_orders",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "purchase_orders_tender_id_tenders_id_fk": {
+          "name": "purchase_orders_tender_id_tenders_id_fk",
+          "tableFrom": "purchase_orders",
+          "tableTo": "tenders",
+          "columnsFrom": [
+            "tender_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "purchase_orders_invitation_id_tender_invitations_id_fk": {
+          "name": "purchase_orders_invitation_id_tender_invitations_id_fk",
+          "tableFrom": "purchase_orders",
+          "tableTo": "tender_invitations",
+          "columnsFrom": [
+            "invitation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "purchase_orders_owner_number_uq": {
+          "name": "purchase_orders_owner_number_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "owner_user_id",
+            "number"
+          ]
+        },
+        "purchase_orders_tender_invitation_uq": {
+          "name": "purchase_orders_tender_invitation_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tender_id",
+            "invitation_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tender_awards": {
+      "name": "tender_awards",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tender_item_id": {
+          "name": "tender_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_price": {
+          "name": "unit_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "tender_awards_item_idx": {
+          "name": "tender_awards_item_idx",
+          "columns": [
+            {
+              "expression": "tender_item_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tender_awards_tender_item_id_tender_items_id_fk": {
+          "name": "tender_awards_tender_item_id_tender_items_id_fk",
+          "tableFrom": "tender_awards",
+          "tableTo": "tender_items",
+          "columnsFrom": [
+            "tender_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tender_awards_invitation_id_tender_invitations_id_fk": {
+          "name": "tender_awards_invitation_id_tender_invitations_id_fk",
+          "tableFrom": "tender_awards",
+          "tableTo": "tender_invitations",
+          "columnsFrom": [
+            "invitation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "tender_awards_unit_price_positive": {
+          "name": "tender_awards_unit_price_positive",
+          "value": "\"tender_awards\".\"unit_price\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tender_drafts": {
+      "name": "tender_drafts",
+      "schema": "",
+      "columns": {
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tender_drafts_owner_user_id_profiles_id_fk": {
+          "name": "tender_drafts_owner_user_id_profiles_id_fk",
+          "tableFrom": "tender_drafts",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tender_invitations": {
+      "name": "tender_invitations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tender_id": {
+          "name": "tender_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supplier_user_id": {
+          "name": "supplier_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "negotiation_requested_at": {
+          "name": "negotiation_requested_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "negotiation_contact": {
+          "name": "negotiation_contact",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "tender_invitations_supplier_idx": {
+          "name": "tender_invitations_supplier_idx",
+          "columns": [
+            {
+              "expression": "supplier_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tender_invitations_tender_id_tenders_id_fk": {
+          "name": "tender_invitations_tender_id_tenders_id_fk",
+          "tableFrom": "tender_invitations",
+          "tableTo": "tenders",
+          "columnsFrom": [
+            "tender_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tender_invitations_supplier_user_id_suppliers_user_id_fk": {
+          "name": "tender_invitations_supplier_user_id_suppliers_user_id_fk",
+          "tableFrom": "tender_invitations",
+          "tableTo": "suppliers",
+          "columnsFrom": [
+            "supplier_user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tender_invitations_tender_supplier_uq": {
+          "name": "tender_invitations_tender_supplier_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tender_id",
+            "supplier_user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tender_items": {
+      "name": "tender_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tender_id": {
+          "name": "tender_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supply_id": {
+          "name": "supply_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supply_name": {
+          "name": "supply_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "specs": {
+          "name": "specs",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "starting_price": {
+          "name": "starting_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reference_price": {
+          "name": "reference_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tender_items_tender_id_tenders_id_fk": {
+          "name": "tender_items_tender_id_tenders_id_fk",
+          "tableFrom": "tender_items",
+          "tableTo": "tenders",
+          "columnsFrom": [
+            "tender_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tender_items_supply_id_supplies_id_fk": {
+          "name": "tender_items_supply_id_supplies_id_fk",
+          "tableFrom": "tender_items",
+          "tableTo": "supplies",
+          "columnsFrom": [
+            "supply_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tender_items_tender_position_uq": {
+          "name": "tender_items_tender_position_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tender_id",
+            "position"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tender_items_quantity_positive": {
+          "name": "tender_items_quantity_positive",
+          "value": "\"tender_items\".\"quantity\" > 0"
+        },
+        "tender_items_starting_price_positive": {
+          "name": "tender_items_starting_price_positive",
+          "value": "\"tender_items\".\"starting_price\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tender_offers": {
+      "name": "tender_offers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tender_item_id": {
+          "name": "tender_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round": {
+          "name": "round",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_price": {
+          "name": "unit_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "tender_offers_invitation_item_idx": {
+          "name": "tender_offers_invitation_item_idx",
+          "columns": [
+            {
+              "expression": "invitation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tender_item_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "tender_offers_item_idx": {
+          "name": "tender_offers_item_idx",
+          "columns": [
+            {
+              "expression": "tender_item_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tender_offers_tender_item_id_tender_items_id_fk": {
+          "name": "tender_offers_tender_item_id_tender_items_id_fk",
+          "tableFrom": "tender_offers",
+          "tableTo": "tender_items",
+          "columnsFrom": [
+            "tender_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tender_offers_invitation_id_tender_invitations_id_fk": {
+          "name": "tender_offers_invitation_id_tender_invitations_id_fk",
+          "tableFrom": "tender_offers",
+          "tableTo": "tender_invitations",
+          "columnsFrom": [
+            "invitation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "tender_offers_unit_price_positive": {
+          "name": "tender_offers_unit_price_positive",
+          "value": "\"tender_offers\".\"unit_price\" > 0"
+        },
+        "tender_offers_round_positive": {
+          "name": "tender_offers_round_positive",
+          "value": "\"tender_offers\".\"round\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tenders": {
+      "name": "tenders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_hours": {
+          "name": "round_hours",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_count": {
+          "name": "round_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decrement_percent": {
+          "name": "decrement_percent",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "no_offer_warning_ack_at": {
+          "name": "no_offer_warning_ack_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "thank_you_note_at": {
+          "name": "thank_you_note_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tenders_owner_user_id_profiles_id_fk": {
+          "name": "tenders_owner_user_id_profiles_id_fk",
+          "tableFrom": "tenders",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tenders_owner_number_uq": {
+          "name": "tenders_owner_number_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "owner_user_id",
+            "number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tenders_round_hours_valid": {
+          "name": "tenders_round_hours_valid",
+          "value": "\"tenders\".\"round_hours\" in (6, 12, 24)"
+        },
+        "tenders_round_count_valid": {
+          "name": "tenders_round_count_valid",
+          "value": "\"tenders\".\"round_count\" between 2 and 5"
+        },
+        "tenders_decrement_percent_valid": {
+          "name": "tenders_decrement_percent_valid",
+          "value": "\"tenders\".\"decrement_percent\" > 0 and \"tenders\".\"decrement_percent\" <= 50"
+        },
+        "tenders_ends_after_start": {
+          "name": "tenders_ends_after_start",
+          "value": "\"tenders\".\"ends_at\" > \"tenders\".\"starts_at\""
         }
       },
       "isRLSEnabled": false

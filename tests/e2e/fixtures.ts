@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from "@playwright/test";
+import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
 import { createUser, deleteUser, findUserIdByEmail, type CreatedUser } from "../support/factories/user";
 import { signInSessionCookies } from "./helpers/session";
 import { DashboardPage } from "./pages/dashboard.page";
@@ -34,6 +34,26 @@ type Fixtures = {
   updatePasswordPage: UpdatePasswordPage;
 };
 
+// Signs `context` in as `user` (for a second party, such as a supplier, in
+// its own browser context).
+export async function signInContext(
+  context: BrowserContext,
+  user: { email: string; password: string },
+  baseURL: string,
+): Promise<void> {
+  const cookies = await signInSessionCookies(user.email, user.password);
+  const now = Math.floor(Date.now() / 1000);
+  await context.addCookies(
+    cookies.map(({ name, value, maxAge, sameSite }) => ({
+      name,
+      value,
+      url: baseURL,
+      sameSite,
+      expires: maxAge ? now + maxAge : -1,
+    })),
+  );
+}
+
 // The fixture callback is named `provide` (Playwright docs call it `use`)
 // because eslint's react-hooks rule treats any `use(...)` call as React's.
 export const test = base.extend<Fixtures>({
@@ -58,17 +78,7 @@ export const test = base.extend<Fixtures>({
   // the login UI, which login.spec.ts covers.
   authedPage: async ({ page, context, user, baseURL }, provide) => {
     if (!baseURL) throw new Error("[e2e] authedPage needs `use.baseURL`.");
-    const cookies = await signInSessionCookies(user.email, user.password);
-    const now = Math.floor(Date.now() / 1000);
-    await context.addCookies(
-      cookies.map(({ name, value, maxAge, sameSite }) => ({
-        name,
-        value,
-        url: baseURL,
-        sameSite,
-        expires: maxAge ? now + maxAge : -1,
-      })),
-    );
+    await signInContext(context, user, baseURL);
     await provide(page);
   },
 
