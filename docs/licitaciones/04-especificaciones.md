@@ -18,7 +18,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-01 | Rondas: si existen en la primera versión | Decidida (20 nov 2026) |
 | ES-02 | Precio de partida: obligatorio u opcional | Decidida (20 nov 2026) |
 | ES-03 | Duración de la licitación y de las rondas | Decidida (20 nov 2026) |
-| ES-04 | Aviso cuando nadie oferta | Abierta |
+| ES-04 | Aviso cuando nadie oferta | Decidida (21 nov 2026) |
 | ES-05 | Cotización por canasta o por ítem | Abierta |
 | ES-06 | Qué habilita la negociación | Abierta |
 | ES-07 | Qué proveedores "venden ese insumo" | Abierta |
@@ -29,18 +29,6 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
 
 ## Abiertas
-
-### ES-04. Aviso cuando nadie oferta
-
-- **Estado:** Abierta
-- **Fuentes:** diagrama de compra (nota *Temporizador*).
-- **Qué dicen las reglas de negocio:** no hay regla sobre este tema. Lo más cercano:
-  - **RN-10:** "[…] Si no responde, se considera que ratifica." (aplica a un proveedor que ya ofertó, no a uno que nunca ofertó).
-  - **RN-12:** "La licitación cierra sola al vencer la duración. […]"
-- **Contexto:** el diagrama pide avisar al emprendedor si ningún proveedor oferta después de un tiempo.
-- **A definir:** cuánto tiempo pasa antes del aviso; qué opciones tiene el emprendedor después (esperar, cancelar, invitar a otros proveedores).
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-05. Cotización por canasta o por ítem
 
@@ -224,6 +212,30 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
   - Si la duración de ronda o la cantidad de rondas pueden cambiarse después de publicar (RN-03 dice que la licitación publicada no se modifica).
 - **Reglas que cambia:** término *Ronda*, RN-02 y RN-09.
 - **Fecha:** 20 de noviembre de 2026.
+
+### ES-04. Aviso cuando nadie oferta
+
+- **Estado:** Decidida
+- **Fuentes:** RN-03, RN-10, RN-12, RN-17; diagrama de compra (nota *Temporizador*).
+- **Qué dicen las reglas de negocio** (antes de la decisión): no había regla sobre este tema. Lo más cercano:
+  - **RN-03:** "Una vez publicada, la licitación no se modifica: solo puede cancelarse antes del cierre. […]"
+  - **RN-10:** "[…] Si no responde, se considera que ratifica." (aplica a un proveedor que ya ofertó, no a uno que nunca ofertó).
+  - **RN-12:** "La licitación cierra sola al vencer la duración. […]"
+  - **RN-17:** "Se guarda de forma inmodificable todo el proceso (ofertas, rondas, % de baja, decisiones y órdenes de compra, si las hubiera), con fecha y hora. […]"
+- **Contexto:** el diagrama pide avisar al emprendedor si ningún proveedor oferta "al cabo de algún tiempo", sin decir cuánto ni qué pasa después.
+- **Decisión:**
+
+  | Tema | Decisión |
+  | --- | --- |
+  | Cuándo avisa | Al terminar la primera ronda, si ningún proveedor ofertó. Avisa una sola vez. |
+  | Qué puede hacer el emprendedor | Dejarla seguir (es lo que pasa si no hace nada) o cancelarla. |
+  | Sumar proveedores sin cancelar | No se puede, porque la licitación publicada no se modifica (RN-03). Para invitar a otros, la cancela y publica una nueva. |
+  | Si cierra sin ninguna oferta | Queda desierta: no hay cuadro comparativo, queda guardada en el historial (RN-17) y el emprendedor puede publicar otra. |
+- **Por qué:** la primera ronda es un momento natural para avisar, sin inventar un plazo aparte, y todavía deja rondas por delante para decidir. Avisar en cada ronda sin ofertas sería molesto.
+- **Ejemplo:** publica a las 10:00 con 4 rondas de 6 h. A las 16:00 termina la primera ronda y nadie ofertó. La aplicación le avisa: "Nadie ofertó todavía en la licitación N° 12. Podés dejarla seguir o cancelarla."
+- **Qué no decide:** por qué canal llega el aviso (ES-10).
+- **Reglas que cambia:** agrega RN-18 (aviso sin ofertas) y RN-19 (licitación desierta).
+- **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla
 

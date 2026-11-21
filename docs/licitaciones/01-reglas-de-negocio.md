@@ -49,11 +49,13 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | RN-10 | En cada ronda el proveedor puede mejorar su oferta con un precio menor al suyo anterior (llegue o no al objetivo) o ratificarla. Nunca puede ofertar por encima de su último precio, y la primera oferta no puede superar el precio de partida. Si no responde, se considera que ratifica. |
 | RN-11 | El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo. |
 | RN-12 | La licitación cierra sola al vencer la duración. No se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires). |
+| RN-18 | Si al terminar la primera ronda ningún proveedor ofertó, la aplicación avisa al emprendedor una sola vez. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelarla. No puede sumar proveedores: para invitar a otros, la cancela y publica una nueva. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 
 ### D. Cierre y compra
 
 | ID | Regla |
 | --- | --- |
+| RN-19 | Si la licitación cierra sin ninguna oferta, queda desierta: no se arma cuadro comparativo, queda guardada en el historial y el emprendedor puede publicar otra. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-13 | Al cierre, la aplicación arma un cuadro comparativo por insumo con la última oferta de cada proveedor, la diferencia contra el precio de partida y contra el último precio registrado del insumo. |
 | RN-14 | El emprendedor decide con qué proveedor contacta para comprar cada insumo. Puede repartir la compra por ítem y negociar. Las ofertas son de referencia (no vinculantes) y no obligan a ninguna de las partes. |
 | RN-15 | Con lo acordado, la aplicación puede generar una orden de compra por proveedor, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo. |
@@ -136,3 +138,10 @@ El emprendedor elige la duración de cada ronda y la cantidad de rondas; la dura
 - **RN-02, texto nuevo:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida, la duración de cada ronda (6, 12 o 24 hs; 6 hs por defecto) y la cantidad de rondas (de 2 a 5; 4 por defecto). La duración de la licitación es la cantidad de rondas por la duración de cada ronda. El precio de partida es obligatorio: la aplicación sugiere el precio actual del insumo en el Maestro de Insumos y el emprendedor puede dejarlo o cambiarlo. Cada licitación recibe un número correlativo."
 - **RN-09, texto anterior** (ya con el cambio de ES-01): "En cada ronda (6 hs por defecto, parametrizable) rige un nuevo precio objetivo. […]"
 - **RN-09, texto nuevo:** "En cada ronda (6, 12 o 24 hs, según elija el emprendedor al publicar) rige un nuevo precio objetivo. […]"
+
+### 21 de noviembre de 2026 — nuevas RN-18 y RN-19 (ES-04)
+
+Se agregan dos reglas para cuando nadie oferta. No reemplazan texto anterior.
+
+- **RN-18** (en *C. Rondas*): "Si al terminar la primera ronda ningún proveedor ofertó, la aplicación avisa al emprendedor una sola vez. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelarla. No puede sumar proveedores: para invitar a otros, la cancela y publica una nueva."
+- **RN-19** (en *D. Cierre y compra*): "Si la licitación cierra sin ninguna oferta, queda desierta: no se arma cuadro comparativo, queda guardada en el historial y el emprendedor puede publicar otra."
