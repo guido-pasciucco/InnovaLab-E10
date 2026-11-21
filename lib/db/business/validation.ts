@@ -4,10 +4,12 @@ import { z } from "zod/v4";
 import { businessNameField, businessTypeField } from "@/lib/schemas/business/fields";
 import { productNameField } from "@/lib/schemas/calculator-setup/fields";
 import {
+  monthlyCapacityField,
   recipeQuantityField,
   recipeSupplyIdField,
   recipeUnitField,
 } from "@/lib/schemas/products/fields";
+import { recipeYieldField } from "@/lib/schemas/recipe-yield/fields";
 import { quantityString } from "../formats";
 import { businesses, productIngredients, products } from "./table";
 
@@ -44,9 +46,19 @@ export const createBusinessInputSchema = createInsertSchema(businesses, {
 export const createProductInputSchema = createInsertSchema(products, {
   name: productNameField,
   skuOrSlug: z.string().trim().min(1).max(120).nullish(),
+  monthlyCapacity: monthlyCapacityField,
 }).omit({
   id: true,
   businessId: true,
+  variableCostStatus: true,
+  variableCostUnitAmount: true,
+  variableCostUnitNumerator: true,
+  variableCostUnitDenominator: true,
+  variableCostRecipeAmount: true,
+  variableCostRecipeNumerator: true,
+  variableCostRecipeDenominator: true,
+  variableCostUnavailableCode: true,
+  variableCostCalculatedAt: true,
   createdAt: true,
   updatedAt: true,
 });
@@ -60,6 +72,8 @@ export const productIngredientInputSchema = z.object({
 export const saveProductInputSchema = z
   .object({
     name: productNameField,
+    monthlyCapacity: monthlyCapacityField,
+    yieldQuantity: recipeYieldField,
     recipe: z
       .array(productIngredientInputSchema)
       .min(1, { error: "Agregá al menos un insumo a la receta." }),

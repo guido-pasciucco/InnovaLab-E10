@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProductItem } from "@/lib/schemas/products/products";
+import { formatARS } from "@/lib/money/format";
 
 type ProductRecipeProps = {
   product: ProductItem;
@@ -43,6 +44,29 @@ export function ProductRecipe({ product, onEdit }: ProductRecipeProps) {
           </tbody>
         </table>
       </div>
+
+      <p className="text-sm text-fg-muted">
+        {product.yieldQuantity === null
+          ? "Este producto histórico todavía no tiene rendimiento; no se calcula un costo variable."
+          : `Rendimiento de la receta: ${product.yieldQuantity} ${product.yieldQuantity === "1" ? "unidad." : "unidades."}`}
+      </p>
+      {product.variableCosts && (
+        <dl className="grid gap-2 rounded-[16px] border border-border-control bg-surface-tint p-3 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-fg-muted">Costo de ingredientes</dt>
+            <dd className="font-semibold text-fg">{formatARS(product.variableCosts.ingredientsCost) || "Importe no disponible"}</dd>
+          </div>
+          <div>
+            <dt className="text-fg-muted">Costo variable por unidad</dt>
+            <dd className="font-semibold text-fg">{formatARS(product.variableCosts.unitCost) || "Importe no disponible"}</dd>
+          </div>
+        </dl>
+      )}
+      {product.variableCostsUnavailableCode !== null && (
+        <p role="status" className="text-sm text-fg-muted">
+          No se puede calcular el costo variable con los datos actuales de la receta.
+        </p>
+      )}
 
       <p className="text-sm text-fg-muted">
         {product.recipe.length === 1

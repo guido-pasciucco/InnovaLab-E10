@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const linkError = linkErrorMessage(params.error);
   // Where to continue after signing in (e.g. back to a supplier invite link).
   // Sanitized so it can only point inside the app.
-  const next = safeNextPath(typeof params.next === "string" ? params.next : null, "/dashboard");
+  const next = safeNextPath(typeof params.next === "string" ? params.next : null, "/inicio");
 
   return (
     <AuthPageShell

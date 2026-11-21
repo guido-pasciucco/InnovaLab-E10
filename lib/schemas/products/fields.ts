@@ -8,6 +8,48 @@ import { z } from "zod";
 // Pure and client-safe: no db imports. Messages are in Spanish so Zod's
 // internal English never reaches the form.
 
+// Capacity is optional ("empty" means NULL, not 0) but, when typed, it must be
+// a whole number of units. The form sends text and the server may receive a
+// number, so the rule normalizes both before checking. Decimal and negative
+// values share one actionable message.
+export const MONTHLY_CAPACITY_INVALID_MESSAGE =
+  "Ingresá un número entero de unidades, 0 o mayor.";
+
+// Cap for the `integer` column: anything bigger would pass Zod and die in
+// Postgres with a 500 instead of a field error.
+const MONTHLY_CAPACITY_MAX = 2_147_483_647;
+
+function toMonthlyCapacity(
+  value: string | number | null | undefined,
+): number | null {
+  if (value === null || value === undefined) return null;
+
+  if (typeof value === "number") return value;
+
+  const trimmed = value.trim();
+
+  if (trimmed === "") return null;
+
+  // Only digits: rejects "2.5", "-5", "abc" and exponent notation before the
+  // numeric checks below can see a rounded value.
+  return /^\d+$/.test(trimmed) ? Number(trimmed) : Number.NaN;
+}
+
+export const monthlyCapacityField = z
+  .union([z.string(), z.number(), z.null()], {
+    error: MONTHLY_CAPACITY_INVALID_MESSAGE,
+  })
+  .optional()
+  .transform(toMonthlyCapacity)
+  .pipe(
+    z
+      .number({ error: MONTHLY_CAPACITY_INVALID_MESSAGE })
+      .int({ error: MONTHLY_CAPACITY_INVALID_MESSAGE })
+      .min(0, { error: MONTHLY_CAPACITY_INVALID_MESSAGE })
+      .max(MONTHLY_CAPACITY_MAX, { error: MONTHLY_CAPACITY_INVALID_MESSAGE })
+      .nullable(),
+  );
+
 export const recipeSupplyField = z
   .string({ error: "Elegí un insumo de tu catálogo." })
   .trim()

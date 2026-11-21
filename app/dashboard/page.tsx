@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getHomePathService } from "@/lib/services/suppliers";
-import { listTenderNoticesService } from "@/lib/services/tenders";
-import { TenderNotices } from "@/components/tenders/notices";
 import { CalculationList, NewCalculationButton } from "@/components/dashboard/calculation-list";
 import { TOTAL_STEPS } from "@/components/calculator/wizard/wizard-steps";
 import { requireUser } from "@/lib/auth/require-user";
@@ -29,10 +27,9 @@ export default async function DashboardPage() {
   // A supplier account without a business of its own belongs in the supplier
   // panel (docs/licitaciones, annex 03), not in the emprendedor dashboard.
   if ((await getHomePathService(user.id)) === "/proveedor") redirect("/proveedor");
-  const [profile, calculations, tenderNotices] = await Promise.all([
+  const [profile, calculations] = await Promise.all([
     getProfileSummaryService(user.id),
     listUserCalculationsService(user.id),
-    listTenderNoticesService(user.id),
   ]);
 
   const furthest = calculations.reduce((max, c) => Math.max(max, c.currentStep), 0);
@@ -50,12 +47,6 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
-            <Link
-              href="/insumos"
-              className="inline-flex min-h-11 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            >
-              Gestionar insumos
-            </Link>
             <Link
               href="/"
               className="inline-flex min-h-11 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
@@ -116,70 +107,6 @@ export default async function DashboardPage() {
             <p className="mt-2 text-sm opacity-80">
               {latest ? `Actualizado ${dateFormat.format(latest.updatedAt)}` : "Empezá uno nuevo"}
             </p>
-          </div>
-        </section>
-
-        {/* Temporary navigation: catalog entry points pending the UX/UI
-            redesign; keep these routes reachable until the new nav ships. */}
-        <section aria-label="Catálogos">
-          <h2 className="mb-3 text-lg font-semibold text-fg">Catálogos Fase 2</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Link
-              href="/insumos"
-              className="rounded-3xl bg-brand-green-50 p-5 shadow-sm transition hover:bg-brand-green-100 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            >
-              <span
-                className="flex size-10 items-center justify-center rounded-xl bg-brand-green-700 text-lg font-bold text-white"
-                aria-hidden="true"
-              >
-                I
-              </span>
-              <p className="mt-3 text-lg font-semibold text-brand-green-700">Insumos y packaging</p>
-              <p className="mt-2 text-sm text-fg-muted">
-                Cargá precios, cantidades y unidades de cada insumo o envase.
-              </p>
-            </Link>
-            <Link
-              href="/products"
-              className="rounded-3xl bg-brand-tile p-5 shadow-sm transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            >
-              <span
-                className="flex size-10 items-center justify-center rounded-xl bg-brand-glyph/20 text-lg font-bold text-brand-glyph"
-                aria-hidden="true"
-              >
-                P
-              </span>
-              <p className="mt-3 text-lg font-semibold text-on-brand">Productos</p>
-              <p className="mt-2 text-sm text-on-brand-muted">
-                Armá la receta de cada producto con los insumos del catálogo.
-              </p>
-            </Link>
-          </div>
-        </section>
-
-        <TenderNotices notices={tenderNotices} />
-
-        <section aria-label="Compras">
-          <h2 className="mb-3 text-lg font-semibold text-fg">Compras de insumos</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Link
-              href="/licitaciones"
-              className="rounded-3xl bg-surface p-5 shadow-sm transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            >
-              <p className="text-lg font-semibold text-brand-green-700">Licitaciones</p>
-              <p className="mt-2 text-sm text-fg-muted">
-                Pedí precios a tus proveedores por rondas y compará las ofertas.
-              </p>
-            </Link>
-            <Link
-              href="/proveedores"
-              className="rounded-3xl bg-surface p-5 shadow-sm transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            >
-              <p className="text-lg font-semibold text-brand-green-700">Proveedores</p>
-              <p className="mt-2 text-sm text-fg-muted">
-                Invitá a tus proveedores con un enlace personal.
-              </p>
-            </Link>
           </div>
         </section>
 

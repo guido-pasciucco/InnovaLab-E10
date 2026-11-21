@@ -159,36 +159,29 @@
     {
       "idx": 22,
       "version": "7",
-      "when": 1795234298154,
-      "tag": "20261121041138_supplier_registry",
+      "when": 1795185507389,
+      "tag": "20261120143827_thin_namorita",
       "breakpoints": true
     },
     {
       "idx": 23,
       "version": "7",
-      "when": 1795234941700,
-      "tag": "20261121042221_tenders",
+      "when": 1795204232002,
+      "tag": "20261120195031_massive_glorian",
       "breakpoints": true
     },
     {
       "idx": 24,
       "version": "7",
-      "when": 1795235297906,
-      "tag": "20261121042817_tender_offers",
+      "when": 1795233618108,
+      "tag": "20261121040018_burly_molly_hayes",
       "breakpoints": true
     },
     {
       "idx": 25,
       "version": "7",
-      "when": 1795235793555,
-      "tag": "20261121043633_tender_purchases",
-      "breakpoints": true
-    },
-    {
-      "idx": 26,
-      "version": "7",
-      "when": 1795279387794,
-      "tag": "20261121164307_tender_drafts",
+      "when": 1795281289958,
+      "tag": "20261121171449_licitaciones",
       "breakpoints": true
     }
   ]

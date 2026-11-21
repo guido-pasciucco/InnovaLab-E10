@@ -362,10 +362,10 @@ describe("getHomePathService", () => {
     const { owner, supplier } = await registeredSupplier();
 
     await expect(getHomePathService(supplier.id, db)).resolves.toBe("/proveedor");
-    await expect(getHomePathService(owner.id, db)).resolves.toBe("/dashboard");
+    await expect(getHomePathService(owner.id, db)).resolves.toBe("/insumos");
 
     await db.insert(businesses).values({ ownerUserId: supplier.id, name: "También vendo" });
-    await expect(getHomePathService(supplier.id, db)).resolves.toBe("/dashboard");
+    await expect(getHomePathService(supplier.id, db)).resolves.toBe("/insumos");
   });
 
   it("keeps an emprendedor with a catalog but no business yet on the dashboard", async () => {
@@ -379,6 +379,6 @@ describe("getHomePathService", () => {
     const { token } = await createSupplierInviteService(owner.id, { label: "Vecino" }, db);
     await registerSupplierService(emprendedor.id, emprendedor.email, token, buildSupplierProfile(), db);
 
-    await expect(getHomePathService(emprendedor.id, db)).resolves.toBe("/dashboard");
+    await expect(getHomePathService(emprendedor.id, db)).resolves.toBe("/insumos");
   });
 });

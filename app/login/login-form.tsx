@@ -17,6 +17,10 @@ import type { LoginState } from "@/lib/types/auth";
 
 import { login } from "./actions";
 
+// Signing in lands on /inicio, which sends each account to its home: flow 1
+// (sidebar + catalogs) for an emprendedor, the panel for a supplier.
+const POST_LOGIN_HREF = "/inicio";
+
 const initialState: LoginState = undefined;
 
 // Los tipos salen del schema compartido (fuente única): si cambia
@@ -77,7 +81,7 @@ function ErrorBanner({ message }: { message: string }) {
 }
 
 // `next` arrives already sanitized by the page (safeNextPath).
-export default function LoginForm({ next = "/dashboard" }: { next?: string }) {
+export default function LoginForm({ next = POST_LOGIN_HREF }: { next?: string }) {
   const router = useRouter();
   const { action, transportError, clearTransportError } = useTransportAwareAction(login);
   const [state, submitAction, pending] = useActionState(action, initialState);
@@ -125,7 +129,7 @@ export default function LoginForm({ next = "/dashboard" }: { next?: string }) {
           className="rounded-md border border-success/30 bg-success-subtle px-3 py-2 text-xs text-success lg:text-sm"
         >
           Sesión iniciada correctamente. Redirigiendo…{" "}
-          <Link href="/dashboard" className="font-semibold underline underline-offset-2">
+          <Link href={next} className="font-semibold underline underline-offset-2">
             Continuar
           </Link>
         </p>

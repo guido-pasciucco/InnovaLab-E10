@@ -426,16 +426,16 @@ export async function listSupplierEmprendedoresService(
 
 // Where a signed-in account lands: a supplier that has never used the
 // emprendedor side (no business and no catalog) goes to its panel; everyone
-// else keeps the emprendedor dashboard.
+// else goes to flow 1 (the emprendedor catalogs).
 export async function getHomePathService(
   userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
-): Promise<"/proveedor" | "/dashboard"> {
+): Promise<"/proveedor" | "/insumos"> {
   const supplier = await getSupplierService(userId, db);
-  if (!supplier) return "/dashboard";
+  if (!supplier) return "/insumos";
   const [[business], [supply]] = await Promise.all([
     db.select({ id: businesses.id }).from(businesses).where(eq(businesses.ownerUserId, userId)).limit(1),
     db.select({ id: supplies.id }).from(supplies).where(eq(supplies.userId, userId)).limit(1),
   ]);
-  return business || supply ? "/dashboard" : "/proveedor";
+  return business || supply ? "/insumos" : "/proveedor";
 }

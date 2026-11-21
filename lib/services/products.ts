@@ -1,6 +1,12 @@
 import "server-only";
 
 import { and, eq, inArray } from "drizzle-orm";
+import {
+  adaptCatalogVariableCosts,
+  type CatalogSupply,
+} from "@/lib/calc/adaptCatalogVariableCosts";
+import { calculateVariableCosts } from "@/lib/calc/calculateVariableCosts";
+import { convertRecipeQuantityToMinimumUnits } from "@/lib/calc/recipeUnits";
 
 import {
   businesses,
@@ -25,6 +31,10 @@ import {
 } from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
 import { getOrCreateDefaultBusiness, type Tx } from "./calculations";
+import {
+  lockVariableCostSupplies,
+  runVariableCostTransaction,
+} from "./variable-cost-transaction";
 
 // Product + recipe persistence for the catalog (#255). Owner scoping:
 // products are reached through businesses.ownerUserId and recipe lines through
@@ -41,6 +51,117 @@ type RecipeSupply = {
 };
 
 type ResolvedRecipeLine = RecipeInput;
+
+function toYieldQuantity(value: number | null): string | null {
+  return value === null ? null : String(value);
+}
+
+export type ProductVariableCostsState = Pick<
+  ProductItem,
+  "variableCosts" | "variableCostsUnavailableCode"
+>;
+
+type PersistedVariableCosts = {
+  variableCostStatus: "pending" | "ready" | "unavailable";
+  variableCostUnitAmount: string | null;
+  variableCostUnitNumerator: string | null;
+  variableCostUnitDenominator: string | null;
+  variableCostRecipeAmount: string | null;
+  variableCostRecipeNumerator: string | null;
+  variableCostRecipeDenominator: string | null;
+  variableCostUnavailableCode: string | null;
+  variableCostCalculatedAt: Date | null;
+};
+
+/** Computes a current cost from source records without using rounded output. */
+export function deriveProductVariableCosts(
+  product: Pick<ProductItem, "yieldQuantity" | "recipe">,
+  catalog: readonly CatalogSupply[],
+): ProductVariableCostsState {
+  if (product.yieldQuantity === null) {
+    return { variableCosts: null, variableCostsUnavailableCode: "MISSING_YIELD" };
+  }
+  if (product.recipe.length === 0) {
+    return { variableCosts: null, variableCostsUnavailableCode: null };
+  }
+
+  const catalogById = new Map(catalog.map((supply) => [supply.id, supply]));
+  const normalizedRecipe = product.recipe.map((ingredient) => {
+    const supply = catalogById.get(ingredient.supplyId);
+    if (!supply) return ingredient;
+
+    const quantity = convertRecipeQuantityToMinimumUnits(
+      ingredient.quantity,
+      ingredient.unit,
+    );
+    if (quantity === null) return null;
+
+    return { ...ingredient, quantity, unit: supply.minimumUnit };
+  });
+
+  if (normalizedRecipe.some((ingredient) => ingredient === null)) {
+    return { variableCosts: null, variableCostsUnavailableCode: "UNSUPPORTED_RECIPE_UNIT" };
+  }
+
+  const recipeForCost = normalizedRecipe as ProductItem["recipe"];
+
+  const adapted = adaptCatalogVariableCosts({
+    catalog: product.recipe.flatMap((ingredient) => {
+      const supply = catalogById.get(ingredient.supplyId);
+      return supply ? [supply] : [];
+    }),
+    recipe: {
+      yieldQuantity: product.yieldQuantity,
+      ingredients: recipeForCost.map((ingredient) => ({
+        supplyId: ingredient.supplyId,
+        quantity: ingredient.quantity,
+        unit: ingredient.unit,
+      })),
+    },
+    presentations: [],
+  });
+
+  if (!adapted.ok) {
+    return { variableCosts: null, variableCostsUnavailableCode: adapted.code };
+  }
+
+  const result = calculateVariableCosts(adapted.input);
+  return result.ok
+    ? { variableCosts: result, variableCostsUnavailableCode: null }
+    : { variableCosts: null, variableCostsUnavailableCode: result.code };
+}
+
+function persistenceFromVariableCosts(
+  state: ProductVariableCostsState,
+): PersistedVariableCosts {
+  if (state.variableCosts) {
+    const { exact, unitCost, ingredientsCost } = state.variableCosts;
+    return {
+      variableCostStatus: "ready",
+      variableCostUnitAmount: unitCost,
+      variableCostUnitNumerator: exact.unitCost.numerator,
+      variableCostUnitDenominator: exact.unitCost.denominator,
+      variableCostRecipeAmount: ingredientsCost,
+      variableCostRecipeNumerator: exact.ingredientsCost.numerator,
+      variableCostRecipeDenominator: exact.ingredientsCost.denominator,
+      variableCostUnavailableCode: null,
+      variableCostCalculatedAt: new Date(),
+    };
+  }
+
+  return {
+    variableCostStatus:
+      state.variableCostsUnavailableCode === null ? "pending" : "unavailable",
+    variableCostUnitAmount: null,
+    variableCostUnitNumerator: null,
+    variableCostUnitDenominator: null,
+    variableCostRecipeAmount: null,
+    variableCostRecipeNumerator: null,
+    variableCostRecipeDenominator: null,
+    variableCostUnavailableCode: state.variableCostsUnavailableCode,
+    variableCostCalculatedAt: new Date(),
+  };
+}
 
 // numeric(14,4) always returns four decimals ("250.0000"). The recipe form
 // accepts up to four and must be able to round-trip the saved value, so the API
@@ -60,6 +181,10 @@ function toProductItem(
   return {
     id: product.id,
     name: product.name,
+    monthlyCapacity: product.monthlyCapacity,
+    yieldQuantity: toYieldQuantity(product.yieldQuantity),
+    variableCosts: null,
+    variableCostsUnavailableCode: null,
     recipe: ingredients.map((ingredient) => ({
       supplyId: ingredient.supplyId,
       supplyName: suppliesById.get(ingredient.supplyId)?.name ?? "",
@@ -67,6 +192,120 @@ function toProductItem(
       unit: ingredient.unit ?? "",
     })),
   };
+}
+
+function persistedVariableCosts(product: Product): ProductVariableCostsState {
+  if (
+    product.variableCostStatus === "ready" &&
+    product.variableCostUnitAmount !== null &&
+    product.variableCostUnitNumerator !== null &&
+    product.variableCostUnitDenominator !== null &&
+    product.variableCostRecipeAmount !== null &&
+    product.variableCostRecipeNumerator !== null &&
+    product.variableCostRecipeDenominator !== null
+  ) {
+    const unitRatio =
+      product.variableCostUnitDenominator === "1"
+        ? product.variableCostUnitNumerator
+        : `${product.variableCostUnitNumerator}/${product.variableCostUnitDenominator}`;
+
+    return {
+      variableCosts: {
+        ok: true,
+        ingredientsCost: product.variableCostRecipeAmount,
+        recipeYield: toYieldQuantity(product.yieldQuantity) ?? "",
+        unitCost: product.variableCostUnitAmount,
+        unitCostCalculationValue: unitRatio,
+        exact: {
+          ingredientsCost: {
+            numerator: product.variableCostRecipeNumerator,
+            denominator: product.variableCostRecipeDenominator,
+          },
+          unitCost: {
+            numerator: product.variableCostUnitNumerator,
+            denominator: product.variableCostUnitDenominator,
+          },
+        },
+        presentations: [],
+      },
+      variableCostsUnavailableCode: null,
+    };
+  }
+
+  return {
+    variableCosts: null,
+    variableCostsUnavailableCode:
+      product.variableCostStatus === "unavailable"
+        ? (product.variableCostUnavailableCode as ProductItem["variableCostsUnavailableCode"])
+        : null,
+  };
+}
+
+/**
+ * Stores the exact current variable-cost result in the caller's transaction.
+ * It deliberately receives `tx`: create/update and their derived values either
+ * commit together or roll back together; it never starts a nested transaction.
+ * A future supply-update path must use this same helper after acquiring its
+ * supply/product locks in the documented global order.
+ */
+export async function persistProductVariableCostsTx(
+  tx: Tx,
+  userId: VerifiedUserId,
+  product: Product,
+  ingredients: ProductIngredient[],
+  suppliesById: Map<string, RecipeSupply>,
+): Promise<ProductVariableCostsState> {
+  const item = toProductItem(product, ingredients, suppliesById);
+  const catalog = await tx.select().from(supplies).where(eq(supplies.userId, userId));
+  const state = deriveProductVariableCosts(item, catalog);
+
+  await tx
+    .update(products)
+    .set(persistenceFromVariableCosts(state))
+    .where(eq(products.id, product.id));
+
+  return state;
+}
+
+/** Recalculates one already-locked product from the persisted catalog. */
+export async function recalculatePersistedProductVariableCostsTx(
+  tx: Tx,
+  userId: VerifiedUserId,
+  productId: string,
+): Promise<ProductVariableCostsState | null> {
+  const [row] = await tx
+    .select({ product: products })
+    .from(products)
+    .innerJoin(businesses, eq(products.businessId, businesses.id))
+    .where(
+      and(
+        eq(products.id, productId),
+        eq(businesses.ownerUserId, userId),
+        eq(products.isActive, true),
+      ),
+    )
+    .limit(1);
+
+  if (!row) return null;
+
+  const ingredients = await tx
+    .select()
+    .from(productIngredients)
+    .where(eq(productIngredients.productId, productId))
+    .orderBy(productIngredients.createdAt, productIngredients.id);
+  const catalog = await tx.select().from(supplies).where(eq(supplies.userId, userId));
+  const suppliesById = new Map(
+    catalog.map((supply) => [
+      supply.id,
+      {
+        name: supply.name,
+        purchaseUnit: supply.purchaseUnit,
+        minimumUnit: supply.minimumUnit,
+      },
+    ]),
+  );
+
+  return persistProductVariableCostsTx(tx, userId, row.product, ingredients, suppliesById);
 }
 
 async function mapRecipeRows(
@@ -210,11 +449,18 @@ export async function listProductsService(
     recipesByProduct.set(ingredient.productId, recipe);
   }
 
-  return productRows.map(({ product }) => ({
-    id: product.id,
-    name: product.name,
-    recipe: recipesByProduct.get(product.id) ?? [],
-  }));
+  return productRows.map(({ product }) => {
+    const item: ProductItem = {
+      id: product.id,
+      name: product.name,
+      monthlyCapacity: product.monthlyCapacity,
+      yieldQuantity: toYieldQuantity(product.yieldQuantity),
+      recipe: recipesByProduct.get(product.id) ?? [],
+      variableCosts: null,
+      variableCostsUnavailableCode: null,
+    };
+    return { ...item, ...persistedVariableCosts(product) };
+  });
 }
 
 export async function getProductService(
@@ -239,11 +485,16 @@ export async function getProductService(
     return null;
   }
 
-  return {
+  const item: ProductItem = {
     id: row.product.id,
     name: row.product.name,
+    monthlyCapacity: row.product.monthlyCapacity,
+    yieldQuantity: toYieldQuantity(row.product.yieldQuantity),
+    variableCosts: null,
+    variableCostsUnavailableCode: null,
     recipe: await mapRecipeRows(db, productId),
   };
+  return { ...item, ...persistedVariableCosts(row.product) };
 }
 
 export async function createProductService(
@@ -253,14 +504,27 @@ export async function createProductService(
 ): Promise<ProductItem> {
   const data = saveProductInputSchema.parse(input);
 
-  return db.transaction(async (tx) => {
+  return runVariableCostTransaction(db, async (tx) => {
+    const lockedSupplies = await lockVariableCostSupplies(
+      tx,
+      userId,
+      data.recipe.map((item) => item.supplyId),
+    );
+    if (lockedSupplies.length !== new Set(data.recipe.map((item) => item.supplyId)).size) {
+      throw new AppError("SUPPLY_NOT_FOUND");
+    }
     const suppliesById = await resolveRecipeSupplies(userId, data.recipe, tx);
     const recipe = resolveRecipeUnits(data.recipe, suppliesById);
     const business = await getOrCreateDefaultBusiness(tx, userId);
 
     const [product] = await tx
       .insert(products)
-      .values({ name: data.name, businessId: business.id })
+      .values({
+        name: data.name,
+        monthlyCapacity: data.monthlyCapacity,
+        yieldQuantity: Number(data.yieldQuantity),
+        businessId: business.id,
+      })
       .returning();
 
     if (!product) {
@@ -281,7 +545,15 @@ export async function createProductService(
       )
       .returning();
 
-    return toProductItem(product, ingredients, suppliesById);
+    const item = toProductItem(product, ingredients, suppliesById);
+    const variableCosts = await persistProductVariableCostsTx(
+      tx,
+      userId,
+      product,
+      ingredients,
+      suppliesById,
+    );
+    return { ...item, ...variableCosts };
   });
 }
 
@@ -293,8 +565,10 @@ export async function updateProductService(
 ): Promise<ProductItem | null> {
   const data = saveProductInputSchema.parse(input);
 
-  return db.transaction(async (tx) => {
-    const [owned] = await tx
+  return runVariableCostTransaction(db, async (tx) => {
+    // Preserve the public not-found contract before inspecting recipe rows of
+    // a product that might belong to another owner.
+    const [preliminaryOwner] = await tx
       .select({ id: products.id })
       .from(products)
       .innerJoin(businesses, eq(products.businessId, businesses.id))
@@ -307,6 +581,39 @@ export async function updateProductService(
       )
       .limit(1);
 
+    if (!preliminaryOwner) {
+      return null;
+    }
+
+    const existingRecipe = await tx
+      .select({ supplyId: productIngredients.supplyId })
+      .from(productIngredients)
+      .where(eq(productIngredients.productId, productId));
+    const lockedSupplies = await lockVariableCostSupplies(tx, userId, [
+      ...existingRecipe.map((item) => item.supplyId),
+      ...data.recipe.map((item) => item.supplyId),
+    ]);
+    const expectedSupplyCount = new Set([
+      ...existingRecipe.map((item) => item.supplyId),
+      ...data.recipe.map((item) => item.supplyId),
+    ]).size;
+    if (lockedSupplies.length !== expectedSupplyCount) {
+      throw new AppError("SUPPLY_NOT_FOUND");
+    }
+    const [owned] = await tx
+      .select({ id: products.id })
+      .from(products)
+      .innerJoin(businesses, eq(products.businessId, businesses.id))
+      .where(
+        and(
+          eq(products.id, productId),
+          eq(businesses.ownerUserId, userId),
+          eq(products.isActive, true),
+        ),
+      )
+      .for("update")
+      .limit(1);
+
     if (!owned) {
       return null;
     }
@@ -316,7 +623,12 @@ export async function updateProductService(
 
     const [product] = await tx
       .update(products)
-      .set({ name: data.name, updatedAt: new Date() })
+      .set({
+        name: data.name,
+        monthlyCapacity: data.monthlyCapacity,
+        yieldQuantity: Number(data.yieldQuantity),
+        updatedAt: new Date(),
+      })
       .where(eq(products.id, productId))
       .returning();
 
@@ -342,7 +654,15 @@ export async function updateProductService(
       )
       .returning();
 
-    return toProductItem(product, ingredients, suppliesById);
+    const item = toProductItem(product, ingredients, suppliesById);
+    const variableCosts = await persistProductVariableCostsTx(
+      tx,
+      userId,
+      product,
+      ingredients,
+      suppliesById,
+    );
+    return { ...item, ...variableCosts };
   });
 }
 
