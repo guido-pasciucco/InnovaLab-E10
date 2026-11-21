@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 
-import { deleteProduct } from "@/app/products/actions";
+import { deleteProduct } from "@/app/(flujo-1)/products/actions";
 import type {
   ProductItem,
   RecipeSupplyOption,

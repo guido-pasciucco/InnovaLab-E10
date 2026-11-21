@@ -29,7 +29,7 @@ export class LoginPage {
     await this.page.goto("/login");
   }
 
-  // Fills and submits the form. On success the form pushes to "/dashboard".
+  // Fills and submits the form. On success the form pushes to "/insumos".
   async logIn(credentials: { email: string; password: string }): Promise<void> {
     await this.emailInput.fill(credentials.email);
     await this.passwordInput.fill(credentials.password);
