@@ -32,16 +32,19 @@ export function offerKey(invitationId: string, itemId: string): string {
   return `${invitationId}:${itemId}`;
 }
 
-// True when `a` came after `b`. Same instant: the later round wins, then the
-// lower price (RN-10 only lets prices go down, so the newer of two offers
-// made in the same instant is never the higher one).
+// True when `a` replaces `b` as the supplier's current offer. RN-10 only
+// accepts a price at or below the current one, so the offer stored last is
+// always the lowest: comparing prices does not depend on timestamps, which two
+// concurrent submissions could stamp in the opposite order they were saved.
+// Equal prices (a ratification) keep the later round, then the later time.
 function isNewer(a: OfferRecord, b: OfferRecord): boolean {
-  if (a.createdAt.getTime() !== b.createdAt.getTime()) return a.createdAt.getTime() > b.createdAt.getTime();
+  const byPrice = new Decimal(a.unitPrice).comparedTo(b.unitPrice);
+  if (byPrice !== 0) return byPrice < 0;
   if (a.round !== b.round) return a.round > b.round;
-  return new Decimal(a.unitPrice).lt(b.unitPrice);
+  return a.createdAt.getTime() > b.createdAt.getTime();
 }
 
-// Last offer of each supplier (invitation) for each item. RN-10: "Si no
+// Current offer of each supplier (invitation) for each item. RN-10: "Si no
 // responde, se considera que ratifica", so the last offer stands until a
 // newer one replaces it.
 export function latestOffers<T extends OfferRecord>(offers: readonly T[]): Map<string, T> {

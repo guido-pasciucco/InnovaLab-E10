@@ -14,12 +14,14 @@ type Invitation = { id: string; businessName: string };
 function Difference({ value }: { value: PriceDifference | null }) {
   if (!value) return <span className="text-fg-muted">—</span>;
   const cheaper = value.amount.startsWith("-");
-  const sign = cheaper || value.amount === "0.00" ? "" : "+";
+  const sign = cheaper ? "-" : value.amount === "0.00" ? "" : "+";
+  const amount = cheaper ? value.amount.slice(1) : value.amount;
+  const percent = cheaper ? value.percent.slice(1) : value.percent;
   return (
     <span className={cheaper ? "text-success" : "text-fg"}>
       {sign}
-      {formatMoney(value.amount)} ({sign}
-      {value.percent.replace(".", ",")} %)
+      {formatMoney(amount)} ({sign}
+      {percent.replace(".", ",")} %)
     </span>
   );
 }

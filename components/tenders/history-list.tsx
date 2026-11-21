@@ -9,12 +9,14 @@ function describe(event: TenderHistoryEvent): string {
       return `Empezó la ronda ${event.round}.`;
     case "offer":
       return `${event.supplier} ofertó ${formatMoney(event.unitPrice)} por ${event.item} (ronda ${event.round}).`;
+    case "no_offers_warning":
+      return `Terminó la primera ronda sin ofertas para ${event.items.join(", ")}: te avisamos.`;
     case "warning_ack":
       return "Elegiste dejar que siga después del aviso de insumos sin ofertas.";
     case "cancelled":
       return "Cancelaste la licitación.";
     case "closed":
-      return "Cerró la licitación.";
+      return event.isVoid ? "Cerró la licitación sin ofertas: quedó desierta." : "Cerró la licitación.";
     case "award":
       return `Elegiste a ${event.supplier} para ${event.item} a ${formatMoney(event.unitPrice)}.`;
     case "negotiation":

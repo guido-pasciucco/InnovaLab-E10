@@ -66,13 +66,14 @@ async function failure(promise: Promise<unknown>): Promise<AppError> {
 
 // Flour and sugar, closes at +24 h. Molino quotes both; Dulce only flour,
 // cheaper.
-async function closedTender() {
+async function closedTender({ withSilentSupplier = false } = {}) {
   const owner = await createUser();
   track(owner);
   const flour = await createSupply(owner.id, "Harina 000", db);
   const sugar = await createSupply(owner.id, "Azúcar", db);
   const molino = await createLinkedSupplier(owner, db, track, "Molino San José");
   const dulce = await createLinkedSupplier(owner, db, track, "Dulce SA");
+  const silent = withSilentSupplier ? await createLinkedSupplier(owner, db, track, "Sin Oferta SRL") : null;
   const { id } = await publishTenderService(
     owner.id,
     {
@@ -83,7 +84,7 @@ async function closedTender() {
         { supplyId: flour.id, quantity: "50", startingPrice: "800.00" },
         { supplyId: sugar.id, quantity: "20", startingPrice: "1000.00" },
       ],
-      supplierIds: [molino.id, dulce.id],
+      supplierIds: silent ? [molino.id, dulce.id, silent.id] : [molino.id, dulce.id],
     },
     db,
     start,
@@ -114,6 +115,7 @@ async function closedTender() {
     sugarId,
     molinoInv: invitation(molino),
     dulceInv: invitation(dulce),
+    silentInv: silent ? invitation(silent) : null,
   };
 }
 
@@ -177,6 +179,15 @@ describe("requestNegotiationService (RN-21)", () => {
       contact: "ana@panaderia.test / 11 5555-0000",
     });
     expect((await getSupplierTenderService(t.dulce.id, t.tenderId, db, at(27))).negotiation).toBeNull();
+  });
+
+  it("only with a supplier that offered (N-27)", async () => {
+    const t = await closedTender({ withSilentSupplier: true });
+    expect(
+      (await failure(
+        requestNegotiationService(t.owner.id, t.tenderId, { invitationId: t.silentInv!, contact: "11 5555-0000" }, db, at(25)),
+      )).code,
+    ).toBe("TENDER_NO_OFFER");
   });
 
   it("requires a contact", async () => {
@@ -320,5 +331,32 @@ describe("getTenderHistoryService (RN-17)", () => {
       item: "Harina 000",
       unitPrice: "740.00",
     });
+  });
+});
+
+describe("history of a void tender (RN-17, RN-18, RN-19)", () => {
+  it("records the round-1 warning and that it closed void", async () => {
+    const owner = await createUser();
+    track(owner);
+    const flour = await createSupply(owner.id, "Harina 000", db);
+    const molino = await createLinkedSupplier(owner, db, track, "Molino San José");
+    const { id } = await publishTenderService(
+      owner.id,
+      {
+        roundHours: 6,
+        roundCount: 2,
+        decrementPercent: "10",
+        items: [{ supplyId: flour.id, quantity: "5", startingPrice: "800" }],
+        supplierIds: [molino.id],
+      },
+      db,
+      start,
+    );
+
+    const history = await getTenderHistoryService(owner.id, id, db, at(13));
+
+    expect(history.map((event) => event.kind)).toEqual(["published", "round", "no_offers_warning", "closed"]);
+    expect(history[2]).toMatchObject({ at: at(6), items: ["Harina 000"] });
+    expect(history[3]).toMatchObject({ at: at(12), isVoid: true });
   });
 });

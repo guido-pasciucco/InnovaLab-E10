@@ -41,4 +41,22 @@ describe("latestOffers", () => {
     expect(latest.get("a:sugar")?.unitPrice).toBe("990.00");
     expect(latest.get("b:sugar")).toBeUndefined();
   });
+
+  it("keeps the lowest price as the current offer even if two submissions got reversed timestamps", () => {
+    // RN-10 only accepts prices at or below the current one, so the offer that
+    // committed last is always the lowest, whatever time it was stamped with.
+    const offers = [
+      { id: "1", itemId: "flour", invitationId: "a", round: 1, unitPrice: "700.00", createdAt: new Date("2026-11-21T12:00:00.000Z") },
+      { id: "2", itemId: "flour", invitationId: "a", round: 1, unitPrice: "720.00", createdAt: new Date("2026-11-21T12:00:00.005Z") },
+    ];
+    expect(latestOffers(offers).get("a:flour")?.unitPrice).toBe("700.00");
+  });
+
+  it("keeps the later round when the price was ratified", () => {
+    const offers = [
+      { id: "1", itemId: "flour", invitationId: "a", round: 1, unitPrice: "700.00", createdAt: new Date("2026-11-21T12:00:00Z") },
+      { id: "2", itemId: "flour", invitationId: "a", round: 2, unitPrice: "700.00", createdAt: new Date("2026-11-21T19:00:00Z") },
+    ];
+    expect(latestOffers(offers).get("a:flour")?.round).toBe(2);
+  });
 });

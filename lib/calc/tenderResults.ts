@@ -62,7 +62,11 @@ export function buildComparison(
         unitPrice: offer.unitPrice,
         round: offer.round,
         vsStarting: priceDifference(offer.unitPrice, item.startingPrice),
-        vsReference: item.referencePrice ? priceDifference(offer.unitPrice, item.referencePrice) : null,
+        // No percentage against a catalog price of 0 (the catalog allows it).
+        vsReference:
+          item.referencePrice && new Decimal(item.referencePrice).gt(0)
+            ? priceDifference(offer.unitPrice, item.referencePrice)
+            : null,
       };
     });
 

@@ -8,6 +8,7 @@ import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { businesses } from "@/lib/db/business/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { profiles } from "@/lib/db/profile/table";
+import { supplies } from "@/lib/db/supplies/table";
 import { supplierInvites, supplierLinks, suppliers, type Supplier } from "@/lib/db/suppliers/table";
 import {
   createSupplierInviteInputSchema,
@@ -352,7 +353,16 @@ export async function startSupplierSignupService(
     client,
     { email, password, displayName: profile.businessName.slice(0, 80) },
     emailRedirectTo,
-    { [PENDING_SUPPLIER_KEY]: { ...profile, termsAcceptedAt: now.toISOString() } },
+    // The invite's hash binds the pending data to this link: completing with
+    // any other link is refused, so a crafted link cannot register the
+    // supplier with a different emprendedor.
+    {
+      [PENDING_SUPPLIER_KEY]: {
+        ...profile,
+        termsAcceptedAt: now.toISOString(),
+        inviteTokenHash: hashInviteToken(token),
+      },
+    },
   );
 }
 
@@ -368,7 +378,9 @@ export async function completeSupplierSignupService(
   db: Db = getDrizzleClient(),
   now: Date = new Date(),
 ): Promise<{ ownerName: string }> {
-  const data = (pending ?? {}) as { termsAcceptedAt?: unknown };
+  const data = (pending ?? {}) as { termsAcceptedAt?: unknown; inviteTokenHash?: unknown };
+  // The data was entered for one invite; any other link is not valid for it.
+  if (data.inviteTokenHash !== hashInviteToken(token)) throw new AppError("SUPPLIER_INVITE_INVALID");
   const profile = supplierProfileInputSchema.parse({ ...data, acceptTerms: true });
   const acceptedAt =
     typeof data.termsAcceptedAt === "string" && !Number.isNaN(Date.parse(data.termsAcceptedAt))
@@ -412,18 +424,18 @@ export async function listSupplierEmprendedoresService(
   return rows.map((row) => ({ ...row, ownerName: row.ownerName ?? UNNAMED_OWNER }));
 }
 
-// Where a signed-in account lands: a supplier that owns no business goes to
-// its panel; everyone else keeps the emprendedor dashboard.
+// Where a signed-in account lands: a supplier that has never used the
+// emprendedor side (no business and no catalog) goes to its panel; everyone
+// else keeps the emprendedor dashboard.
 export async function getHomePathService(
   userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
 ): Promise<"/proveedor" | "/dashboard"> {
   const supplier = await getSupplierService(userId, db);
   if (!supplier) return "/dashboard";
-  const [business] = await db
-    .select({ id: businesses.id })
-    .from(businesses)
-    .where(eq(businesses.ownerUserId, userId))
-    .limit(1);
-  return business ? "/dashboard" : "/proveedor";
+  const [[business], [supply]] = await Promise.all([
+    db.select({ id: businesses.id }).from(businesses).where(eq(businesses.ownerUserId, userId)).limit(1),
+    db.select({ id: supplies.id }).from(supplies).where(eq(supplies.userId, userId)).limit(1),
+  ]);
+  return business || supply ? "/dashboard" : "/proveedor";
 }

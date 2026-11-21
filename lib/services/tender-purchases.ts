@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 
 import { latestAwards, orderTotals } from "@/lib/calc/purchaseOrder";
 import { latestOffers, offerKey } from "@/lib/calc/tenderOffers";
+import { itemsWithoutRoundOneOffers } from "@/lib/calc/tenderResults";
 import { roundStartsAt, tenderPhase } from "@/lib/calc/tenderRounds";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { profiles } from "@/lib/db/profile/table";
@@ -102,7 +103,8 @@ export async function awardItemService(
 }
 
 // RN-21: the supplier is told in its panel and gets the emprendedor's contact.
-// Recorded once; asking again keeps the first request.
+// Only suppliers that offered for at least one item (N-27). Recorded once;
+// asking again keeps the first request.
 export async function requestNegotiationService(
   userId: VerifiedUserId,
   tenderId: string,
@@ -114,6 +116,7 @@ export async function requestNegotiationService(
   const tender = await getOwnedTender(userId, tenderId, db);
   requireClosed(tender, now);
   await requireInvitation(tender.id, data.invitationId, db);
+  if ((await loadOffers(tender.id, db, data.invitationId)).length === 0) throw new AppError("TENDER_NO_OFFER");
 
   await db
     .update(tenderInvitations)
@@ -292,9 +295,10 @@ export type TenderHistoryEvent =
   | { kind: "published"; at: Date; roundHours: number; roundCount: number; decrementPercent: string }
   | { kind: "round"; at: Date; round: number }
   | { kind: "offer"; at: Date; supplier: string; item: string; round: number; unitPrice: string }
+  | { kind: "no_offers_warning"; at: Date; items: string[] }
   | { kind: "warning_ack"; at: Date }
   | { kind: "cancelled"; at: Date }
-  | { kind: "closed"; at: Date }
+  | { kind: "closed"; at: Date; isVoid: boolean }
   | { kind: "award"; at: Date; supplier: string; item: string; unitPrice: string }
   | { kind: "negotiation"; at: Date; supplier: string }
   | { kind: "order"; at: Date; supplier: string; number: number; total: string }
@@ -355,9 +359,17 @@ export async function getTenderHistoryService(
       unitPrice: offer.unitPrice,
     });
   }
+  // RN-18: the warning appeared when round 1 ended with items nobody quoted.
+  const roundTwo = roundStartsAt(tender, 2);
+  const withoutOffers = itemsWithoutRoundOneOffers(items, offers);
+  if (withoutOffers.length > 0 && roundTwo.getTime() < until) {
+    events.push({ kind: "no_offers_warning", at: roundTwo, items: withoutOffers.map((id) => itemName.get(id) ?? "") });
+  }
   if (tender.noOfferWarningAckAt) events.push({ kind: "warning_ack", at: tender.noOfferWarningAckAt });
   if (tender.cancelledAt) events.push({ kind: "cancelled", at: tender.cancelledAt });
-  else if (now.getTime() >= tender.endsAt.getTime()) events.push({ kind: "closed", at: tender.endsAt });
+  else if (now.getTime() >= tender.endsAt.getTime()) {
+    events.push({ kind: "closed", at: tender.endsAt, isVoid: offers.length === 0 });
+  }
   for (const award of awards) {
     events.push({
       kind: "award",

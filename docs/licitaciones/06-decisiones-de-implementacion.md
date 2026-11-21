@@ -43,6 +43,8 @@ El registro pide nombre del negocio, CUIT, persona de contacto, teléfono y rubr
 El proveedor completa sus datos y elige mail y contraseña. La aplicación le manda el mail de confirmación. Recién cuando lo abre quedan guardados sus datos de proveedor y su vínculo con el emprendedor. Si el enlace de invitación venció mientras tanto, el proveedor ve el aviso y le pide uno nuevo al emprendedor; con el enlace nuevo solo vuelve a cargar los datos de proveedor, no la cuenta.
 
 - **Por qué:** RN-23 dice "antes de crear la cuenta, el proveedor confirma su mail". El enlace se consume al final, para que un mail que nunca se confirma no gaste el enlace.
+- Los datos en espera quedan atados al enlace con el que se cargaron: completar el alta con otro enlace se rechaza. Así, nadie puede armar un enlace que registre al proveedor con otro emprendedor.
+- Si el proveedor abre el mail de confirmación en otro dispositivo, el mail queda confirmado pero la sesión no se abre ahí. La aplicación lo manda a ingresar y, al ingresar, termina el alta.
 
 ### N-07. Una cuenta existente puede sumarse como proveedor
 
@@ -56,7 +58,7 @@ Si el emprendedor abre un enlace que generó él, la aplicación le recuerda que
 
 ### N-09. A dónde entra cada cuenta
 
-Una cuenta de proveedor sin negocio propio entra directo a su panel de proveedor. Si la cuenta también tiene un negocio (vende y compra), entra al dashboard del emprendedor, desde donde llega a todo.
+Una cuenta de proveedor que nunca usó el lado del emprendedor (sin negocio ni insumos cargados) entra directo a su panel de proveedor. Si la cuenta también compra, entra al dashboard del emprendedor, desde donde llega a todo.
 
 ### N-10. Lo que la primera versión no permite
 
@@ -149,7 +151,7 @@ Mientras la licitación está en curso, el emprendedor ve la última oferta de c
 
 ### N-27. Pedir negociar
 
-- Se puede pedir negociar con cualquier proveedor que ofertó, con varios a la vez (ES-06 lo dejó abierto) y antes o después de elegir.
+- Se puede pedir negociar con cualquier proveedor que ofertó por al menos un insumo, con varios a la vez (ES-06 lo dejó abierto) y antes o después de elegir. A un proveedor que no ofertó no se le puede pedir.
 - El emprendedor escribe el contacto que le comparte. Por defecto aparece el mail de su cuenta. El proveedor lo ve en su panel (RN-21).
 - El pedido se registra una sola vez por proveedor y licitación.
 - Elegir a un proveedor sin negociar no le manda ningún aviso (ES-06 lo dejó abierto): el emprendedor le hace llegar la orden de compra por su cuenta.
@@ -163,7 +165,7 @@ Mientras la licitación está en curso, el emprendedor ve la última oferta de c
 
 ### N-29. Nota de agradecimiento
 
-- El texto es fijo e igual para todos: agradece la participación sin mencionar precios ni resultados (RN-16).
+- El texto es fijo e igual para todos: "¡Gracias por participar en esta licitación! Vamos a tenerte en cuenta en las próximas." No menciona precios, resultados ni si se eligió a otro (RN-16).
 - La ven todos los proveedores invitados que no tienen ningún insumo elegido, incluidos los que no ofertaron (ES-11 lo dejó abierto).
 - Se muestra una sola vez y no se puede retirar. Si después de mostrarla el emprendedor elige a uno de esos proveedores, ese proveedor deja de verla.
 
@@ -212,7 +214,11 @@ Al publicar, la transacción bloquea la fila del perfil del emprendedor. Así, d
 
 ### D-09. Ofertas sin modificación
 
-`tender_offers` guarda una fila por oferta, con su ronda y su hora, y los servicios nunca la modifican ni la borran (RN-17). La oferta vigente de un proveedor en un insumo es su fila más reciente. Para que dos envíos simultáneos del mismo proveedor no salteen la regla de "nunca por encima del último precio", cada envío bloquea la invitación de ese proveedor mientras se guarda.
+`tender_offers` guarda una fila por oferta, con su ronda y su hora, y los servicios nunca la modifican ni la borran (RN-17). Para que dos envíos simultáneos del mismo proveedor no salteen la regla de "nunca por encima del último precio", cada envío bloquea la invitación de ese proveedor mientras se guarda.
+
+La oferta vigente de un proveedor en un insumo es la de menor precio. Si hay dos iguales (una ratificación), vale la de la ronda más reciente. Como RN-10 solo acepta precios iguales o menores al vigente, la última oferta guardada siempre es la más baja. Comparar precios en vez de horas evita un error: dos envíos simultáneos podrían quedar con las horas invertidas respecto del orden en que se guardaron.
+
+- **Límite conocido:** una oferta que llega en el mismo instante en que el emprendedor cancela puede quedar guardada un instante después de la cancelación. No cambia nada, porque una licitación cancelada no tiene cuadro ni compra.
 
 - **Alternativa:** un trigger en la base que rechace cualquier modificación o borrado de ofertas. Se dejó para más adelante. Hoy ninguna parte del código modifica ofertas, y un trigger impediría también el borrado en cascada al borrar una cuenta.
 
@@ -253,6 +259,10 @@ El cálculo de rondas, precios objetivo y cierre vive en `lib/calc/tenderRounds.
 ### C-05. El formulario de publicación valida también en el navegador
 
 Publicar implica varias filas de insumos. El formulario revisa cada fila con las mismas reglas de campo antes de enviar, para mostrar cada error debajo de su campo. El servidor vuelve a validar todo con esas mismas reglas.
+
+### C-06. Verificación independiente
+
+El cambio toca alta de cuentas y enlaces de un solo uso, así que además de los tests lo revisó un verificador independiente contra estas especificaciones. No encontró bloqueantes. Sus advertencias se corrigieron en el último commit: atar los datos en espera al enlace, la oferta vigente por precio, sin porcentaje contra un precio de catálogo 0, negociar solo con quien ofertó, el texto de la nota, el aviso y la licitación desierta en el historial, la confirmación desde otro dispositivo y la redirección del dashboard.
 
 ## Entrega
 

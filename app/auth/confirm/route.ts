@@ -35,9 +35,12 @@ export async function GET(request: NextRequest) {
 
   // The supplier signup (docs/licitaciones RN-23) confirms the email and then
   // continues to its invite's completion route: on failure it is a signup too.
-  const isSignup = next === SIGNUP_NEXT || next.startsWith(SUPPLIER_SIGNUP_NEXT_PREFIX);
+  // Opened on another device, the code exchange fails although the email is
+  // confirmed, so /login keeps `next` to finish the supplier signup.
+  const isSupplierSignup = next.startsWith(SUPPLIER_SIGNUP_NEXT_PREFIX);
 
   // redirect() throws, so it stays outside the try.
-  if (failure) redirect(`${isSignup ? "/login" : "/reset-password"}?error=${failure}`);
+  if (failure && isSupplierSignup) redirect(`/login?error=${failure}&next=${encodeURIComponent(next)}`);
+  if (failure) redirect(`${next === SIGNUP_NEXT ? "/login" : "/reset-password"}?error=${failure}`);
   redirect(next);
 }

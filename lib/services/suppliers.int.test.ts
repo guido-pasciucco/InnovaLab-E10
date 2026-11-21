@@ -25,6 +25,7 @@ import {
   registerSupplierService,
   startSupplierSignupService,
 } from "./suppliers";
+import { createSupplyService } from "./supplies";
 
 // Integration tests for the supplier registry (docs/licitaciones RN-22,
 // RN-23) against the local Supabase stack. Users are removed after each test;
@@ -267,6 +268,7 @@ describe("startSupplierSignupService", () => {
             phone: "+54 11 5555-1234",
             categories: ["Harinas", "Azúcares"],
             termsAcceptedAt: "2026-11-21T12:00:00.000Z",
+            inviteTokenHash: hashInviteToken(token),
           },
         },
         emailRedirectTo: "http://site/auth/confirm",
@@ -309,6 +311,7 @@ describe("completeSupplierSignupService", () => {
       phone: "1155551234",
       categories: ["Harinas"],
       termsAcceptedAt: "2026-11-20T10:00:00.000Z",
+      inviteTokenHash: hashInviteToken(token),
     };
 
     await completeSupplierSignupService(supplier.id, supplier.email, token, pending, db);
@@ -317,13 +320,39 @@ describe("completeSupplierSignupService", () => {
     expect(linked).toMatchObject({ userId: supplier.id, cuit });
   });
 
+  it("only completes with the invite the data was entered for", async () => {
+    const owner = await makeUser();
+    const otherOwner = await makeUser();
+    const supplier = await makeUser();
+    const { token } = await createSupplierInviteService(owner.id, { label: "Molino" }, db);
+    const other = await createSupplierInviteService(otherOwner.id, { label: "Molino" }, db);
+    const pending = {
+      businessName: "Molino San José",
+      cuit: randomValidCuit(),
+      contactName: "Ana Pérez",
+      phone: "1155551234",
+      categories: ["Harinas"],
+      inviteTokenHash: hashInviteToken(token),
+    };
+
+    await expectAppError(
+      completeSupplierSignupService(supplier.id, supplier.email, other.token, pending, db),
+      "SUPPLIER_INVITE_INVALID",
+    );
+    await expectAppError(
+      completeSupplierSignupService(supplier.id, supplier.email, token, { ...pending, inviteTokenHash: undefined }, db),
+      "SUPPLIER_INVITE_INVALID",
+    );
+    await expect(listLinkedSuppliersService(otherOwner.id, db)).resolves.toEqual([]);
+  });
+
   it("validates the pending data again (the owner can edit metadata)", async () => {
     const owner = await makeUser();
     const supplier = await makeUser();
     const { token } = await createSupplierInviteService(owner.id, { label: "Molino" }, db);
 
     await expect(
-      completeSupplierSignupService(supplier.id, supplier.email, token, { cuit: "1" }, db),
+      completeSupplierSignupService(supplier.id, supplier.email, token, { cuit: "1", inviteTokenHash: hashInviteToken(token) }, db),
     ).rejects.toBeInstanceOf(ZodError);
   });
 });
@@ -337,5 +366,19 @@ describe("getHomePathService", () => {
 
     await db.insert(businesses).values({ ownerUserId: supplier.id, name: "También vendo" });
     await expect(getHomePathService(supplier.id, db)).resolves.toBe("/dashboard");
+  });
+
+  it("keeps an emprendedor with a catalog but no business yet on the dashboard", async () => {
+    const owner = await makeUser();
+    const emprendedor = await makeUser();
+    await createSupplyService(
+      emprendedor.id,
+      { kind: "supply", name: "Harina", purchasePrice: "100", purchaseQuantity: "1", purchaseUnit: "kg", minimumUnit: "g", conversionFactor: "1000" },
+      db,
+    );
+    const { token } = await createSupplierInviteService(owner.id, { label: "Vecino" }, db);
+    await registerSupplierService(emprendedor.id, emprendedor.email, token, buildSupplierProfile(), db);
+
+    await expect(getHomePathService(emprendedor.id, db)).resolves.toBe("/dashboard");
   });
 });

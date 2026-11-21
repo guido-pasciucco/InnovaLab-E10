@@ -76,4 +76,13 @@ describe("buildComparison (RN-13, RN-19, RN-20)", () => {
     );
     expect(sugarRow?.rows[0]).toMatchObject({ unitPrice: "900.00", vsReference: null });
   });
+
+  it("has no reference difference when the catalog price was 0", () => {
+    const [row] = buildComparison(
+      [{ id: "flour", startingPrice: "800.00", referencePrice: "0.00" }],
+      [{ id: "a" }],
+      [offer("1", "flour", "a", 1, "700.00", "2026-11-21T13:00:00Z")],
+    );
+    expect(row?.rows[0]?.vsReference).toBeNull();
+  });
 });
