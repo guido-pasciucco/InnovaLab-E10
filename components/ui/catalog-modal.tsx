@@ -102,9 +102,15 @@ export function CatalogModal({
       window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
-      // Restore focus to the element that opened the modal.
+      // Restore focus to the element that opened the modal, but only if it is
+      // still mounted and enabled; otherwise leave focus where it is.
       const trigger = triggerRef.current;
-      if (trigger && typeof trigger.focus === "function") {
+      if (
+        trigger &&
+        typeof trigger.focus === "function" &&
+        trigger.isConnected &&
+        !trigger.hasAttribute("disabled")
+      ) {
         trigger.focus();
       }
     };
