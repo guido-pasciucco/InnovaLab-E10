@@ -154,3 +154,14 @@ export const traceabilityField = z.enum(["direct", "indirect"], {
 export const isOwnLaborField = z.boolean({
   error: "Indicá si el costo es trabajo propio.",
 });
+
+// Month the period expenses belong to (#243), as "YYYY-MM". The calculator is
+// monthly (see periodField in calculator-setup/fields.ts), so a month key is
+// enough and keeps the card free of timezone-dependent dates. The server
+// defaults it to the current month in Argentina when the caller omits it.
+export const costPeriodField = z
+  .string({ error: "Indicá el período del gasto." })
+  .trim()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, {
+    error: "El período debe tener el formato AAAA-MM.",
+  });

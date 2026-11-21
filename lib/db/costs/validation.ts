@@ -6,6 +6,7 @@ import {
   amountField,
   behaviorField,
   conceptField,
+  costPeriodField,
   hoursField,
   traceabilityField,
   yieldField,
@@ -23,6 +24,7 @@ import { businessCostLines, calcCostLines } from "./table";
 // --- Persisted rows: mirror exactly what comes back from the database. ---
 
 export const businessCostLineRowSchema = createSelectSchema(businessCostLines, {
+  period: costPeriodField,
   amountPeriod: moneyString,
 });
 
@@ -39,6 +41,7 @@ export const calcCostLineRowSchema = createSelectSchema(calcCostLines, {
 export const createBusinessCostLineInputSchema = createInsertSchema(
   businessCostLines,
   {
+    period: costPeriodField,
     concept: conceptField,
     behavior: behaviorField,
     traceability: traceabilityField,
@@ -50,6 +53,29 @@ export const createBusinessCostLineInputSchema = createInsertSchema(
   businessId: true,
   createdAt: true,
   updatedAt: true,
+});
+
+// Period expenses of the product catalog (#243). The client sends only the
+// concept and the amount; the period is optional (the service defaults it to
+// the current month) and behavior/traceability are server-owned: a period
+// expense is a fixed, indirect cost. These schemas are separate from the
+// generic business-cost input so the client cannot set the dimensions.
+export const addPeriodCostLineInputSchema = z.object({
+  period: costPeriodField.optional(),
+  concept: conceptField,
+  amountPeriod: amountField,
+});
+
+export const listPeriodCostsOptionsSchema = z.object({
+  period: costPeriodField.optional(),
+});
+
+export const updatePeriodCostLineAmountInputSchema = z.object({
+  amountPeriod: amountField,
+});
+
+export const updatePeriodCostLineConceptInputSchema = z.object({
+  concept: conceptField,
 });
 
 export const createCalcCostLineInputSchema = createInsertSchema(calcCostLines, {
@@ -122,6 +148,14 @@ export type CalcCostLineRow = z.infer<typeof calcCostLineRowSchema>;
 
 export type CreateBusinessCostLineInput = z.infer<
   typeof createBusinessCostLineInputSchema
+>;
+export type AddPeriodCostLineInput = z.infer<typeof addPeriodCostLineInputSchema>;
+export type ListPeriodCostsOptions = z.infer<typeof listPeriodCostsOptionsSchema>;
+export type UpdatePeriodCostLineAmountInput = z.infer<
+  typeof updatePeriodCostLineAmountInputSchema
+>;
+export type UpdatePeriodCostLineConceptInput = z.infer<
+  typeof updatePeriodCostLineConceptInputSchema
 >;
 export type CreateCalcCostLineInput = z.infer<typeof createCalcCostLineInputSchema>;
 export type AddCalcCostLineInput = z.infer<typeof addCalcCostLineInputSchema>;

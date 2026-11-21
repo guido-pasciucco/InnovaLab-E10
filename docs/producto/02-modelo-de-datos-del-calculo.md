@@ -198,15 +198,20 @@ Agregar renglones siempre es posible, con o sin `calculations`: la relación con
 
 ## 4. El catálogo del negocio: `business_cost_lines`
 
-Algunos costos son del **negocio**, no de un producto: el alquiler del taller se paga una vez y se reparte entre alfajores, tortas y budines. El catálogo permite cargarlo **una vez** y reutilizarlo en cada cálculo.
+Algunos costos son del **negocio**, no de un producto: el alquiler del taller se paga una vez y se reparte entre alfajores, tortas y budines. El catálogo permite cargarlo **una vez** para toda la lista de productos y reutilizarlo en cada cálculo.
 
-| id | business_id | concept | amount_period |
-|---|---|---|---|
-| bc-1 | b-1 | alquiler del taller | 150000.00 |
+Cada renglón pertenece a un **negocio y a un mes**. `period` guarda el mes como `AAAA-MM`; el servicio lo completa con el mes actual de Argentina si el cliente no lo envía. Así dos meses no se mezclan y el total del período se puede volver a leer tal cual quedó guardado.
+
+| id | business_id | period | concept | amount_period |
+|---|---|---|---|---|
+| bc-1 | b-1 | 2026-11 | alquiler del taller | 150000.00 |
+| bc-2 | b-1 | 2026-11 | luz y gas | 25000.50 |
+
+El total del período es la suma exacta de `amount_period` de esas filas (`Decimal`, dos decimales). No se guarda un total aparte: se deriva de las líneas, así una edición o una baja nunca lo deja desactualizado.
 
 Cuando un renglón de un cálculo sale del catálogo, `calc_cost_lines.source_business_cost_id` apunta a él (`bc-1`). El renglón guarda **su propia copia** del concepto y el importe: si el alquiler sube en el catálogo, los cálculos viejos no cambian.
 
-> **Estado en la Fase 1:** el catálogo está **fuera de alcance** de H2. Los costos se cargan sueltos en cada cálculo. #176 dejó `source_business_cost_id` opcional y su borrado en `set null` (borrar un ítem del catálogo no borra renglones de cálculos ya hechos).
+> **Estado desde #243:** el catálogo entra en alcance para los **gastos del período** (alquiler, servicios y similares) que se cargan una sola vez para la lista de productos. El **prorrateo** de esos gastos entre productos y el precio de venta quedan para #244. #176 dejó `source_business_cost_id` opcional y su borrado en `set null` (borrar un ítem del catálogo no borra renglones de cálculos ya hechos).
 
 ---
 
@@ -220,7 +225,7 @@ Cuando un renglón de un cálculo sale del catálogo, `calc_cost_lines.source_bu
 | `calculations` | ✔ (un borrador) | ✔ | historial, varios cálculos |
 | `costing_setup` | ✔ | | |
 | `calc_cost_lines` | | ✔ | horas × valor, prorrateo |
-| `business_cost_lines` | | | catálogo reutilizable |
+| `business_cost_lines` | | | ✔ gastos del período (#243); prorrateo en #244 |
 | `pricing_inputs` | | | precio y margen |
 | `scenarios` | | | "¿y si…?" |
 | `computed_results` | | | motor de cálculo |
