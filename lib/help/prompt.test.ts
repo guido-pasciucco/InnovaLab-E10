@@ -9,4 +9,14 @@ describe("buildHelpSystemPrompt", () => {
     expect(prompt).toContain("No pidas ni uses los números del cálculo");
     expect(prompt).toContain("gatito 🐱");
   });
+
+it("uses a clear and professional tone", () => {
+  const prompt = buildHelpSystemPrompt(
+    "Margen: parte del precio de venta.",
+  );
+
+  expect(prompt).toContain("tono amable, profesional y accesible");
+  expect(prompt).not.toContain("bizarro y algo grosero");
+});
+
 });
