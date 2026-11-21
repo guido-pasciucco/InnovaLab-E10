@@ -3,34 +3,23 @@
 import { MessageCircle, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { HELP_THREAD_LIMIT, type HelpMessage } from "@/lib/schemas/help/help";
-
-const STORAGE_KEY = "numora-ayuda";
+import {
+  createHelpRequestGuard,
+  readHelpThread,
+  writeHelpThread,
+} from "@/lib/help/client-session";
 
 type HelpWidgetProps = {
   enabled: boolean;
+  userId: string | null;
 };
 
-function readThread(): HelpMessage[] {
-  try {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (!stored) return [];
-    const parsed: unknown = JSON.parse(stored);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter(
-        (item): item is HelpMessage =>
-          !!item &&
-          typeof item === "object" &&
-          (item.role === "user" || item.role === "assistant") &&
-          typeof item.content === "string",
-      )
-      .slice(-HELP_THREAD_LIMIT);
-  } catch {
-    return [];
-  }
+export function HelpWidget({ enabled, userId }: HelpWidgetProps) {
+  if (!enabled) return null;
+  return <HelpWidgetSession key={userId ?? "signed-out"} userId={userId} />;
 }
 
-export function HelpWidget({ enabled }: HelpWidgetProps) {
+function HelpWidgetSession({ userId }: Pick<HelpWidgetProps, "userId">) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<HelpMessage[]>([]);
@@ -38,17 +27,24 @@ export function HelpWidget({ enabled }: HelpWidgetProps) {
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const loadedRef = useRef(false);
+  const requestGuardRef = useRef(createHelpRequestGuard());
 
   useEffect(() => {
-    if (!enabled || !loadedRef.current) return;
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-HELP_THREAD_LIMIT)));
-  }, [enabled, messages]);
+    const guard = requestGuardRef.current;
+
+    return () => {
+      guard.invalidate();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!userId || !loadedRef.current) return;
+    writeHelpThread(sessionStorage, userId, messages);
+  }, [messages, userId]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [messages, open]);
-
-  if (!enabled) return null;
 
   async function send() {
     const content = draft.trim();
@@ -59,14 +55,18 @@ export function HelpWidget({ enabled }: HelpWidgetProps) {
     setDraft("");
     setError(null);
     setPending(true);
+    const request = requestGuardRef.current.start();
+    const { controller, isCurrent } = request;
 
     try {
       const response = await fetch("/api/help", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ messages: next }),
+        signal: controller.signal,
       });
 
+      if (!isCurrent()) return;
       if (!response.ok || !response.body) {
         setError(
           response.status === 401
@@ -86,6 +86,10 @@ export function HelpWidget({ enabled }: HelpWidgetProps) {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        if (!isCurrent()) {
+          await reader.cancel();
+          return;
+        }
         answer += decoder.decode(value, { stream: true });
         const snapshot = answer;
         setMessages((current) => {
@@ -96,10 +100,15 @@ export function HelpWidget({ enabled }: HelpWidgetProps) {
           return updated;
         });
       }
-    } catch {
-      setError("No pude obtener una respuesta. Probá de nuevo.");
+    } catch (caught) {
+      if (isCurrent() && !(caught instanceof DOMException && caught.name === "AbortError")) {
+        setError("No pude obtener una respuesta. Probá de nuevo.");
+      }
     } finally {
-      setPending(false);
+      if (isCurrent()) {
+        request.finish();
+        setPending(false);
+      }
     }
   }
 
@@ -177,7 +186,7 @@ export function HelpWidget({ enabled }: HelpWidgetProps) {
         onClick={() => {
           if (!open) {
             loadedRef.current = true;
-            setMessages(readThread());
+            if (userId) setMessages(readHelpThread(sessionStorage, userId));
           }
           setOpen((value) => !value);
         }}

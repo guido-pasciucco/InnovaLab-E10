@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { HelpWidget } from "@/components/help/help-widget";
 import { isHelpEnabled } from "@/lib/help/config";
 import { FlowSwitcher } from "@/components/flow-switcher";
+import { getOptionalUser } from "@/lib/auth/optional-user";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,11 +21,14 @@ export const metadata: Metadata = {
   description: "Calculá tus costos, definí tus precios y encontrá tu punto de equilibrio.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const helpEnabled = isHelpEnabled();
+  const user = helpEnabled ? await getOptionalUser() : null;
+
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased overflow-x-clip`}>
       <body 
@@ -78,7 +82,7 @@ export default function RootLayout({
           {/* TEMPORARY: flow 1 / flow 2 switcher, remove with flow 2. */}
           <FlowSwitcher />
           {children}
-          <HelpWidget enabled={isHelpEnabled()} />
+          <HelpWidget enabled={helpEnabled} userId={user?.id ?? null} />
         </div>
       </body>
     </html>
