@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  integer,
   index,
   numeric,
   pgTable,
@@ -41,6 +42,29 @@ export const products = pgTable("products", {
     .references(() => businesses.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   skuOrSlug: text("sku_or_slug"),
+  // Historical products can lack this source datum. New product writes require it.
+  yieldQuantity: integer("yield_quantity"),
+  // Current derived variable costs. These columns are intentionally nullable:
+  // legacy products have no fabricated value until a future explicit backfill.
+  // Monetary columns are only display values; consumers that calculate further
+  // must use the exact numerator/denominator pairs.
+  variableCostStatus: text("variable_cost_status").notNull().default("pending"),
+  variableCostUnitAmount: numeric("variable_cost_unit_amount", {
+    precision: 12,
+    scale: 2,
+  }),
+  variableCostUnitNumerator: text("variable_cost_unit_numerator"),
+  variableCostUnitDenominator: text("variable_cost_unit_denominator"),
+  variableCostRecipeAmount: numeric("variable_cost_recipe_amount", {
+    precision: 12,
+    scale: 2,
+  }),
+  variableCostRecipeNumerator: text("variable_cost_recipe_numerator"),
+  variableCostRecipeDenominator: text("variable_cost_recipe_denominator"),
+  variableCostUnavailableCode: text("variable_cost_unavailable_code"),
+  variableCostCalculatedAt: timestamp("variable_cost_calculated_at", {
+    withTimezone: true,
+  }),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -49,7 +73,44 @@ export const products = pgTable("products", {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+}, (table) => [
+  // Existing products predate recipe yield, but any present value is positive.
+  check(
+    "products_yield_quantity_positive",
+    sql`${table.yieldQuantity} IS NULL OR ${table.yieldQuantity} > 0`,
+  ),
+  check(
+    "products_variable_cost_status_valid",
+    sql`${table.variableCostStatus} IN ('pending', 'ready', 'unavailable')`,
+  ),
+  check(
+    "products_variable_cost_ready_shape",
+    sql`(
+      ${table.variableCostStatus} = 'ready'
+      AND ${table.variableCostUnitAmount} IS NOT NULL
+      AND ${table.variableCostUnitNumerator} ~ '^[0-9]+$'
+      AND ${table.variableCostUnitDenominator} ~ '^[1-9][0-9]*$'
+      AND ${table.variableCostRecipeAmount} IS NOT NULL
+      AND ${table.variableCostRecipeNumerator} ~ '^[0-9]+$'
+      AND ${table.variableCostRecipeDenominator} ~ '^[1-9][0-9]*$'
+      AND ${table.variableCostUnavailableCode} IS NULL
+      AND ${table.variableCostCalculatedAt} IS NOT NULL
+    ) OR (
+      ${table.variableCostStatus} IN ('pending', 'unavailable')
+      AND ${table.variableCostUnitAmount} IS NULL
+      AND ${table.variableCostUnitNumerator} IS NULL
+      AND ${table.variableCostUnitDenominator} IS NULL
+      AND ${table.variableCostRecipeAmount} IS NULL
+      AND ${table.variableCostRecipeNumerator} IS NULL
+      AND ${table.variableCostRecipeDenominator} IS NULL
+    )`,
+  ),
+  check(
+    "products_variable_cost_amounts_nonnegative",
+    sql`(${table.variableCostUnitAmount} IS NULL OR ${table.variableCostUnitAmount} >= 0)
+      AND (${table.variableCostRecipeAmount} IS NULL OR ${table.variableCostRecipeAmount} >= 0)`,
+  ),
+]);
 
 export const productIngredients = pgTable("product_ingredients", {
   id: uuid("id").defaultRandom().primaryKey(),

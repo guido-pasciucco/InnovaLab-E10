@@ -27,6 +27,7 @@ import { useServerFieldErrors } from "@/components/forms/use-server-field-errors
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
+import { RecipeYieldField } from "./recipe-yield-field";
 
 type ProductFormProps = {
   product: ProductItem | null;
@@ -36,7 +37,7 @@ type ProductFormProps = {
 };
 
 // Fields the server may flag; module-level so the reference stays stable.
-const SERVER_FIELDS: readonly Path<ProductFormValues>[] = ["name", "recipe"];
+const SERVER_FIELDS: readonly Path<ProductFormValues>[] = ["name", "yieldQuantity", "recipe"];
 
 // Empty row used when the form opens or the user adds another ingredient.
 function emptyRecipeRow(): ProductFormValues["recipe"][number] {
@@ -45,11 +46,12 @@ function emptyRecipeRow(): ProductFormValues["recipe"][number] {
 
 function toDefaultValues(product: ProductItem | null): ProductFormValues {
   if (!product) {
-    return { name: "", recipe: [emptyRecipeRow()] };
+    return { name: "", yieldQuantity: "", recipe: [emptyRecipeRow()] };
   }
 
   return {
     name: product.name,
+    yieldQuantity: product.yieldQuantity ?? "",
     recipe: product.recipe.map((item) => ({
       supplyId: item.supplyId,
       quantity: item.quantity,
@@ -128,6 +130,9 @@ export function ProductForm({
     control,
     name: "recipe",
   });
+
+  const productName = useWatch({ control, name: "name" });
+  const yieldQuantity = useWatch({ control, name: "yieldQuantity" });
 
   const recipeValues = useWatch({ control, name: "recipe" });
 
@@ -292,6 +297,14 @@ export function ProductForm({
           + Agregar insumo
         </button>
       </fieldset>
+
+      <RecipeYieldField
+        productName={productName}
+        value={yieldQuantity}
+        onChange={(value) => setValue("yieldQuantity", value, { shouldValidate: true })}
+        error={errors.yieldQuantity?.message}
+        disabled={isPending}
+      />
 
       <div className="flex gap-3">
         <PrimaryButton
