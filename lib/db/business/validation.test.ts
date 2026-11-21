@@ -30,6 +30,7 @@ const validProduct = {
 const validRecipeProduct = {
   name: "Pan flauta",
   monthlyCapacity: "120",
+  yieldQuantity: "12",
   recipe: [{ supplyId: SERVER_ID, quantity: "250", unit: "g" }],
 };
 

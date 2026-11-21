@@ -1,8 +1,8 @@
 import "server-only";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
-import { businesses, productIngredients } from "@/lib/db/business/table";
+import { businesses, productIngredients, products } from "@/lib/db/business/table";
 import { supplies } from "@/lib/db/supplies/table";
 import {
   createSupplyInputSchema,
@@ -18,6 +18,11 @@ import {
   resolveSupplyUnitsForUpdate,
 } from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
+import { recalculatePersistedProductVariableCostsTx } from "./products";
+import {
+  lockVariableCostSupplies,
+  runVariableCostTransaction,
+} from "./variable-cost-transaction";
 
 // Supply catalog persistence (ADR 0005: the catalog lives server-side only).
 // Input is validated with the server gate from lib/db, never with the client
@@ -87,62 +92,103 @@ export async function updateSupplyService(
 ): Promise<SupplyRow | null> {
   const supply = updateSupplyInputSchema.parse(input);
 
-  const [existing] = await db
-    .select()
-    .from(supplies)
-    .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
-    .limit(1);
-
-  if (!existing) {
-    return null;
-  }
-
-  const units = resolveSupplyUnitsForUpdate(existing, supply);
-
-  if (!units) {
-    throw new AppError("VALIDATION", {
-      formErrors: [],
-      fieldErrors: { purchaseUnit: [SUPPLY_UNIT_CATALOG_MESSAGE] },
-    });
-  }
-
-  // Each recipe line stores its own unit, but that unit must stay in the
-  // supply's family. Changing the kind or the resolved minimum unit changes the
-  // family (or the meaning of legacy rows), so the update is blocked while a
-  // recipe references the supply. Price, purchase quantity, purchase unit
-  // within the same family and conversion factor stay editable: they only feed
-  // the cost calculation.
-  const changesRecipeMeaning =
-    supply.kind !== existing.kind || units.minimumUnit !== existing.minimumUnit;
-
-  if (changesRecipeMeaning) {
-    const [used] = await db
-      .select({ id: productIngredients.id })
-      .from(productIngredients)
-      .where(eq(productIngredients.supplyId, supplyId))
+  return runVariableCostTransaction(db, async (tx) => {
+    // Do not reveal recipe usage for a foreign or absent supply.
+    const [preliminaryOwner] = await tx
+      .select({ id: supplies.id })
+      .from(supplies)
+      .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
       .limit(1);
+    if (!preliminaryOwner) return null;
 
-    if (used) {
-      throw new AppError("SUPPLY_IN_USE");
+    // Read the affected graph before locking it. Serializable isolation makes
+    // a concurrent recipe rewrite retry; the stable supply/product lock order
+    // prevents a stale catalog snapshot from committing.
+    const affectedRows = await tx
+      .select({ productId: products.id })
+      .from(productIngredients)
+      .innerJoin(products, eq(productIngredients.productId, products.id))
+      .innerJoin(businesses, eq(products.businessId, businesses.id))
+      .where(
+        and(
+          eq(productIngredients.supplyId, supplyId),
+          eq(products.isActive, true),
+          eq(businesses.ownerUserId, userId),
+        ),
+      );
+    const affectedProductIds = [...new Set(affectedRows.map((row) => row.productId))].sort();
+    const relatedIngredients =
+      affectedProductIds.length === 0
+        ? []
+        : await tx
+            .select({ supplyId: productIngredients.supplyId })
+            .from(productIngredients)
+            .where(inArray(productIngredients.productId, affectedProductIds));
+
+    const lockedSupplies = await lockVariableCostSupplies(tx, userId, [
+      supplyId,
+      ...relatedIngredients.map((ingredient) => ingredient.supplyId),
+    ]);
+    if (!lockedSupplies.some((locked) => locked.id === supplyId)) return null;
+
+    const [existing] = await tx
+      .select()
+      .from(supplies)
+      .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
+      .limit(1);
+    if (!existing) return null;
+
+    const units = resolveSupplyUnitsForUpdate(existing, supply);
+    if (!units) {
+      throw new AppError("VALIDATION", {
+        formErrors: [],
+        fieldErrors: { purchaseUnit: [SUPPLY_UNIT_CATALOG_MESSAGE] },
+      });
     }
-  }
 
-  const [row] = await db
-    .update(supplies)
-    .set({
-      kind: supply.kind,
-      name: supply.name,
-      purchasePrice: supply.purchasePrice,
-      purchaseQuantity: supply.purchaseQuantity,
-      purchaseUnit: units.purchaseUnit,
-      minimumUnit: units.minimumUnit,
-      conversionFactor: units.conversionFactor,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
-    .returning();
+    const changesRecipeMeaning =
+      supply.kind !== existing.kind || units.minimumUnit !== existing.minimumUnit;
+    if (changesRecipeMeaning) {
+      const [used] = await tx
+        .select({ id: productIngredients.id })
+        .from(productIngredients)
+        .where(eq(productIngredients.supplyId, supplyId))
+        .limit(1);
+      if (used) throw new AppError("SUPPLY_IN_USE");
+    }
 
-  return row ?? null;
+    if (affectedProductIds.length > 0) {
+      await tx
+        .select({ id: products.id })
+        .from(products)
+        .where(inArray(products.id, affectedProductIds))
+        .orderBy(products.id)
+        .for("update");
+    }
+
+    const [row] = await tx
+      .update(supplies)
+      .set({
+        kind: supply.kind,
+        name: supply.name,
+        purchasePrice: supply.purchasePrice,
+        purchaseQuantity: supply.purchaseQuantity,
+        purchaseUnit: units.purchaseUnit,
+        minimumUnit: units.minimumUnit,
+        conversionFactor: units.conversionFactor,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
+      .returning();
+
+    if (!row) return null;
+
+    for (const productId of affectedProductIds) {
+      await recalculatePersistedProductVariableCostsTx(tx, userId, productId);
+    }
+
+    return row;
+  });
 }
 
 export async function deleteSupplyService(

@@ -32,6 +32,7 @@ import {
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
+import { RecipeYieldField } from "./recipe-yield-field";
 
 type ProductFormProps = {
   product: ProductItem | null;
@@ -44,6 +45,7 @@ type ProductFormProps = {
 const SERVER_FIELDS: readonly Path<ProductFormValues>[] = [
   "name",
   "monthlyCapacity",
+  "yieldQuantity",
   "recipe",
 ];
 
@@ -59,12 +61,18 @@ function toDefaultValues(product: ProductItem | null): ProductFormValues {
       : String(product.monthlyCapacity);
 
   if (!product) {
-    return { name: "", monthlyCapacity, recipe: [emptyRecipeRow()] };
+    return {
+      name: "",
+      monthlyCapacity,
+      yieldQuantity: "",
+      recipe: [emptyRecipeRow()],
+    };
   }
 
   return {
     name: product.name,
     monthlyCapacity,
+    yieldQuantity: product.yieldQuantity ?? "",
     recipe: product.recipe.map((item) => ({
       supplyId: item.supplyId,
       quantity: item.quantity,
@@ -143,6 +151,9 @@ export function ProductForm({
     control,
     name: "recipe",
   });
+
+  const productName = useWatch({ control, name: "name" });
+  const yieldQuantity = useWatch({ control, name: "yieldQuantity" });
 
   const recipeValues = useWatch({ control, name: "recipe" });
   const monthlyCapacity = useWatch({ control, name: "monthlyCapacity" });
@@ -329,6 +340,14 @@ export function ProductForm({
           + Agregar insumo
         </button>
       </fieldset>
+
+      <RecipeYieldField
+        productName={productName}
+        value={yieldQuantity}
+        onChange={(value) => setValue("yieldQuantity", value, { shouldValidate: true })}
+        error={errors.yieldQuantity?.message}
+        disabled={isPending}
+      />
 
       <div className="flex gap-3">
         <PrimaryButton

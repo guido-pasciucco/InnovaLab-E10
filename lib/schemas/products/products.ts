@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 import { productNameField } from "@/lib/schemas/calculator-setup/fields";
+import type { CatalogVariableCostsAdapterErrorCode } from "@/lib/calc/adaptCatalogVariableCosts";
+import type { VariableCostsErrorCode, VariableCostsSuccess } from "@/lib/calc/calculateVariableCosts";
+import { recipeYieldField } from "../recipe-yield/fields";
 import {
   canonicalSupplyUnit,
   getSupplyUnit,
@@ -36,6 +39,7 @@ export const recipeItemSchema = z.object({
 const productFormObjectSchema = z.object({
   name: productNameField,
   monthlyCapacity: monthlyCapacityField,
+  yieldQuantity: recipeYieldField,
   recipe: z
     .array(recipeItemSchema)
     .min(1, { error: "Agregá al menos un insumo a la receta." }),
@@ -152,7 +156,15 @@ export type ProductItem = {
   id: string;
   name: string;
   monthlyCapacity: number | null;
+  yieldQuantity: string | null;
   recipe: ProductRecipeItem[];
+  variableCosts: VariableCostsSuccess | null;
+  variableCostsUnavailableCode:
+    | CatalogVariableCostsAdapterErrorCode
+    | VariableCostsErrorCode
+    | "UNSUPPORTED_RECIPE_UNIT"
+    | "MISSING_YIELD"
+    | null;
 };
 
 // Minimal shape the recipe selector needs from the supply catalog.

@@ -1,9 +1,9 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+﻿import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ZodError } from "zod/v4";
 
 import { eq, sql } from "drizzle-orm";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
-import { productIngredients } from "@/lib/db/business/table";
+import { businesses, productIngredients, products } from "@/lib/db/business/table";
 import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
@@ -15,6 +15,7 @@ import {
   listProductsService,
   updateProductService,
 } from "./products";
+import { backfillProductVariableCosts } from "./product-variable-cost-backfill";
 import { createSupplyService } from "./supplies";
 
 // Integration tests against the local Supabase stack (.env.test URLs are
@@ -98,10 +99,41 @@ async function makeProduct(
     {
       name: "Pan flauta",
       monthlyCapacity,
+      yieldQuantity: "12",
       recipe: [{ supplyId, quantity, unit }],
     },
     db,
   );
+}
+
+async function persistedVariableCosts(productId: string) {
+  const [row] = await db
+    .select({
+      status: products.variableCostStatus,
+      unitAmount: products.variableCostUnitAmount,
+      unitNumerator: products.variableCostUnitNumerator,
+      unitDenominator: products.variableCostUnitDenominator,
+      recipeAmount: products.variableCostRecipeAmount,
+      recipeNumerator: products.variableCostRecipeNumerator,
+      recipeDenominator: products.variableCostRecipeDenominator,
+      unavailableCode: products.variableCostUnavailableCode,
+      calculatedAt: products.variableCostCalculatedAt,
+    })
+    .from(products)
+    .where(eq(products.id, productId));
+
+  if (!row) throw new Error("persisted product not found");
+  return row;
+}
+
+async function businessIdFor(userId: CreatedUser["id"]): Promise<string> {
+  const [business] = await db
+    .select({ id: businesses.id })
+    .from(businesses)
+    .where(eq(businesses.ownerUserId, userId))
+    .limit(1);
+  if (!business) throw new Error("test business was not created");
+  return business.id;
 }
 
 describe("products service", () => {
@@ -119,6 +151,7 @@ describe("products service", () => {
       user.id,
       {
         name: "Pan flauta",
+        yieldQuantity: "12",
         recipe: [{ supplyId: supply.id, quantity: "250", unit: "g" }],
       },
       db,
@@ -176,6 +209,218 @@ describe("products service", () => {
     await expect(listProductsService(user.id, db)).resolves.toHaveLength(0);
   });
 
+  it("persists rounded and exact current costs without using the rounded CVU as input", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id, {
+      purchasePrice: "1.00",
+      purchaseQuantity: "1",
+      purchaseUnit: "unidad",
+      minimumUnit: "unidad",
+      conversionFactor: "1",
+    });
+
+    const product = await createProductService(
+      user.id,
+      {
+        name: "Producto periódico",
+        yieldQuantity: "3",
+        recipe: [{ supplyId: supply.id, quantity: "1", unit: "unidad" }],
+      },
+      db,
+    );
+
+    expect(product.variableCosts?.unitCost).toBe("0.33");
+    await expect(persistedVariableCosts(product.id)).resolves.toMatchObject({
+      status: "ready",
+      unitAmount: "0.33",
+      unitNumerator: "1",
+      unitDenominator: "3",
+      recipeAmount: "1.00",
+      recipeNumerator: "1",
+      recipeDenominator: "1",
+      unavailableCode: null,
+      calculatedAt: expect.any(Date),
+    });
+  });
+
+  it("keeps zero as a ready current cost instead of an unavailable cost", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id, {
+      purchasePrice: "0.00",
+      purchaseQuantity: "1",
+      purchaseUnit: "unidad",
+      minimumUnit: "unidad",
+      conversionFactor: "1",
+    });
+    const product = await makeProduct(user.id, supply.id, "unidad", "1");
+
+    await expect(persistedVariableCosts(product.id)).resolves.toMatchObject({
+      status: "ready",
+      unitAmount: "0.00",
+      unitNumerator: "0",
+      unitDenominator: "1",
+      unavailableCode: null,
+    });
+  });
+
+  it("updates the persisted exact CVU when the recipe yield changes", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id, {
+      purchasePrice: "1.00",
+      purchaseQuantity: "1",
+      purchaseUnit: "unidad",
+      minimumUnit: "unidad",
+      conversionFactor: "1",
+    });
+    const product = await makeProduct(user.id, supply.id, "unidad", "1");
+
+    await updateProductService(
+      user.id,
+      product.id,
+      {
+        name: product.name,
+        yieldQuantity: "3",
+        recipe: [{ supplyId: supply.id, quantity: "1", unit: "unidad" }],
+      },
+      db,
+    );
+
+    await expect(persistedVariableCosts(product.id)).resolves.toMatchObject({
+      status: "ready",
+      unitAmount: "0.33",
+      unitNumerator: "1",
+      unitDenominator: "3",
+    });
+  });
+
+  it("keeps recipe and persisted CVU unchanged when an edit is rejected", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id, {
+      purchasePrice: "1.00",
+      purchaseQuantity: "1",
+      purchaseUnit: "unidad",
+      minimumUnit: "unidad",
+      conversionFactor: "1",
+    });
+    const product = await makeProduct(user.id, supply.id, "unidad", "1");
+    const before = await persistedVariableCosts(product.id);
+
+    await expect(
+      updateProductService(
+        user.id,
+        product.id,
+        {
+          name: "No debe guardarse",
+          yieldQuantity: "3",
+          recipe: [{ supplyId: supply.id, quantity: "1", unit: "kg" }],
+        },
+        db,
+      ),
+    ).rejects.toMatchObject({ code: "VALIDATION" });
+
+    await expect(persistedVariableCosts(product.id)).resolves.toEqual(before);
+    await expect(getProductService(user.id, product.id, db)).resolves.toMatchObject({
+      name: product.name,
+      yieldQuantity: "12",
+      recipe: [{ supplyId: supply.id, quantity: "1", unit: "unidad" }],
+    });
+  });
+
+  it("leaves a historical product pending without fabricating a cost", async () => {
+    const user = await makeUser();
+    const [business] = await db
+      .insert(businesses)
+      .values({ ownerUserId: user.id, name: "Negocio histórico" })
+      .returning();
+    if (!business) throw new Error("historical business was not created");
+
+    const [legacy] = await db
+      .insert(products)
+      .values({ businessId: business.id, name: "Producto histórico" })
+      .returning();
+    if (!legacy) throw new Error("historical product was not created");
+
+    await expect(persistedVariableCosts(legacy.id)).resolves.toMatchObject({
+      status: "pending",
+      unitAmount: null,
+      unitNumerator: null,
+      unitDenominator: null,
+      recipeAmount: null,
+      unavailableCode: null,
+      calculatedAt: null,
+    });
+  });
+
+  it("persists a typed unavailable state for a legacy recipe the engine cannot calculate", async () => {
+    const user = await makeUser();
+    const [legacy] = await db
+      .insert(supplies)
+      .values({
+        userId: user.id,
+        kind: "supply",
+        name: "Insumo heredado",
+        purchasePrice: "10.00",
+        purchaseQuantity: "1",
+        purchaseUnit: "bolsa",
+        minimumUnit: "bolsa",
+        conversionFactor: "1",
+      })
+      .returning();
+    if (!legacy) throw new Error("legacy supply was not created");
+
+    const product = await makeProduct(user.id, legacy.id, "bolsa", "1");
+
+    await expect(persistedVariableCosts(product.id)).resolves.toMatchObject({
+      status: "unavailable",
+      unitAmount: null,
+      unitNumerator: null,
+      recipeAmount: null,
+      unavailableCode: "UNSUPPORTED_RECIPE_UNIT",
+      calculatedAt: expect.any(Date),
+    });
+  });
+
+  it("backfills pending products with a yield once and leaves ready results intact", async () => {
+    const user = await makeUser();
+    const supply = await makeSupply(user.id, {
+      purchasePrice: "1.00",
+      purchaseQuantity: "1",
+      purchaseUnit: "unidad",
+      minimumUnit: "unidad",
+      conversionFactor: "1",
+    });
+    const product = await makeProduct(user.id, supply.id, "unidad", "1");
+
+    await db
+      .update(products)
+      .set({
+        variableCostStatus: "pending",
+        variableCostUnitAmount: null,
+        variableCostUnitNumerator: null,
+        variableCostUnitDenominator: null,
+        variableCostRecipeAmount: null,
+        variableCostRecipeNumerator: null,
+        variableCostRecipeDenominator: null,
+        variableCostUnavailableCode: null,
+        variableCostCalculatedAt: null,
+      })
+      .where(eq(products.id, product.id));
+
+    const businessId = await businessIdFor(user.id);
+    await expect(backfillProductVariableCosts({ batchSize: 10, businessId }, db)).resolves.toEqual({
+      processed: 1,
+      nextAfterProductId: null,
+    });
+    const afterFirst = await persistedVariableCosts(product.id);
+    expect(afterFirst).toMatchObject({ status: "ready", unitAmount: "0.08" });
+
+    await expect(backfillProductVariableCosts({ batchSize: 10, businessId }, db)).resolves.toEqual({
+      processed: 0,
+      nextAfterProductId: null,
+    });
+    await expect(persistedVariableCosts(product.id)).resolves.toEqual(afterFirst);
+  });
+
   it("normalizes a catalog alias to its canonical unit", async () => {
     const user = await makeUser();
     const supply = await makeSupply(user.id);
@@ -184,6 +429,7 @@ describe("products service", () => {
       user.id,
       {
         name: "Pan flauta",
+        yieldQuantity: "12",
         recipe: [{ supplyId: supply.id, quantity: "0.25", unit: "KILOS" }],
       },
       db,
@@ -202,6 +448,7 @@ describe("products service", () => {
         user.id,
         {
           name: "Pan flauta",
+          yieldQuantity: "12",
           recipe: [{ supplyId: supply.id, quantity: "1", unit: "L" }],
         },
         db,
@@ -220,6 +467,7 @@ describe("products service", () => {
         user.id,
         {
           name: "Pan flauta",
+          yieldQuantity: "12",
           recipe: [{ supplyId: supply.id, quantity: "1", unit: "caja" }],
         },
         db,
@@ -318,6 +566,7 @@ describe("products service", () => {
       product.id,
       {
         name: "Pan integral",
+        yieldQuantity: "12",
         recipe: [{ supplyId: wholeFlour.id, quantity: "0.5", unit: "kg" }],
       },
       db,
@@ -346,6 +595,7 @@ describe("products service", () => {
       {
         name: product.name,
         monthlyCapacity: "200",
+        yieldQuantity: "12",
         recipe: product.recipe.map((item) => ({
           supplyId: item.supplyId,
           quantity: item.quantity,
@@ -371,6 +621,7 @@ describe("products service", () => {
       {
         name: product.name,
         monthlyCapacity: "",
+        yieldQuantity: "12",
         recipe: product.recipe.map((item) => ({
           supplyId: item.supplyId,
           quantity: item.quantity,
@@ -424,6 +675,7 @@ describe("products service", () => {
         user.id,
         {
           name: "Pan flauta",
+          yieldQuantity: "12",
           recipe: [
             { supplyId: supply.id, quantity: "250", unit: "g" },
             { supplyId: supply.id, quantity: "100", unit: "g" },
@@ -467,6 +719,7 @@ describe("products service", () => {
       {
         name: "Hackeado",
         monthlyCapacity: "999",
+        yieldQuantity: "12",
         recipe: [{ supplyId: supply.id, quantity: "1", unit: "g" }],
       },
       db,
@@ -489,6 +742,7 @@ describe("products service", () => {
         product.id,
         {
           name: product.name,
+          yieldQuantity: "12",
           recipe: [{ supplyId: supply.id, quantity: "1", unit: "L" }],
         },
         db,
@@ -533,6 +787,7 @@ describe("products service", () => {
         user.id,
         {
           name: "Pan flauta",
+          yieldQuantity: "12",
           recipe: [{ supplyId: supply.id, quantity: "1", unit: "L" }],
         },
         db,

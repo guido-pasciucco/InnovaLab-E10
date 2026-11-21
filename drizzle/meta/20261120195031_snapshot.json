@@ -1,6 +1,6 @@
 {
-  "id": "079f15fd-49a0-48ac-9fb8-0a53a7901751",
-  "prevId": "108c8569-fdba-45f5-8bad-95166e009b94",
+  "id": "6431b3ae-3e38-49e5-84b2-492cf7051e16",
+  "prevId": "45d7d455-9298-4397-b00b-ef9924d3bb2a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -223,9 +223,64 @@
           "primaryKey": false,
           "notNull": false
         },
-        "monthly_capacity": {
-          "name": "monthly_capacity",
+        "yield_quantity": {
+          "name": "yield_quantity",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variable_cost_status": {
+          "name": "variable_cost_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "variable_cost_unit_amount": {
+          "name": "variable_cost_unit_amount",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variable_cost_unit_numerator": {
+          "name": "variable_cost_unit_numerator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variable_cost_unit_denominator": {
+          "name": "variable_cost_unit_denominator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variable_cost_recipe_amount": {
+          "name": "variable_cost_recipe_amount",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variable_cost_recipe_numerator": {
+          "name": "variable_cost_recipe_numerator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variable_cost_recipe_denominator": {
+          "name": "variable_cost_recipe_denominator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variable_cost_unavailable_code": {
+          "name": "variable_cost_unavailable_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variable_cost_calculated_at": {
+          "name": "variable_cost_calculated_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -271,9 +326,21 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "products_monthly_capacity_non_negative": {
-          "name": "products_monthly_capacity_non_negative",
-          "value": "\"products\".\"monthly_capacity\" >= 0"
+        "products_yield_quantity_positive": {
+          "name": "products_yield_quantity_positive",
+          "value": "\"products\".\"yield_quantity\" IS NULL OR \"products\".\"yield_quantity\" > 0"
+        },
+        "products_variable_cost_status_valid": {
+          "name": "products_variable_cost_status_valid",
+          "value": "\"products\".\"variable_cost_status\" IN ('pending', 'ready', 'unavailable')"
+        },
+        "products_variable_cost_ready_shape": {
+          "name": "products_variable_cost_ready_shape",
+          "value": "(\n      \"products\".\"variable_cost_status\" = 'ready'\n      AND \"products\".\"variable_cost_unit_amount\" IS NOT NULL\n      AND \"products\".\"variable_cost_unit_numerator\" ~ '^[0-9]+$'\n      AND \"products\".\"variable_cost_unit_denominator\" ~ '^[1-9][0-9]*$'\n      AND \"products\".\"variable_cost_recipe_amount\" IS NOT NULL\n      AND \"products\".\"variable_cost_recipe_numerator\" ~ '^[0-9]+$'\n      AND \"products\".\"variable_cost_recipe_denominator\" ~ '^[1-9][0-9]*$'\n      AND \"products\".\"variable_cost_unavailable_code\" IS NULL\n      AND \"products\".\"variable_cost_calculated_at\" IS NOT NULL\n    ) OR (\n      \"products\".\"variable_cost_status\" IN ('pending', 'unavailable')\n      AND \"products\".\"variable_cost_unit_amount\" IS NULL\n      AND \"products\".\"variable_cost_unit_numerator\" IS NULL\n      AND \"products\".\"variable_cost_unit_denominator\" IS NULL\n      AND \"products\".\"variable_cost_recipe_amount\" IS NULL\n      AND \"products\".\"variable_cost_recipe_numerator\" IS NULL\n      AND \"products\".\"variable_cost_recipe_denominator\" IS NULL\n    )"
+        },
+        "products_variable_cost_amounts_nonnegative": {
+          "name": "products_variable_cost_amounts_nonnegative",
+          "value": "(\"products\".\"variable_cost_unit_amount\" IS NULL OR \"products\".\"variable_cost_unit_amount\" >= 0)\n      AND (\"products\".\"variable_cost_recipe_amount\" IS NULL OR \"products\".\"variable_cost_recipe_amount\" >= 0)"
         }
       },
       "isRLSEnabled": false
