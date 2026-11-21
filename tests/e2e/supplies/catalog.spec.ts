@@ -1,14 +1,32 @@
 import { expect, test } from "../fixtures";
 
-test("el dashboard lleva al catálogo de insumos", async ({ authedPage }) => {
+test("el selector de flujo lleva del dashboard (flujo 2) al catálogo de insumos (flujo 1)", async ({ authedPage }) => {
   await authedPage.goto("/dashboard");
 
-  await authedPage.getByRole("link", { name: "Gestionar insumos" }).click();
+  await authedPage.getByRole("link", { name: "Flujo 1" }).click();
 
   await expect(authedPage).toHaveURL("/insumos");
   await expect(
     authedPage.getByRole("heading", { name: "Insumos y packaging" }),
   ).toBeVisible();
+});
+
+test("el sidebar del flujo 1 navega entre insumos y productos", async ({ authedPage }) => {
+  await authedPage.goto("/insumos");
+  const sidebar = authedPage.getByRole("navigation", { name: "Principal" });
+
+  await sidebar.getByRole("link", { name: "Productos" }).click();
+  await expect(authedPage).toHaveURL("/products");
+  await expect(authedPage.getByRole("heading", { name: "Productos", level: 1 })).toBeVisible();
+
+  await sidebar.getByRole("link", { name: "Insumos" }).click();
+  await expect(authedPage).toHaveURL("/insumos");
+});
+
+test("el dashboard del flujo 2 ya no enlaza a los catálogos", async ({ authedPage }) => {
+  await authedPage.goto("/dashboard");
+
+  await expect(authedPage.getByRole("main").getByRole("link", { name: /insumos|productos/i })).toHaveCount(0);
 });
 
 test("la ruta anterior /supplies redirige al catálogo en /insumos", async ({ authedPage }) => {

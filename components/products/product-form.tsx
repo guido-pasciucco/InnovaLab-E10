@@ -11,7 +11,7 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { saveProduct } from "@/app/products/actions";
+import { saveProduct } from "@/app/(flujo-1)/products/actions";
 import type {
   ProductFormValues,
   ProductItem,
