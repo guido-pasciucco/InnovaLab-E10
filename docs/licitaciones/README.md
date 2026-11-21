@@ -12,5 +12,6 @@ Funcionalidad complementaria de la Calculadora de Costos: el emprendedor publica
 | [Especificaciones](04-especificaciones.md) | Documento vivo con los puntos abiertos entre reglas y diagramas, y las decisiones que se van tomando. |
 | [Decisiones en duda](05-decisiones-en-duda.md) | Decisiones ya tomadas en las reglas o los diagramas que alguien quiere revisar, con los argumentos a favor y en contra. |
 | [Decisiones de implementación](06-decisiones-de-implementacion.md) | Documento técnico: decisiones de negocio, base de datos y código que se tomaron al implementar la primera versión y que las reglas no fijaban. |
+| [Guía de QA](07-guia-qa.md) | Casos para validar a mano la primera versión: preparación del entorno, cómo mover el reloj de una licitación y resultados esperados por regla. |
 
 Los diagramas originales están en [`assets/`](assets/).
