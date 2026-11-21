@@ -124,6 +124,16 @@ async function persistedVariableCosts(productId: string) {
   return row;
 }
 
+async function businessIdFor(userId: CreatedUser["id"]): Promise<string> {
+  const [business] = await db
+    .select({ id: businesses.id })
+    .from(businesses)
+    .where(eq(businesses.ownerUserId, userId))
+    .limit(1);
+  if (!business) throw new Error("test business was not created");
+  return business.id;
+}
+
 describe("products service", () => {
   it("lists empty when the user has no products", async () => {
     const user = await makeUser();
@@ -353,14 +363,15 @@ describe("products service", () => {
       })
       .where(eq(products.id, product.id));
 
-    await expect(backfillProductVariableCosts({ batchSize: 10 }, db)).resolves.toEqual({
+    const businessId = await businessIdFor(user.id);
+    await expect(backfillProductVariableCosts({ batchSize: 10, businessId }, db)).resolves.toEqual({
       processed: 1,
       nextAfterProductId: null,
     });
     const afterFirst = await persistedVariableCosts(product.id);
     expect(afterFirst).toMatchObject({ status: "ready", unitAmount: "0.08" });
 
-    await expect(backfillProductVariableCosts({ batchSize: 10 }, db)).resolves.toEqual({
+    await expect(backfillProductVariableCosts({ batchSize: 10, businessId }, db)).resolves.toEqual({
       processed: 0,
       nextAfterProductId: null,
     });

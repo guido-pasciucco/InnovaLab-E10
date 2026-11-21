@@ -58,3 +58,17 @@ los bloqueos y persistir todos los CVU en la misma transacción. Así se evita
 confirmar un resultado calculado con un precio o una receta ya reemplazados.
 La creación de insumos no dispara recálculos. Los snapshots históricos siguen
 siendo una responsabilidad separada.
+
+## Sincronizacion y backfill operativo
+
+La actualizacion de producto y la actualizacion de un insumo usado bloquean primero los insumos involucrados por UUID ascendente y luego los productos afectados por UUID ascendente. Leen los datos despues de obtener los bloqueos y persisten todos los CVU en una transaccion `SERIALIZABLE`. Los conflictos `40001` y `40P01` se reintentan hasta cinco veces; los errores de validacion, autorizacion, base de datos o del motor se propagan. La creacion de insumos no dispara recalculos.
+
+Los servicios que reciben un propietario toman `VerifiedUserId` del guard de sesion. El backfill no recibe un id del cliente: obtiene `owner_user_id` de `businesses`, protegido por su FK a `profiles`, y lo usa solo dentro del proceso administrativo. Esa es la conversion interna necesaria para recorrer productos de todos los negocios.
+
+El backfill se ejecuta explicitamente con `DIRECT_URL` y `--execute`:
+
+```sh
+bun run deploy:backfill-variable-costs -- --execute --batch-size 50
+```
+
+Por defecto procesa una pagina y escribe eventos JSON de inicio, cada lote, cursor y finalizacion. El cursor `nextAfterProductId` se pasa en la siguiente ejecucion con `--after-product-id`; `--max-batches` procesa mas paginas de forma acotada y `--business-id` limita una reanudacion a un negocio. Nunca crea rendimientos: un producto legado sin rendimiento queda `unavailable/MISSING_YIELD`, mientras uno con rendimiento pero sin receta queda `pending` hasta que exista su fuente. La operacion no toca resultados historicos ni usa importes redondeados como entrada.

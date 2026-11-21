@@ -65,7 +65,7 @@ describe("deriveProductVariableCosts", () => {
   it("keeps historical products without yield distinct from zero cost", () => {
     expect(deriveProductVariableCosts({ ...recipe, yieldQuantity: null }, [supply])).toEqual({
       variableCosts: null,
-      variableCostsUnavailableCode: null,
+      variableCostsUnavailableCode: "MISSING_YIELD",
     });
   });
 

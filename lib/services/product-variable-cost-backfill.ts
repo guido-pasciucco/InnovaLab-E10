@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, exists, gt, isNull, or, sql } from "drizzle-orm";
 
 import { businesses, productIngredients, products } from "@/lib/db/business/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
@@ -14,6 +14,8 @@ const MAX_BATCH_SIZE = 200;
 export type ProductVariableCostBackfillOptions = {
   batchSize?: number;
   afterProductId?: string;
+  /** Limits an operational run to one business; useful for a safe retry. */
+  businessId?: string;
 };
 
 export type ProductVariableCostBackfillResult = {
@@ -22,10 +24,12 @@ export type ProductVariableCostBackfillResult = {
 };
 
 /**
- * Explicit, resumable backfill for products that have a real yield. Products
- * without one remain pending: assigning a default would fabricate a cost.
- * It is idempotent because successful rows leave `pending` for `ready` or a
- * typed `unavailable` state, and no historical calculation rows are touched.
+ * Explicit, resumable backfill. Legacy products without a yield become the
+ * typed `MISSING_YIELD` state: assigning a default would fabricate a cost.
+ * Rows with a yield but no persisted recipe stay pending until their source
+ * data is complete, so they are not selected repeatedly. Successful rows
+ * leave `pending` for `ready` or a typed `unavailable` state; no historical
+ * calculation rows are touched.
  */
 export async function backfillProductVariableCosts(
   options: ProductVariableCostBackfillOptions = {},
@@ -35,8 +39,18 @@ export async function backfillProductVariableCosts(
   const conditions = [
     eq(products.variableCostStatus, "pending"),
     eq(products.isActive, true),
+    or(
+      isNull(products.yieldQuantity),
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(productIngredients)
+          .where(eq(productIngredients.productId, products.id)),
+      ),
+    ),
   ];
   if (options.afterProductId) conditions.push(gt(products.id, options.afterProductId));
+  if (options.businessId) conditions.push(eq(products.businessId, options.businessId));
 
   const candidates = await db
     .select({ productId: products.id, userId: businesses.ownerUserId })
@@ -47,8 +61,9 @@ export async function backfillProductVariableCosts(
     .limit(batchSize);
 
   for (const candidate of candidates) {
-    // The value originates in businesses.owner_user_id, whose FK points to a
-    // verified profile; this batch never accepts a caller-provided id.
+    // This internal job reads the owner only from businesses.owner_user_id,
+    // whose FK references profiles. It never accepts a caller-provided id;
+    // see the documented backfill contract for this trusted boundary.
     const userId = candidate.userId as VerifiedUserId;
     await runVariableCostTransaction(db, async (tx) => {
       const recipe = await tx

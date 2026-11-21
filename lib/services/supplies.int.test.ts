@@ -786,9 +786,17 @@ describe("supplies service", () => {
 
     if (!legacyProduct) throw new Error("legacy product was not created");
 
-    // Run backfill
-    const result1 = await backfillProductVariableCosts({ batchSize: 10 }, db);
-    expect(result1.processed).toBeGreaterThanOrEqual(1);
+    const [business] = await db
+      .select({ id: (await import("@/lib/db/business/table")).businesses.id })
+      .from((await import("@/lib/db/business/table")).businesses)
+      .where(eq((await import("@/lib/db/business/table")).businesses.ownerUserId, user.id))
+      .limit(1);
+    if (!business) throw new Error("test business was not created");
+
+    // Scope the operational backfill to this test's business. Other test files
+    // may legitimately create pending legacy rows in the shared test database.
+    const result1 = await backfillProductVariableCosts({ batchSize: 10, businessId: business.id }, db);
+    expect(result1).toEqual({ processed: 2, nextAfterProductId: null });
 
     // Product with yield should now be ready
     const afterBackfill = await db
@@ -806,7 +814,9 @@ describe("supplies service", () => {
     expect(legacyAfter[0]?.code).toBe("MISSING_YIELD");
 
     // Run backfill again (idempotent)
-    await backfillProductVariableCosts({ batchSize: 10 }, db);
+    await expect(
+      backfillProductVariableCosts({ batchSize: 10, businessId: business.id }, db),
+    ).resolves.toEqual({ processed: 0, nextAfterProductId: null });
 
     // Product with yield should still be ready (no change)
     const afterSecond = await db
@@ -908,8 +918,8 @@ describe("supplies service", () => {
 
     if (!legacyProduct) throw new Error("legacy product was not created");
 
-    // Run backfill
-    await backfillProductVariableCosts({ batchSize: 10 }, db);
+    // Scope the backfill so unrelated pending rows cannot affect this test.
+    await backfillProductVariableCosts({ batchSize: 10, businessId: biz[0].id }, db);
 
     // Legacy product should remain pending (no yield to calculate)
     const after = await db
