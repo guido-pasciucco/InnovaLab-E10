@@ -19,7 +19,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | Precio de partida | Techo inicial que publica el emprendedor. Ninguna oferta puede superarlo. |
 | Ronda | Intervalo (6, 12 o 24 hs; 6 hs por defecto) en el que rige un precio objetivo. *(Modificado el 20 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | Precio objetivo | Referencia de la ronda: precio objetivo anterior × (1 − % de baja). No es obligatorio alcanzarlo. |
-| En carrera | Proveedores a los que el emprendedor decide notificar cada ronda. |
+| En carrera | Proveedores que pueden ofertar en la ronda. En la primera versión son todos los invitados, hasta el cierre. *(Modificado el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 
 ## 3. Reglas de negocio principales
 
@@ -49,7 +49,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | --- | --- |
 | RN-09 | En cada ronda (6, 12 o 24 hs, según elija el emprendedor al publicar) rige un nuevo precio objetivo. El emprendedor define el % de baja una sola vez, al publicar, y la aplicación avanza las rondas y calcula el nuevo precio objetivo sin que el emprendedor intervenga. El objetivo es una referencia, no una obligación. *(Modificada el 20 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-10 | En cada ronda el proveedor puede mejorar su oferta con un precio menor al suyo anterior (llegue o no al objetivo) o ratificarla. Nunca puede ofertar por encima de su último precio, y la primera oferta no puede superar el precio de partida. Si no responde, se considera que ratifica. |
-| RN-11 | El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo. |
+| RN-11 | En la primera versión, todos los proveedores invitados siguen en carrera hasta el cierre: el emprendedor no puede excluir a ninguno durante la licitación. *(Modificada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-12 | La licitación cierra sola al vencer la duración. No se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires). |
 | RN-18 | Si al terminar la primera ronda uno o más insumos no recibieron ninguna oferta, la aplicación avisa al emprendedor una sola vez cuáles son. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelar la licitación entera. No puede sumar proveedores ni quitar insumos: para eso, la cancela y publica una nueva. *(Agregada y modificada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-20 | En una canasta, el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. RN-10 se aplica insumo por insumo. En el cuadro comparativo, un insumo que el proveedor no cotizó figura sin oferta. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
@@ -211,3 +211,12 @@ La orden de compra y la nota de agradecimiento entran en la primera versión, ad
 - **RN-15, texto nuevo:** "Con lo acordado, la aplicación genera una orden de compra por cada proveedor adjudicado, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo. El emprendedor completa las condiciones de entrega y pago, y obtiene una página lista para imprimir o guardar como PDF; la envía él por su cuenta."
 - **RN-16, texto anterior:** "Si el emprendedor lo ordena, la aplicación envía a los proveedores no elegidos una nota de agradecimiento idéntica para todos, sin revelar precios ni resultados, y les avisa de próxima licitación cuando se publique por medio de mail. Puede existir consentimiento del proveedor y registro de la respuesta."
 - **RN-16, texto nuevo:** "Si el emprendedor lo ordena, la aplicación muestra en el panel de los proveedores no elegidos una nota de agradecimiento idéntica para todos, sin revelar precios ni resultados."
+
+### 21 de noviembre de 2026 — término *En carrera* y RN-11 (ES-12)
+
+En la primera versión no hay exclusión de proveedores durante la licitación. La pregunta de para qué servía queda en [DD-02](05-decisiones-en-duda.md).
+
+- **En carrera, texto anterior:** "Proveedores a los que el emprendedor decide notificar cada ronda."
+- **En carrera, texto nuevo:** "Proveedores que pueden ofertar en la ronda. En la primera versión son todos los invitados, hasta el cierre."
+- **RN-11, texto anterior:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
+- **RN-11, texto nuevo:** "En la primera versión, todos los proveedores invitados siguen en carrera hasta el cierre: el emprendedor no puede excluir a ninguno durante la licitación."

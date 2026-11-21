@@ -14,6 +14,7 @@ Decisiones que ya figuran en las [reglas de negocio](01-reglas-de-negocio.md) o 
 | ID | Tema | Estado |
 | --- | --- | --- |
 | DD-01 | Registro público de proveedores y licitaciones visibles para todos | Se mantiene en la primera versión (21 nov 2026) |
+| DD-02 | ¿Para qué sirve excluir proveedores durante la licitación? | En duda (preguntar al equipo) |
 
 ## DD-01. Registro público de proveedores y licitaciones visibles para todos
 
@@ -43,3 +44,27 @@ Decisiones que ya figuran en las [reglas de negocio](01-reglas-de-negocio.md) o 
 - **Puntos relacionados:** ES-07 (a quién se invita), ES-08 (una cuenta o varias por proveedor), ES-09 (enlace de registro y verificación).
 - **Resolución:** la primera versión se implementa con lo que dicen las reglas: el proveedor entra a la aplicación solo invitado por un emprendedor, y no hay registro público. Para implementar hace falta una decisión tomada, y esta es la que ya está escrita. La duda sigue abierta para revisarla en una versión siguiente, con los resguardos de arriba como punto de partida.
 - **Fecha:** 21 de noviembre de 2026.
+
+## DD-02. ¿Para qué sirve excluir proveedores durante la licitación?
+
+- **Estado:** En duda (preguntar al equipo)
+- **Planteada:** 21 de noviembre de 2026.
+- **Qué estaba decidido:**
+  - **En carrera:** "Proveedores a los que el emprendedor decide notificar cada ronda."
+  - **RN-11:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
+- **Qué rige hoy:** para la primera versión, [ES-12](04-especificaciones.md#es-12-proveedores-en-carrera-con-rondas-automáticas) sacó la exclusión: todos los proveedores invitados siguen en carrera hasta el cierre.
+- **La duda:** no está claro qué problema resolvía la exclusión. Antes de sumarla en una versión siguiente, hay que saber para qué se pensó.
+- **Preguntas para el equipo:**
+  1. ¿Qué caso concreto llevó a escribir RN-11? Por ejemplo: precios absurdos, un proveedor con mala experiencia previa, u otro.
+  2. ¿Por qué "sin aviso"? ¿Qué se gana con que el proveedor no se entere de que quedó afuera?
+  3. Si se vuelve a sumar: ¿se excluye en cualquier momento o solo entre rondas? ¿Se puede volver a incluir a un proveedor excluido?
+- **Posibles motivos** (hipótesis, sin confirmar):
+  - Que un proveedor que ya no interesa deje de ver el precio objetivo de cada ronda, que muestra hacia dónde quiere llegar el emprendedor.
+  - Concentrar la competencia en los proveedores que de verdad están en juego.
+- **Por qué no se incluyó en la primera versión:**
+  - Con rondas automáticas (ES-01), el emprendedor no interviene ronda por ronda.
+  - Las ofertas no obligan (RN-14): el emprendedor puede simplemente no elegir a ese proveedor al cierre.
+  - Suma pantallas y casos: volver a sumarlo, o qué pasa si era el único que ofertaba un insumo (ES-13).
+- **Puntos relacionados:** ES-01, ES-12, ES-13.
+- **Resolución:** —
+- **Fecha:** —

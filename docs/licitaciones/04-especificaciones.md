@@ -27,22 +27,12 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-09 | Enlace de registro: vencimiento y verificación | Decidida (21 nov 2026) |
 | ES-10 | Canal de las notificaciones | Decidida (21 nov 2026) |
 | ES-11 | Orden de compra y nota de agradecimiento en la primera versión | Decidida (21 nov 2026) |
-| ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
+| ES-12 | Proveedores en carrera con rondas automáticas | Decidida (21 nov 2026) |
 | ES-13 | Insumo sin ofertas dentro de una canasta | Decidida (21 nov 2026) |
 
 ## Abiertas
 
-### ES-12. Proveedores en carrera con rondas automáticas
-
-- **Estado:** Abierta
-- **Fuentes:** RN-11; surge de la decisión de ES-01.
-- **Qué dicen las reglas de negocio:**
-  - **En carrera:** "Proveedores a los que el emprendedor decide notificar cada ronda."
-  - **RN-11:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
-- **Contexto:** con rondas automáticas (ES-01) el emprendedor ya no tiene que intervenir en cada ronda. RN-11 supone que en cada ronda elige a quién notificar.
-- **A definir:** si por defecto todos los proveedores siguen en carrera ronda tras ronda; si el emprendedor puede excluir a un proveedor en cualquier momento o solo entre rondas.
-- **Decisión:** —
-- **Fecha:** —
+No quedan puntos abiertos. Los puntos nuevos se agregan acá con la plantilla del final.
 
 ## Decididas
 
@@ -354,6 +344,26 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Ejemplo:** Don José negocia la harina con A a $880 y le adjudica 100 kg; el azúcar y la manteca se los adjudica a B. La aplicación arma la orden N° 1 para A (harina, 100 kg × $880 = $88.000, entrega el martes en el local, pago por transferencia a 15 días) y la orden N° 2 para B. Don José las guarda en PDF y las manda por WhatsApp. Toca "Enviar agradecimiento" y D, que ofertó pero no fue elegido, ve en su panel: "La licitación N° 12 terminó. Gracias por participar."
 - **Qué no decide:** si la nota también les llega a los proveedores invitados que no ofertaron.
 - **Reglas que cambia:** RN-15 y RN-16.
+- **Fecha:** 21 de noviembre de 2026.
+
+### ES-12. Proveedores en carrera con rondas automáticas
+
+- **Estado:** Decidida
+- **Fuentes:** RN-11, RN-14; surge de la decisión de ES-01.
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **En carrera:** "Proveedores a los que el emprendedor decide notificar cada ronda."
+  - **RN-11:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
+  - **RN-14:** "[…] Las ofertas son de referencia (no vinculantes) y no obligan a ninguna de las partes."
+- **Contexto:** RN-11 estaba pensada para rondas manuales, en las que el emprendedor entra en cada ronda. Con rondas automáticas (ES-01) el emprendedor no interviene ronda por ronda.
+- **Opciones consideradas:**
+  1. Todos hasta el final: ningún proveedor sale de carrera hasta el cierre; no hay exclusión en la primera versión.
+  2. Excluir en cualquier momento: el excluido ya no puede ofertar y su última oferta aparece marcada como "excluido". Suma pantallas y casos (volver a sumarlo, que fuera el único que ofertaba un insumo).
+  3. Excluir solo entre rondas: igual de costosa que la 2 y más difícil de entender.
+- **Decisión:** opción 1. En la primera versión, todos los proveedores invitados siguen en carrera hasta el cierre y el emprendedor no puede excluir a ninguno durante la licitación.
+- **Por qué:** va en la misma línea que las rondas automáticas: el emprendedor no tiene que estar pendiente. El resultado final es el mismo, porque las ofertas no obligan (RN-14) y el emprendedor elige igual entre todas al cierre.
+- **Ejemplo:** Don José invita a A, B y D. Los tres pueden ofertar en las 4 rondas. Al cierre, el cuadro comparativo muestra a los tres y Don José elige con quién comprar.
+- **Qué no decide:** para qué servía excluir y si hace falta en una versión siguiente. Queda como pregunta para el equipo en [DD-02](05-decisiones-en-duda.md#dd-02-para-qué-sirve-excluir-proveedores-durante-la-licitación).
+- **Reglas que cambia:** término *En carrera* y RN-11.
 - **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla
