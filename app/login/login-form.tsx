@@ -17,6 +17,9 @@ import type { LoginState } from "@/lib/types/auth";
 
 import { login } from "./actions";
 
+// Signing in lands on flow 1 (sidebar + catalogs), the new main flow.
+const POST_LOGIN_HREF = "/insumos";
+
 const initialState: LoginState = undefined;
 
 // Los tipos salen del schema compartido (fuente única): si cambia
@@ -93,7 +96,7 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (state?.ok) {
-      router.push("/dashboard");
+      router.push(POST_LOGIN_HREF);
       router.refresh();
     }
   }, [state, router]);
@@ -124,7 +127,7 @@ export default function LoginForm() {
           className="rounded-md border border-success/30 bg-success-subtle px-3 py-2 text-xs text-success lg:text-sm"
         >
           Sesión iniciada correctamente. Redirigiendo…{" "}
-          <Link href="/dashboard" className="font-semibold underline underline-offset-2">
+          <Link href={POST_LOGIN_HREF} className="font-semibold underline underline-offset-2">
             Continuar
           </Link>
         </p>
