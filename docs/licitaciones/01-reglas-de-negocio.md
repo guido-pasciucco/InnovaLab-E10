@@ -41,6 +41,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | RN-07 | Ningún proveedor ve el precio de compra de referencia del emprendedor, su catálogo ni sus recetas. |
 | RN-08 | El emprendedor ve la identidad de los proveedores, que los datos del registro hacen posible. El emprendedor ve todas las ofertas con la identidad de cada proveedor desde el inicio. |
 | RN-22 | Un proveedor tiene una sola cuenta y puede estar vinculado a varios emprendedores. Cada emprendedor lo vincula con su propio enlace; si el proveedor ya tiene cuenta, entra con ella y no vuelve a cargar sus datos. Ve solo las licitaciones de los emprendedores con los que está vinculado, separadas por emprendedor, y ningún emprendedor ve con qué otros emprendedores trabaja. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
+| RN-23 | El emprendedor invita a cada proveedor con un enlace personal que genera en la aplicación y envía por el medio que quiera. El enlace sirve una sola vez y vence a los 7 días; si vence, el emprendedor genera otro. Antes de crear la cuenta, el proveedor confirma su mail y se controla que su CUIT tenga formato y dígito verificador correctos. Si el CUIT ya tiene cuenta, no se crea otra: el proveedor entra con la suya y queda vinculado. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 
 ### C. Rondas
 
@@ -183,3 +184,9 @@ Al publicar se preseleccionan todos los proveedores registrados, no solo los que
 Un proveedor tiene una sola cuenta y puede trabajar con varios emprendedores. No reemplaza texto anterior de las reglas; reemplaza la nota *Queda ligado a un emprendedor* del diagrama de registro.
 
 - **RN-22** (nueva, en *B. Participación y confidencialidad*): "Un proveedor tiene una sola cuenta y puede estar vinculado a varios emprendedores. Cada emprendedor lo vincula con su propio enlace; si el proveedor ya tiene cuenta, entra con ella y no vuelve a cargar sus datos. Ve solo las licitaciones de los emprendedores con los que está vinculado, separadas por emprendedor, y ningún emprendedor ve con qué otros emprendedores trabaja."
+
+### 21 de noviembre de 2026 — nueva RN-23 (ES-09)
+
+Se define el enlace de invitación y qué se verifica del proveedor. No reemplaza texto anterior de las reglas.
+
+- **RN-23** (nueva, en *B. Participación y confidencialidad*): "El emprendedor invita a cada proveedor con un enlace personal que genera en la aplicación y envía por el medio que quiera. El enlace sirve una sola vez y vence a los 7 días; si vence, el emprendedor genera otro. Antes de crear la cuenta, el proveedor confirma su mail y se controla que su CUIT tenga formato y dígito verificador correctos. Si el CUIT ya tiene cuenta, no se crea otra: el proveedor entra con la suya y queda vinculado."

@@ -24,25 +24,13 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-06 | Qué habilita la negociación | Decidida (21 nov 2026) |
 | ES-07 | Qué proveedores "venden ese insumo" | Decidida (21 nov 2026) |
 | ES-08 | Proveedor ligado a un emprendedor vs. dashboard unificado | Decidida (21 nov 2026) |
-| ES-09 | Enlace de registro: vencimiento y verificación | Abierta |
+| ES-09 | Enlace de registro: vencimiento y verificación | Decidida (21 nov 2026) |
 | ES-10 | Canal de las notificaciones | Abierta |
 | ES-11 | Orden de compra y nota de agradecimiento en la primera versión | Abierta |
 | ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
 | ES-13 | Insumo sin ofertas dentro de una canasta | Decidida (21 nov 2026) |
 
 ## Abiertas
-
-### ES-09. Enlace de registro: vencimiento y verificación
-
-- **Estado:** Abierta
-- **Fuentes:** diagrama de registro (subtítulo y nota *Invitación directa*).
-- **Qué dicen las reglas de negocio:** no hay regla sobre el enlace ni sobre la verificación. Lo más cercano:
-  - **RN-05:** "Participan solo proveedores registrados con ese emprendedor. […]"
-  - **RN-08:** "El emprendedor ve la identidad de los proveedores, que los datos del registro hacen posible. […]"
-- **Contexto:** el diagrama dice que el enlace es de un solo uso y vence, y que la invitación directa entra en la misma verificación.
-- **A definir:** cuánto dura el enlace; si es uno por proveedor o uno general que el emprendedor difunde; qué se verifica del proveedor (CUIT válido, mail confirmado) antes de crear la cuenta.
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-10. Canal de las notificaciones
 
@@ -310,6 +298,30 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
   - Si el proveedor puede desvincularse de un emprendedor, o el emprendedor quitar a un proveedor de su lista.
   - Si los términos y los avisos se aceptan una sola vez o con cada emprendedor.
 - **Reglas que cambia:** agrega RN-22.
+- **Fecha:** 21 de noviembre de 2026.
+
+### ES-09. Enlace de registro: vencimiento y verificación
+
+- **Estado:** Decidida
+- **Fuentes:** RN-05, RN-08, RN-22; diagrama de registro (tarea *Difunde el enlace*, subtítulo y nota *Invitación directa*); DD-01.
+- **Qué dicen las reglas de negocio** (antes de la decisión): no había regla sobre el enlace ni sobre la verificación. Lo más cercano:
+  - **RN-05:** "Participan solo proveedores registrados con ese emprendedor. […]"
+  - **RN-08:** "El emprendedor ve la identidad de los proveedores, que los datos del registro hacen posible. […]"
+- **Contexto:** el diagrama dice que el emprendedor "difunde el enlace", como si fuera uno general, pero su nota dice que el enlace es de un solo uso y vence, como una invitación personal. No dice qué se verifica del proveedor. Con un enlace general, cualquiera que lo consiga entraría a la lista del emprendedor sin aprobación, y eso va contra DD-01.
+- **Decisión:**
+
+  | Tema | Decisión |
+  | --- | --- |
+  | Tipo de enlace | Uno por proveedor. El emprendedor lo genera en la aplicación y lo manda por el medio que quiera (WhatsApp, mail). |
+  | Uso | Sirve una sola vez. Cuando el proveedor termina de registrarse o de vincularse, deja de funcionar. |
+  | Vencimiento | 7 días. Si vence, el emprendedor genera otro. |
+  | Mail | El proveedor confirma su mail antes de que se cree la cuenta. |
+  | CUIT | Se controla que tenga formato y dígito verificador correctos. En la primera versión no se consulta a AFIP. |
+  | CUIT que ya tiene cuenta | No se crea otra cuenta: el proveedor entra con la suya y queda vinculado (RN-22). |
+- **Por qué:** un enlace personal deja entrar solo a quien el emprendedor invitó, como pide DD-01. El dígito verificador detecta CUIT mal escritos o inventados sin depender de un servicio externo.
+- **Ejemplo:** Don José genera un enlace para Molino A y se lo manda por WhatsApp. Molino A lo abre al día siguiente, completa sus datos con un CUIT válido y confirma su mail: queda registrado. Si alguien abre después ese mismo enlace, ya no funciona. Si Molino A lo hubiera dejado pasar más de 7 días, Don José tendría que mandarle uno nuevo.
+- **Qué no decide:** si el emprendedor puede anular un enlace antes de que venza.
+- **Reglas que cambia:** agrega RN-23.
 - **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla
