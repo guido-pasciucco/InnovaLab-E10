@@ -45,7 +45,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 
 | ID | Regla |
 | --- | --- |
-| RN-09 | En cada ronda (6 hs por defecto, parametrizable) el emprendedor define el % de baja y la aplicación calcula el nuevo precio objetivo. El objetivo es una referencia, no una obligación. |
+| RN-09 | En cada ronda (6 hs por defecto, parametrizable) rige un nuevo precio objetivo. El emprendedor define el % de baja una sola vez, al publicar, y la aplicación avanza las rondas y calcula el nuevo precio objetivo sin que el emprendedor intervenga. El objetivo es una referencia, no una obligación. *(Modificada el 20 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-10 | En cada ronda el proveedor puede mejorar su oferta con un precio menor al suyo anterior (llegue o no al objetivo) o ratificarla. Nunca puede ofertar por encima de su último precio, y la primera oferta no puede superar el precio de partida. Si no responde, se considera que ratifica. |
 | RN-11 | El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo. |
 | RN-12 | La licitación cierra sola al vencer la duración. No se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires). |
@@ -107,3 +107,14 @@ El resultado de la licitación es un precio final por unidad de cada insumo. Una
 - **Precio por volumen.** Si el precio se consiguió por comprar una cantidad grande, conviene actualizar el costo solo si ese volumen se va a sostener. Si no, el costo cargado quedaría más bajo que el real.
 - **Comparabilidad.** Los precios deben ser finales y puestos en destino (RN-04). Si algún proveedor cotiza sin flete o sin impuestos, la comparación y el costo cargado quedan distorsionados.
 - **Costo histórico y mermas.** El precio adjudicado se carga como costo histórico, sin ajuste por inflación. La Calculadora sigue calculando con cantidades teóricas de receta, de modo que un insumo más barato no corrige las mermas no cargadas.
+
+## Historial de cambios
+
+Cambios a las reglas que surgen de las decisiones registradas en [Especificaciones](04-especificaciones.md). Se conserva el texto anterior.
+
+### 20 de noviembre de 2026 — RN-09 (ES-01)
+
+Las rondas pasan a ser automáticas: el % de baja se fija una sola vez al publicar.
+
+- **Texto anterior:** "En cada ronda (6 hs por defecto, parametrizable) el emprendedor define el % de baja y la aplicación calcula el nuevo precio objetivo. El objetivo es una referencia, no una obligación."
+- **Texto nuevo:** "En cada ronda (6 hs por defecto, parametrizable) rige un nuevo precio objetivo. El emprendedor define el % de baja una sola vez, al publicar, y la aplicación avanza las rondas y calcula el nuevo precio objetivo sin que el emprendedor intervenga. El objetivo es una referencia, no una obligación."

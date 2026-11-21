@@ -15,7 +15,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 
 | ID | Tema | Estado |
 | --- | --- | --- |
-| ES-01 | Rondas: si existen en la primera versión | Abierta |
+| ES-01 | Rondas: si existen en la primera versión | Decidida (20 nov 2026) |
 | ES-02 | Precio de partida: obligatorio u opcional | Abierta |
 | ES-03 | Duración de la licitación y de las rondas | Abierta |
 | ES-04 | Aviso cuando nadie oferta | Abierta |
@@ -26,28 +26,9 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-09 | Enlace de registro: vencimiento y verificación | Abierta |
 | ES-10 | Canal de las notificaciones | Abierta |
 | ES-11 | Orden de compra y nota de agradecimiento en la primera versión | Abierta |
+| ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
 
 ## Abiertas
-
-### ES-01. Rondas: si existen en la primera versión
-
-- **Estado:** Abierta
-- **Fuentes:** RN-09, RN-10, RN-11; diagrama de compra (tarea *Cotiza canasta o ítems*).
-- **Qué dicen las reglas de negocio:**
-  - **Ronda:** "Intervalo (6 hs por defecto) en el que rige un precio objetivo."
-  - **Precio objetivo:** "Referencia de la ronda: precio objetivo anterior × (1 − % de baja). No es obligatorio alcanzarlo."
-  - **En carrera:** "Proveedores a los que el emprendedor decide notificar cada ronda."
-  - **RN-09:** "En cada ronda (6 hs por defecto, parametrizable) el emprendedor define el % de baja y la aplicación calcula el nuevo precio objetivo. El objetivo es una referencia, no una obligación."
-  - **RN-10:** "En cada ronda el proveedor puede mejorar su oferta con un precio menor al suyo anterior (llegue o no al objetivo) o ratificarla. Nunca puede ofertar por encima de su último precio, y la primera oferta no puede superar el precio de partida. Si no responde, se considera que ratifica."
-  - **RN-11:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
-- **Contexto:** las reglas definen rondas con % de baja, precio objetivo y proveedores en carrera. El diagrama no muestra rondas: el proveedor cotiza y puede volver a cotizar para bajar su precio dentro de la licitación.
-- **Opciones:**
-  1. Rondas completas como dicen las reglas: el emprendedor fija el % de baja en cada ronda y elige a quién notificar.
-  2. Licitación abierta sin rondas, como el diagrama: una ventana única en la que cada proveedor puede bajar su oferta.
-  3. Empezar sin rondas y sumarlas en una versión siguiente.
-  4. Rondas automáticas: el emprendedor fija el % de baja una sola vez al publicar y la aplicación avanza las rondas sola. Requiere cambiar RN-09.
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-02. Precio de partida: obligatorio u opcional
 
@@ -180,9 +161,43 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Decisión:** —
 - **Fecha:** —
 
+### ES-12. Proveedores en carrera con rondas automáticas
+
+- **Estado:** Abierta
+- **Fuentes:** RN-11; surge de la decisión de ES-01.
+- **Qué dicen las reglas de negocio:**
+  - **En carrera:** "Proveedores a los que el emprendedor decide notificar cada ronda."
+  - **RN-11:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
+- **Contexto:** con rondas automáticas (ES-01) el emprendedor ya no tiene que intervenir en cada ronda. RN-11 supone que en cada ronda elige a quién notificar.
+- **A definir:** si por defecto todos los proveedores siguen en carrera ronda tras ronda; si el emprendedor puede excluir a un proveedor en cualquier momento o solo entre rondas.
+- **Decisión:** —
+- **Fecha:** —
+
 ## Decididas
 
-Todavía no hay puntos decididos.
+### ES-01. Rondas: si existen en la primera versión
+
+- **Estado:** Decidida
+- **Fuentes:** RN-09, RN-10, RN-11; diagrama de compra (tarea *Cotiza canasta o ítems*).
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **Ronda:** "Intervalo (6 hs por defecto) en el que rige un precio objetivo."
+  - **Precio objetivo:** "Referencia de la ronda: precio objetivo anterior × (1 − % de baja). No es obligatorio alcanzarlo."
+  - **En carrera:** "Proveedores a los que el emprendedor decide notificar cada ronda."
+  - **RN-09:** "En cada ronda (6 hs por defecto, parametrizable) el emprendedor define el % de baja y la aplicación calcula el nuevo precio objetivo. El objetivo es una referencia, no una obligación."
+  - **RN-10:** "En cada ronda el proveedor puede mejorar su oferta con un precio menor al suyo anterior (llegue o no al objetivo) o ratificarla. Nunca puede ofertar por encima de su último precio, y la primera oferta no puede superar el precio de partida. Si no responde, se considera que ratifica."
+  - **RN-11:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
+- **Contexto:** las reglas definen rondas con % de baja, precio objetivo y proveedores en carrera. El diagrama no muestra rondas: el proveedor cotiza y puede volver a cotizar para bajar su precio dentro de la licitación.
+- **Opciones consideradas:**
+  1. Rondas completas como dicen las reglas: el emprendedor fija el % de baja en cada ronda y elige a quién notificar.
+  2. Licitación abierta sin rondas, como el diagrama: una ventana única en la que cada proveedor puede bajar su oferta.
+  3. Empezar sin rondas y sumarlas en una versión siguiente.
+  4. Rondas automáticas: el emprendedor fija el % de baja una sola vez al publicar y la aplicación avanza las rondas sola.
+- **Decisión:** opción 4, rondas automáticas. La primera versión tiene rondas. El emprendedor fija el % de baja una sola vez, al publicar, y la aplicación avanza las rondas y calcula el precio objetivo de cada una sin que el emprendedor intervenga. El precio objetivo sigue siendo una referencia, no una obligación.
+- **Por qué:** sin rondas, el proveedor no ve su posición (RN-06) y no tiene motivo para bajar su oferta. Con rondas manuales, el emprendedor tendría que entrar cada 6 hs. Las rondas automáticas mantienen la presión sobre el precio sin exigirle eso.
+- **Ejemplo:** precio de partida $1.000 el kilo y 10% de baja. El precio objetivo pasa de $1.000 a $900 en la segunda ronda y a $810 en la tercera, sin que el emprendedor haga nada.
+- **Qué no decide:** la duración de las rondas y de la licitación (ES-03); qué pasa si no hay precio de partida (ES-02); si el emprendedor puede excluir proveedores entre rondas (ES-12); si el % de baja puede cambiarse después de publicar.
+- **Reglas que cambia:** RN-09.
+- **Fecha:** 20 de noviembre de 2026.
 
 ## Plantilla
 
