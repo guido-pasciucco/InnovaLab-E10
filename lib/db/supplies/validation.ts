@@ -10,7 +10,9 @@ import {
   purchaseUnitField,
   supplyKindField,
   supplyNameField,
+  SUPPLY_UNIT_CATALOG_MESSAGE,
 } from "@/lib/schemas/supplies/fields";
+import { getSupplyUnit } from "@/lib/schemas/supplies/units";
 import { supplies } from "./table";
 
 // ---------------------------------------------------------------------------
@@ -41,19 +43,33 @@ const supplyInputShape = {
   conversionFactor: conversionFactorField,
 } as const;
 
-export const createSupplyInputSchema = createInsertSchema(supplies, supplyInputShape).omit({
+const supplyInputObjectSchema = createInsertSchema(supplies, supplyInputShape).omit({
   id: true,
   userId: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const updateSupplyInputSchema = createInsertSchema(supplies, supplyInputShape).omit({
-  id: true,
-  userId: true,
-  createdAt: true,
-  updatedAt: true,
+// New supplies must pick a unit from the catalog. Updates cannot enforce this
+// here because a legacy row may keep its stored unknown unit; the service
+// compares the payload with the persisted row before accepting it.
+export const createSupplyInputSchema = supplyInputObjectSchema.superRefine((value, ctx) => {
+  const hasValidLength = value.purchaseUnit.length > 0 && value.purchaseUnit.length <= 40;
+
+  if (
+    value.kind === "supply" &&
+    hasValidLength &&
+    getSupplyUnit(value.purchaseUnit) === null
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["purchaseUnit"],
+      message: SUPPLY_UNIT_CATALOG_MESSAGE,
+    });
+  }
 });
+
+export const updateSupplyInputSchema = supplyInputObjectSchema;
 
 // --- Inferred input/row types: single source of truth, no manual interfaces. ---
 

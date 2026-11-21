@@ -21,7 +21,7 @@ Los costos de **un cálculo concreto** (alquiler, harina, horas de amasado…).
 *"Renglones de costo del cálculo".*
 
 **`business_cost_lines`**
-El **catálogo de costos del negocio**, cargados una vez para reutilizarlos en varios cálculos. Fuera de alcance en la Fase 1.
+El **catálogo de costos del negocio**, cargados una vez para toda la lista de productos y reutilizarlos en varios cálculos. Desde #243 guarda los gastos del período por mes (`period`, `AAAA-MM`); el prorrateo entre productos es #244.
 *"Renglones de costo del negocio".*
 
 **`calculation` (cálculo)**
@@ -70,7 +70,7 @@ El valor del tiempo que el emprendedor pone él mismo, marcado con `true` en su 
 > **No existe `category`.** El modelo confirmado el 2026-10-17 (ver #76) tiene tres datos independientes (`behavior`, `traceability`, `is_own_labor`) y ningún enum de cuatro categorías ni `categoryToAxes`. Cómo agrupa la UI las filas es una decisión abierta del dueño de la historia (ver #75).
 
 **`amount` vs `amount_period`**
-`amount`: importe del renglón en el cálculo. `amount_period`: importe del catálogo, expresado por período (ej. por mes).
+`amount`: importe del renglón en el cálculo. `amount_period`: importe del catálogo, expresado por período (ej. por mes). El mes al que pertenece vive en `business_cost_lines.period` (`AAAA-MM`).
 
 **`allocation_pct`**
 Porcentaje de un costo indirecto que se le asigna a este producto.

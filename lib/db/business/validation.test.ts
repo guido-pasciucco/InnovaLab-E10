@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createBusinessInputSchema, createProductInputSchema } from "./validation";
+import {
+  createBusinessInputSchema,
+  createProductInputSchema,
+  saveProductInputSchema,
+} from "./validation";
 
 // DB tests cover shared-field wiring and removal of server-controlled fields.
 function fieldErrors(schema: z.ZodType, input: unknown) {
@@ -19,7 +23,15 @@ const validBusiness = {
 const validProduct = {
   name: "Vela aromática",
   skuOrSlug: "vela-aromatica",
+  monthlyCapacity: "120",
   isActive: true,
+};
+
+const validRecipeProduct = {
+  name: "Pan flauta",
+  monthlyCapacity: "120",
+  yieldQuantity: "12",
+  recipe: [{ supplyId: SERVER_ID, quantity: "250", unit: "g" }],
 };
 
 describe("createBusinessInputSchema", () => {
@@ -89,6 +101,20 @@ describe("createProductInputSchema", () => {
     });
   });
 
+  it.each(["-5", "abc", "2.5"])(
+    "rejects the monthly capacity %j with the shared message",
+    (monthlyCapacity) => {
+      expect(
+        fieldErrors(createProductInputSchema, {
+          ...validProduct,
+          monthlyCapacity,
+        }),
+      ).toEqual({
+        monthlyCapacity: ["Ingresá un número entero de unidades, 0 o mayor."],
+      });
+    },
+  );
+
   it("drops server-controlled fields when the input carries them", () => {
     const input = {
       ...validProduct,
@@ -104,5 +130,144 @@ describe("createProductInputSchema", () => {
     expect(result).not.toHaveProperty("businessId");
     expect(result).not.toHaveProperty("createdAt");
     expect(result).not.toHaveProperty("updatedAt");
+  });
+});
+
+describe("saveProductInputSchema", () => {
+  it("accepts a product with a name and one valid recipe line", () => {
+    const result = saveProductInputSchema.safeParse(validRecipeProduct);
+
+    expect(result.success).toBe(true);
+  });
+
+  it("normalizes the monthly capacity to an integer", () => {
+    const result = saveProductInputSchema.parse(validRecipeProduct);
+
+    expect(result.monthlyCapacity).toBe(120);
+  });
+
+  it.each(["", "   "])(
+    "stores an empty monthly capacity %j as null",
+    (monthlyCapacity) => {
+      const result = saveProductInputSchema.parse({
+        ...validRecipeProduct,
+        monthlyCapacity,
+      });
+
+      expect(result.monthlyCapacity).toBeNull();
+    },
+  );
+
+  it.each(["-5", "abc", "2.5", "1e3"])(
+    "rejects the monthly capacity %j with the shared message",
+    (monthlyCapacity) => {
+      expect(
+        fieldErrors(saveProductInputSchema, {
+          ...validRecipeProduct,
+          monthlyCapacity,
+        }),
+      ).toEqual({
+        monthlyCapacity: ["Ingresá un número entero de unidades, 0 o mayor."],
+      });
+    },
+  );
+
+  it("rejects a whitespace-only name with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        name: "   ",
+      }),
+    ).toEqual({ name: ["Escribí el nombre de tu producto."] });
+  });
+
+  it("requires at least one recipe line", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [],
+      }),
+    ).toEqual({ recipe: ["Agregá al menos un insumo a la receta."] });
+  });
+
+  it("rejects a supply id that is not a uuid with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [{ supplyId: "supply-harina", quantity: "250", unit: "g" }],
+      }),
+    ).toEqual({ recipe: ["Elegí un insumo de tu catálogo."] });
+  });
+
+  it("rejects an empty unit with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [{ supplyId: SERVER_ID, quantity: "250", unit: " " }],
+      }),
+    ).toEqual({ recipe: ["Elegí la unidad de medida del insumo."] });
+  });
+
+  it("rejects a unit longer than 40 characters with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [
+          { supplyId: SERVER_ID, quantity: "250", unit: "x".repeat(41) },
+        ],
+      }),
+    ).toEqual({
+      recipe: ["La unidad de medida debe tener como máximo 40 caracteres."],
+    });
+  });
+
+  it("rejects a zero quantity with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [{ supplyId: SERVER_ID, quantity: "0", unit: "g" }],
+      }),
+    ).toEqual({ recipe: ["La cantidad debe ser mayor que 0."] });
+  });
+
+  it("accepts a quantity with up to four decimals", () => {
+    const result = saveProductInputSchema.safeParse({
+      ...validRecipeProduct,
+      recipe: [{ supplyId: SERVER_ID, quantity: "0.0001", unit: "g" }],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a quantity with more than four decimals with the shared message", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [{ supplyId: SERVER_ID, quantity: "0.00001", unit: "g" }],
+      }),
+    ).toEqual({ recipe: ["La cantidad debe tener hasta 4 decimales."] });
+  });
+
+  it("rejects the same supply twice in one recipe", () => {
+    expect(
+      fieldErrors(saveProductInputSchema, {
+        ...validRecipeProduct,
+        recipe: [
+          { supplyId: SERVER_ID, quantity: "250", unit: "g" },
+          { supplyId: SERVER_ID, quantity: "100", unit: "g" },
+        ],
+      }),
+    ).toEqual({ recipe: ["Ese insumo ya está en la receta."] });
+  });
+
+  it("drops server-controlled fields when the input carries them", () => {
+    const result = saveProductInputSchema.parse({
+      ...validRecipeProduct,
+      id: SERVER_ID,
+      businessId: SERVER_ID,
+    });
+
+    expect(result).not.toHaveProperty("id");
+    expect(result).not.toHaveProperty("businessId");
   });
 });

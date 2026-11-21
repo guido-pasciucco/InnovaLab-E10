@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getHomePathService } from "@/lib/services/suppliers";
 import { CalculationList, NewCalculationButton } from "@/components/dashboard/calculation-list";
 import { TOTAL_STEPS } from "@/components/calculator/wizard/wizard-steps";
 import { requireUser } from "@/lib/auth/require-user";
@@ -10,7 +12,7 @@ const dateFormat = new Intl.DateTimeFormat("es-AR", { dateStyle: "medium" });
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-[24px] bg-surface p-5 shadow-sm">
+    <div className="rounded-3xl bg-surface p-5 shadow-sm">
       <p className="text-xs font-semibold tracking-wide text-fg-muted uppercase">{label}</p>
       <p className="mt-3 text-3xl font-bold text-fg">{value}</p>
       {hint && <p className="mt-2 text-sm text-fg-muted">{hint}</p>}
@@ -22,6 +24,9 @@ function StatCard({ label, value, hint }: { label: string; value: string; hint?:
 // piece of data below is read from the DB, filtered by the session user id.
 export default async function DashboardPage() {
   const user = await requireUser();
+  // A supplier account without a business of its own belongs in the supplier
+  // panel (docs/licitaciones, annex 03), not in the emprendedor dashboard.
+  if ((await getHomePathService(user.id)) === "/proveedor") redirect("/proveedor");
   const [profile, calculations] = await Promise.all([
     getProfileSummaryService(user.id),
     listUserCalculationsService(user.id),
@@ -48,13 +53,19 @@ export default async function DashboardPage() {
             >
               Volver al inicio
             </Link>
+            <Link
+              href="/period-costs"
+              className="inline-flex min-h-11 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Gastos del período
+            </Link>
             <NewCalculationButton />
           </div>
         </header>
 
         <section
           aria-label="Perfil"
-          className="flex items-center justify-between gap-4 rounded-[24px] bg-surface p-5 shadow-sm"
+          className="flex items-center justify-between gap-4 rounded-3xl bg-surface p-5 shadow-sm"
         >
           <div className="flex min-w-0 items-center gap-4">
             <span
@@ -92,7 +103,7 @@ export default async function DashboardPage() {
             value={furthest > 0 ? `Paso ${furthest} de ${TOTAL_STEPS}` : "—"}
             hint={furthest > 0 ? "Entre todos tus cálculos" : "Todavía sin cálculos"}
           />
-          <div className="rounded-[24px] bg-action-primary-pressed p-5 text-white shadow-sm">
+          <div className="rounded-3xl bg-action-primary-pressed p-5 text-white shadow-sm">
             <p className="text-xs font-semibold tracking-wide uppercase opacity-80">
               Último cálculo
             </p>

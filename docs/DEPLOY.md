@@ -72,6 +72,14 @@ DIRECT_URL="postgresql://…:5432/postgres" bun run db:migrate
 
 Si la base ya está migrada, este paso no hace falta.
 
+### Las funciones corren en la misma región que la base
+
+`vercel.json` fija la región de las funciones en `gru1` (São Paulo), que es la misma región de AWS (`sa-east-1`) donde está el proyecto de Supabase. Sin ese archivo, Vercel usa `iad1` (Washington) y cada consulta cruza el continente.
+
+Las dos regiones se mueven juntas. Si el proyecto de Supabase cambia de región, `regions` cambia en el mismo deploy: una función lejos de su base es más lenta que una función lejos del usuario. El plan Hobby admite una sola región.
+
+Supabase no permite cambiar la región de un proyecto existente: hay que crear uno nuevo, volver a cargar las credenciales en `.env.deploy`, correr `deploy:env` y repetir la configuración de Auth.
+
 ### Supabase Auth valida los redirects
 
 Los links de confirmación de cuenta y de recuperación de contraseña se generan con `SITE_URL`, pero Supabase los valida contra una lista blanca del proyecto. Si el dominio deployado no está ahí, el flujo falla aunque `SITE_URL` esté bien cargada.

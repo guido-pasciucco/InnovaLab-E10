@@ -5,7 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Path } from "react-hook-form";
 
-import { saveSupply } from "@/app/supplies/actions";
+import { saveSupply } from "@/app/(flujo-1)/insumos/actions";
 import {
   calculateMinimumUnitPrice,
   calculateMinimumUnits,
@@ -17,12 +17,21 @@ import {
   type SupplyItem,
 } from "@/lib/schemas/supplies/supplies";
 import type { SupplyKind } from "@/lib/schemas/supplies/fields";
+import { capitalizeFirstWord } from "@/lib/schemas/supplies/input-format";
+import {
+  SUPPLY_UNITS,
+  canonicalSupplyUnit,
+  getSupplyUnit,
+} from "@/lib/schemas/supplies/units";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { FormGrid } from "@/components/ui/form-grid";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { PrimaryButton } from "@/components/ui/primary-button";
+import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
 import { buildConfirmation } from "./build-confirmation";
+import { MoneyField } from "./money-field";
 import { quantityFormat, trimDecimalZeros, unitPriceFormat } from "./format";
 
 type SuppliesFormProps = {
@@ -49,6 +58,13 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
   const displayKind = supply?.kind ?? kind;
   const [state, submitAction, isPending] = useActionState(saveSupply, undefined);
 
+  const initialPurchaseUnit =
+    supply === null
+      ? ""
+      : displayKind === "supply"
+        ? canonicalSupplyUnit(supply.purchaseUnit)
+        : supply.purchaseUnit;
+
   const {
     register,
     handleSubmit,
@@ -65,7 +81,7 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
           name: supply.name,
           purchasePrice: supply.purchasePrice,
           purchaseQuantity: trimDecimalZeros(supply.purchaseQuantity),
-          purchaseUnit: supply.purchaseUnit,
+          purchaseUnit: initialPurchaseUnit,
           minimumUnit: supply.minimumUnit,
           conversionFactor: trimDecimalZeros(supply.conversionFactor),
         }
@@ -75,8 +91,8 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
           purchasePrice: "",
           purchaseQuantity: "1",
           purchaseUnit: "",
-          minimumUnit: "",
-          conversionFactor: "",
+          minimumUnit: displayKind === "supply" ? "unidad" : "",
+          conversionFactor: displayKind === "supply" ? "1" : "",
         },
   });
 
@@ -101,12 +117,13 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
     if (state?.ok) onSaved();
   }, [state, onSaved]);
 
-  // Suggest the equivalence for common pairs (kg→g, L→ml, docena→unidad) while
-  // respecting a value the user typed: only overwrite an empty field or the
-  // previous suggestion.
+  // Packaging keeps the old behaviour: suggest the equivalence for common
+  // pairs (kg→g, L→ml, docena→unidad) while respecting a value the user typed.
   const lastSuggestion = useRef<string | null>(supply?.conversionFactor ?? null);
 
   useEffect(() => {
+    if (displayKind !== "packaging") return;
+
     const suggested = suggestConversionFactor(purchaseUnit, minimumUnit);
     if (suggested === null) return;
 
@@ -115,7 +132,20 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
       setValue("conversionFactor", suggested);
     }
     lastSuggestion.current = suggested;
-  }, [purchaseUnit, minimumUnit, getValues, setValue]);
+  }, [displayKind, purchaseUnit, minimumUnit, getValues, setValue]);
+
+  // Supplies derive both technical columns from the selected catalog unit.
+  // The values are still submitted because the server contract keeps them, but
+  // the user never edits them.
+  useEffect(() => {
+    if (displayKind !== "supply") return;
+
+    const unit = getSupplyUnit(purchaseUnit);
+    if (!unit) return;
+
+    setValue("minimumUnit", unit.minimumUnit, { shouldValidate: true });
+    setValue("conversionFactor", unit.factor, { shouldValidate: true });
+  }, [displayKind, purchaseUnit, setValue]);
 
   const handleSubmitAction = (data: Supply) => {
     if (isSubmittingRef.current) return;
@@ -129,6 +159,8 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
     void handleSubmit(handleSubmitAction)(event);
   };
 
+  const nameField = register("name");
+
   const totalUnits = calculateMinimumUnits(purchaseQuantity, conversionFactor);
   const unitPrice = calculateMinimumUnitPrice(
     purchasePrice,
@@ -136,7 +168,21 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
     conversionFactor,
   );
   const unitLabel = minimumUnit.trim() || "unidad mínima";
-  const showPreview = purchasePrice.trim() !== "" && totalUnits !== null && unitPrice !== null;
+  const showPreview =
+    purchasePrice.trim() !== "" &&
+    totalUnits !== null &&
+    unitPrice !== null &&
+    (displayKind !== "supply" || purchaseUnit.trim() !== "");
+
+  const unitOptions: { value: string; label: string }[] = SUPPLY_UNITS.map((unit) => ({
+    value: unit.value,
+    label: unit.label,
+  }));
+
+  // Keep an unknown legacy unit editable instead of silently changing the row.
+  if (displayKind === "supply" && purchaseUnit.trim() !== "" && !getSupplyUnit(purchaseUnit)) {
+    unitOptions.unshift({ value: purchaseUnit, label: `${purchaseUnit} (actual)` });
+  }
 
   return (
     <form onSubmit={handleFormSubmit} noValidate className="flex flex-col gap-3">
@@ -153,16 +199,26 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
         placeholder={displayKind === "packaging" ? "Bolsa kraft 1 kg" : "Harina 000"}
         disabled={isPending}
         error={errors.name?.message}
-        {...register("name")}
+        {...nameField}
+        onBlur={(event) => {
+          nameField.onBlur(event);
+          const capitalized = capitalizeFirstWord(event.currentTarget.value);
+          if (capitalized !== event.currentTarget.value) {
+            setValue("name", capitalized, { shouldValidate: true });
+          }
+        }}
       />
 
-      <TextField
-        label="Precio de compra"
-        placeholder="18750.00"
-        inputMode="decimal"
+      <MoneyField
+        control={control}
         disabled={isPending}
         error={errors.purchasePrice?.message}
-        {...register("purchasePrice")}
+        help={
+          <HelpTooltip
+            label="Precio de compra"
+            text="Ingresá el precio total pagado por la cantidad comprada. Podés escribir centavos con coma."
+          />
+        }
       />
 
       <FormGrid className="gap-3">
@@ -172,53 +228,111 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
           inputMode="decimal"
           disabled={isPending}
           error={errors.purchaseQuantity?.message}
+          help={
+            <HelpTooltip
+              label="Cantidad comprada"
+              text="Ingresá el total comprado en la unidad elegida (kg, metros, ml, etc.). Si compraste 25 kg, cargá 25."
+            />
+          }
           {...register("purchaseQuantity")}
         />
-        <TextField
-          label="Unidad de compra"
-          placeholder="kg"
-          disabled={isPending}
-          error={errors.purchaseUnit?.message}
-          {...register("purchaseUnit")}
-        />
+        {displayKind === "supply" ? (
+          <SelectField
+            label="Unidad de medida"
+            disabled={isPending}
+            error={errors.purchaseUnit?.message}
+            help={
+              <HelpTooltip
+                label="Unidad de medida"
+                align="right"
+                text="Elegí la unidad de medida del insumo. El sistema calcula automáticamente el costo por unidad."
+              />
+            }
+            {...register("purchaseUnit")}
+          >
+            <option value="">Elegí una unidad</option>
+            {unitOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </SelectField>
+        ) : (
+          <TextField
+            label="Unidad de compra"
+            placeholder="kg"
+            disabled={isPending}
+            error={errors.purchaseUnit?.message}
+            {...register("purchaseUnit")}
+          />
+        )}
       </FormGrid>
 
-      <FormGrid className="gap-3">
-        <TextField
-          label="Unidad mínima"
-          placeholder="g"
-          disabled={isPending}
-          error={errors.minimumUnit?.message}
-          {...register("minimumUnit")}
-        />
-        <TextField
-          label="Equivalencia"
-          placeholder="1000"
-          inputMode="decimal"
-          disabled={isPending}
-          error={errors.conversionFactor?.message}
-          {...register("conversionFactor")}
-        />
-      </FormGrid>
+      {displayKind === "supply" ? (
+        <>
+          <input type="hidden" {...register("minimumUnit")} />
+          <input type="hidden" {...register("conversionFactor")} />
+        </>
+      ) : (
+        <>
+          <FormGrid className="gap-3">
+            <TextField
+              label="Unidad mínima"
+              placeholder="g"
+              disabled={isPending}
+              error={errors.minimumUnit?.message}
+              {...register("minimumUnit")}
+            />
+            <TextField
+              label="Equivalencia"
+              placeholder="1000"
+              inputMode="decimal"
+              disabled={isPending}
+              error={errors.conversionFactor?.message}
+              {...register("conversionFactor")}
+            />
+          </FormGrid>
 
-      <p className="text-xs text-fg-muted">
-        Equivalencia: cuántas unidades mínimas trae 1 unidad de compra (1 kg = 1000 g).
-      </p>
+          <p className="text-xs text-fg-muted">
+            Equivalencia: cuántas unidades mínimas trae 1 unidad de compra (1 kg = 1000 g).
+          </p>
+        </>
+      )}
 
       {showPreview && (
         <div className="rounded-[14px] border border-border-tonal bg-surface-tint p-3 text-sm text-fg-muted">
-          <p>
-            Total:{" "}
-            <span className="font-semibold text-fg">
-              {quantityFormat.format(Number(totalUnits))} {unitLabel}
-            </span>
-          </p>
-          <p className="mt-0.5">
-            Costo por {unitLabel}:{" "}
-            <span className="font-semibold text-fg">
-              {unitPriceFormat.format(Number(unitPrice))}
-            </span>
-          </p>
+          {displayKind === "supply" ? (
+            <>
+              <p>
+                Total:{" "}
+                <span className="font-semibold text-fg">
+                  {quantityFormat.format(Number(purchaseQuantity))} {purchaseUnit} ={" "}
+                  {quantityFormat.format(Number(totalUnits))} {unitLabel}
+                </span>
+              </p>
+              <p className="mt-0.5">
+                Costo por {unitLabel}:{" "}
+                <span className="font-semibold text-fg">
+                  {unitPriceFormat.format(Number(unitPrice))}
+                </span>
+              </p>
+            </>
+          ) : (
+            <>
+              <p>
+                Total:{" "}
+                <span className="font-semibold text-fg">
+                  {quantityFormat.format(Number(totalUnits))} {unitLabel}
+                </span>
+              </p>
+              <p className="mt-0.5">
+                Costo por {unitLabel}:{" "}
+                <span className="font-semibold text-fg">
+                  {unitPriceFormat.format(Number(unitPrice))}
+                </span>
+              </p>
+            </>
+          )}
         </div>
       )}
 
