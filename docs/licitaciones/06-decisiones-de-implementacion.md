@@ -173,6 +173,19 @@ Mientras la licitación está en curso, el emprendedor ve la última oferta de c
 
 El emprendedor ve en cada licitación el historial completo, con fecha y hora: publicación con sus condiciones, inicio de cada ronda, ofertas, aviso sin ofertas, cancelación o cierre, elecciones, pedidos de negociación, órdenes y nota de agradecimiento. El proveedor ve solo lo suyo: sus ofertas por insumo, el pedido de negociación y la nota (RN-17).
 
+### N-31. Borrador de licitación
+
+El emprendedor puede cargar los insumos y las condiciones de una licitación y guardarlos como borrador, aunque todavía no tenga proveedores registrados. Decisión pedida por el equipo el 21 de noviembre de 2026.
+
+- Hay un borrador por emprendedor. Guardar de nuevo lo reemplaza.
+- El formulario de nueva licitación se abre siempre que haya insumos en el catálogo. Si no hay proveedores, o si hay otra licitación en curso, el botón Publicar queda deshabilitado con la explicación, y se puede guardar el borrador.
+- El borrador guarda los valores tal como están, completos o no. Se validan todos al publicar.
+- Guarda los proveedores destildados, no los tildados: un proveedor que se registra después aparece invitado, como en un formulario nuevo.
+- Si un insumo del borrador se borra del catálogo, desaparece del borrador al abrirlo.
+- Publicar borra el borrador en la misma transacción. Si la publicación falla, el borrador queda.
+- En Licitaciones, el botón dice "Seguir con el borrador" cuando hay uno. "Descartar borrador" lo borra y vuelve a la lista.
+- **Alternativa:** varios borradores por emprendedor, con una lista propia. Se dejó uno solo porque igual puede haber una sola licitación en curso por vez (RN-03).
+
 ## Base de datos
 
 ### D-01. Tres tablas para el registro de proveedores
@@ -230,6 +243,13 @@ No hay tabla de avisos. Cada vez que se abre un panel, los avisos se calculan a 
 
 - `tender_awards` guarda una fila por elección, sin modificarla nunca. La elección vigente de un insumo es la más reciente; las anteriores quedan para el historial (RN-17).
 - `purchase_orders` y `purchase_order_lines` copian los ítems, cantidades y precios al generar la orden. Hay una sola orden por proveedor y licitación, con número único por emprendedor. Generar una orden bloquea el perfil (por el número) y la licitación (para que la elección no cambie mientras se escribe).
+
+### D-12. El borrador se guarda como un documento JSON
+
+`tender_drafts` tiene una fila por emprendedor (la clave es su id) con el formulario en una columna `jsonb`. Se borra en cascada con la cuenta.
+
+- **Por qué:** un borrador está a medio cargar por definición: cantidades vacías, % sin escribir. Guardarlo en columnas tipadas obligaría a permitir nulos en todo, o a validar como si se publicara. El servidor igual acota el tamaño de cada valor y controla que los insumos sean del catálogo del emprendedor.
+- **Alternativa:** reutilizar `tenders` con un estado "borrador". Se descartó porque rompería sus restricciones (número correlativo, horas de inicio y fin, una licitación activa por vez).
 
 ## Estructura de código
 

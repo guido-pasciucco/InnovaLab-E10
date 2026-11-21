@@ -38,6 +38,7 @@ import { formatARS } from "@/lib/money/format";
 import { offerAboveLastMessage, offerAboveStartingMessage } from "@/lib/schemas/tenders/fields";
 import type { VerifiedUserId } from "@/lib/services/auth";
 import { listLinkedSuppliersService, type LinkedSupplier } from "@/lib/services/suppliers";
+import { discardTenderDraftService, loadTenderDraft, type TenderDraft } from "@/lib/services/tender-drafts";
 
 // Supply tenders, emprendedor and supplier sides (docs/licitaciones).
 // Owner scoping: emprendedor reads and writes filter by owner_user_id; the
@@ -66,6 +67,7 @@ export type TenderFormSupply = {
 };
 
 export type TenderFormData = {
+  draft: TenderDraft | null;
   supplies: TenderFormSupply[];
   suppliers: LinkedSupplier[];
   activeTender: { id: string; number: number } | null;
@@ -98,7 +100,10 @@ export async function getTenderFormDataService(
     findActiveTender(userId, db, now),
   ]);
 
+  const draft = await loadTenderDraft(userId, new Set(catalog.map((supply) => supply.id)), db);
+
   return {
+    draft,
     supplies: catalog.map((supply) => ({
       id: supply.id,
       name: supply.name,
@@ -184,6 +189,9 @@ export async function publishTenderService(
     await tx.insert(tenderInvitations).values(
       data.supplierIds.map((supplierUserId) => ({ tenderId: tender.id, supplierUserId, createdAt: now })),
     );
+
+    // The draft became this tender.
+    await discardTenderDraftService(userId, tx);
 
     return tender;
   });

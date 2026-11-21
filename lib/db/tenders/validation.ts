@@ -9,6 +9,7 @@ import {
   roundCountField,
   roundHoursField,
   startingPriceField,
+  tenderDraftItemsMessage,
   tenderDuplicateItemMessage,
   tenderItemsLengthMessage,
   tenderQuantityField,
@@ -48,6 +49,37 @@ export const publishTenderInputSchema = z.object({
 });
 
 export type PublishTenderInput = z.infer<typeof publishTenderInputSchema>;
+
+// A draft is the half-filled publish form: values may be empty or not yet
+// valid (they are fully validated on publish), only bounded in size.
+const draftText = (max: number) => z.string().trim().max(max).catch("");
+
+export const tenderDraftInputSchema = z.object({
+  roundHours: draftText(3),
+  roundCount: draftText(2),
+  decrementPercent: draftText(10),
+  items: z
+    .array(
+      z.object({
+        supplyId: uuid,
+        quantity: draftText(20),
+        specs: tenderSpecsField,
+        startingPrice: draftText(20),
+      }),
+      { error: tenderDraftItemsMessage },
+    )
+    .min(1, { error: tenderDraftItemsMessage })
+    .max(MAX_TENDER_ITEMS, { error: tenderItemsLengthMessage })
+    .refine((items) => new Set(items.map((item) => item.supplyId)).size === items.length, {
+      error: tenderDuplicateItemMessage,
+    }),
+  excludedSupplierIds: z
+    .array(uuid)
+    .max(500)
+    .transform((ids) => [...new Set(ids)]),
+});
+
+export type TenderDraftInput = z.infer<typeof tenderDraftInputSchema>;
 
 // Offers of one supplier in one submission (RN-10, RN-20). Items left blank
 // are not quoted (a basket may be quoted partially); at least one price.

@@ -7,54 +7,41 @@ import { getTenderFormDataService } from "@/lib/services/tenders";
 
 const linkClass = "font-semibold text-brand-green-700 underline";
 
-// Publish a tender (RN-01 to RN-05).
+// Publish a tender (RN-01 to RN-05), or save it as a draft to publish later.
 export default async function NewTenderPage() {
   const user = await requireUser();
   const data = await getTenderFormDataService(user.id);
   const links = [{ href: "/licitaciones", label: "Volver a licitaciones" }];
 
-  if (data.activeTender) {
+  if (data.supplies.length === 0) {
     return (
       <PageShell title="Nueva licitación" links={links}>
         <Card>
           <p className="text-sm text-fg">
-            Ya tenés en curso la{" "}
-            <Link href={`/licitaciones/${data.activeTender.id}`} className={linkClass}>
-              licitación N° {data.activeTender.number}
-            </Link>
-            . Por ahora puede haber una sola por vez: esperá a que cierre o cancelala para publicar otra.
+            Solo se licitan insumos de tu catálogo.{" "}
+            <Link href="/insumos" className={linkClass}>
+              Cargá tus insumos
+            </Link>{" "}
+            primero.
           </p>
         </Card>
       </PageShell>
     );
   }
 
-  if (data.supplies.length === 0 || data.suppliers.length === 0) {
-    return (
-      <PageShell title="Nueva licitación" links={links}>
-        <Card>
-          {data.supplies.length === 0 && (
-            <p className="text-sm text-fg">
-              Solo se licitan insumos de tu catálogo.{" "}
-              <Link href="/insumos" className={linkClass}>
-                Cargá tus insumos
-              </Link>{" "}
-              primero.
-            </p>
-          )}
-          {data.suppliers.length === 0 && (
-            <p className="text-sm text-fg">
-              Solo participan proveedores registrados con vos.{" "}
-              <Link href="/proveedores" className={linkClass}>
-                Invitá a tus proveedores
-              </Link>{" "}
-              primero.
-            </p>
-          )}
-        </Card>
-      </PageShell>
-    );
-  }
+  // The form is always available to load and save a draft; publishing waits
+  // for a linked supplier and for the active tender to end (RN-03, RN-05).
+  const publishBlocked = data.activeTender ? (
+    <p>
+      Ya tenés en curso la{" "}
+      <Link href={`/licitaciones/${data.activeTender.id}`} className={linkClass}>
+        licitación N° {data.activeTender.number}
+      </Link>
+      . Por ahora puede haber una sola por vez: guardá el borrador y publicalo cuando cierre o la canceles.
+    </p>
+  ) : data.suppliers.length === 0 ? (
+    <p>Para publicar necesitás al menos un proveedor registrado con vos. Mientras tanto, guardá el borrador.</p>
+  ) : null;
 
   return (
     <PageShell
@@ -63,7 +50,12 @@ export default async function NewTenderPage() {
       description="Elegí los insumos, cuánto necesitás y el precio máximo. Tus proveedores ofertan por rondas sin ver los precios de los demás."
       links={links}
     >
-      <PublishTenderForm supplies={data.supplies} suppliers={data.suppliers} />
+      <PublishTenderForm
+        supplies={data.supplies}
+        suppliers={data.suppliers}
+        draft={data.draft}
+        publishBlocked={publishBlocked}
+      />
     </PageShell>
   );
 }

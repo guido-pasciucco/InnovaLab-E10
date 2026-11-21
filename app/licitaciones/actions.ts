@@ -5,13 +5,14 @@ import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth/require-user";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
-import type { PublishTenderFormValues } from "@/lib/schemas/tenders/publish";
+import type { PublishTenderFormValues, TenderDraftFormValues } from "@/lib/schemas/tenders/publish";
 import {
   awardItemService,
   issuePurchaseOrderService,
   requestNegotiationService,
   sendThankYouNoteService,
 } from "@/lib/services/tender-purchases";
+import { discardTenderDraftService, saveTenderDraftService } from "@/lib/services/tender-drafts";
 import {
   acknowledgeNoOfferWarningService,
   cancelTenderService,
@@ -29,6 +30,22 @@ export const publishTender = handleActionErrors(
     redirect(`/licitaciones/${id}`);
   },
 );
+
+// Saves the half-filled publish form, even without suppliers, to publish it
+// later. The payload has the publish form's shape plus the unticked suppliers.
+export const saveTenderDraft = handleActionErrors(async (_previous: unknown, payload: TenderDraftFormValues) => {
+  const user = await requireUser();
+  await saveTenderDraftService(user.id, payload);
+  revalidatePath("/licitaciones");
+  return { savedAt: new Date().toISOString() };
+});
+
+export const discardTenderDraft = handleActionErrors(async () => {
+  const user = await requireUser();
+  await discardTenderDraftService(user.id);
+  revalidatePath("/licitaciones");
+  redirect("/licitaciones");
+});
 
 // RN-18: let the tender continue after the "items without offers" warning.
 export const acknowledgeNoOfferWarning = handleActionErrors(async (_previous: unknown, data: FormData) => {

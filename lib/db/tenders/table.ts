@@ -3,6 +3,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   numeric,
   pgTable,
   text,
@@ -206,6 +207,29 @@ export const purchaseOrderLines = pgTable(
   },
   (table) => [index("purchase_order_lines_order_idx").on(table.orderId)],
 );
+
+// Unpublished tender form of an emprendedor: one per emprendedor, saved
+// before publishing (for example, before any supplier is registered). The
+// content is the half-filled form, validated loosely on save and fully on
+// publish, so it is stored as one JSON document. Supplies deleted from the
+// catalog are dropped when the draft is loaded.
+export type TenderDraftContent = {
+  roundHours: string;
+  roundCount: string;
+  decrementPercent: string;
+  items: { supplyId: string; quantity: string; specs: string; startingPrice: string }[];
+  // Linked suppliers the emprendedor unticked; suppliers registered later
+  // start invited, as on a new form.
+  excludedSupplierIds: string[];
+};
+
+export const tenderDrafts = pgTable("tender_drafts", {
+  ownerUserId: uuid("owner_user_id")
+    .primaryKey()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  content: jsonb("content").$type<TenderDraftContent>().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export type Tender = typeof tenders.$inferSelect;
 export type TenderOffer = typeof tenderOffers.$inferSelect;

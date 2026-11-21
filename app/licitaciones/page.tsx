@@ -5,13 +5,17 @@ import { PhaseBadge, roundLabel } from "@/components/tenders/phase-badge";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
 import { TenderNotices } from "@/components/tenders/notices";
+import { hasTenderDraftService } from "@/lib/services/tender-drafts";
 import { listTenderNoticesService, listTendersService } from "@/lib/services/tenders";
 
 // The emprendedor's tenders, newest first. Data filtered by the session user.
 export default async function TendersPage() {
   const user = await requireUser();
-  const [tenders, notices] = await Promise.all([listTendersService(user.id), listTenderNoticesService(user.id)]);
-  const hasActive = tenders.some((tender) => tender.phase === "active");
+  const [tenders, notices, hasDraft] = await Promise.all([
+    listTendersService(user.id),
+    listTenderNoticesService(user.id),
+    hasTenderDraftService(user.id),
+  ]);
 
   return (
     <PageShell
@@ -23,14 +27,13 @@ export default async function TendersPage() {
         { href: "/dashboard", label: "Volver al dashboard" },
       ]}
       actions={
-        !hasActive && (
-          <Link
-            href="/licitaciones/nueva"
-            className="inline-flex min-h-11 items-center justify-center rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            Nueva licitación
-          </Link>
-        )
+        // Always open: a draft can be prepared while another tender runs.
+        <Link
+          href="/licitaciones/nueva"
+          className="inline-flex min-h-11 items-center justify-center rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          {hasDraft ? "Seguir con el borrador" : "Nueva licitación"}
+        </Link>
       }
     >
       <TenderNotices notices={notices} />

@@ -89,18 +89,24 @@ Después de mover el reloj, recargá la página. Al mover las horas, el historia
 | QA-12 | Cerrá la sesión e ingresá como P1. Después, como E1. | P1 entra directo a `/proveedor`. E1 entra al dashboard. |
 | QA-13 | E1 abre `/proveedor`. | Lo manda al dashboard: el panel es solo para proveedores. |
 
-## 3. Publicación (RN-01 a RN-07, RN-09, ES-01 a ES-03, ES-07)
+## 3. Publicación y borrador (RN-01 a RN-07, RN-09, ES-01 a ES-03, ES-07, N-31)
 
 | ID | Pasos | Resultado esperado |
 | --- | --- | --- |
-| QA-14 | E2, sin insumos ni proveedores, abre `/licitaciones/nueva`. | En vez del formulario, ve qué le falta, con accesos a `/insumos` y a `/proveedores`. |
+| QA-14 | E2, sin insumos, abre `/licitaciones/nueva`. | En vez del formulario ve "Solo se licitan insumos de tu catálogo.", con el acceso a `/insumos`. |
+| QA-14b | E2 carga un insumo, sin proveedores, y abre `/licitaciones/nueva`. | Ve el formulario. "Publicar licitación" está deshabilitado con "Para publicar necesitás al menos un proveedor registrado con vos. Mientras tanto, guardá el borrador." En proveedores invitados está el acceso para invitarlos. |
+| QA-14c | E2 tilda el insumo, completa parte de los datos (por ejemplo, sin el % de baja) y toca "Guardar borrador". | "Borrador guardado. Podés seguir cuando quieras desde Licitaciones." |
+| QA-14d | E2 va a `/licitaciones`. | El botón dice "Seguir con el borrador". Al tocarlo, el formulario se abre con lo que guardó, incluso lo que estaba incompleto. |
+| QA-14e | E2 registra un proveedor (con un enlace) y vuelve al borrador. | El proveedor aparece tildado y E2 puede publicar. Al publicar, el borrador desaparece: el botón de Licitaciones vuelve a decir "Nueva licitación". |
+| QA-14f | Con un borrador guardado, tocá "Descartar borrador". | Vuelve a `/licitaciones`, sin borrador. |
+| QA-14g | Guardá un borrador con dos insumos y borrá uno del catálogo en `/insumos`. | Al abrir el borrador, solo queda el insumo que sigue en el catálogo. |
 | QA-15 | E1 abre `/licitaciones/nueva` y tilda "Harina 000". | El precio de partida sugerido es $ 750 por kg (18.750 / 25). Al lado está el aviso de que los proveedores ven ese precio. |
 | QA-16 | Elegí rondas de 6 horas, 2 rondas y 10 % de baja, con precio de partida 1000. | Muestra "Precio objetivo por ronda: $ 1.000,00 → $ 900,00" y que la licitación dura 12 horas desde que se publica. |
 | QA-17 | Probá en "% de baja por ronda" los valores `0`, `51`, `10,555` y vacío. | "El % de baja tiene que ser mayor a 0.", "El % de baja puede ser como máximo 50 %.", "El % de baja es un número con hasta 2 decimales." y "Escribí el % de baja por ronda.", cada uno debajo del campo. |
 | QA-18 | Dejá la cantidad o el precio de partida de un insumo vacío o en 0, y tocá "Publicar licitación". | El error aparece debajo del campo de ese insumo, sin perder lo demás que cargaste. |
 | QA-19 | No tildes ningún insumo. Después, destildá a todos los proveedores. | "Elegí entre 1 y 20 insumos." y "Dejá al menos un proveedor invitado." |
 | QA-20 | Publicá con los dos insumos e invitá solo a P1 (destildá a P2). | Va al detalle "Licitación N° 1" en curso, con sus términos, insumos y proveedores invitados. Solo P1 la ve en su panel. P2 no la ve, ni abriendo su dirección (ve "no encontrado"). |
-| QA-21 | Con la N° 1 en curso, intentá publicar otra. | "Ya tenés una licitación en curso. Por ahora puede haber una sola por vez: esperá a que cierre o cancelala." |
+| QA-21 | Con la N° 1 en curso, abrí `/licitaciones/nueva`. | El formulario se abre para preparar un borrador, pero "Publicar licitación" está deshabilitado con el aviso de la licitación en curso y su enlace. |
 | QA-22 | P1 abre la licitación. | Ve inicio y fin, insumos, cantidades, especificaciones, precio de partida y precio objetivo de la ronda en curso. **No** ve el % de baja, el precio de catálogo de E1 ni los otros proveedores. |
 | QA-23 | E1 cancela una licitación en curso con "Cancelar licitación" y confirma. | Pide confirmación antes de cancelar. Queda cancelada y P1 ve el aviso de cancelación en su panel. P1 ya no puede ofertar. Después de cancelar, E1 puede publicar otra, que toma el número siguiente. |
 

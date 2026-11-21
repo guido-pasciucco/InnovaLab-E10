@@ -36,6 +36,16 @@ export const publishTenderFormSchema = z.object({
 
 export type PublishTenderFormValues = z.input<typeof publishTenderFormSchema>;
 
+// What "Guardar borrador" sends: the form as it is, valid or not, with the
+// suppliers the emprendedor unticked (server gate: tenderDraftInputSchema).
+export type TenderDraftFormValues = {
+  roundHours: string;
+  roundCount: string;
+  decrementPercent: string;
+  items: { supplyId: string; quantity: string; specs: string; startingPrice: string }[];
+  excludedSupplierIds: string[];
+};
+
 // Issue path → "items.0.quantity", the key the form uses for each input.
 export function publishFormErrors(values: unknown): Record<string, string> {
   const result = publishTenderFormSchema.safeParse(values);
