@@ -49,14 +49,14 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | RN-10 | En cada ronda el proveedor puede mejorar su oferta con un precio menor al suyo anterior (llegue o no al objetivo) o ratificarla. Nunca puede ofertar por encima de su último precio, y la primera oferta no puede superar el precio de partida. Si no responde, se considera que ratifica. |
 | RN-11 | El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo. |
 | RN-12 | La licitación cierra sola al vencer la duración. No se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires). |
-| RN-18 | Si al terminar la primera ronda ningún proveedor ofertó, la aplicación avisa al emprendedor una sola vez. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelarla. No puede sumar proveedores: para invitar a otros, la cancela y publica una nueva. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
+| RN-18 | Si al terminar la primera ronda uno o más insumos no recibieron ninguna oferta, la aplicación avisa al emprendedor una sola vez cuáles son. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelar la licitación entera. No puede sumar proveedores ni quitar insumos: para eso, la cancela y publica una nueva. *(Agregada y modificada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-20 | En una canasta, el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. RN-10 se aplica insumo por insumo. En el cuadro comparativo, un insumo que el proveedor no cotizó figura sin oferta. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 
 ### D. Cierre y compra
 
 | ID | Regla |
 | --- | --- |
-| RN-19 | Si la licitación cierra sin ninguna oferta, queda desierta: no se arma cuadro comparativo, queda guardada en el historial y el emprendedor puede publicar otra. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
+| RN-19 | Al cierre, cada insumo sin ninguna oferta queda desierto por separado y el resto de la licitación sigue normal. Si ningún insumo recibió ofertas, la licitación entera queda desierta y no se arma cuadro comparativo. Lo desierto queda guardado en el historial y el emprendedor puede publicar una licitación nueva para esos insumos. *(Agregada y modificada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-13 | Al cierre, la aplicación arma un cuadro comparativo por insumo con la última oferta de cada proveedor, la diferencia contra el precio de partida y contra el último precio registrado del insumo. |
 | RN-14 | El emprendedor decide con qué proveedor contacta para comprar cada insumo. Puede repartir la compra por ítem y negociar. Las ofertas son de referencia (no vinculantes) y no obligan a ninguna de las partes. |
 | RN-15 | Con lo acordado, la aplicación puede generar una orden de compra por proveedor, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo. |
@@ -153,3 +153,12 @@ La canasta solo agrupa insumos: todo se cotiza por insumo, y un proveedor puede 
 
 - **RN-02:** se agrega la frase "Una canasta agrupa varios insumos en una misma licitación: el precio de partida, el precio objetivo y las ofertas van siempre por insumo." El resto del texto no cambia.
 - **RN-20** (nueva, en *C. Rondas*): "En una canasta, el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. RN-10 se aplica insumo por insumo. En el cuadro comparativo, un insumo que el proveedor no cotizó figura sin oferta."
+
+### 21 de noviembre de 2026 — RN-18 y RN-19 por insumo (ES-13)
+
+El aviso y la licitación desierta pasan a aplicarse insumo por insumo.
+
+- **RN-18, texto anterior:** "Si al terminar la primera ronda ningún proveedor ofertó, la aplicación avisa al emprendedor una sola vez. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelarla. No puede sumar proveedores: para invitar a otros, la cancela y publica una nueva."
+- **RN-18, texto nuevo:** "Si al terminar la primera ronda uno o más insumos no recibieron ninguna oferta, la aplicación avisa al emprendedor una sola vez cuáles son. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelar la licitación entera. No puede sumar proveedores ni quitar insumos: para eso, la cancela y publica una nueva."
+- **RN-19, texto anterior:** "Si la licitación cierra sin ninguna oferta, queda desierta: no se arma cuadro comparativo, queda guardada en el historial y el emprendedor puede publicar otra."
+- **RN-19, texto nuevo:** "Al cierre, cada insumo sin ninguna oferta queda desierto por separado y el resto de la licitación sigue normal. Si ningún insumo recibió ofertas, la licitación entera queda desierta y no se arma cuadro comparativo. Lo desierto queda guardado en el historial y el emprendedor puede publicar una licitación nueva para esos insumos."

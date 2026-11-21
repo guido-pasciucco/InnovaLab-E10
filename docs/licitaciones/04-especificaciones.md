@@ -27,7 +27,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-10 | Canal de las notificaciones | Abierta |
 | ES-11 | Orden de compra y nota de agradecimiento en la primera versión | Abierta |
 | ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
-| ES-13 | Insumo sin ofertas dentro de una canasta | Abierta |
+| ES-13 | Insumo sin ofertas dentro de una canasta | Decidida (21 nov 2026) |
 
 ## Abiertas
 
@@ -116,19 +116,6 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
   - **RN-11:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
 - **Contexto:** con rondas automáticas (ES-01) el emprendedor ya no tiene que intervenir en cada ronda. RN-11 supone que en cada ronda elige a quién notificar.
 - **A definir:** si por defecto todos los proveedores siguen en carrera ronda tras ronda; si el emprendedor puede excluir a un proveedor en cualquier momento o solo entre rondas.
-- **Decisión:** —
-- **Fecha:** —
-
-### ES-13. Insumo sin ofertas dentro de una canasta
-
-- **Estado:** Abierta
-- **Fuentes:** RN-18, RN-19, RN-20; surge de la decisión de ES-05.
-- **Qué dicen las reglas de negocio:**
-  - **RN-18:** "Si al terminar la primera ronda ningún proveedor ofertó, la aplicación avisa al emprendedor una sola vez. […]"
-  - **RN-19:** "Si la licitación cierra sin ninguna oferta, queda desierta: […]"
-  - **RN-20:** "En una canasta, el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. […]"
-- **Contexto:** como un proveedor puede cotizar solo algunos insumos (ES-05), un insumo de la canasta puede quedar sin ninguna oferta mientras los demás sí reciben. RN-18 y RN-19 hablan de la licitación entera, no de cada insumo.
-- **A definir:** si el aviso de RN-18 también se manda cuando un solo insumo no tiene ofertas; si ese insumo queda desierto por separado mientras el resto de la canasta sigue.
 - **Decisión:** —
 - **Fecha:** —
 
@@ -265,6 +252,29 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
   El emprendedor compra la harina a A, y el azúcar y la manteca a B.
 - **Qué no decide:** qué pasa si un insumo de la canasta no recibe ninguna oferta (ES-13).
 - **Reglas que cambia:** RN-02; agrega RN-20.
+- **Fecha:** 21 de noviembre de 2026.
+
+### ES-13. Insumo sin ofertas dentro de una canasta
+
+- **Estado:** Decidida
+- **Fuentes:** RN-03, RN-18, RN-19, RN-20; surge de la decisión de ES-05.
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **RN-03:** "Una vez publicada, la licitación no se modifica: solo puede cancelarse antes del cierre. […]"
+  - **RN-18:** "Si al terminar la primera ronda ningún proveedor ofertó, la aplicación avisa al emprendedor una sola vez. […]"
+  - **RN-19:** "Si la licitación cierra sin ninguna oferta, queda desierta: […]"
+  - **RN-20:** "En una canasta, el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. […]"
+- **Contexto:** como un proveedor puede cotizar solo algunos insumos (ES-05), un insumo de la canasta puede quedar sin ninguna oferta mientras los demás sí reciben. RN-18 y RN-19 hablaban de la licitación entera, no de cada insumo.
+- **Decisión:** el aviso y la licitación desierta se aplican insumo por insumo.
+
+  | Tema | Decisión |
+  | --- | --- |
+  | Aviso | Al terminar la primera ronda, la aplicación avisa una sola vez qué insumos siguen sin ofertas. Si son todos, es el mismo aviso de antes. |
+  | Qué puede hacer el emprendedor | Dejarla seguir o cancelar la licitación entera. No puede sacar un solo insumo, porque la licitación publicada no se modifica (RN-03). |
+  | Al cierre | Cada insumo sin ofertas queda desierto por separado y el resto de la canasta sigue normal. La licitación entera queda desierta solo si ningún insumo recibió ofertas. |
+  | Después | El emprendedor puede publicar una licitación nueva solo para el insumo desierto. |
+- **Por qué:** reutiliza las reglas de ES-04 sin inventar nada nuevo, y un insumo sin ofertas no le arruina al emprendedor la compra del resto de la canasta.
+- **Ejemplo:** canasta con harina, azúcar y manteca. A las 16:00 termina la primera ronda y llega el aviso: "La manteca todavía no tiene ofertas." El emprendedor la deja seguir. Al cierre, la manteca sigue sin ofertas y queda desierta. El cuadro comparativo muestra la harina y el azúcar, el emprendedor compra esos dos y después publica una licitación solo para la manteca.
+- **Reglas que cambia:** RN-18 y RN-19.
 - **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla
