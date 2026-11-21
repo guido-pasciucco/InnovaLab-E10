@@ -176,6 +176,13 @@
       "when": 1795233618108,
       "tag": "20261121040018_burly_molly_hayes",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795281289958,
+      "tag": "20261121171449_licitaciones",
+      "breakpoints": true
     }
   ]
 }

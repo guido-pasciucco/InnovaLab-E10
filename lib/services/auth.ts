@@ -72,6 +72,9 @@ export async function signupService(
   input: unknown,
   // Where the confirmation email link lands once GoTrue verifies it.
   emailRedirectTo: string,
+  // Extra user metadata kept until the email is confirmed (the supplier
+  // signup stores its pending data here). Already validated by the caller.
+  extraData: Record<string, unknown> = {},
 ): Promise<Record<string, never>> {
   const { email, password, displayName } = signupSchema.parse(input);
 
@@ -80,7 +83,7 @@ export async function signupService(
     password,
     options: {
       // Empty name ("" after trim) means no display name at all.
-      data: { display_name: displayName || undefined },
+      data: { ...extraData, display_name: displayName || undefined },
       emailRedirectTo,
     },
   });

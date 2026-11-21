@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getHomePathService } from "@/lib/services/suppliers";
 import { CalculationList, NewCalculationButton } from "@/components/dashboard/calculation-list";
 import { TOTAL_STEPS } from "@/components/calculator/wizard/wizard-steps";
 import { requireUser } from "@/lib/auth/require-user";
@@ -22,6 +24,9 @@ function StatCard({ label, value, hint }: { label: string; value: string; hint?:
 // piece of data below is read from the DB, filtered by the session user id.
 export default async function DashboardPage() {
   const user = await requireUser();
+  // A supplier account without a business of its own belongs in the supplier
+  // panel (docs/licitaciones, annex 03), not in the emprendedor dashboard.
+  if ((await getHomePathService(user.id)) === "/proveedor") redirect("/proveedor");
   const [profile, calculations] = await Promise.all([
     getProfileSummaryService(user.id),
     listUserCalculationsService(user.id),

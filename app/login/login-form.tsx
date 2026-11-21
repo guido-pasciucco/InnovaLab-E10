@@ -17,8 +17,9 @@ import type { LoginState } from "@/lib/types/auth";
 
 import { login } from "./actions";
 
-// Signing in lands on flow 1 (sidebar + catalogs), the new main flow.
-const POST_LOGIN_HREF = "/insumos";
+// Signing in lands on /inicio, which sends each account to its home: flow 1
+// (sidebar + catalogs) for an emprendedor, the panel for a supplier.
+const POST_LOGIN_HREF = "/inicio";
 
 const initialState: LoginState = undefined;
 
@@ -79,7 +80,8 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-export default function LoginForm() {
+// `next` arrives already sanitized by the page (safeNextPath).
+export default function LoginForm({ next = POST_LOGIN_HREF }: { next?: string }) {
   const router = useRouter();
   const { action, transportError, clearTransportError } = useTransportAwareAction(login);
   const [state, submitAction, pending] = useActionState(action, initialState);
@@ -96,10 +98,10 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (state?.ok) {
-      router.push(POST_LOGIN_HREF);
+      router.push(next);
       router.refresh();
     }
-  }, [state, router]);
+  }, [state, router, next]);
 
   // A transport failure wins over the server message: the request never
   // arrived, so the previous state is not meaningful anymore.
@@ -127,7 +129,7 @@ export default function LoginForm() {
           className="rounded-md border border-success/30 bg-success-subtle px-3 py-2 text-xs text-success lg:text-sm"
         >
           Sesión iniciada correctamente. Redirigiendo…{" "}
-          <Link href={POST_LOGIN_HREF} className="font-semibold underline underline-offset-2">
+          <Link href={next} className="font-semibold underline underline-offset-2">
             Continuar
           </Link>
         </p>
