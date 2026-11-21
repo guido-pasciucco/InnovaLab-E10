@@ -17,7 +17,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | Proveedor | Participa con sus ofertas. No conoce a los demás proveedores ni sus precios. |
 | Aplicación | Ejecuta las reglas, notifica, registra y compara. No adjudica ni elige por el emprendedor. |
 | Precio de partida | Techo inicial que publica el emprendedor. Ninguna oferta puede superarlo. |
-| Ronda | Intervalo (6 hs por defecto) en el que rige un precio objetivo. |
+| Ronda | Intervalo (6, 12 o 24 hs; 6 hs por defecto) en el que rige un precio objetivo. *(Modificado el 20 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | Precio objetivo | Referencia de la ronda: precio objetivo anterior × (1 − % de baja). No es obligatorio alcanzarlo. |
 | En carrera | Proveedores a los que el emprendedor decide notificar cada ronda. |
 
@@ -28,7 +28,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | ID | Regla |
 | --- | --- |
 | RN-01 | Solo se licitan insumos del Maestro de Insumos. Las cantidades se sugieren a partir de recetas y producción planificada si existen; si no, se cargan a mano. |
-| RN-02 | El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. El precio de partida es obligatorio: la aplicación sugiere el precio actual del insumo en el Maestro de Insumos y el emprendedor puede dejarlo o cambiarlo. Cada licitación recibe un número correlativo. *(Modificada el 20 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
+| RN-02 | El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida, la duración de cada ronda (6, 12 o 24 hs; 6 hs por defecto) y la cantidad de rondas (de 2 a 5; 4 por defecto). La duración de la licitación es la cantidad de rondas por la duración de cada ronda. El precio de partida es obligatorio: la aplicación sugiere el precio actual del insumo en el Maestro de Insumos y el emprendedor puede dejarlo o cambiarlo. Cada licitación recibe un número correlativo. *(Modificada el 20 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-03 | Una vez publicada, la licitación no se modifica: solo puede cancelarse antes del cierre. Un insumo no puede estar en dos licitaciones activas a la vez (para esta versión, el desarrollo solo contempla una licitación activa por vez). |
 | RN-04 | Los precios ofertados son precios finales puestos en destino (impuestos y flete incluidos), por unidad de medida. Es la misma base que usa la Calculadora de Costos. |
 
@@ -45,7 +45,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 
 | ID | Regla |
 | --- | --- |
-| RN-09 | En cada ronda (6 hs por defecto, parametrizable) rige un nuevo precio objetivo. El emprendedor define el % de baja una sola vez, al publicar, y la aplicación avanza las rondas y calcula el nuevo precio objetivo sin que el emprendedor intervenga. El objetivo es una referencia, no una obligación. *(Modificada el 20 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
+| RN-09 | En cada ronda (6, 12 o 24 hs, según elija el emprendedor al publicar) rige un nuevo precio objetivo. El emprendedor define el % de baja una sola vez, al publicar, y la aplicación avanza las rondas y calcula el nuevo precio objetivo sin que el emprendedor intervenga. El objetivo es una referencia, no una obligación. *(Modificada el 20 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-10 | En cada ronda el proveedor puede mejorar su oferta con un precio menor al suyo anterior (llegue o no al objetivo) o ratificarla. Nunca puede ofertar por encima de su último precio, y la primera oferta no puede superar el precio de partida. Si no responde, se considera que ratifica. |
 | RN-11 | El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo. |
 | RN-12 | La licitación cierra sola al vencer la duración. No se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires). |
@@ -125,3 +125,14 @@ El precio de partida pasa a ser obligatorio explícitamente, con una sugerencia 
 
 - **Texto anterior:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. Cada licitación recibe un número correlativo."
 - **Texto nuevo:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. El precio de partida es obligatorio: la aplicación sugiere el precio actual del insumo en el Maestro de Insumos y el emprendedor puede dejarlo o cambiarlo. Cada licitación recibe un número correlativo."
+
+### 20 de noviembre de 2026 — término *Ronda*, RN-02 y RN-09 (ES-03)
+
+El emprendedor elige la duración de cada ronda y la cantidad de rondas; la duración total sale de ahí.
+
+- **Ronda, texto anterior:** "Intervalo (6 hs por defecto) en el que rige un precio objetivo."
+- **Ronda, texto nuevo:** "Intervalo (6, 12 o 24 hs; 6 hs por defecto) en el que rige un precio objetivo."
+- **RN-02, texto anterior** (ya con el cambio de ES-02): "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. El precio de partida es obligatorio: la aplicación sugiere el precio actual del insumo en el Maestro de Insumos y el emprendedor puede dejarlo o cambiarlo. Cada licitación recibe un número correlativo."
+- **RN-02, texto nuevo:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida, la duración de cada ronda (6, 12 o 24 hs; 6 hs por defecto) y la cantidad de rondas (de 2 a 5; 4 por defecto). La duración de la licitación es la cantidad de rondas por la duración de cada ronda. El precio de partida es obligatorio: la aplicación sugiere el precio actual del insumo en el Maestro de Insumos y el emprendedor puede dejarlo o cambiarlo. Cada licitación recibe un número correlativo."
+- **RN-09, texto anterior** (ya con el cambio de ES-01): "En cada ronda (6 hs por defecto, parametrizable) rige un nuevo precio objetivo. […]"
+- **RN-09, texto nuevo:** "En cada ronda (6, 12 o 24 hs, según elija el emprendedor al publicar) rige un nuevo precio objetivo. […]"

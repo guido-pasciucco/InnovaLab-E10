@@ -17,7 +17,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | --- | --- | --- |
 | ES-01 | Rondas: si existen en la primera versión | Decidida (20 nov 2026) |
 | ES-02 | Precio de partida: obligatorio u opcional | Decidida (20 nov 2026) |
-| ES-03 | Duración de la licitación y de las rondas | Abierta |
+| ES-03 | Duración de la licitación y de las rondas | Decidida (20 nov 2026) |
 | ES-04 | Aviso cuando nadie oferta | Abierta |
 | ES-05 | Cotización por canasta o por ítem | Abierta |
 | ES-06 | Qué habilita la negociación | Abierta |
@@ -29,20 +29,6 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
 
 ## Abiertas
-
-### ES-03. Duración de la licitación y de las rondas
-
-- **Estado:** Abierta
-- **Fuentes:** RN-02, RN-09, RN-12.
-- **Qué dicen las reglas de negocio:**
-  - **Ronda:** "Intervalo (6 hs por defecto) en el que rige un precio objetivo."
-  - **RN-02:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. […]"
-  - **RN-09:** "En cada ronda (6 hs por defecto, parametrizable) […]"
-  - **RN-12:** "La licitación cierra sola al vencer la duración. No se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires)."
-- **Contexto:** la ronda dura 6 hs por defecto y es parametrizable. La duración de la licitación la elige el emprendedor al publicar.
-- **A definir:** duración mínima y máxima de la licitación; si la duración tiene que ser múltiplo de la ronda; quién parametriza la ronda (cada emprendedor o la aplicación) y entre qué valores.
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-04. Aviso cuando nadie oferta
 
@@ -208,6 +194,35 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
   - Cómo se sugiere el precio de partida de una canasta (ES-05).
   - Si la pantalla avisa que el precio de partida lo van a ver los proveedores. Se recomendó, porque si el emprendedor deja la sugerencia, los proveedores ven cuánto paga hoy, que es lo que RN-07 protege. No está decidido.
 - **Reglas que cambia:** RN-02.
+- **Fecha:** 20 de noviembre de 2026.
+
+### ES-03. Duración de la licitación y de las rondas
+
+- **Estado:** Decidida
+- **Fuentes:** RN-02, RN-09, RN-12.
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **Ronda:** "Intervalo (6 hs por defecto) en el que rige un precio objetivo."
+  - **RN-02:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. […]"
+  - **RN-09:** "En cada ronda (6 hs por defecto, parametrizable) […]"
+  - **RN-12:** "La licitación cierra sola al vencer la duración. No se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires)."
+- **Contexto:** la ronda dura 6 hs por defecto y es parametrizable, y la duración total la elige el emprendedor. Si la duración no es múltiplo de la ronda, la última ronda queda cortada, y nada limita cuánto puede durar una licitación.
+- **Decisión:** el emprendedor no elige la duración total, sino la duración de cada ronda y la cantidad de rondas:
+
+  | Qué elige | Valores | Por defecto |
+  | --- | --- | --- |
+  | Duración de cada ronda | 6 h, 12 h o 24 h | 6 h |
+  | Cantidad de rondas | de 2 a 5 | 4 |
+
+  La duración total es la cantidad de rondas por la duración de cada ronda, de modo que ninguna ronda queda cortada.
+- **Por qué:**
+  - Mínimo 2 rondas: con una sola no hay rondas, y eso contradice ES-01.
+  - Máximo 5 rondas: con 10% de baja, en la quinta ronda el objetivo ya está en un 66% del precio de partida; más rondas darían objetivos que nadie alcanza.
+  - Rondas de 12 h y 24 h: una ronda de 6 h puede caer de madrugada. Con rondas más largas el proveedor siempre tiene un horario hábil para responder.
+- **Ejemplo:** 4 rondas de 6 h dan 24 horas. Si la licitación arranca a las 10:00, cierra al día siguiente a las 10:00.
+- **Qué no decide:**
+  - Si la licitación arranca al publicarse o puede programarse una hora de inicio posterior.
+  - Si la duración de ronda o la cantidad de rondas pueden cambiarse después de publicar (RN-03 dice que la licitación publicada no se modifica).
+- **Reglas que cambia:** término *Ronda*, RN-02 y RN-09.
 - **Fecha:** 20 de noviembre de 2026.
 
 ## Plantilla
