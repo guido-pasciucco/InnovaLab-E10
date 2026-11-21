@@ -123,6 +123,23 @@ RN-06 lista lo que ve el proveedor: hora de inicio y fin, insumos, cantidades, p
 - Si un precio del envío no cumple la regla, no se guarda ninguno de ese envío y el error aparece debajo del insumo. Así nunca queda una oferta a medias.
 - La pantalla le muestra el máximo que puede ofertar en cada insumo: su último precio o, si todavía no ofertó, el precio de partida.
 
+### N-23. Cuánto dura el aviso de insumos sin ofertas
+
+El aviso de RN-18 aparece cuando termina la primera ronda y sigue visible en la licitación y en los paneles del emprendedor hasta que pasa una de tres cosas: elige "Dejar que siga", cancela la licitación o la licitación cierra. "Una sola vez" se interpretó como un único aviso, no uno por ronda.
+
+### N-24. Qué avisos ve cada uno y por cuánto tiempo
+
+Todos los avisos se ven solo en los paneles de la aplicación (RN-24).
+
+- **Emprendedor**, en el dashboard y en Licitaciones: insumos sin ofertas tras la primera ronda (mientras esté pendiente) y licitación cerrada, con el cuadro listo o desierta (durante 7 días).
+- **Proveedor**, en su panel: invitación nueva (mientras no haya ofertado), ronda nueva con nuevo precio objetivo (desde la segunda ronda, una vez que ofertó), pedido de negociación, nota de agradecimiento, licitación cerrada y licitación cancelada (estas dos, durante 7 días).
+- El aviso de cancelación al proveedor no está en RN-24. Se agregó porque, sin él, un proveedor no se entera de que ya no puede ofertar.
+- **Alternativa:** marcar los avisos como leídos. Necesita guardar qué vio cada persona; se dejó para cuando haga falta.
+
+### N-25. Ofertas en vivo y cuadro comparativo
+
+Mientras la licitación está en curso, el emprendedor ve la última oferta de cada proveedor por insumo (RN-08). Al cierre, esa tabla se reemplaza por el cuadro comparativo de RN-13, ordenado de la oferta más baja a la más alta, con la diferencia en pesos y en porcentaje contra el precio de partida y contra el precio del catálogo al publicar. La oferta más baja se resalta. La aplicación no elige ni recomienda: la decisión es del emprendedor (RN-14).
+
 ## Base de datos
 
 ### D-01. Tres tablas para el registro de proveedores
@@ -167,6 +184,10 @@ Al publicar, la transacción bloquea la fila del perfil del emprendedor. Así, d
 `tender_offers` guarda una fila por oferta, con su ronda y su hora, y los servicios nunca la modifican ni la borran (RN-17). La oferta vigente de un proveedor en un insumo es su fila más reciente. Para que dos envíos simultáneos del mismo proveedor no salteen la regla de "nunca por encima del último precio", cada envío bloquea la invitación de ese proveedor mientras se guarda.
 
 - **Alternativa:** un trigger en la base que rechace cualquier modificación o borrado de ofertas. Se dejó para más adelante. Hoy ninguna parte del código modifica ofertas, y un trigger impediría también el borrado en cascada al borrar una cuenta.
+
+### D-10. Los avisos no se guardan
+
+No hay tabla de avisos. Cada vez que se abre un panel, los avisos se calculan a partir del estado de las licitaciones: ronda en curso, ofertas, cierre, cancelación, pedidos de negociación y nota de agradecimiento. No hay nada que sincronizar ni ningún envío fuera de la aplicación (RN-24).
 
 ## Estructura de código
 

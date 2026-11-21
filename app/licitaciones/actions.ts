@@ -6,7 +6,11 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
 import type { PublishTenderFormValues } from "@/lib/schemas/tenders/publish";
-import { cancelTenderService, publishTenderService } from "@/lib/services/tenders";
+import {
+  acknowledgeNoOfferWarningService,
+  cancelTenderService,
+  publishTenderService,
+} from "@/lib/services/tenders";
 
 // Doors of the emprendedor's tender screens. Each one validates the session
 // once and passes the raw input to the service, which validates it.
@@ -19,6 +23,16 @@ export const publishTender = handleActionErrors(
     redirect(`/licitaciones/${id}`);
   },
 );
+
+// RN-18: let the tender continue after the "items without offers" warning.
+export const acknowledgeNoOfferWarning = handleActionErrors(async (_previous: unknown, data: FormData) => {
+  const user = await requireUser();
+  const tenderId = String(data.get("tenderId") ?? "");
+  await acknowledgeNoOfferWarningService(user.id, tenderId);
+  revalidatePath(`/licitaciones/${tenderId}`);
+  revalidatePath("/licitaciones");
+  return { acknowledged: true as const };
+});
 
 export const cancelTender = handleActionErrors(async (_previous: unknown, data: FormData) => {
   const user = await requireUser();

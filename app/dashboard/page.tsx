@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getHomePathService } from "@/lib/services/suppliers";
+import { listTenderNoticesService } from "@/lib/services/tenders";
+import { TenderNotices } from "@/components/tenders/notices";
 import { CalculationList, NewCalculationButton } from "@/components/dashboard/calculation-list";
 import { TOTAL_STEPS } from "@/components/calculator/wizard/wizard-steps";
 import { requireUser } from "@/lib/auth/require-user";
@@ -27,9 +29,10 @@ export default async function DashboardPage() {
   // A supplier account without a business of its own belongs in the supplier
   // panel (docs/licitaciones, annex 03), not in the emprendedor dashboard.
   if ((await getHomePathService(user.id)) === "/proveedor") redirect("/proveedor");
-  const [profile, calculations] = await Promise.all([
+  const [profile, calculations, tenderNotices] = await Promise.all([
     getProfileSummaryService(user.id),
     listUserCalculationsService(user.id),
+    listTenderNoticesService(user.id),
   ]);
 
   const furthest = calculations.reduce((max, c) => Math.max(max, c.currentStep), 0);
@@ -153,6 +156,8 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </section>
+
+        <TenderNotices notices={tenderNotices} />
 
         <section aria-label="Compras">
           <h2 className="mb-3 text-lg font-semibold text-fg">Compras de insumos</h2>

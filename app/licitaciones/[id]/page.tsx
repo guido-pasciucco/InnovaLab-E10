@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 
+import Link from "next/link";
+
 import { CancelTenderForm } from "@/components/tenders/cancel-tender-form";
+import { ComparisonTable } from "@/components/tenders/comparison-table";
+import { NoOfferWarning } from "@/components/tenders/no-offer-warning";
 import { OffersTable } from "@/components/tenders/offers-table";
 import { formatDateTime, formatMoney, formatPercent, formatQuantity } from "@/components/tenders/format";
 import { PhaseBadge, roundLabel } from "@/components/tenders/phase-badge";
@@ -40,6 +44,29 @@ export default async function TenderPage({ params }: TenderPageProps) {
       }
       links={[{ href: "/licitaciones", label: "Volver a licitaciones" }]}
     >
+      {tender.noOfferWarning && (
+        <NoOfferWarning
+          tenderId={tender.id}
+          items={tender.items.filter((item) => tender.noOfferWarning!.itemIds.includes(item.id)).map((item) => item.supplyName)}
+        />
+      )}
+
+      {tender.comparison && (
+        <Card title="Cuadro comparativo" id="comparativo">
+          {tender.isVoid ? (
+            <p className="text-sm text-fg">
+              La licitación cerró sin ofertas y quedó desierta. Queda guardada en el historial y podés{" "}
+              <Link href="/licitaciones/nueva" className="font-semibold text-brand-green-700 underline">
+                publicar una nueva
+              </Link>
+              .
+            </p>
+          ) : (
+            <ComparisonTable items={tender.items} invitations={tender.invitations} comparison={tender.comparison} />
+          )}
+        </Card>
+      )}
+
       <Card title="Términos" id="terminos">
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
@@ -110,13 +137,15 @@ export default async function TenderPage({ params }: TenderPageProps) {
         </div>
       </Card>
 
-      <Card title="Ofertas" id="ofertas">
-        <p className="text-sm text-fg-muted">
-          La última oferta de cada proveedor por insumo. Los proveedores no ven estas ofertas ni saben cuántos
-          compiten.
-        </p>
-        <OffersTable items={tender.items} invitations={tender.invitations} offers={tender.offers} />
-      </Card>
+      {!tender.comparison && (
+        <Card title="Ofertas" id="ofertas">
+          <p className="text-sm text-fg-muted">
+            La última oferta de cada proveedor por insumo. Los proveedores no ven estas ofertas ni saben cuántos
+            compiten.
+          </p>
+          <OffersTable items={tender.items} invitations={tender.invitations} offers={tender.offers} />
+        </Card>
+      )}
 
       <Card title={`Proveedores invitados (${tender.invitations.length})`} id="invitados">
         <ul className="divide-y divide-border-default">

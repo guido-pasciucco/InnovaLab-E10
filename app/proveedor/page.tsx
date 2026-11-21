@@ -7,16 +7,22 @@ import { Card, PageShell } from "@/components/ui/page-shell";
 import { requireSupplier } from "@/lib/auth/require-supplier";
 import { formatCuit } from "@/lib/schemas/suppliers/cuit";
 import { listSupplierEmprendedoresService } from "@/lib/services/suppliers";
-import { listSupplierTendersService, type SupplierTenderSummary } from "@/lib/services/tenders";
+import { SupplierNotices } from "@/components/tenders/notices";
+import {
+  listSupplierNoticesService,
+  listSupplierTendersService,
+  type SupplierTenderSummary,
+} from "@/lib/services/tenders";
 
 // Supplier panel ("dashboard unificado", annex 03): the tenders of every
 // emprendedor the supplier is linked to, grouped by emprendedor (RN-22). It
 // never opens the emprendedor's calculator or catalog (RN-07).
 export default async function SupplierPanelPage() {
   const { user, supplier } = await requireSupplier();
-  const [emprendedores, tenders] = await Promise.all([
+  const [emprendedores, tenders, notices] = await Promise.all([
     listSupplierEmprendedoresService(user.id),
     listSupplierTendersService(user.id),
+    listSupplierNoticesService(user.id),
   ]);
 
   const tendersByOwner = new Map<string, SupplierTenderSummary[]>();
@@ -31,6 +37,7 @@ export default async function SupplierPanelPage() {
       description="Acá ves las licitaciones de los emprendedores que te invitaron y todos sus avisos."
       actions={<LogoutButton />}
     >
+      <SupplierNotices notices={notices} />
       {emprendedores.length === 0 && (
         <Card>
           <p className="text-sm text-fg-muted">Todavía no estás vinculado con ningún emprendedor.</p>

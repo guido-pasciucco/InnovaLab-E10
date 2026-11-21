@@ -4,12 +4,13 @@ import { formatDateTime } from "@/components/tenders/format";
 import { PhaseBadge, roundLabel } from "@/components/tenders/phase-badge";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
-import { listTendersService } from "@/lib/services/tenders";
+import { TenderNotices } from "@/components/tenders/notices";
+import { listTenderNoticesService, listTendersService } from "@/lib/services/tenders";
 
 // The emprendedor's tenders, newest first. Data filtered by the session user.
 export default async function TendersPage() {
   const user = await requireUser();
-  const tenders = await listTendersService(user.id);
+  const [tenders, notices] = await Promise.all([listTendersService(user.id), listTenderNoticesService(user.id)]);
   const hasActive = tenders.some((tender) => tender.phase === "active");
 
   return (
@@ -32,6 +33,7 @@ export default async function TendersPage() {
         )
       }
     >
+      <TenderNotices notices={notices} />
       <Card>
         {tenders.length === 0 ? (
           <p className="text-sm text-fg-muted">Todavía no publicaste licitaciones.</p>

@@ -5,6 +5,12 @@ import { z } from "zod/v4";
 
 import { checkOffer, latestOffers, offerKey, type OfferRecord } from "@/lib/calc/tenderOffers";
 import {
+  buildComparison,
+  isTenderVoid,
+  itemsWithoutRoundOneOffers,
+  type ComparisonItem,
+} from "@/lib/calc/tenderResults";
+import {
   catalogUnitPrice,
   currentRound,
   targetPrices,
@@ -37,6 +43,9 @@ import { listLinkedSuppliersService, type LinkedSupplier } from "@/lib/services/
 // closing) are testable; doors leave the default (the server clock, RN-12).
 
 const UNNAMED_OWNER = "Emprendedor sin nombre";
+// How long the "closed" and "cancelled" notices stay in the panels (RN-24).
+const NOTICE_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
 const tenderIdSchema = z.uuid();
 
 export type { TenderPhase };
@@ -307,7 +316,27 @@ export type TenderDetail = {
   invitations: TenderDetailInvitation[];
   // Every offer, oldest first (RN-08: with identity, from the start).
   offers: OfferRecord[];
+  // RN-18: items without offers in round 1, while the warning is pending.
+  noOfferWarning: { itemIds: string[] } | null;
+  // RN-13: the comparative table, once the tender closed (not cancelled).
+  comparison: ComparisonItem[] | null;
+  // RN-19: closed with no offer for any item.
+  isVoid: boolean;
 };
+
+// RN-18: shown once the first round is over, while the tender is active and
+// the emprendedor has not chosen to let it continue.
+function pendingNoOfferWarning(
+  tender: Tender,
+  items: readonly { id: string }[],
+  offers: readonly OfferRecord[],
+  now: Date,
+): { itemIds: string[] } | null {
+  if (tenderPhase(tender, now) !== "active" || tender.noOfferWarningAckAt) return null;
+  if ((currentRound(tender, now) ?? 0) < 2) return null;
+  const itemIds = itemsWithoutRoundOneOffers(items, offers);
+  return itemIds.length > 0 ? { itemIds } : null;
+}
 
 // Offers of a tender, oldest first; optionally only one supplier's.
 async function loadOffers(tenderId: string, db: Db | Tx, invitationId?: string): Promise<OfferRecord[]> {
@@ -387,6 +416,7 @@ export async function getTenderDetailService(
   ]);
 
   const phase = tenderPhase(tender, now);
+  const comparison = phase === "closed" ? buildComparison(items, invitations, offers) : null;
   return {
     id: tender.id,
     number: tender.number,
@@ -403,7 +433,28 @@ export async function getTenderDetailService(
     items,
     invitations,
     offers,
+    noOfferWarning: pendingNoOfferWarning(tender, items, offers, now),
+    comparison,
+    isVoid: comparison !== null && isTenderVoid(comparison),
   };
+}
+
+// RN-18: "El emprendedor puede dejarla seguir": hides the warning; the tender
+// goes on unchanged (which is also what happens if the emprendedor does
+// nothing).
+export async function acknowledgeNoOfferWarningService(
+  userId: VerifiedUserId,
+  tenderId: string,
+  db: Db = getDrizzleClient(),
+  now: Date = new Date(),
+): Promise<void> {
+  const tender = await getOwnedTender(userId, tenderId, db);
+  const [row] = await db
+    .update(tenders)
+    .set({ noOfferWarningAckAt: now })
+    .where(and(eq(tenders.id, tender.id), isNull(tenders.cancelledAt), gt(tenders.endsAt, now)))
+    .returning({ id: tenders.id });
+  if (!row) throw new AppError("TENDER_NOT_ACTIVE");
 }
 
 // ---------------------------------------------------------------------------
@@ -614,4 +665,133 @@ export async function submitOffersService(
 
     return { round, count: offers.length };
   });
+}
+
+// ---------------------------------------------------------------------------
+// Panel notices (RN-24: every notice shows only in the app's panel)
+// ---------------------------------------------------------------------------
+
+// Notices are derived from the tender state on every read, so there is no
+// notification table to keep in sync and nothing is ever sent outside the app.
+
+async function offersByTender(tenderIds: string[], db: Db): Promise<Map<string, OfferRecord[]>> {
+  const byTender = new Map<string, OfferRecord[]>();
+  if (tenderIds.length === 0) return byTender;
+  const rows = await db
+    .select({
+      tenderId: tenderItems.tenderId,
+      id: tenderOffers.id,
+      itemId: tenderOffers.tenderItemId,
+      invitationId: tenderOffers.invitationId,
+      round: tenderOffers.round,
+      unitPrice: tenderOffers.unitPrice,
+      createdAt: tenderOffers.createdAt,
+    })
+    .from(tenderOffers)
+    .innerJoin(tenderItems, eq(tenderItems.id, tenderOffers.tenderItemId))
+    .where(inArray(tenderItems.tenderId, tenderIds));
+  for (const { tenderId, ...offer } of rows) {
+    byTender.set(tenderId, [...(byTender.get(tenderId) ?? []), offer]);
+  }
+  return byTender;
+}
+
+const isRecent = (instant: Date, now: Date) => now.getTime() - instant.getTime() < NOTICE_DAYS * DAY_MS;
+
+export type TenderNotice =
+  | { kind: "no_offers"; tenderId: string; number: number; items: string[] }
+  | { kind: "closed"; tenderId: string; number: number; isVoid: boolean };
+
+// The emprendedor's notices: items without offers after round 1 (RN-18) and
+// the close with the comparative table ready (RN-24), for a week.
+export async function listTenderNoticesService(
+  userId: VerifiedUserId,
+  db: Db = getDrizzleClient(),
+  now: Date = new Date(),
+): Promise<TenderNotice[]> {
+  const rows = await db.select().from(tenders).where(eq(tenders.ownerUserId, userId)).orderBy(desc(tenders.number));
+  const relevant = rows.filter((tender) => {
+    const phase = tenderPhase(tender, now);
+    return phase === "active" || (phase === "closed" && isRecent(tender.endsAt, now));
+  });
+  if (relevant.length === 0) return [];
+
+  const ids = relevant.map((tender) => tender.id);
+  const [items, offers] = await Promise.all([
+    db
+      .select({ id: tenderItems.id, tenderId: tenderItems.tenderId, supplyName: tenderItems.supplyName })
+      .from(tenderItems)
+      .where(inArray(tenderItems.tenderId, ids))
+      .orderBy(asc(tenderItems.position)),
+    offersByTender(ids, db),
+  ]);
+
+  const notices: TenderNotice[] = [];
+  for (const tender of relevant) {
+    const own = items.filter((item) => item.tenderId === tender.id);
+    const tenderOffersList = offers.get(tender.id) ?? [];
+    if (tenderPhase(tender, now) === "active") {
+      const warning = pendingNoOfferWarning(tender, own, tenderOffersList, now);
+      if (warning) {
+        notices.push({
+          kind: "no_offers",
+          tenderId: tender.id,
+          number: tender.number,
+          items: own.filter((item) => warning.itemIds.includes(item.id)).map((item) => item.supplyName),
+        });
+      }
+    } else {
+      notices.push({ kind: "closed", tenderId: tender.id, number: tender.number, isVoid: tenderOffersList.length === 0 });
+    }
+  }
+  return notices;
+}
+
+type SupplierNoticeBase = { tenderId: string; number: number; ownerName: string };
+
+export type SupplierNotice =
+  | (SupplierNoticeBase & { kind: "invited"; round: number; roundCount: number })
+  | (SupplierNoticeBase & { kind: "round"; round: number; roundCount: number })
+  | (SupplierNoticeBase & { kind: "negotiation"; contact: string })
+  | (SupplierNoticeBase & { kind: "thank_you" })
+  | (SupplierNoticeBase & { kind: "closed" })
+  | (SupplierNoticeBase & { kind: "cancelled" });
+
+// The supplier's notices (RN-24): a new invitation it has not answered yet, a
+// new round with a new target price, the close and a cancellation (for a
+// week).
+export async function listSupplierNoticesService(
+  supplierUserId: VerifiedUserId,
+  db: Db = getDrizzleClient(),
+  now: Date = new Date(),
+): Promise<SupplierNotice[]> {
+  const rows = await db
+    .select({ tender: tenders, invitation: tenderInvitations, ownerName: profiles.displayName })
+    .from(tenderInvitations)
+    .innerJoin(tenders, eq(tenders.id, tenderInvitations.tenderId))
+    .innerJoin(profiles, eq(profiles.id, tenders.ownerUserId))
+    .where(eq(tenderInvitations.supplierUserId, supplierUserId))
+    .orderBy(desc(tenders.startsAt));
+  if (rows.length === 0) return [];
+
+  const offers = await offersByTender(
+    rows.map((row) => row.tender.id),
+    db,
+  );
+  const notices: SupplierNotice[] = [];
+  for (const { tender, invitation, ownerName } of rows) {
+    const base = { tenderId: tender.id, number: tender.number, ownerName: ownerName ?? UNNAMED_OWNER };
+    const phase = tenderPhase(tender, now);
+    const offered = (offers.get(tender.id) ?? []).some((offer) => offer.invitationId === invitation.id);
+    if (phase === "active") {
+      const round = currentRound(tender, now)!;
+      if (!offered) notices.push({ ...base, kind: "invited", round, roundCount: tender.roundCount });
+      else if (round >= 2) notices.push({ ...base, kind: "round", round, roundCount: tender.roundCount });
+    } else if (phase === "closed" && isRecent(tender.endsAt, now)) {
+      notices.push({ ...base, kind: "closed" });
+    } else if (phase === "cancelled" && tender.cancelledAt && isRecent(tender.cancelledAt, now)) {
+      notices.push({ ...base, kind: "cancelled" });
+    }
+  }
+  return notices;
 }
