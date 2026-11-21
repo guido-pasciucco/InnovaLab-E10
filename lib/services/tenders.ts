@@ -3,6 +3,7 @@ import "server-only";
 import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
+import { latestAwards, type AwardRecord } from "@/lib/calc/purchaseOrder";
 import { checkOffer, latestOffers, offerKey, type OfferRecord } from "@/lib/calc/tenderOffers";
 import {
   buildComparison,
@@ -23,6 +24,8 @@ import { profiles } from "@/lib/db/profile/table";
 import { supplierLinks, suppliers } from "@/lib/db/suppliers/table";
 import { supplies } from "@/lib/db/supplies/table";
 import {
+  purchaseOrders,
+  tenderAwards,
   tenderInvitations,
   tenderItems,
   tenderOffers,
@@ -108,7 +111,7 @@ export async function getTenderFormDataService(
   };
 }
 
-type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 export async function publishTenderService(
   userId: VerifiedUserId,
@@ -322,7 +325,27 @@ export type TenderDetail = {
   comparison: ComparisonItem[] | null;
   // RN-19: closed with no offer for any item.
   isVoid: boolean;
+  // RN-14: the current choice per item, in item order.
+  awards: { itemId: string; invitationId: string; unitPrice: string; createdAt: Date }[];
+  // RN-15: issued purchase orders.
+  orders: { id: string; number: number; invitationId: string; issuedAt: Date; total: string }[];
 };
+
+// Every choice of a tender, oldest first (earlier choices stay in the history).
+export async function loadAwards(tenderId: string, db: Db | Tx): Promise<AwardRecord[]> {
+  return db
+    .select({
+      id: tenderAwards.id,
+      itemId: tenderAwards.tenderItemId,
+      invitationId: tenderAwards.invitationId,
+      unitPrice: tenderAwards.unitPrice,
+      createdAt: tenderAwards.createdAt,
+    })
+    .from(tenderAwards)
+    .innerJoin(tenderItems, eq(tenderItems.id, tenderAwards.tenderItemId))
+    .where(eq(tenderItems.tenderId, tenderId))
+    .orderBy(asc(tenderAwards.createdAt));
+}
 
 // RN-18: shown once the first round is over, while the tender is active and
 // the emprendedor has not chosen to let it continue.
@@ -339,7 +362,7 @@ function pendingNoOfferWarning(
 }
 
 // Offers of a tender, oldest first; optionally only one supplier's.
-async function loadOffers(tenderId: string, db: Db | Tx, invitationId?: string): Promise<OfferRecord[]> {
+export async function loadOffers(tenderId: string, db: Db | Tx, invitationId?: string): Promise<OfferRecord[]> {
   return db
     .select({
       id: tenderOffers.id,
@@ -393,7 +416,7 @@ export async function getTenderDetailService(
   now: Date = new Date(),
 ): Promise<TenderDetail> {
   const tender = await getOwnedTender(userId, tenderId, db);
-  const [items, invitations, offers] = await Promise.all([
+  const [items, invitations, offers, awards, orders] = await Promise.all([
     loadItems(tender, db, now),
     db
       .select({
@@ -413,7 +436,20 @@ export async function getTenderDetailService(
       .where(eq(tenderInvitations.tenderId, tender.id))
       .orderBy(asc(suppliers.businessName)),
     loadOffers(tender.id, db),
+    loadAwards(tender.id, db),
+    db
+      .select({
+        id: purchaseOrders.id,
+        number: purchaseOrders.number,
+        invitationId: purchaseOrders.invitationId,
+        issuedAt: purchaseOrders.issuedAt,
+        total: purchaseOrders.total,
+      })
+      .from(purchaseOrders)
+      .where(eq(purchaseOrders.tenderId, tender.id))
+      .orderBy(asc(purchaseOrders.number)),
   ]);
+  const currentAwards = latestAwards(awards);
 
   const phase = tenderPhase(tender, now);
   const comparison = phase === "closed" ? buildComparison(items, invitations, offers) : null;
@@ -436,7 +472,19 @@ export async function getTenderDetailService(
     noOfferWarning: pendingNoOfferWarning(tender, items, offers, now),
     comparison,
     isVoid: comparison !== null && isTenderVoid(comparison),
+    awards: items.flatMap((item) => {
+      const award = currentAwards.get(item.id);
+      return award
+        ? [{ itemId: item.id, invitationId: award.invitationId, unitPrice: award.unitPrice, createdAt: award.createdAt }]
+        : [];
+    }),
+    orders,
   };
+}
+
+// RN-16: a supplier "no elegido" has no current choice in the tender.
+export function isAwarded(awards: readonly AwardRecord[], invitationId: string): boolean {
+  return [...latestAwards(awards).values()].some((award) => award.invitationId === invitationId);
 }
 
 // RN-18: "El emprendedor puede dejarla seguir": hides the warning; the tender
@@ -561,7 +609,11 @@ export async function getSupplierTenderService(
   now: Date = new Date(),
 ): Promise<SupplierTenderView> {
   const { invitation, tender, ownerName } = await getSupplierInvitation(supplierUserId, tenderId, db);
-  const [items, offers] = await Promise.all([loadItems(tender, db, now), loadOffers(tender.id, db, invitation.id)]);
+  const [items, offers, awards] = await Promise.all([
+    loadItems(tender, db, now),
+    loadOffers(tender.id, db, invitation.id),
+    loadAwards(tender.id, db),
+  ]);
   const latest = latestOffers(offers);
   const phase = tenderPhase(tender, now);
 
@@ -593,7 +645,7 @@ export async function getSupplierTenderService(
       invitation.negotiationRequestedAt && invitation.negotiationContact
         ? { requestedAt: invitation.negotiationRequestedAt, contact: invitation.negotiationContact }
         : null,
-    showThankYouNote: false,
+    showThankYouNote: tender.thankYouNoteAt !== null && !isAwarded(awards, invitation.id),
   };
 }
 
@@ -758,8 +810,8 @@ export type SupplierNotice =
   | (SupplierNoticeBase & { kind: "cancelled" });
 
 // The supplier's notices (RN-24): a new invitation it has not answered yet, a
-// new round with a new target price, the close and a cancellation (for a
-// week).
+// new round with a new target price, the close and a cancellation, plus the
+// negotiation requests (RN-21) and the thank-you note (RN-16), for a week.
 export async function listSupplierNoticesService(
   supplierUserId: VerifiedUserId,
   db: Db = getDrizzleClient(),
@@ -783,6 +835,16 @@ export async function listSupplierNoticesService(
     const base = { tenderId: tender.id, number: tender.number, ownerName: ownerName ?? UNNAMED_OWNER };
     const phase = tenderPhase(tender, now);
     const offered = (offers.get(tender.id) ?? []).some((offer) => offer.invitationId === invitation.id);
+    if (invitation.negotiationRequestedAt && invitation.negotiationContact && isRecent(invitation.negotiationRequestedAt, now)) {
+      notices.push({ ...base, kind: "negotiation", contact: invitation.negotiationContact });
+    }
+    if (
+      tender.thankYouNoteAt &&
+      isRecent(tender.thankYouNoteAt, now) &&
+      !isAwarded(await loadAwards(tender.id, db), invitation.id)
+    ) {
+      notices.push({ ...base, kind: "thank_you" });
+    }
     if (phase === "active") {
       const round = currentRound(tender, now)!;
       if (!offered) notices.push({ ...base, kind: "invited", round, roundCount: tender.roundCount });

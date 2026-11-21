@@ -7,6 +7,12 @@ import { requireUser } from "@/lib/auth/require-user";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
 import type { PublishTenderFormValues } from "@/lib/schemas/tenders/publish";
 import {
+  awardItemService,
+  issuePurchaseOrderService,
+  requestNegotiationService,
+  sendThankYouNoteService,
+} from "@/lib/services/tender-purchases";
+import {
   acknowledgeNoOfferWarningService,
   cancelTenderService,
   publishTenderService,
@@ -32,6 +38,57 @@ export const acknowledgeNoOfferWarning = handleActionErrors(async (_previous: un
   revalidatePath(`/licitaciones/${tenderId}`);
   revalidatePath("/licitaciones");
   return { acknowledged: true as const };
+});
+
+function refresh(tenderId: string) {
+  revalidatePath(`/licitaciones/${tenderId}`);
+}
+
+// RN-14: choose the supplier of one item at the agreed price.
+export const awardItem = handleActionErrors(async (_previous: unknown, data: FormData) => {
+  const user = await requireUser();
+  const tenderId = String(data.get("tenderId") ?? "");
+  await awardItemService(user.id, tenderId, {
+    itemId: data.get("itemId"),
+    invitationId: data.get("invitationId"),
+    unitPrice: data.get("unitPrice"),
+  });
+  refresh(tenderId);
+  return { awarded: true as const };
+});
+
+// RN-21: ask a supplier to negotiate; it sees the contact in its panel.
+export const requestNegotiation = handleActionErrors(async (_previous: unknown, data: FormData) => {
+  const user = await requireUser();
+  const tenderId = String(data.get("tenderId") ?? "");
+  await requestNegotiationService(user.id, tenderId, {
+    invitationId: data.get("invitationId"),
+    contact: data.get("contact"),
+  });
+  refresh(tenderId);
+  return { requested: true as const };
+});
+
+// RN-15: issue the purchase order of one awarded supplier.
+export const issuePurchaseOrder = handleActionErrors(async (_previous: unknown, data: FormData) => {
+  const user = await requireUser();
+  const tenderId = String(data.get("tenderId") ?? "");
+  const order = await issuePurchaseOrderService(user.id, tenderId, {
+    invitationId: data.get("invitationId"),
+    deliveryTerms: data.get("deliveryTerms"),
+    paymentTerms: data.get("paymentTerms"),
+  });
+  refresh(tenderId);
+  redirect(`/licitaciones/${tenderId}/ordenes/${order.id}`);
+});
+
+// RN-16: show the thank-you note to the suppliers not chosen.
+export const sendThankYouNote = handleActionErrors(async (_previous: unknown, data: FormData) => {
+  const user = await requireUser();
+  const tenderId = String(data.get("tenderId") ?? "");
+  await sendThankYouNoteService(user.id, tenderId);
+  refresh(tenderId);
+  return { sent: true as const };
 });
 
 export const cancelTender = handleActionErrors(async (_previous: unknown, data: FormData) => {

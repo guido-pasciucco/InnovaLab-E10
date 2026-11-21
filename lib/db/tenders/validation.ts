@@ -3,7 +3,9 @@ import { z } from "zod/v4";
 import {
   decrementPercentField,
   MAX_TENDER_ITEMS,
+  negotiationContactField,
   offerEmptyMessage,
+  orderTermsField,
   roundCountField,
   roundHoursField,
   startingPriceField,
@@ -61,4 +63,24 @@ export const submitOffersInputSchema = z.object({
       .array(z.object({ itemId: uuid, unitPrice: unitPriceField }), { error: offerEmptyMessage })
       .min(1, { error: offerEmptyMessage }),
   ),
+});
+
+// RN-14: choose the supplier of an item, at the agreed unit price.
+export const awardItemInputSchema = z.object({
+  itemId: uuid,
+  invitationId: uuid,
+  unitPrice: unitPriceField,
+});
+
+// RN-21: ask a supplier to negotiate, sharing the emprendedor's contact.
+export const negotiationInputSchema = z.object({
+  invitationId: uuid,
+  contact: negotiationContactField,
+});
+
+// RN-15: the terms the emprendedor completes on the purchase order.
+export const purchaseOrderInputSchema = z.object({
+  invitationId: uuid,
+  deliveryTerms: orderTermsField("las condiciones de entrega"),
+  paymentTerms: orderTermsField("las condiciones de pago"),
 });

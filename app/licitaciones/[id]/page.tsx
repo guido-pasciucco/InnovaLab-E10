@@ -1,17 +1,19 @@
-import { notFound } from "next/navigation";
-
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { CancelTenderForm } from "@/components/tenders/cancel-tender-form";
 import { ComparisonTable } from "@/components/tenders/comparison-table";
 import { NoOfferWarning } from "@/components/tenders/no-offer-warning";
+import { HistoryList } from "@/components/tenders/history-list";
 import { OffersTable } from "@/components/tenders/offers-table";
+import { PurchasePanel } from "@/components/tenders/purchase-panel";
 import { formatDateTime, formatMoney, formatPercent, formatQuantity } from "@/components/tenders/format";
 import { PhaseBadge, roundLabel } from "@/components/tenders/phase-badge";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
 import { AppError } from "@/lib/errors/app-error";
 import { formatCuit } from "@/lib/schemas/suppliers/cuit";
+import { getTenderHistoryService } from "@/lib/services/tender-purchases";
 import { getTenderDetailService, type TenderDetail } from "@/lib/services/tenders";
 
 type TenderPageProps = { params: Promise<{ id: string }> };
@@ -25,12 +27,15 @@ async function loadTender(userId: Parameters<typeof getTenderDetailService>[0], 
   }
 }
 
-// One tender, emprendedor side: terms, target price per round, invited
-// suppliers with their identity (RN-08) and the cancel action (RN-03).
+// One tender, emprendedor side: terms, target price per round, live offers
+// with identity (RN-08), the round-1 warning (RN-18), and after the close the
+// comparative table, the purchase (RN-13 to RN-16, RN-21) and the history
+// (RN-17).
 export default async function TenderPage({ params }: TenderPageProps) {
   const user = await requireUser();
   const { id } = await params;
   const tender = await loadTender(user.id, id);
+  const history = await getTenderHistoryService(user.id, tender.id);
 
   return (
     <PageShell
@@ -66,6 +71,8 @@ export default async function TenderPage({ params }: TenderPageProps) {
           )}
         </Card>
       )}
+
+      {tender.comparison && !tender.isVoid && <PurchasePanel tender={tender} defaultContact={user.email ?? ""} />}
 
       <Card title="Términos" id="terminos">
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
@@ -158,6 +165,10 @@ export default async function TenderPage({ params }: TenderPageProps) {
             </li>
           ))}
         </ul>
+      </Card>
+
+      <Card title="Historial" id="historial">
+        <HistoryList events={history} />
       </Card>
     </PageShell>
   );

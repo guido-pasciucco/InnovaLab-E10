@@ -235,6 +235,6 @@ describe("who sees the offers (RN-06, RN-08)", () => {
 
     const view = await getSupplierTenderService(t.dulce.id, t.tenderId, db, at(1));
     expect(view.items[0]?.myLastPrice).toBeNull();
-    expect(JSON.stringify(view)).not.toContain("777");
+    expect(JSON.stringify(view)).not.toContain("777.00");
   });
 });

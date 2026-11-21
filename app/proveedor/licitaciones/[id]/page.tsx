@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { formatDateTime, formatMoney, formatQuantity } from "@/components/tenders/format";
 import { OfferForm } from "@/components/tenders/offer-form";
+import { ThankYouNote } from "@/components/tenders/thank-you-note";
 import { PhaseBadge, roundLabel } from "@/components/tenders/phase-badge";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { requireSupplier } from "@/lib/auth/require-supplier";
@@ -41,6 +42,18 @@ export default async function SupplierTenderPage({ params }: SupplierTenderPageP
       }
       links={[{ href: "/proveedor", label: "Volver al panel" }]}
     >
+      {tender.negotiation && (
+        <Card title="Pedido de negociación" id="negociacion">
+          <p className="text-sm text-fg">
+            {tender.ownerName} quiere negociar con vos (lo pidió el {formatDateTime(tender.negotiation.requestedAt)}).
+            Contactalo: <strong>{tender.negotiation.contact}</strong>
+          </p>
+          <p className="text-sm text-fg-muted">La negociación sigue por fuera de la aplicación.</p>
+        </Card>
+      )}
+
+      {tender.showThankYouNote && <ThankYouNote ownerName={tender.ownerName} />}
+
       <Card title="Términos" id="terminos">
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div>

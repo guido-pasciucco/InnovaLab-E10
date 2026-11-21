@@ -135,6 +135,78 @@ export const tenderOffers = pgTable(
   ],
 );
 
+// The emprendedor's choice of supplier per item (RN-14), with the agreed unit
+// price (the supplier's last offer unless negotiated otherwise). Append-only:
+// the current choice is the latest row, and earlier choices stay in the
+// history (RN-17). One supplier per item; the purchase can be split across
+// items.
+export const tenderAwards = pgTable(
+  "tender_awards",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tenderItemId: uuid("tender_item_id")
+      .notNull()
+      .references(() => tenderItems.id, { onDelete: "cascade" }),
+    invitationId: uuid("invitation_id")
+      .notNull()
+      .references(() => tenderInvitations.id, { onDelete: "cascade" }),
+    unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("tender_awards_item_idx").on(table.tenderItemId),
+    check("tender_awards_unit_price_positive", sql`${table.unitPrice} > 0`),
+  ],
+);
+
+// RN-15: one purchase order per awarded supplier. Once issued it is final:
+// its lines are copied here and the awards it covers can no longer change.
+export const purchaseOrders = pgTable(
+  "purchase_orders",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ownerUserId: uuid("owner_user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    tenderId: uuid("tender_id")
+      .notNull()
+      .references(() => tenders.id, { onDelete: "cascade" }),
+    invitationId: uuid("invitation_id")
+      .notNull()
+      .references(() => tenderInvitations.id, { onDelete: "cascade" }),
+    // Correlative per emprendedor, separate from the tender number.
+    number: integer("number").notNull(),
+    deliveryTerms: text("delivery_terms").notNull(),
+    paymentTerms: text("payment_terms").notNull(),
+    total: numeric("total", { precision: 14, scale: 2 }).notNull(),
+    issuedAt: timestamp("issued_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    unique("purchase_orders_owner_number_uq").on(table.ownerUserId, table.number),
+    unique("purchase_orders_tender_invitation_uq").on(table.tenderId, table.invitationId),
+  ],
+);
+
+export const purchaseOrderLines = pgTable(
+  "purchase_order_lines",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => purchaseOrders.id, { onDelete: "cascade" }),
+    tenderItemId: uuid("tender_item_id")
+      .notNull()
+      .references(() => tenderItems.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    supplyName: text("supply_name").notNull(),
+    unit: text("unit").notNull(),
+    quantity: numeric("quantity", { precision: 14, scale: 4 }).notNull(),
+    unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
+    lineTotal: numeric("line_total", { precision: 14, scale: 2 }).notNull(),
+  },
+  (table) => [index("purchase_order_lines_order_idx").on(table.orderId)],
+);
+
 export type Tender = typeof tenders.$inferSelect;
 export type TenderOffer = typeof tenderOffers.$inferSelect;
 export type TenderItem = typeof tenderItems.$inferSelect;

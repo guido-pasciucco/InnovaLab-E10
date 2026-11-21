@@ -1,3 +1,4 @@
+import { fakerES as faker } from "@faker-js/faker";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -248,13 +249,14 @@ describe("startSupplierSignupService", () => {
     const { token } = await createSupplierInviteService(owner.id, { label: "Molino" }, db);
     const { client, signUp } = fakeClient();
     const now = new Date("2026-11-21T12:00:00Z");
-    const profile = buildSupplierProfile({ email: "molino@example.test", password: "secret-123" });
+    const password = faker.internet.password({ length: 16 });
+    const profile = buildSupplierProfile({ email: "molino@example.test", password });
 
     await startSupplierSignupService(client, token, profile, "http://site/auth/confirm", db, now);
 
     expect(signUp).toHaveBeenCalledWith({
       email: "molino@example.test",
-      password: "secret-123",
+      password,
       options: {
         data: {
           display_name: "Molino San José",
@@ -276,7 +278,11 @@ describe("startSupplierSignupService", () => {
     const { owner, profile } = await registeredSupplier();
     const { token } = await createSupplierInviteService(owner.id, { label: "Otro" }, db);
     const { client, signUp } = fakeClient();
-    const input = buildSupplierProfile({ cuit: profile.cuit, email: "x@example.test", password: "secret-123" });
+    const input = buildSupplierProfile({
+      cuit: profile.cuit,
+      email: "x@example.test",
+      password: faker.internet.password({ length: 16 }),
+    });
 
     await expectAppError(
       startSupplierSignupService(client, token, input, "http://site", db),

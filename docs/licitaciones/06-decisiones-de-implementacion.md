@@ -140,6 +140,37 @@ Todos los avisos se ven solo en los paneles de la aplicación (RN-24).
 
 Mientras la licitación está en curso, el emprendedor ve la última oferta de cada proveedor por insumo (RN-08). Al cierre, esa tabla se reemplaza por el cuadro comparativo de RN-13, ordenado de la oferta más baja a la más alta, con la diferencia en pesos y en porcentaje contra el precio de partida y contra el precio del catálogo al publicar. La oferta más baja se resalta. La aplicación no elige ni recomienda: la decisión es del emprendedor (RN-14).
 
+### N-26. Elegir proveedor por insumo
+
+- Cada insumo se le compra a un solo proveedor. La compra se reparte eligiendo proveedores distintos para insumos distintos (RN-14: "puede repartir la compra por ítem"). En esta versión no se divide un mismo insumo entre dos proveedores.
+- Solo se puede elegir a un proveedor que ofertó por ese insumo, y solo después del cierre. Una licitación cancelada no tiene compra.
+- El precio acordado arranca en la última oferta de ese proveedor y el emprendedor lo puede cambiar, para reflejar lo que negoció.
+- La elección se puede cambiar hasta generar la orden de compra de ese proveedor. Cada cambio queda en el historial.
+
+### N-27. Pedir negociar
+
+- Se puede pedir negociar con cualquier proveedor que ofertó, con varios a la vez (ES-06 lo dejó abierto) y antes o después de elegir.
+- El emprendedor escribe el contacto que le comparte. Por defecto aparece el mail de su cuenta. El proveedor lo ve en su panel (RN-21).
+- El pedido se registra una sola vez por proveedor y licitación.
+- Elegir a un proveedor sin negociar no le manda ningún aviso (ES-06 lo dejó abierto): el emprendedor le hace llegar la orden de compra por su cuenta.
+
+### N-28. Orden de compra
+
+- Se genera una por proveedor elegido, con los insumos elegidos para él, cantidades, precio acordado, subtotal por ítem, total, condiciones de entrega y pago, fecha y número correlativo propio de cada emprendedor (RN-15).
+- Cada subtotal se redondea a centavos y el total es la suma de los subtotales, para que la orden impresa siempre cierre.
+- Una vez generada es definitiva: no se puede volver a generar ni cambiar la elección de los insumos que incluye.
+- La página de la orden tiene un botón para imprimirla o guardarla como PDF desde el navegador. La aplicación no la envía (RN-24).
+
+### N-29. Nota de agradecimiento
+
+- El texto es fijo e igual para todos: agradece la participación sin mencionar precios ni resultados (RN-16).
+- La ven todos los proveedores invitados que no tienen ningún insumo elegido, incluidos los que no ofertaron (ES-11 lo dejó abierto).
+- Se muestra una sola vez y no se puede retirar. Si después de mostrarla el emprendedor elige a uno de esos proveedores, ese proveedor deja de verla.
+
+### N-30. Historial
+
+El emprendedor ve en cada licitación el historial completo, con fecha y hora: publicación con sus condiciones, inicio de cada ronda, ofertas, aviso sin ofertas, cancelación o cierre, elecciones, pedidos de negociación, órdenes y nota de agradecimiento. El proveedor ve solo lo suyo: sus ofertas por insumo, el pedido de negociación y la nota (RN-17).
+
 ## Base de datos
 
 ### D-01. Tres tablas para el registro de proveedores
@@ -188,6 +219,11 @@ Al publicar, la transacción bloquea la fila del perfil del emprendedor. Así, d
 ### D-10. Los avisos no se guardan
 
 No hay tabla de avisos. Cada vez que se abre un panel, los avisos se calculan a partir del estado de las licitaciones: ronda en curso, ofertas, cierre, cancelación, pedidos de negociación y nota de agradecimiento. No hay nada que sincronizar ni ningún envío fuera de la aplicación (RN-24).
+
+### D-11. Elecciones y órdenes de compra
+
+- `tender_awards` guarda una fila por elección, sin modificarla nunca. La elección vigente de un insumo es la más reciente; las anteriores quedan para el historial (RN-17).
+- `purchase_orders` y `purchase_order_lines` copian los ítems, cantidades y precios al generar la orden. Hay una sola orden por proveedor y licitación, con número único por emprendedor. Generar una orden bloquea el perfil (por el número) y la licitación (para que la elección no cambie mientras se escribe).
 
 ## Estructura de código
 
