@@ -24,6 +24,11 @@ import {
 } from "@/lib/schemas/supplies/units";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
+import {
+  isMonthlyCapacityMissing,
+  MONTHLY_CAPACITY_LABEL,
+  MONTHLY_CAPACITY_WARNING,
+} from "@/components/products/monthly-capacity";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
@@ -37,7 +42,12 @@ type ProductFormProps = {
 };
 
 // Fields the server may flag; module-level so the reference stays stable.
-const SERVER_FIELDS: readonly Path<ProductFormValues>[] = ["name", "yieldQuantity", "recipe"];
+const SERVER_FIELDS: readonly Path<ProductFormValues>[] = [
+  "name",
+  "monthlyCapacity",
+  "yieldQuantity",
+  "recipe",
+];
 
 // Empty row used when the form opens or the user adds another ingredient.
 function emptyRecipeRow(): ProductFormValues["recipe"][number] {
@@ -45,12 +55,23 @@ function emptyRecipeRow(): ProductFormValues["recipe"][number] {
 }
 
 function toDefaultValues(product: ProductItem | null): ProductFormValues {
+  const monthlyCapacity =
+    product?.monthlyCapacity === null || product?.monthlyCapacity === undefined
+      ? ""
+      : String(product.monthlyCapacity);
+
   if (!product) {
-    return { name: "", yieldQuantity: "", recipe: [emptyRecipeRow()] };
+    return {
+      name: "",
+      monthlyCapacity,
+      yieldQuantity: "",
+      recipe: [emptyRecipeRow()],
+    };
   }
 
   return {
     name: product.name,
+    monthlyCapacity,
     yieldQuantity: product.yieldQuantity ?? "",
     recipe: product.recipe.map((item) => ({
       supplyId: item.supplyId,
@@ -135,6 +156,9 @@ export function ProductForm({
   const yieldQuantity = useWatch({ control, name: "yieldQuantity" });
 
   const recipeValues = useWatch({ control, name: "recipe" });
+  const monthlyCapacity = useWatch({ control, name: "monthlyCapacity" });
+  const showMonthlyCapacityWarning =
+    isMonthlyCapacityMissing(monthlyCapacity);
 
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
   const isSubmittingRef = useRef(false);
@@ -175,13 +199,32 @@ export function ProductForm({
         </p>
       )}
 
-      <TextField
-        label="Nombre del producto"
-        placeholder="Pan flauta"
-        disabled={isPending}
-        error={errors.name?.message}
-        {...register("name")}
-      />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField
+          label="Nombre del producto"
+          placeholder="Pan flauta"
+          disabled={isPending}
+          error={errors.name?.message}
+          {...register("name")}
+        />
+
+        <div className="flex flex-col gap-1">
+          <TextField
+            label={MONTHLY_CAPACITY_LABEL}
+            placeholder="200"
+            inputMode="numeric"
+            autoComplete="off"
+            disabled={isPending}
+            error={errors.monthlyCapacity?.message}
+            {...register("monthlyCapacity")}
+          />
+          {showMonthlyCapacityWarning && !errors.monthlyCapacity && (
+            <p role="status" className="text-sm text-fg-muted">
+              {MONTHLY_CAPACITY_WARNING}
+            </p>
+          )}
+        </div>
+      </div>
 
       <fieldset className="flex flex-col gap-3">
         <legend className="text-base font-semibold text-fg">Receta</legend>

@@ -181,6 +181,7 @@ function toProductItem(
   return {
     id: product.id,
     name: product.name,
+    monthlyCapacity: product.monthlyCapacity,
     yieldQuantity: toYieldQuantity(product.yieldQuantity),
     variableCosts: null,
     variableCostsUnavailableCode: null,
@@ -452,6 +453,7 @@ export async function listProductsService(
     const item: ProductItem = {
       id: product.id,
       name: product.name,
+      monthlyCapacity: product.monthlyCapacity,
       yieldQuantity: toYieldQuantity(product.yieldQuantity),
       recipe: recipesByProduct.get(product.id) ?? [],
       variableCosts: null,
@@ -486,6 +488,7 @@ export async function getProductService(
   const item: ProductItem = {
     id: row.product.id,
     name: row.product.name,
+    monthlyCapacity: row.product.monthlyCapacity,
     yieldQuantity: toYieldQuantity(row.product.yieldQuantity),
     variableCosts: null,
     variableCostsUnavailableCode: null,
@@ -516,7 +519,12 @@ export async function createProductService(
 
     const [product] = await tx
       .insert(products)
-      .values({ name: data.name, yieldQuantity: Number(data.yieldQuantity), businessId: business.id })
+      .values({
+        name: data.name,
+        monthlyCapacity: data.monthlyCapacity,
+        yieldQuantity: Number(data.yieldQuantity),
+        businessId: business.id,
+      })
       .returning();
 
     if (!product) {
@@ -615,7 +623,12 @@ export async function updateProductService(
 
     const [product] = await tx
       .update(products)
-      .set({ name: data.name, yieldQuantity: Number(data.yieldQuantity), updatedAt: new Date() })
+      .set({
+        name: data.name,
+        monthlyCapacity: data.monthlyCapacity,
+        yieldQuantity: Number(data.yieldQuantity),
+        updatedAt: new Date(),
+      })
       .where(eq(products.id, productId))
       .returning();
 

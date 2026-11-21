@@ -1,0 +1,2 @@
+ALTER TABLE "products" ADD COLUMN "monthly_capacity" integer;--> statement-breakpoint
+ALTER TABLE "products" ADD CONSTRAINT "products_monthly_capacity_non_negative" CHECK ("products"."monthly_capacity" >= 0);

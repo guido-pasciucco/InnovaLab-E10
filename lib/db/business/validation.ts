@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 import { businessNameField, businessTypeField } from "@/lib/schemas/business/fields";
 import { productNameField } from "@/lib/schemas/calculator-setup/fields";
 import {
+  monthlyCapacityField,
   recipeQuantityField,
   recipeSupplyIdField,
   recipeUnitField,
@@ -45,6 +46,7 @@ export const createBusinessInputSchema = createInsertSchema(businesses, {
 export const createProductInputSchema = createInsertSchema(products, {
   name: productNameField,
   skuOrSlug: z.string().trim().min(1).max(120).nullish(),
+  monthlyCapacity: monthlyCapacityField,
 }).omit({
   id: true,
   businessId: true,
@@ -70,6 +72,7 @@ export const productIngredientInputSchema = z.object({
 export const saveProductInputSchema = z
   .object({
     name: productNameField,
+    monthlyCapacity: monthlyCapacityField,
     yieldQuantity: recipeYieldField,
     recipe: z
       .array(productIngredientInputSchema)

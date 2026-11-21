@@ -24,6 +24,7 @@ function issues(input: unknown, target = schema) {
 
 const validProduct = {
   name: "Pan flauta",
+  monthlyCapacity: "120",
   yieldQuantity: "12",
   recipe: [{ supplyId: "supply-harina", quantity: "250", unit: "g" }],
 };
@@ -280,6 +281,39 @@ describe("createProductFormSchema", () => {
       },
     ]);
   });
+
+  it.each([
+    ["120", 120],
+    ["0", 0],
+    ["0012", 12],
+    ["", null],
+    ["   ", null],
+  ])("normalizes the monthly capacity %j to %j", (monthlyCapacity, expected) => {
+    const result = schema.safeParse({ ...validProduct, monthlyCapacity });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.monthlyCapacity).toBe(expected);
+    }
+  });
+
+  it("accepts a numeric monthly capacity", () => {
+    expect(schema.safeParse({ ...validProduct, monthlyCapacity: 120 }).success).toBe(
+      true,
+    );
+  });
+
+  it.each(["-5", "abc", "2.5", "1e3", "2147483648"])(
+    "rejects the monthly capacity %j with the shared message",
+    (monthlyCapacity) => {
+      expect(issues({ ...validProduct, monthlyCapacity })).toEqual([
+        {
+          path: "monthlyCapacity",
+          message: "Ingresá un número entero de unidades, 0 o mayor.",
+        },
+      ]);
+    },
+  );
 });
 
 describe("toRecipeSupplyOptions", () => {

@@ -2,8 +2,8 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
-  integer,
   index,
+  integer,
   numeric,
   pgTable,
   text,
@@ -42,6 +42,10 @@ export const products = pgTable("products", {
     .references(() => businesses.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   skuOrSlug: text("sku_or_slug"),
+  // How many units the business plans to make in the month (#269). One number
+  // per product, independent of the calculation period. NULL means "not
+  // loaded" and is stored instead of 0 so the UI can tell empty from zero.
+  monthlyCapacity: integer("monthly_capacity"),
   // Historical products can lack this source datum. New product writes require it.
   yieldQuantity: integer("yield_quantity"),
   // Current derived variable costs. These columns are intentionally nullable:
@@ -74,6 +78,7 @@ export const products = pgTable("products", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 }, (table) => [
+  check("products_monthly_capacity_non_negative", sql`${table.monthlyCapacity} >= 0`),
   // Existing products predate recipe yield, but any present value is positive.
   check(
     "products_yield_quantity_positive",
