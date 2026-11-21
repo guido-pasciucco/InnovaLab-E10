@@ -5,7 +5,7 @@ Decisiones que ya figuran en las [reglas de negocio](01-reglas-de-negocio.md) o 
 ## Cómo se usa
 
 - Cada duda tiene un ID `DD-NN` que no se reutiliza.
-- Estados: **En duda** (en discusión), **Se mantiene** (con fecha y porqué), **Se cambia** (con fecha).
+- Estados: **En duda** (en discusión), **Se mantiene** (con fecha y porqué), **Se mantiene en la primera versión** (se implementa como está, pero la duda queda para una versión siguiente), **Se cambia** (con fecha).
 - Cada duda cita textual lo que está decidido hoy, junta los argumentos a favor y en contra del cambio, y anota los resguardos posibles.
 - Si se cambia, el cambio se registra como un punto nuevo en [Especificaciones](04-especificaciones.md) y se actualizan las reglas afectadas, con su historial.
 
@@ -13,11 +13,11 @@ Decisiones que ya figuran en las [reglas de negocio](01-reglas-de-negocio.md) o 
 
 | ID | Tema | Estado |
 | --- | --- | --- |
-| DD-01 | Registro público de proveedores y licitaciones visibles para todos | En duda |
+| DD-01 | Registro público de proveedores y licitaciones visibles para todos | Se mantiene en la primera versión (21 nov 2026) |
 
 ## DD-01. Registro público de proveedores y licitaciones visibles para todos
 
-- **Estado:** En duda
+- **Estado:** Se mantiene en la primera versión
 - **Planteada:** 21 de noviembre de 2026.
 - **Qué está decidido hoy:**
   - **RN-05:** "Participan solo proveedores registrados con ese emprendedor. Al publicar, se invita a todos los proveedores registrados que venden ese insumo y antes de publicar, el emprendedor puede quitar de esa lista a quienes no quiere invitar."
@@ -41,5 +41,5 @@ Decisiones que ya figuran en las [reglas de negocio](01-reglas-de-negocio.md) o 
   - Que el emprendedor pueda bloquear a un proveedor.
   - Mostrar las licitaciones públicas sin el nombre del emprendedor hasta que elija negociar. RN-21 ya le pasa su contacto al proveedor en ese momento.
 - **Puntos relacionados:** ES-07 (a quién se invita), ES-08 (una cuenta o varias por proveedor), ES-09 (enlace de registro y verificación).
-- **Resolución:** —
-- **Fecha:** —
+- **Resolución:** la primera versión se implementa con lo que dicen las reglas: el proveedor entra a la aplicación solo invitado por un emprendedor, y no hay registro público. Para implementar hace falta una decisión tomada, y esta es la que ya está escrita. La duda sigue abierta para revisarla en una versión siguiente, con los resguardos de arriba como punto de partida.
+- **Fecha:** 21 de noviembre de 2026.
