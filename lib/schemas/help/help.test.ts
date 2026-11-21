@@ -34,4 +34,15 @@ describe("helpRequestSchema", () => {
     const result = helpRequestSchema.safeParse({ messages });
     expect(result.success).toBe(false);
   });
+
+  it("rejects a thread whose combined content is too long", () => {
+    const messages = Array.from({ length: 4 }, () => ({
+      role: "user" as const,
+      content: "a".repeat(1_600),
+    }));
+
+    const result = helpRequestSchema.safeParse({ messages });
+
+    expect(result.success).toBe(false);
+  });
 });

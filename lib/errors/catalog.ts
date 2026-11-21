@@ -171,6 +171,16 @@ export const ERROR_CATALOG = {
     message: "El asistente de ayuda no está disponible",
     logLevel: "error",
   },
+  HELP_RATE_LIMITED: {
+    status: 429,
+    message: "Hiciste muchas consultas seguidas. Esperá un minuto e intentá de nuevo.",
+    logLevel: "silent",
+  },
+  HELP_BUSY: {
+    status: 409,
+    message: "Ya hay una respuesta en curso.",
+    logLevel: "silent",
+  },
 
   COST_CATALOG_LINE_NOT_FOUND: {
     // Same code when the id is missing, not a uuid or belongs to another

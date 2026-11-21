@@ -17,6 +17,8 @@ export function createBedrockHelpModel(config: HelpConfig): HelpModel {
       const result = streamText({
         model: bedrock(config.modelId),
         system: input.system,
+        abortSignal: input.abortSignal,
+        maxOutputTokens: input.maxOutputTokens,
         messages: input.messages.map((message) => ({
           role: message.role,
           content: message.content,

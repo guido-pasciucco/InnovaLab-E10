@@ -6,6 +6,7 @@ import postgres from "postgres";
 import * as business from "./business/table";
 import * as calculation from "./calculation/table";
 import * as costs from "./costs/table";
+import * as help from "./help/table";
 import * as profile from "./profile/table";
 import * as relations from "./relations";
 
@@ -13,7 +14,7 @@ import * as relations from "./relations";
 // Handlers. Connects through DATABASE_URL, the Supabase transaction pooler
 // (port 6543): it does not support prepared statements, so `prepare: false`
 // is required. Migrations keep using DIRECT_URL (see drizzle.config.ts).
-const schema = { ...profile, ...business, ...calculation, ...costs, ...relations };
+const schema = { ...profile, ...business, ...calculation, ...costs, ...help, ...relations };
 
 function createDrizzleClient(url: string) {
   return drizzle(postgres(url, { prepare: false }), { schema });

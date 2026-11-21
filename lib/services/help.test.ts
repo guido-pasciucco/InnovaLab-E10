@@ -7,9 +7,15 @@ const corpus = "Margen: parte del precio de venta que no es costo.";
 function fakeModel(): HelpModel & { system: string | null } {
   const model = {
     system: null as string | null,
-    stream(input: { system: string; messages: { role: string; content: string }[] }) {
+    stream(input: {
+      system: string;
+      messages: { role: "user" | "assistant"; content: string }[];
+      abortSignal?: AbortSignal;
+      maxOutputTokens: number;
+    }) {
       model.system = input.system;
       expect(input.messages.at(-1)?.content).toBe("¿Qué es el margen?");
+      expect(input.maxOutputTokens).toBe(500);
       return {
         textStream: (async function* () {
           yield "Es la parte del precio que no es costo.";
