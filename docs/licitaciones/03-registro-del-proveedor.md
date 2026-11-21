@@ -36,3 +36,12 @@ Anexo A, antes de la primera licitación. El enlace es el camino feliz. La invit
 | Queda ligado a un emprendedor | Completa negocio, CUIT, contacto y rubros | Solo recibe invitaciones de él. Para trabajar con otro, se registra otra vez. |
 | Al publicar | Crea la cuenta | Se invita a quienes venden ese insumo. El emprendedor puede quitar a alguno antes de enviar. |
 | Dashboard | Entra a dashboard unificado | Funciona en el navegador. No abre la calculadora ni el catálogo del emprendedor. |
+
+## Diferencias con decisiones posteriores
+
+El diagrama es del 17 de noviembre de 2026. Estas decisiones, registradas en [Especificaciones](04-especificaciones.md) y [Decisiones en duda](05-decisiones-en-duda.md), cambian o confirman lo que muestra:
+
+| Decisión | Qué cambia en el diagrama |
+| --- | --- |
+| DD-01 (21 nov 2026) | Se confirma para la primera versión: el proveedor entra solo por el enlace de un emprendedor y no hay registro público. |
+| ES-07 (21 nov 2026) | La nota *Al publicar* cambia: no se invita solo a quienes venden ese insumo, sino que aparecen todos los proveedores registrados preseleccionados, con sus rubros a la vista, y el emprendedor quita a los que no van. |

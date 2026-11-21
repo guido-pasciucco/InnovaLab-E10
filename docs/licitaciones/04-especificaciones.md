@@ -22,7 +22,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-04 | Aviso cuando nadie oferta | Decidida (21 nov 2026) |
 | ES-05 | Cotización por canasta o por ítem | Decidida (21 nov 2026) |
 | ES-06 | Qué habilita la negociación | Decidida (21 nov 2026) |
-| ES-07 | Qué proveedores "venden ese insumo" | Abierta |
+| ES-07 | Qué proveedores "venden ese insumo" | Decidida (21 nov 2026) |
 | ES-08 | Proveedor ligado a un emprendedor vs. dashboard unificado | Abierta |
 | ES-09 | Enlace de registro: vencimiento y verificación | Abierta |
 | ES-10 | Canal de las notificaciones | Abierta |
@@ -31,18 +31,6 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-13 | Insumo sin ofertas dentro de una canasta | Decidida (21 nov 2026) |
 
 ## Abiertas
-
-### ES-07. Qué proveedores "venden ese insumo"
-
-- **Estado:** Abierta
-- **Fuentes:** RN-05; diagrama de registro (tarea *Completa negocio, CUIT, contacto y rubros*; nota *Al publicar*).
-- **Qué dicen las reglas de negocio:**
-  - **RN-01:** "Solo se licitan insumos del Maestro de Insumos. […]"
-  - **RN-05:** "Participan solo proveedores registrados con ese emprendedor. Al publicar, se invita a todos los proveedores registrados que venden ese insumo y antes de publicar, el emprendedor puede quitar de esa lista a quienes no quiere invitar."
-- **Contexto:** al publicar se invita a los proveedores que venden ese insumo. El proveedor declara rubros al registrarse, pero los insumos del emprendedor no tienen rubro. Las reglas no dicen cómo se sabe qué vende cada proveedor.
-- **A definir:** cómo se vincula un insumo con los proveedores que lo venden (por rubro, eligiéndolos a mano en cada insumo, o invitando a todos y dejando que el emprendedor quite).
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-08. Proveedor ligado a un emprendedor vs. dashboard unificado
 
@@ -287,6 +275,26 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
   - Si el emprendedor puede negociar a la vez con varios proveedores por el mismo insumo.
   - Si el proveedor recibe algún aviso cuando el emprendedor confirma sin negociar.
 - **Reglas que cambia:** agrega RN-21.
+- **Fecha:** 21 de noviembre de 2026.
+
+### ES-07. Qué proveedores "venden ese insumo"
+
+- **Estado:** Decidida
+- **Fuentes:** RN-01, RN-05, RN-20; diagrama de registro (tarea *Completa negocio, CUIT, contacto y rubros*; nota *Al publicar*); DD-01.
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **RN-01:** "Solo se licitan insumos del Maestro de Insumos. […]"
+  - **RN-05:** "Participan solo proveedores registrados con ese emprendedor. Al publicar, se invita a todos los proveedores registrados que venden ese insumo y antes de publicar, el emprendedor puede quitar de esa lista a quienes no quiere invitar."
+  - **RN-20:** "En una canasta, el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. […]"
+- **Contexto:** RN-05 invita a los proveedores que "venden ese insumo". El proveedor declara rubros al registrarse, pero los insumos del catálogo no tienen rubro, así que no hay forma de cruzar uno con otro. Para la primera versión, el proveedor entra solo invitado por un emprendedor (DD-01).
+- **Opciones consideradas:**
+  1. Por rubro: cada insumo lleva un rubro de una lista fija y se invita a los proveedores con ese rubro. Exige armar la lista y clasificar cada insumo, y los rubros pueden no coincidir.
+  2. A mano en cada insumo: el emprendedor anota quién le vende cada insumo. Exige cargarlo insumo por insumo y asignar a cada proveedor nuevo.
+  3. Todos preseleccionados: al publicar aparecen todos los proveedores registrados ya tildados, con sus rubros a la vista, y el emprendedor destilda los que no van.
+- **Decisión:** opción 3. Al publicar, la aplicación muestra todos los proveedores registrados con ese emprendedor, ya tildados y con los rubros que declararon a la vista. El emprendedor destilda a los que no quiere invitar, y solo los que quedan tildados reciben la invitación a esa licitación. La lista es una por licitación. Los rubros del proveedor sirven como ayuda para decidir, no para filtrar.
+- **Por qué:** un emprendedor chico tiene pocos proveedores y los invitó él mismo. Como un proveedor puede cotizar solo algunos insumos (RN-20), invitar a uno que no vende manteca no rompe nada: simplemente no la cotiza. No hace falta clasificar insumos ni mantener una lista de rubros.
+- **Ejemplo:** la panadería tiene 4 proveedores: Molino A (harinas), Distribuidora B (lácteos), C (envases) y D (mayorista). Publica una canasta de harina y manteca. Aparecen los 4 tildados y el emprendedor destilda a C. A cotiza solo la harina, B solo la manteca y D las dos.
+- **Qué no decide:** si la aplicación recuerda a quién destildó el emprendedor la vez anterior para el mismo insumo.
+- **Reglas que cambia:** RN-05.
 - **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla

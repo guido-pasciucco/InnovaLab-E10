@@ -36,7 +36,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 
 | ID | Regla |
 | --- | --- |
-| RN-05 | Participan solo proveedores registrados con ese emprendedor. Al publicar, se invita a todos los proveedores registrados que venden ese insumo y antes de publicar, el emprendedor puede quitar de esa lista a quienes no quiere invitar. |
+| RN-05 | Participan solo proveedores registrados con ese emprendedor. Al publicar, aparecen todos los proveedores registrados con ese emprendedor, ya preseleccionados y con los rubros que declararon a la vista. Antes de publicar, el emprendedor puede quitar de esa lista a quienes no quiere invitar; solo los que quedan reciben la invitación. *(Modificada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-06 | Los proveedores no se conocen entre sí. Cada uno ve únicamente en su interfaz lo ya definido: términos de la licitación (hora de inicio y fin, insumos, cantidades, precio de partida y precio objetivo vigente) y su propia oferta. No recibe señales de su posición ni de cuántos compiten. |
 | RN-07 | Ningún proveedor ve el precio de compra de referencia del emprendedor, su catálogo ni sus recetas. |
 | RN-08 | El emprendedor ve la identidad de los proveedores, que los datos del registro hacen posible. El emprendedor ve todas las ofertas con la identidad de cada proveedor desde el inicio. |
@@ -169,3 +169,10 @@ El aviso y la licitación desierta pasan a aplicarse insumo por insumo.
 Se define qué pasa al elegir negociar. No reemplaza texto anterior; RN-08 queda igual.
 
 - **RN-21** (nueva, en *D. Cierre y compra*): "Cuando el emprendedor elige negociar con un proveedor, la aplicación le avisa a ese proveedor y le comparte el contacto del emprendedor. La negociación sigue fuera de la aplicación, y su inicio queda registrado en el historial."
+
+### 21 de noviembre de 2026 — RN-05 (ES-07)
+
+Al publicar se preseleccionan todos los proveedores registrados, no solo los que "venden ese insumo".
+
+- **Texto anterior:** "Participan solo proveedores registrados con ese emprendedor. Al publicar, se invita a todos los proveedores registrados que venden ese insumo y antes de publicar, el emprendedor puede quitar de esa lista a quienes no quiere invitar."
+- **Texto nuevo:** "Participan solo proveedores registrados con ese emprendedor. Al publicar, aparecen todos los proveedores registrados con ese emprendedor, ya preseleccionados y con los rubros que declararon a la vista. Antes de publicar, el emprendedor puede quitar de esa lista a quienes no quiere invitar; solo los que quedan reciben la invitación."
