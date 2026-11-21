@@ -45,7 +45,7 @@ export function CatalogModal({
     document.body.style.overflow = "hidden";
 
     const getFocusables = (): HTMLElement[] => {
-      const root = contentRef.current ?? dialogRef.current;
+      const root = dialogRef.current;
       if (!root) return [];
       return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
         (el) => !el.hasAttribute("disabled"),
@@ -54,9 +54,17 @@ export function CatalogModal({
 
     // Move focus to the first field of the content once it is mounted.
     const focusTimer = window.setTimeout(() => {
-      const focusables = getFocusables();
-      if (focusables.length > 0) focusables[0].focus();
-      else closeRef.current?.focus();
+      const contentFocusables = contentRef.current
+        ? Array.from(
+            contentRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+          ).filter((el) => !el.hasAttribute("disabled"))
+        : [];
+      if (contentFocusables.length > 0) contentFocusables[0].focus();
+      else {
+        const all = getFocusables();
+        if (all.length > 0) all[0].focus();
+        else closeRef.current?.focus();
+      }
     }, 0);
 
     const handleKeyDown = (event: KeyboardEvent) => {
