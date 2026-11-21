@@ -57,4 +57,20 @@ describe("ERROR_CATALOG", () => {
     expect(ERROR_CATALOG.AUTH_SIGNOUT_FAILED).toMatchObject({ status: 500 });
     expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 422 });
   });
+
+  it("exposes the product and supply-in-use codes", () => {
+    expect(ERROR_CATALOG.PRODUCT_NOT_FOUND).toMatchObject({
+      status: 404,
+      logLevel: "silent",
+    });
+    expect(ERROR_CATALOG.SUPPLY_IN_USE).toMatchObject({
+      status: 409,
+      logLevel: "silent",
+      message: expect.stringContaining("todas las recetas"),
+    });
+    expect(ERROR_CATALOG.SUPPLY_NOT_INGREDIENT).toMatchObject({
+      status: 422,
+      logLevel: "silent",
+    });
+  });
 });

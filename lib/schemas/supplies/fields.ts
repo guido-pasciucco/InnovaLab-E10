@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { capitalizeFirstWord } from "./input-format";
+
 // Field rules for the supply catalog domain: the business rules and user-facing
 // messages, shared by the form contract (./supplies.ts) and
 // lib/db/supplies/validation.ts. Pure and client-safe: no db imports.
@@ -11,7 +13,8 @@ export const supplyNameField = z
   .string({ error: "Escribí el nombre del insumo." })
   .trim()
   .min(1, { error: "Escribí el nombre del insumo." })
-  .max(200, { error: "El nombre del insumo debe tener como máximo 200 caracteres." });
+  .max(200, { error: "El nombre del insumo debe tener como máximo 200 caracteres." })
+  .transform(capitalizeFirstWord);
 
 // The catalog stores insumos and packaging in the same table: `kind` is the
 // only difference, so the form can switch tabs without a second contract.
@@ -27,6 +30,11 @@ export const purchaseUnitField = z
   .trim()
   .min(1, { error: "Escribí la unidad de compra (ej: kg, caja, docena)." })
   .max(40, { error: "La unidad de compra debe tener como máximo 40 caracteres." });
+
+// Supplies use the closed catalog; packaging keeps its free-text unit. The
+// message is shared by the create gate and the edit service.
+export const SUPPLY_UNIT_CATALOG_MESSAGE =
+  "Elegí una unidad de compra del catálogo.";
 
 export const minimumUnitField = z
   .string({ error: "Escribí la unidad mínima (ej: g, ml, unidad)." })

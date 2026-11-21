@@ -148,19 +148,37 @@ export const ERROR_CATALOG = {
     message: "The scenario price must be greater than 0",
     logLevel: "silent",
   },
+  PRODUCT_NOT_FOUND: {
+    // Missing, foreign or soft-deleted product id: all look the same.
+    status: 404,
+    message: "No encontramos ese producto.",
+    logLevel: "silent",
+  },
   SUPPLY_NOT_FOUND: {
     // Missing, foreign or non-uuid supply id: all look the same.
     status: 404,
     message: "Supply not found",
     logLevel: "silent",
   },
-
-  // Cost catalog
   COST_CATALOG_LINE_NOT_FOUND: {
     // Same code when the id is missing, not a uuid or belongs to another
     // owner's business, so a caller cannot tell those cases apart.
     status: 404,
     message: "Cost catalog line not found",
+    logLevel: "silent",
+  },
+  SUPPLY_IN_USE: {
+    // A recipe references the supply, so deleting it or changing its type/unit
+    // would invalidate saved quantities.
+    status: 409,
+    message:
+      "Ese insumo se usa en una o más recetas. Sacalo de todas las recetas que lo usan antes de borrarlo o cambiar su tipo o unidad.",
+    logLevel: "silent",
+  },
+  SUPPLY_NOT_INGREDIENT: {
+    // Packaging lives in the same catalog but can never be a recipe ingredient.
+    status: 422,
+    message: "El packaging no se puede usar como ingrediente.",
     logLevel: "silent",
   },
 } as const satisfies Record<string, CatalogEntry>;

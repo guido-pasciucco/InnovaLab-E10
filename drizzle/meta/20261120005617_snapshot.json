@@ -1,6 +1,6 @@
 {
-  "id": "0b261889-b209-49e7-ba31-f72e0acfc654",
-  "prevId": "b98301f7-8d1c-4f55-9c13-cc0cab81fd82",
+  "id": "108c8569-fdba-45f5-8bad-95166e009b94",
+  "prevId": "b16a7bfd-27d4-44bc-b7b5-66bde0e8cfd6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -61,6 +61,137 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.product_ingredients": {
+      "name": "product_ingredients",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supply_id": {
+          "name": "supply_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "product_ingredients_product_supply_uq": {
+          "name": "product_ingredients_product_supply_uq",
+          "columns": [
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "supply_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "product_ingredients_supply_id_idx": {
+          "name": "product_ingredients_supply_id_idx",
+          "columns": [
+            {
+              "expression": "supply_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "product_ingredients_product_id_products_id_fk": {
+          "name": "product_ingredients_product_id_products_id_fk",
+          "tableFrom": "product_ingredients",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "product_ingredients_supply_id_supplies_id_fk": {
+          "name": "product_ingredients_supply_id_supplies_id_fk",
+          "tableFrom": "product_ingredients",
+          "tableTo": "supplies",
+          "columnsFrom": [
+            "supply_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "product_ingredients_quantity_positive": {
+          "name": "product_ingredients_quantity_positive",
+          "value": "\"product_ingredients\".\"quantity\" > 0"
+        },
+        "product_ingredients_unit_not_empty": {
+          "name": "product_ingredients_unit_not_empty",
+          "value": "length(btrim(\"product_ingredients\".\"unit\")) > 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.products": {
@@ -698,13 +829,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "period": {
-          "name": "period",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "to_char(now(), 'YYYY-MM')"
-        },
         "concept": {
           "name": "concept",
           "type": "text",
@@ -750,29 +874,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "business_cost_lines_business_period_idx": {
-          "name": "business_cost_lines_business_period_idx",
-          "columns": [
-            {
-              "expression": "business_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "period",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "business_cost_lines_business_id_businesses_id_fk": {
           "name": "business_cost_lines_business_id_businesses_id_fk",

@@ -3,11 +3,15 @@ import { linkErrorMessage } from "./link-error";
 
 describe("linkErrorMessage", () => {
   it("explains an invalid or expired link", () => {
-    expect(linkErrorMessage("AUTH_LINK_INVALID")).toBe("This link is invalid or has expired. Please request a new one");
+    expect(linkErrorMessage("AUTH_LINK_INVALID")).toBe(
+      "El enlace no es válido o venció. Pedí uno nuevo para continuar.",
+    );
   });
 
   it("explains an auth outage", () => {
-    expect(linkErrorMessage("AUTH_UNAVAILABLE")).toBe("Authentication unavailable");
+    expect(linkErrorMessage("AUTH_UNAVAILABLE")).toBe(
+      "No pudimos conectar con el servicio de acceso. Intentá de nuevo en unos minutos.",
+    );
   });
 
   it.each([undefined, "", "INTERNAL", "<script>", ["AUTH_LINK_INVALID", "x"]])(
