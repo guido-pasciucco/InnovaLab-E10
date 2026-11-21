@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { lookup } from "node:dns/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { connect } from "node:net";
+import { failureDetail } from "./failure-detail";
 
 /**
  * Sube las variables de `.env.deploy` al proyecto de Vercel vinculado.
@@ -199,7 +200,7 @@ async function main(): Promise<void> {
     const detail =
       result.error?.message ??
       (result.signal ? `abortado por ${result.signal} (timeout)` : undefined) ??
-      (result.stderr || result.stdout || "").trim().split("\n")[0];
+      failureDetail(`${result.stderr ?? ""}\n${result.stdout ?? ""}`, value);
     console.log(`  ✗ ${key}${detail ? ` — ${detail}` : ""}`);
   }
 
