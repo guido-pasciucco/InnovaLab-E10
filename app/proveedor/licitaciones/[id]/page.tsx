@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { formatDateTime, formatMoney, formatQuantity } from "@/components/tenders/format";
+import { OfferForm } from "@/components/tenders/offer-form";
 import { PhaseBadge, roundLabel } from "@/components/tenders/phase-badge";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { requireSupplier } from "@/lib/auth/require-supplier";
@@ -88,6 +89,35 @@ export default async function SupplierTenderPage({ params }: SupplierTenderPageP
             </tbody>
           </table>
         </div>
+      </Card>
+
+      {tender.phase === "active" && tender.currentRound && (
+        <Card title={`Tu oferta · ronda ${tender.currentRound} de ${tender.roundCount}`} id="oferta">
+          <OfferForm tenderId={tender.id} round={tender.currentRound} items={tender.items} />
+        </Card>
+      )}
+
+      <Card title="Tus ofertas" id="historial">
+        {tender.items.every((item) => item.myOffers.length === 0) ? (
+          <p className="text-sm text-fg-muted">Todavía no ofertaste en esta licitación.</p>
+        ) : (
+          <ul className="space-y-3 text-sm">
+            {tender.items
+              .filter((item) => item.myOffers.length > 0)
+              .map((item) => (
+                <li key={item.id}>
+                  <p className="font-semibold text-fg">{item.supplyName}</p>
+                  <ul className="text-fg-muted">
+                    {item.myOffers.map((offer, index) => (
+                      <li key={index}>
+                        Ronda {offer.round}: {formatMoney(offer.unitPrice)} · {formatDateTime(offer.createdAt)}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+          </ul>
+        )}
       </Card>
     </PageShell>
   );

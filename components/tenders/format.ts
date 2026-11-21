@@ -2,6 +2,8 @@
 // Buenos Aires time, whatever the browser's zone (RN-12: "Los horarios los
 // fija el reloj del servidor (hora de Buenos Aires)"). Pure: no React.
 
+import { formatARS } from "@/lib/money/format";
+
 export const TENDER_TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 const dateTimeFormat = new Intl.DateTimeFormat("es-AR", {
@@ -21,13 +23,6 @@ const dateFormat = new Intl.DateTimeFormat("es-AR", {
   year: "numeric",
 });
 
-const moneyFormat = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
 const quantityFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 4 });
 
 const percentFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
@@ -41,10 +36,9 @@ export function formatDate(value: Date | string): string {
   return dateFormat.format(new Date(value));
 }
 
-// Decimal strings from the database ("1234.50"). Display only: Number() is
-// fine here because nothing is computed with the result.
+// Decimal strings from the database ("1234.50") → "$ 1.234,50".
 export function formatMoney(value: string): string {
-  return moneyFormat.format(Number(value));
+  return formatARS(value);
 }
 
 export function formatQuantity(value: string): string {

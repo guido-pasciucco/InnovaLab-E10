@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 import {
   decrementPercentField,
   MAX_TENDER_ITEMS,
+  offerEmptyMessage,
   roundCountField,
   roundHoursField,
   startingPriceField,
@@ -11,6 +12,7 @@ import {
   tenderQuantityField,
   tenderSpecsField,
   tenderSuppliersMessage,
+  unitPriceField,
 } from "@/lib/schemas/tenders/fields";
 
 // Server gate for publishing a tender (RN-02, RN-05). Server-controlled
@@ -44,3 +46,19 @@ export const publishTenderInputSchema = z.object({
 });
 
 export type PublishTenderInput = z.infer<typeof publishTenderInputSchema>;
+
+// Offers of one supplier in one submission (RN-10, RN-20). Items left blank
+// are not quoted (a basket may be quoted partially); at least one price.
+function isBlankOffer(offer: unknown): boolean {
+  const price = (offer as { unitPrice?: unknown } | null)?.unitPrice;
+  return price === undefined || price === null || String(price).trim() === "";
+}
+
+export const submitOffersInputSchema = z.object({
+  offers: z.preprocess(
+    (offers) => (Array.isArray(offers) ? offers.filter((offer) => !isBlankOffer(offer)) : offers),
+    z
+      .array(z.object({ itemId: uuid, unitPrice: unitPriceField }), { error: offerEmptyMessage })
+      .min(1, { error: offerEmptyMessage }),
+  ),
+});

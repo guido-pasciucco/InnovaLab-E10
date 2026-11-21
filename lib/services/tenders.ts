@@ -3,6 +3,7 @@ import "server-only";
 import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
+import { checkOffer, latestOffers, offerKey, type OfferRecord } from "@/lib/calc/tenderOffers";
 import {
   catalogUnitPrice,
   currentRound,
@@ -15,9 +16,17 @@ import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { profiles } from "@/lib/db/profile/table";
 import { supplierLinks, suppliers } from "@/lib/db/suppliers/table";
 import { supplies } from "@/lib/db/supplies/table";
-import { tenderInvitations, tenderItems, tenders, type Tender } from "@/lib/db/tenders/table";
-import { publishTenderInputSchema } from "@/lib/db/tenders/validation";
+import {
+  tenderInvitations,
+  tenderItems,
+  tenderOffers,
+  tenders,
+  type Tender,
+} from "@/lib/db/tenders/table";
+import { publishTenderInputSchema, submitOffersInputSchema } from "@/lib/db/tenders/validation";
 import { AppError } from "@/lib/errors/app-error";
+import { formatARS } from "@/lib/money/format";
+import { offerAboveLastMessage, offerAboveStartingMessage } from "@/lib/schemas/tenders/fields";
 import type { VerifiedUserId } from "@/lib/services/auth";
 import { listLinkedSuppliersService, type LinkedSupplier } from "@/lib/services/suppliers";
 
@@ -296,7 +305,30 @@ export type TenderDetail = {
   thankYouNoteAt: Date | null;
   items: TenderDetailItem[];
   invitations: TenderDetailInvitation[];
+  // Every offer, oldest first (RN-08: with identity, from the start).
+  offers: OfferRecord[];
 };
+
+// Offers of a tender, oldest first; optionally only one supplier's.
+async function loadOffers(tenderId: string, db: Db | Tx, invitationId?: string): Promise<OfferRecord[]> {
+  return db
+    .select({
+      id: tenderOffers.id,
+      itemId: tenderOffers.tenderItemId,
+      invitationId: tenderOffers.invitationId,
+      round: tenderOffers.round,
+      unitPrice: tenderOffers.unitPrice,
+      createdAt: tenderOffers.createdAt,
+    })
+    .from(tenderOffers)
+    .innerJoin(tenderItems, eq(tenderItems.id, tenderOffers.tenderItemId))
+    .where(
+      invitationId
+        ? and(eq(tenderItems.tenderId, tenderId), eq(tenderOffers.invitationId, invitationId))
+        : eq(tenderItems.tenderId, tenderId),
+    )
+    .orderBy(asc(tenderOffers.createdAt), asc(tenderOffers.round), desc(tenderOffers.unitPrice));
+}
 
 async function loadItems(tender: Tender, db: Db | Tx, now: Date): Promise<TenderDetailItem[]> {
   const rows = await db
@@ -332,7 +364,7 @@ export async function getTenderDetailService(
   now: Date = new Date(),
 ): Promise<TenderDetail> {
   const tender = await getOwnedTender(userId, tenderId, db);
-  const [items, invitations] = await Promise.all([
+  const [items, invitations, offers] = await Promise.all([
     loadItems(tender, db, now),
     db
       .select({
@@ -351,6 +383,7 @@ export async function getTenderDetailService(
       .innerJoin(suppliers, eq(suppliers.userId, tenderInvitations.supplierUserId))
       .where(eq(tenderInvitations.tenderId, tender.id))
       .orderBy(asc(suppliers.businessName)),
+    loadOffers(tender.id, db),
   ]);
 
   const phase = tenderPhase(tender, now);
@@ -369,6 +402,7 @@ export async function getTenderDetailService(
     thankYouNoteAt: tender.thankYouNoteAt,
     items,
     invitations,
+    offers,
   };
 }
 
@@ -427,6 +461,9 @@ export type SupplierTenderItem = {
   specs: string;
   startingPrice: string;
   currentTarget: string | null;
+  // This supplier's current offer (latest) and its history, oldest first.
+  myLastPrice: string | null;
+  myOffers: { round: number; unitPrice: string; createdAt: Date }[];
 };
 
 export type SupplierTenderView = {
@@ -473,7 +510,8 @@ export async function getSupplierTenderService(
   now: Date = new Date(),
 ): Promise<SupplierTenderView> {
   const { invitation, tender, ownerName } = await getSupplierInvitation(supplierUserId, tenderId, db);
-  const items = await loadItems(tender, db, now);
+  const [items, offers] = await Promise.all([loadItems(tender, db, now), loadOffers(tender.id, db, invitation.id)]);
+  const latest = latestOffers(offers);
   const phase = tenderPhase(tender, now);
 
   return {
@@ -495,6 +533,10 @@ export async function getSupplierTenderService(
       specs: item.specs,
       startingPrice: item.startingPrice,
       currentTarget: item.currentTarget,
+      myLastPrice: latest.get(offerKey(invitation.id, item.id))?.unitPrice ?? null,
+      myOffers: offers
+        .filter((offer) => offer.itemId === item.id)
+        .map((offer) => ({ round: offer.round, unitPrice: offer.unitPrice, createdAt: offer.createdAt })),
     })),
     negotiation:
       invitation.negotiationRequestedAt && invitation.negotiationContact
@@ -502,4 +544,74 @@ export async function getSupplierTenderService(
         : null,
     showThankYouNote: false,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Offers (RN-10, RN-12, RN-20)
+// ---------------------------------------------------------------------------
+
+// One submission of the supplier's offer form: one price per item it quotes
+// (blank items are not quoted, RN-20). Every price is checked against the
+// supplier's own last price for that item, or the starting price for a first
+// offer (RN-10); if any fails, nothing is saved and each message goes under its
+// item. The round is the one in force on the server clock (RN-12).
+export async function submitOffersService(
+  supplierUserId: VerifiedUserId,
+  tenderId: string,
+  input: unknown,
+  db: Db = getDrizzleClient(),
+  now: Date = new Date(),
+): Promise<{ round: number; count: number }> {
+  const { offers } = submitOffersInputSchema.parse(input);
+  const { invitation, tender } = await getSupplierInvitation(supplierUserId, tenderId, db);
+
+  const round = tenderPhase(tender, now) === "active" ? currentRound(tender, now) : null;
+  if (round === null) throw new AppError("TENDER_NOT_ACTIVE");
+
+  return db.transaction(async (tx) => {
+    // Serializes this supplier's submissions for this tender, so two quick
+    // submissions cannot both pass the "not above the last price" check.
+    await tx
+      .select({ id: tenderInvitations.id })
+      .from(tenderInvitations)
+      .where(eq(tenderInvitations.id, invitation.id))
+      .for("update");
+
+    const items = await tx
+      .select({ id: tenderItems.id, startingPrice: tenderItems.startingPrice })
+      .from(tenderItems)
+      .where(eq(tenderItems.tenderId, tender.id));
+    const itemById = new Map(items.map((item) => [item.id, item]));
+    if (offers.some((offer) => !itemById.has(offer.itemId))) throw new AppError("TENDER_NOT_FOUND");
+
+    const latest = latestOffers(await loadOffers(tender.id, tx, invitation.id));
+    const fieldErrors: Record<string, string[]> = {};
+    for (const offer of offers) {
+      const item = itemById.get(offer.itemId)!;
+      const lastPrice = latest.get(offerKey(invitation.id, item.id))?.unitPrice ?? null;
+      const check = checkOffer(offer.unitPrice, { startingPrice: item.startingPrice, lastPrice });
+      if (!check.ok) {
+        fieldErrors[`price-${item.id}`] = [
+          check.reason === "above_starting"
+            ? offerAboveStartingMessage(formatARS(item.startingPrice))
+            : offerAboveLastMessage(formatARS(lastPrice!)),
+        ];
+      }
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      throw new AppError("VALIDATION", { formErrors: [], fieldErrors });
+    }
+
+    await tx.insert(tenderOffers).values(
+      offers.map((offer) => ({
+        tenderItemId: offer.itemId,
+        invitationId: invitation.id,
+        round,
+        unitPrice: offer.unitPrice,
+        createdAt: now,
+      })),
+    );
+
+    return { round, count: offers.length };
+  });
 }

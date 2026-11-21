@@ -115,6 +115,14 @@ Cada emprendedor numera sus licitaciones desde 1. Las órdenes de compra tienen 
 
 RN-06 lista lo que ve el proveedor: hora de inicio y fin, insumos, cantidades, precio de partida y precio objetivo vigente. El % de baja no está en la lista, así que el proveedor ve el objetivo de la ronda en curso y no la fórmula.
 
+### N-22. Cómo oferta el proveedor
+
+- En cada ronda, el proveedor escribe un precio por cada insumo que cotiza. Si deja un insumo en blanco, su oferta anterior sigue vigente (RN-10: "si no responde, se considera que ratifica"); si nunca cotizó ese insumo, queda sin oferta (RN-20).
+- Puede enviar más de una vez en la misma ronda. Vale el último envío, y cada envío respeta la misma regla: nunca por encima de su último precio.
+- Volver a escribir el mismo precio queda registrado como una ratificación expresa, con su ronda y su hora.
+- Si un precio del envío no cumple la regla, no se guarda ninguno de ese envío y el error aparece debajo del insumo. Así nunca queda una oferta a medias.
+- La pantalla le muestra el máximo que puede ofertar en cada insumo: su último precio o, si todavía no ofertó, el precio de partida.
+
 ## Base de datos
 
 ### D-01. Tres tablas para el registro de proveedores
@@ -153,6 +161,12 @@ Al publicar, la transacción bloquea la fila del perfil del emprendedor. Así, d
 ### D-08. Tablas de la licitación
 
 `tenders` (la licitación), `tender_items` (los insumos) y `tender_invitations` (un proveedor invitado por fila, con el pedido de negociación de RN-21). Las ofertas, las elecciones y las órdenes de compra tienen tablas propias, descriptas más abajo. Si un proveedor borra su cuenta, se borran sus invitaciones y sus ofertas: se priorizó que nadie guarde datos de una cuenta borrada.
+
+### D-09. Ofertas sin modificación
+
+`tender_offers` guarda una fila por oferta, con su ronda y su hora, y los servicios nunca la modifican ni la borran (RN-17). La oferta vigente de un proveedor en un insumo es su fila más reciente. Para que dos envíos simultáneos del mismo proveedor no salteen la regla de "nunca por encima del último precio", cada envío bloquea la invitación de ese proveedor mientras se guarda.
+
+- **Alternativa:** un trigger en la base que rechace cualquier modificación o borrado de ofertas. Se dejó para más adelante. Hoy ninguna parte del código modifica ofertas, y un trigger impediría también el borrado en cascada al borrar una cuenta.
 
 ## Estructura de código
 

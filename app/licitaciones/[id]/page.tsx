@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { CancelTenderForm } from "@/components/tenders/cancel-tender-form";
+import { OffersTable } from "@/components/tenders/offers-table";
 import { formatDateTime, formatMoney, formatPercent, formatQuantity } from "@/components/tenders/format";
 import { PhaseBadge, roundLabel } from "@/components/tenders/phase-badge";
 import { Card, PageShell } from "@/components/ui/page-shell";
@@ -107,6 +108,14 @@ export default async function TenderPage({ params }: TenderPageProps) {
             </tbody>
           </table>
         </div>
+      </Card>
+
+      <Card title="Ofertas" id="ofertas">
+        <p className="text-sm text-fg-muted">
+          La última oferta de cada proveedor por insumo. Los proveedores no ven estas ofertas ni saben cuántos
+          compiten.
+        </p>
+        <OffersTable items={tender.items} invitations={tender.invitations} offers={tender.offers} />
       </Card>
 
       <Card title={`Proveedores invitados (${tender.invitations.length})`} id="invitados">

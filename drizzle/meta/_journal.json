@@ -169,6 +169,13 @@
       "when": 1795234941700,
       "tag": "20261121042221_tenders",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795235297906,
+      "tag": "20261121042817_tender_offers",
+      "breakpoints": true
     }
   ]
 }

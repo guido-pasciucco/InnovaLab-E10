@@ -109,6 +109,33 @@ export const tenderInvitations = pgTable(
   ],
 );
 
+// Offers (RN-10, RN-20). Append-only: a new offer is a new row and nothing is
+// updated or deleted by the services, so every offer stays in the history
+// with its round and time (RN-17). The supplier's current offer for an item
+// is its latest row; no row means it did not quote that item.
+export const tenderOffers = pgTable(
+  "tender_offers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tenderItemId: uuid("tender_item_id")
+      .notNull()
+      .references(() => tenderItems.id, { onDelete: "cascade" }),
+    invitationId: uuid("invitation_id")
+      .notNull()
+      .references(() => tenderInvitations.id, { onDelete: "cascade" }),
+    round: integer("round").notNull(),
+    unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("tender_offers_invitation_item_idx").on(table.invitationId, table.tenderItemId),
+    index("tender_offers_item_idx").on(table.tenderItemId),
+    check("tender_offers_unit_price_positive", sql`${table.unitPrice} > 0`),
+    check("tender_offers_round_positive", sql`${table.round} >= 1`),
+  ],
+);
+
 export type Tender = typeof tenders.$inferSelect;
+export type TenderOffer = typeof tenderOffers.$inferSelect;
 export type TenderItem = typeof tenderItems.$inferSelect;
 export type TenderInvitation = typeof tenderInvitations.$inferSelect;

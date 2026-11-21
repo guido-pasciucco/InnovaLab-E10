@@ -82,6 +82,13 @@ export const tenderSpecsField = z
   })
   .default("");
 
+// RN-10 messages, with the limit the supplier has to respect.
+export const offerAboveStartingMessage = (startingPrice: string) =>
+  `Tu primera oferta no puede superar el precio de partida (${startingPrice}).`;
+export const offerAboveLastMessage = (lastPrice: string) =>
+  `No podés ofertar por encima de tu último precio (${lastPrice}). Podés bajarlo o mantenerlo.`;
+export const offerEmptyMessage = "Escribí el precio de al menos un insumo.";
+
 export const tenderItemsLengthMessage = `Elegí entre 1 y ${MAX_TENDER_ITEMS} insumos.`;
 export const tenderSuppliersMessage = "Dejá al menos un proveedor invitado.";
 export const tenderDuplicateItemMessage = "Cada insumo puede estar una sola vez en la licitación.";
