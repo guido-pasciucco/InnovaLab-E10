@@ -1,0 +1,118 @@
+# Decisiones de implementación
+
+Documento técnico. Registra las decisiones que se tomaron al implementar la primera versión de licitaciones y que las reglas de negocio ([01](01-reglas-de-negocio.md)) y las especificaciones ([04](04-especificaciones.md)) no fijaban. Fecha de todas las decisiones: 21 de noviembre de 2026, salvo que se indique otra.
+
+Cada decisión dice qué se eligió, por qué y qué alternativa queda si el equipo prefiere otra cosa. Las marcadas **Negocio** cambian lo que ve o puede hacer una persona: conviene revisarlas con el equipo y, si se confirman, pasarlas a las reglas de negocio.
+
+## Negocio
+
+### N-01. El enlace de invitación se muestra una sola vez
+
+El emprendedor ve el enlace completo solo al generarlo, con un botón para copiarlo. Después, la lista muestra para quién era, cuándo vence y si se usó, pero no el enlace.
+
+- **Por qué:** la base guarda solo una huella del enlace, no el enlace. Si alguien lee la base, no puede armar enlaces que sirvan. RN-23 ya prevé generar otro si hace falta.
+- **Alternativa:** guardar el enlace para volver a mostrarlo. Es más cómodo, pero un acceso indebido a la base permitiría registrarse como proveedor de cualquier emprendedor.
+
+### N-02. Cada enlace lleva el nombre de para quién es
+
+Al generar un enlace, el emprendedor escribe para quién es (por ejemplo, "Molino San José"). Ese nombre solo lo ve él, en su lista de enlaces.
+
+- **Por qué:** RN-23 pide un enlace personal por proveedor. Sin un nombre, la lista de enlaces sería una lista de fechas imposible de distinguir.
+
+### N-03. Rubros en texto libre
+
+El proveedor escribe sus rubros separados por coma, hasta 10. Se descartan los repetidos.
+
+- **Por qué:** el Maestro de Insumos no tiene rubros ni categorías de donde elegir. Una lista cerrada exigiría definir y mantener un catálogo de rubros.
+- **Alternativa:** una lista cerrada de rubros, cuando exista una clasificación de insumos.
+
+### N-04. Qué se controla del CUIT
+
+Se controla que tenga 11 números y que el último coincida con el dígito verificador. El proveedor puede escribirlo con o sin guiones. No se controla el prefijo (20, 23, 27, 30, etc.) contra una lista.
+
+- **Por qué:** RN-23 pide formato y dígito verificador. AFIP agregó prefijos con el tiempo, y una lista fija podría rechazar un CUIT real. El dígito verificador ya rechaza los números mal tipeados.
+
+### N-05. Datos de contacto del proveedor
+
+El registro pide nombre del negocio, CUIT, persona de contacto, teléfono y rubros. El mail de contacto es el de la cuenta, ya confirmado.
+
+- **Por qué:** el anexo de registro dice "negocio, CUIT, contacto y rubros" sin detallar el contacto. RN-21 necesita un contacto para negociar, y RN-08 que el emprendedor identifique al proveedor.
+
+### N-06. La cuenta de proveedor se crea al confirmar el mail
+
+El proveedor completa sus datos y elige mail y contraseña. La aplicación le manda el mail de confirmación. Recién cuando lo abre quedan guardados sus datos de proveedor y su vínculo con el emprendedor. Si el enlace de invitación venció mientras tanto, el proveedor ve el aviso y le pide uno nuevo al emprendedor; con el enlace nuevo solo vuelve a cargar los datos de proveedor, no la cuenta.
+
+- **Por qué:** RN-23 dice "antes de crear la cuenta, el proveedor confirma su mail". El enlace se consume al final, para que un mail que nunca se confirma no gaste el enlace.
+
+### N-07. Una cuenta existente puede sumarse como proveedor
+
+Si quien abre el enlace ya tiene una cuenta en la aplicación (por ejemplo, un emprendedor que también vende insumos), carga solo sus datos de proveedor con esa misma cuenta. Si ya es proveedor, solo confirma la vinculación con el nuevo emprendedor (RN-22).
+
+- **Por qué:** RN-22 dice que un proveedor tiene una sola cuenta. Pedirle otra cuenta a quien ya tiene una contradice esa regla.
+
+### N-08. El emprendedor no puede usar su propio enlace
+
+Si el emprendedor abre un enlace que generó él, la aplicación le recuerda que es para mandárselo al proveedor.
+
+### N-09. A dónde entra cada cuenta
+
+Una cuenta de proveedor sin negocio propio entra directo a su panel de proveedor. Si la cuenta también tiene un negocio (vende y compra), entra al dashboard del emprendedor, desde donde llega a todo.
+
+### N-10. Lo que la primera versión no permite
+
+Puntos que las especificaciones dejaron abiertos y que la primera versión resuelve por la opción más simple:
+
+- No se puede anular un enlace antes de que venza (ES-09). Vence solo a los 7 días o al usarse.
+- El proveedor no puede desvincularse de un emprendedor, ni el emprendedor quitarlo de su lista (ES-08).
+- Los términos se aceptan una sola vez, al registrarse como proveedor, y no con cada emprendedor (ES-08).
+
+## Base de datos
+
+### D-01. Tres tablas para el registro de proveedores
+
+- `suppliers`: los datos del proveedor. Su clave es el id de la cuenta, así que hay una sola fila por cuenta. El CUIT es único: es lo que impide una segunda cuenta para el mismo CUIT (RN-23).
+- `supplier_links`: el vínculo entre un emprendedor y un proveedor, único por par. Es la lista "proveedores registrados con ese emprendedor" de RN-05.
+- `supplier_invites`: los enlaces. Guarda la huella SHA-256 del enlace, para quién es, el vencimiento y quién lo usó.
+
+### D-02. El enlace se consume con una sola actualización condicional
+
+Marcar el enlace como usado es una única sentencia que solo actualiza si el enlace no se usó y no venció. Si dos personas usan el mismo enlace a la vez, solo una lo consigue. El alta del proveedor, el consumo del enlace y el vínculo van en la misma transacción.
+
+### D-03. Sin RLS en las tablas nuevas
+
+Las tablas nuevas siguen el criterio de `supplies`: no tienen políticas RLS. La API pública de la base está cerrada para todas las tablas, incluidas las futuras (privilegios por defecto revocados), y cada consulta de los servicios filtra por el usuario de la sesión.
+
+### D-04. El mail de contacto se copia en la tabla de proveedores
+
+El mail de la cuenta vive en el esquema de autenticación, fuera del alcance de las consultas de la aplicación. Se copia al registrarse para mostrárselo al emprendedor.
+
+## Estructura de código
+
+### C-01. Formularios nativos validados en el servidor
+
+Los formularios nuevos son formularios HTML comunes que llaman a una Server Action. La validación vive una sola vez, en el servicio, con las reglas de `lib/schemas/suppliers/fields.ts` (y las de licitaciones, más adelante). Un hook (`useFormDataAction`) muestra los errores de cada campo y conserva lo tipeado cuando el servidor rechaza el envío.
+
+- **Por qué:** son muchas pantallas nuevas. Sumar `react-hook-form` en cada una duplicaría los contratos de formulario sin cambiar lo que valida el servidor.
+- **Alternativa:** migrar a `react-hook-form` las pantallas que necesiten validación en vivo.
+
+### C-02. Rutas en español, código en inglés
+
+Las páginas usan rutas en español, como `/insumos`: `/proveedores` (emprendedor), `/proveedores/invitacion/<enlace>` (pública), `/proveedor` (panel del proveedor) y `/licitaciones`. Tablas, servicios y componentes están en inglés (`suppliers`, `tenders`).
+
+### C-03. Cambios en piezas compartidas
+
+- El servicio de alta de cuentas acepta datos extra para guardar en la cuenta. El alta de proveedor guarda ahí sus datos hasta que confirma el mail. El alta normal no cambia.
+- La ruta que recibe los enlaces de confirmación trata la confirmación de un proveedor como un alta: si falla, vuelve a `/login`, igual que el alta común.
+- El login acepta `?next=` (saneado con `safeNextPath`) para volver al enlace de invitación después de ingresar.
+- El dashboard manda al panel de proveedor a las cuentas de proveedor sin negocio propio y suma accesos a Licitaciones y Proveedores.
+- Un marco de página compartido (`components/ui/page-shell.tsx`) da a las pantallas nuevas el mismo encabezado que el dashboard y el catálogo.
+
+## Entrega
+
+### E-01. Un solo PR con commits por unidad de trabajo
+
+Toda la implementación va en un único PR, como se pidió. Cada commit es una unidad que se puede revisar sola: registro de proveedores, publicación, ofertas, cierre y compra. El PR parte de la rama de la documentación de licitaciones, para que la revisión no mezcle los documentos con el código.
+
+### E-02. Fuera de esta versión: actualizar el costo del insumo
+
+La sección 4 de las reglas (actualizar el Maestro de Insumos con el precio acordado, CC-01 a CC-05) queda para una versión siguiente. Las especificaciones no la trataron, y necesita un historial de precios del insumo que todavía no existe.

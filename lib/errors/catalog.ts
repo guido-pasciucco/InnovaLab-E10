@@ -174,6 +174,37 @@ export const ERROR_CATALOG = {
     message: "El packaging no se puede usar como ingrediente.",
     logLevel: "silent",
   },
+
+  // Suppliers (supply tenders, docs/licitaciones RN-22 and RN-23)
+  SUPPLIER_INVITE_INVALID: {
+    // Unknown, already used or expired link: all look the same.
+    status: 410,
+    message:
+      "Este enlace de invitación ya no sirve: puede haber vencido o ya se usó. Pedile uno nuevo a quien te invitó.",
+    logLevel: "silent",
+  },
+  SUPPLIER_INVITE_OWN: {
+    status: 422,
+    message: "Este enlace lo generaste vos: mandáselo al proveedor para que se registre.",
+    logLevel: "silent",
+  },
+  SUPPLIER_CUIT_TAKEN: {
+    // RN-23: an existing CUIT never gets a second account.
+    status: 409,
+    message:
+      "Ese CUIT ya tiene una cuenta de proveedor. Ingresá con esa cuenta y abrí de nuevo el enlace para quedar vinculado.",
+    logLevel: "silent",
+  },
+  SUPPLIER_ALREADY_REGISTERED: {
+    status: 409,
+    message: "Tu cuenta ya tiene datos de proveedor.",
+    logLevel: "silent",
+  },
+  SUPPLIER_REQUIRED: {
+    status: 403,
+    message: "Esta sección es solo para proveedores.",
+    logLevel: "silent",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;

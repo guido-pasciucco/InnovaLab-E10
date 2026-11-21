@@ -75,6 +75,21 @@ describe("GET /auth/confirm", () => {
     ).resolves.toBe("/login?error=AUTH_LINK_INVALID");
   });
 
+  it("treats a failed supplier signup confirmation as a signup (back to /login)", async () => {
+    confirmAuthLinkService.mockRejectedValue(new AppError("AUTH_LINK_INVALID"));
+    const next = encodeURIComponent(`/proveedores/invitacion/${"a".repeat(43)}/completar`);
+    await expect(
+      redirectTarget(`http://localhost:3000/auth/confirm?code=bad&next=${next}`),
+    ).resolves.toBe("/login?error=AUTH_LINK_INVALID");
+  });
+
+  it("continues a confirmed supplier signup to its invite completion route", async () => {
+    const path = `/proveedores/invitacion/${"a".repeat(43)}/completar`;
+    await expect(
+      redirectTarget(`http://localhost:3000/auth/confirm?code=ok&next=${encodeURIComponent(path)}`),
+    ).resolves.toBe(path);
+  });
+
   it("lets Next.js control-flow errors through", async () => {
     const bailout = Object.assign(new Error("Dynamic server usage"), { digest: "DYNAMIC_SERVER_USAGE" });
     confirmAuthLinkService.mockRejectedValue(bailout);
