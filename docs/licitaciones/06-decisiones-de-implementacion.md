@@ -66,6 +66,55 @@ Puntos que las especificaciones dejaron abiertos y que la primera versión resue
 - El proveedor no puede desvincularse de un emprendedor, ni el emprendedor quitarlo de su lista (ES-08).
 - Los términos se aceptan una sola vez, al registrarse como proveedor, y no con cada emprendedor (ES-08).
 
+### N-11. Límites del % de baja
+
+El % de baja tiene que ser mayor a 0 y como máximo 50 %, con hasta dos decimales.
+
+- **Por qué:** con 0 % el precio objetivo no cambia y las rondas no tienen sentido. Con más de 50 % por ronda, en pocas rondas el objetivo queda en una fracción del precio de partida, lo que es casi seguro un error de tipeo.
+- **Alternativa:** otro tope, si el equipo tiene casos reales que lo justifiquen.
+
+### N-12. La licitación arranca al publicarse
+
+No se puede programar una hora de inicio posterior (ES-03 lo dejó abierto). La primera ronda empieza en el momento de publicar.
+
+### N-13. Cantidades cargadas a mano
+
+RN-01 dice que las cantidades se sugieren a partir de recetas y producción planificada "si existen". La aplicación todavía no guarda una producción planificada, así que el emprendedor escribe la cantidad de cada insumo.
+
+### N-14. Unidad y precio sugerido de cada insumo
+
+Cada insumo se licita en su unidad de compra del Maestro de Insumos (kg, litro, unidad, etc.). El precio de partida sugerido es el precio de compra dividido por la cantidad comprada: si el catálogo dice 25 kg a $18.750, sugiere $750 por kg. Los proveedores ofertan por esa misma unidad.
+
+- **Por qué:** RN-04 pide precios por unidad de medida, en la misma base que la Calculadora. La unidad de compra es la que el emprendedor ya usa para comprar.
+
+### N-15. Aviso de que el precio de partida es visible
+
+Junto al precio de partida, la pantalla avisa que los proveedores lo ven, y que si deja el precio del catálogo van a saber cuánto paga hoy. ES-02 lo había recomendado sin decidirlo; se agregó porque protege lo que pide RN-07 sin quitarle la decisión al emprendedor.
+
+### N-16. También se licita packaging
+
+El packaging vive en el mismo Maestro de Insumos que los insumos. Se puede licitar igual que un insumo.
+
+### N-17. Tamaño de una licitación
+
+Una licitación lleva entre 1 y 20 insumos, cada uno una sola vez. Las especificaciones son opcionales, de hasta 500 caracteres.
+
+### N-18. Redondeo del precio objetivo
+
+El precio objetivo de cada ronda se redondea a centavos, y la ronda siguiente se calcula desde ese valor redondeado. Así, lo que ve el proveedor y la cuenta siempre coinciden. Ejemplo: $333,33 con 15 % de baja da $283,33 en la segunda ronda y $240,83 en la tercera.
+
+### N-19. "Último precio registrado del insumo"
+
+RN-13 compara cada oferta con el último precio registrado del insumo. Se toma el precio del catálogo en el momento de publicar y se guarda con la licitación. El cuadro comparativo no cambia si después se edita el catálogo, y queda igual en el historial (RN-17).
+
+### N-20. Número correlativo por emprendedor
+
+Cada emprendedor numera sus licitaciones desde 1. Las órdenes de compra tienen su propia numeración, también por emprendedor.
+
+### N-21. El proveedor no ve el % de baja
+
+RN-06 lista lo que ve el proveedor: hora de inicio y fin, insumos, cantidades, precio de partida y precio objetivo vigente. El % de baja no está en la lista, así que el proveedor ve el objetivo de la ronda en curso y no la fórmula.
+
 ## Base de datos
 
 ### D-01. Tres tablas para el registro de proveedores
@@ -85,6 +134,25 @@ Las tablas nuevas siguen el criterio de `supplies`: no tienen políticas RLS. La
 ### D-04. El mail de contacto se copia en la tabla de proveedores
 
 El mail de la cuenta vive en el esquema de autenticación, fuera del alcance de las consultas de la aplicación. Se copia al registrarse para mostrárselo al emprendedor.
+
+### D-05. Las rondas no se guardan: se calculan
+
+Una licitación guarda la hora de inicio, la duración de cada ronda, la cantidad de rondas y la hora de cierre. La ronda en curso, el precio objetivo y si la licitación cerró se calculan en el momento con el reloj del servidor.
+
+- **Por qué:** así las rondas avanzan y la licitación cierra sola (RN-09, RN-12) sin una tarea programada que pueda fallar o atrasarse. Una oferta que llega después del cierre se rechaza porque el servidor compara contra la hora de cierre guardada.
+- **Consecuencia:** "estado de la licitación" no es una columna. En curso, cerrada o cancelada se deriva de la hora de cierre y de la fecha de cancelación.
+
+### D-06. Copia del insumo en cada ítem
+
+Cada ítem de la licitación copia el nombre, la unidad y el precio de catálogo del insumo al publicar. Si después el insumo se borra del catálogo, el ítem queda igual y pierde solo el enlace al insumo. Borrar un insumo que está en una licitación no está bloqueado.
+
+### D-07. Publicar bloquea al emprendedor un instante
+
+Al publicar, la transacción bloquea la fila del perfil del emprendedor. Así, dos publicaciones simultáneas no pueden tomar el mismo número correlativo ni saltarse la regla de una licitación activa por vez (RN-03).
+
+### D-08. Tablas de la licitación
+
+`tenders` (la licitación), `tender_items` (los insumos) y `tender_invitations` (un proveedor invitado por fila, con el pedido de negociación de RN-21). Las ofertas, las elecciones y las órdenes de compra tienen tablas propias, descriptas más abajo. Si un proveedor borra su cuenta, se borran sus invitaciones y sus ofertas: se priorizó que nadie guarde datos de una cuenta borrada.
 
 ## Estructura de código
 
@@ -106,6 +174,14 @@ Las páginas usan rutas en español, como `/insumos`: `/proveedores` (emprendedo
 - El login acepta `?next=` (saneado con `safeNextPath`) para volver al enlace de invitación después de ingresar.
 - El dashboard manda al panel de proveedor a las cuentas de proveedor sin negocio propio y suma accesos a Licitaciones y Proveedores.
 - Un marco de página compartido (`components/ui/page-shell.tsx`) da a las pantallas nuevas el mismo encabezado que el dashboard y el catálogo.
+
+### C-04. La lógica de rondas es pura y el reloj se inyecta
+
+El cálculo de rondas, precios objetivo y cierre vive en `lib/calc/tenderRounds.ts`, sin base de datos ni React. Los servicios reciben la hora actual como parámetro, con el reloj del servidor por defecto: los tests prueban "tres horas después" o "después del cierre" sin esperar.
+
+### C-05. El formulario de publicación valida también en el navegador
+
+Publicar implica varias filas de insumos. El formulario revisa cada fila con las mismas reglas de campo antes de enviar, para mostrar cada error debajo de su campo. El servidor vuelve a validar todo con esas mismas reglas.
 
 ## Entrega
 
