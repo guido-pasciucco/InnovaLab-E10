@@ -25,26 +25,12 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-07 | Qué proveedores "venden ese insumo" | Decidida (21 nov 2026) |
 | ES-08 | Proveedor ligado a un emprendedor vs. dashboard unificado | Decidida (21 nov 2026) |
 | ES-09 | Enlace de registro: vencimiento y verificación | Decidida (21 nov 2026) |
-| ES-10 | Canal de las notificaciones | Abierta |
+| ES-10 | Canal de las notificaciones | Decidida (21 nov 2026) |
 | ES-11 | Orden de compra y nota de agradecimiento en la primera versión | Abierta |
 | ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
 | ES-13 | Insumo sin ofertas dentro de una canasta | Decidida (21 nov 2026) |
 
 ## Abiertas
-
-### ES-10. Canal de las notificaciones
-
-- **Estado:** Abierta
-- **Fuentes:** RN-11, RN-16; diagrama de registro (tarea *Acepta los términos y, aparte, los avisos*).
-- **Qué dicen las reglas de negocio:**
-  - **Aplicación:** "Ejecuta las reglas, notifica, registra y compara. No adjudica ni elige por el emprendedor."
-  - **En carrera:** "Proveedores a los que el emprendedor decide notificar cada ronda."
-  - **RN-11:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
-  - **RN-16:** "[…] les avisa de próxima licitación cuando se publique por medio de mail. Puede existir consentimiento del proveedor y registro de la respuesta."
-- **Contexto:** la aplicación notifica invitaciones, rondas y cierres. Solo RN-16 nombra un canal (el mail), y el registro pide aceptar los avisos por separado.
-- **A definir:** canales (mail, aviso dentro de la aplicación, otro); qué pasa con un proveedor que no aceptó los avisos.
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-11. Orden de compra y nota de agradecimiento en la primera versión
 
@@ -322,6 +308,37 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Ejemplo:** Don José genera un enlace para Molino A y se lo manda por WhatsApp. Molino A lo abre al día siguiente, completa sus datos con un CUIT válido y confirma su mail: queda registrado. Si alguien abre después ese mismo enlace, ya no funciona. Si Molino A lo hubiera dejado pasar más de 7 días, Don José tendría que mandarle uno nuevo.
 - **Qué no decide:** si el emprendedor puede anular un enlace antes de que venza.
 - **Reglas que cambia:** agrega RN-23.
+- **Fecha:** 21 de noviembre de 2026.
+
+### ES-10. Canal de las notificaciones
+
+- **Estado:** Decidida
+- **Fuentes:** RN-05, RN-09, RN-10, RN-11, RN-16, RN-18, RN-21, RN-23; diagrama de registro (tarea *Acepta los términos y, aparte, los avisos*).
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **Aplicación:** "Ejecuta las reglas, notifica, registra y compara. No adjudica ni elige por el emprendedor."
+  - **En carrera:** "Proveedores a los que el emprendedor decide notificar cada ronda."
+  - **RN-11:** "El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo."
+  - **RN-16:** "[…] les avisa de próxima licitación cuando se publique por medio de mail. Puede existir consentimiento del proveedor y registro de la respuesta."
+  - **RN-23:** "[…] Antes de crear la cuenta, el proveedor confirma su mail […]"
+- **Contexto:** las reglas dicen muchas veces que la aplicación notifica, pero solo RN-16 nombra un canal (el mail). El registro pide aceptar los avisos por separado. No hay capacidad para mandar mails en volumen.
+- **Decisión:** todos los avisos se muestran solo en el panel de la aplicación. La aplicación no manda mails, WhatsApp ni SMS por ellos.
+
+  | Aviso | Para quién |
+  | --- | --- |
+  | Invitación a una licitación (RN-05) | Proveedor |
+  | Empieza una ronda nueva, con su precio objetivo (RN-09) | Proveedores en carrera |
+  | El emprendedor quiere negociar (RN-21) | Proveedor |
+  | Insumos sin ofertas al terminar la primera ronda (RN-18) | Emprendedor |
+  | La licitación cerró y el cuadro comparativo está listo | Emprendedor |
+
+  El único mail es el de confirmación de cuenta del proveedor al registrarse (RN-23), uno por cuenta, igual que el que ya reciben los emprendedores. Como no hay mails opcionales, el registro no pide aceptar avisos por separado.
+- **Por qué:** no hay capacidad para mandar mails en volumen. El mail de confirmación se mantiene porque es uno solo por cuenta y la aplicación ya lo usa para los emprendedores.
+- **Consecuencia:** nadie se entera de un aviso si no entra al panel. Un proveedor que no entra seguido se pierde rondas; no se rompe nada, porque si no responde se toma como que ratifica (RN-10), pero las rondas pierden fuerza. El emprendedor puede avisarles por su cuenta, por ejemplo por WhatsApp, como ya hace con el enlace de registro.
+- **Ejemplo:** Don José publica una licitación a las 10:00. Molino A no recibe ningún mail; ve la invitación cuando entra a su panel a las 13:00 y oferta. A las 16:00 empieza la segunda ronda; Molino A la ve la próxima vez que entra.
+- **Qué no decide:**
+  - Qué pasa con la nota de agradecimiento y el aviso de próxima licitación que RN-16 manda por mail (ES-11).
+  - Si la aplicación ofrece algo para que el emprendedor avise más fácil por su cuenta, como copiar un mensaje listo para WhatsApp.
+- **Reglas que cambia:** agrega RN-24.
 - **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla

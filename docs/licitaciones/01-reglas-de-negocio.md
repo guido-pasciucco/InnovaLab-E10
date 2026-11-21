@@ -71,6 +71,12 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | --- | --- |
 | RN-17 | Se guarda de forma inmodificable todo el proceso (ofertas, rondas, % de baja, decisiones y órdenes de compra, si las hubiera), con fecha y hora. El emprendedor ve el historial completo; cada proveedor, solo el suyo. |
 
+### F. Avisos
+
+| ID | Regla |
+| --- | --- |
+| RN-24 | Todos los avisos de la licitación se muestran solo en el panel de la aplicación: invitaciones, rondas nuevas con su precio objetivo, pedidos de negociación, insumos sin ofertas y cierre con el cuadro comparativo listo. La aplicación no envía mails, WhatsApp ni SMS por estos avisos. El único mail es el de confirmación de cuenta al registrarse. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
+
 ## 4. Conexión con la Calculadora de Costos
 
 El resultado de la licitación es un precio final por unidad de cada insumo. Una vez confirmado por el emprendedor, ese precio puede reemplazar al precio del insumo en el Maestro de Insumos. Como el precio del insumo forma parte de cada receta, alimenta el Costo Variable Unitario y, de ahí, el resto de los indicadores.
@@ -190,3 +196,9 @@ Un proveedor tiene una sola cuenta y puede trabajar con varios emprendedores. No
 Se define el enlace de invitación y qué se verifica del proveedor. No reemplaza texto anterior de las reglas.
 
 - **RN-23** (nueva, en *B. Participación y confidencialidad*): "El emprendedor invita a cada proveedor con un enlace personal que genera en la aplicación y envía por el medio que quiera. El enlace sirve una sola vez y vence a los 7 días; si vence, el emprendedor genera otro. Antes de crear la cuenta, el proveedor confirma su mail y se controla que su CUIT tenga formato y dígito verificador correctos. Si el CUIT ya tiene cuenta, no se crea otra: el proveedor entra con la suya y queda vinculado."
+
+### 21 de noviembre de 2026 — nueva RN-24 (ES-10)
+
+Se define el canal de los avisos: solo el panel de la aplicación. No reemplaza texto anterior. RN-16 todavía menciona el mail; se resuelve en ES-11.
+
+- **RN-24** (nueva, en la nueva sección *F. Avisos*): "Todos los avisos de la licitación se muestran solo en el panel de la aplicación: invitaciones, rondas nuevas con su precio objetivo, pedidos de negociación, insumos sin ofertas y cierre con el cuadro comparativo listo. La aplicación no envía mails, WhatsApp ni SMS por estos avisos. El único mail es el de confirmación de cuenta al registrarse."
