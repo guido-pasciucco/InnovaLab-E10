@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProductItem } from "@/lib/schemas/products/products";
+import { formatMonthlyCapacity } from "./monthly-capacity";
 
 type ProductsTableProps = {
   products: ProductItem[];
@@ -50,6 +51,12 @@ export function ProductsTable({
             <th scope="col" className="min-w-48 px-3 py-3 font-semibold text-fg-muted">
               Nombre
             </th>
+            <th
+              scope="col"
+              className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted"
+            >
+              Capacidad mensual
+            </th>
             <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
               Receta
             </th>
@@ -65,6 +72,9 @@ export function ProductsTable({
           {products.map((product) => (
             <tr key={product.id} className="border-b border-border-control last:border-0">
               <td className="min-w-48 px-3 py-3 text-fg">{product.name}</td>
+              <td className="px-3 py-3 whitespace-nowrap text-fg-muted">
+                {formatMonthlyCapacity(product.monthlyCapacity)}
+              </td>
               <td className="px-3 py-3 whitespace-nowrap text-fg-muted">
                 {product.recipe.length === 1
                   ? "1 insumo"

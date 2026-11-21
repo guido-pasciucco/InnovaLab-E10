@@ -11,7 +11,7 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { saveProduct } from "@/app/products/actions";
+import { saveProduct } from "@/app/(flujo-1)/products/actions";
 import type {
   ProductFormValues,
   ProductItem,
@@ -24,9 +24,15 @@ import {
 } from "@/lib/schemas/supplies/units";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
+import {
+  isMonthlyCapacityMissing,
+  MONTHLY_CAPACITY_LABEL,
+  MONTHLY_CAPACITY_WARNING,
+} from "@/components/products/monthly-capacity";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
+import { RecipeYieldField } from "./recipe-yield-field";
 
 type ProductFormProps = {
   product: ProductItem | null;
@@ -36,7 +42,12 @@ type ProductFormProps = {
 };
 
 // Fields the server may flag; module-level so the reference stays stable.
-const SERVER_FIELDS: readonly Path<ProductFormValues>[] = ["name", "recipe"];
+const SERVER_FIELDS: readonly Path<ProductFormValues>[] = [
+  "name",
+  "monthlyCapacity",
+  "yieldQuantity",
+  "recipe",
+];
 
 // Empty row used when the form opens or the user adds another ingredient.
 function emptyRecipeRow(): ProductFormValues["recipe"][number] {
@@ -44,12 +55,24 @@ function emptyRecipeRow(): ProductFormValues["recipe"][number] {
 }
 
 function toDefaultValues(product: ProductItem | null): ProductFormValues {
+  const monthlyCapacity =
+    product?.monthlyCapacity === null || product?.monthlyCapacity === undefined
+      ? ""
+      : String(product.monthlyCapacity);
+
   if (!product) {
-    return { name: "", recipe: [emptyRecipeRow()] };
+    return {
+      name: "",
+      monthlyCapacity,
+      yieldQuantity: "",
+      recipe: [emptyRecipeRow()],
+    };
   }
 
   return {
     name: product.name,
+    monthlyCapacity,
+    yieldQuantity: product.yieldQuantity ?? "",
     recipe: product.recipe.map((item) => ({
       supplyId: item.supplyId,
       quantity: item.quantity,
@@ -129,7 +152,13 @@ export function ProductForm({
     name: "recipe",
   });
 
+  const productName = useWatch({ control, name: "name" });
+  const yieldQuantity = useWatch({ control, name: "yieldQuantity" });
+
   const recipeValues = useWatch({ control, name: "recipe" });
+  const monthlyCapacity = useWatch({ control, name: "monthlyCapacity" });
+  const showMonthlyCapacityWarning =
+    isMonthlyCapacityMissing(monthlyCapacity);
 
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
   const isSubmittingRef = useRef(false);
@@ -170,13 +199,32 @@ export function ProductForm({
         </p>
       )}
 
-      <TextField
-        label="Nombre del producto"
-        placeholder="Pan flauta"
-        disabled={isPending}
-        error={errors.name?.message}
-        {...register("name")}
-      />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField
+          label="Nombre del producto"
+          placeholder="Pan flauta"
+          disabled={isPending}
+          error={errors.name?.message}
+          {...register("name")}
+        />
+
+        <div className="flex flex-col gap-1">
+          <TextField
+            label={MONTHLY_CAPACITY_LABEL}
+            placeholder="200"
+            inputMode="numeric"
+            autoComplete="off"
+            disabled={isPending}
+            error={errors.monthlyCapacity?.message}
+            {...register("monthlyCapacity")}
+          />
+          {showMonthlyCapacityWarning && !errors.monthlyCapacity && (
+            <p role="status" className="text-sm text-fg-muted">
+              {MONTHLY_CAPACITY_WARNING}
+            </p>
+          )}
+        </div>
+      </div>
 
       <fieldset className="flex flex-col gap-3">
         <legend className="text-base font-semibold text-fg">Receta</legend>
@@ -292,6 +340,14 @@ export function ProductForm({
           + Agregar insumo
         </button>
       </fieldset>
+
+      <RecipeYieldField
+        productName={productName}
+        value={yieldQuantity}
+        onChange={(value) => setValue("yieldQuantity", value, { shouldValidate: true })}
+        error={errors.yieldQuantity?.message}
+        disabled={isPending}
+      />
 
       <div className="flex gap-3">
         <PrimaryButton
