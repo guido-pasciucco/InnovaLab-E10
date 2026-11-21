@@ -1,6 +1,6 @@
 "use client";
 
-import { acknowledgeNoOfferWarning } from "@/app/licitaciones/actions";
+import { acknowledgeNoOfferWarning } from "@/app/(flujo-1)/licitaciones/actions";
 import { useFormDataAction } from "@/components/forms/use-form-data-action";
 import { FormBanner } from "@/components/ui/page-shell";
 import { CancelTenderForm } from "./cancel-tender-form";

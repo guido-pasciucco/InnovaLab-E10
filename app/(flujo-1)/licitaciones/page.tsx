@@ -22,10 +22,6 @@ export default async function TendersPage() {
       eyebrow="Compras de insumos"
       title="Licitaciones"
       description="Publicá una compra y tus proveedores compiten por rondas, sin conocerse entre sí. Vos decidís a quién le comprás."
-      links={[
-        { href: "/proveedores", label: "Proveedores" },
-        { href: "/dashboard", label: "Volver al dashboard" },
-      ]}
       actions={
         // Always open: a draft can be prepared while another tender runs.
         <Link

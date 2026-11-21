@@ -8,6 +8,8 @@ Cada caso tiene un ID (`QA-NN`), las reglas que valida, los pasos y el resultado
 
 ### 1.1 Entorno local
 
+> Si ya habías migrado tu base local con una versión anterior de esta rama, las migraciones de licitaciones se unificaron en una sola (`*_licitaciones.sql`). Borrá las tablas de licitaciones y sus filas en `drizzle.__drizzle_migrations` posteriores a `20261121040018_burly_molly_hayes`, o recreá la base local, antes de migrar.
+
 1. Levantá la base local y aplicá las migraciones:
 
    ```bash
@@ -86,8 +88,8 @@ Después de mover el reloj, recargá la página. Al mover las horas, el historia
 | QA-09 | E2 genera un enlace y P1 lo abre con su sesión. | Ve "Vincularme con <nombre de E2>", sin volver a cargar datos. En su panel aparecen los dos emprendedores, cada uno por separado. |
 | QA-10 | Generá un enlace, vencelo (sección 1.3) y abrilo. | El mismo aviso de QA-04. |
 | QA-11 | Registrá un proveedor nuevo y abrí el mail de confirmación **en otro navegador**, sin sesión. | Lo manda a `/login`. Al ingresar con el mail y la contraseña del proveedor, termina el alta y entra a `/proveedor`. |
-| QA-12 | Cerrá la sesión e ingresá como P1. Después, como E1. | P1 entra directo a `/proveedor`. E1 entra al dashboard. |
-| QA-13 | E1 abre `/proveedor`. | Lo manda al dashboard: el panel es solo para proveedores. |
+| QA-12 | Cerrá la sesión e ingresá como P1. Después, como E1. | P1 entra directo a `/proveedor`. E1 entra a `/insumos` (flujo 1). |
+| QA-13 | E1 abre `/proveedor`. | Lo manda a `/insumos`: el panel es solo para proveedores. |
 
 ## 3. Publicación y borrador (RN-01 a RN-07, RN-09, ES-01 a ES-03, ES-07, N-31)
 
@@ -131,12 +133,12 @@ Usá una licitación con dos insumos (precio de partida $ 1.000 y $ 500) e invit
 
 | ID | Pasos | Resultado esperado |
 | --- | --- | --- |
-| QA-34 | En una licitación de dos insumos, que nadie oferte por el segundo. Pasá a la ronda 2. | E1 ve en la licitación y en el dashboard el aviso de insumos sin ofertas, con "Dejar que siga" y "Cancelar la licitación". |
+| QA-34 | En una licitación de dos insumos, que nadie oferte por el segundo. Pasá a la ronda 2. | E1 ve en la licitación y en `/licitaciones` el aviso de insumos sin ofertas, con "Dejar que siga" y "Cancelar la licitación". |
 | QA-35 | Tocá "Dejar que siga". | El aviso desaparece y no vuelve en las rondas siguientes. |
 | QA-36 | Cerrá la licitación. E1 la abre. | Ve el "Cuadro comparativo": por insumo, cada proveedor con su última oferta, de la más baja a la más alta. La más baja está resaltada. Cada oferta muestra la diferencia en pesos y en % contra el precio de partida y contra el catálogo al publicar. La aplicación no elige por E1. |
 | QA-37 | En el mismo cuadro, mirá el insumo sin ofertas. | Figura aparte, marcado "Desierto": "Nadie ofertó por este insumo. Podés publicar una licitación nueva para él." |
 | QA-38 | Cerrá una licitación sin ninguna oferta. | La licitación queda desierta. E1 ve el aviso de que cerró sin ofertas y, en el historial, el cierre marcado como desierta. |
-| QA-39 | Revisá los paneles después de un cierre. | E1 ve en el dashboard el aviso de licitación cerrada. Los proveedores invitados ven el aviso de cierre en su panel. Ninguno de los dos recibe un mail. |
+| QA-39 | Revisá los paneles después de un cierre. | E1 ve en `/licitaciones` el aviso de licitación cerrada. Los proveedores invitados ven el aviso de cierre en su panel. Ninguno de los dos recibe un mail. |
 
 ## 6. Elección, negociación, orden de compra y nota (RN-14 a RN-17, RN-21, ES-06, ES-11)
 
@@ -171,7 +173,10 @@ El cambio tocó piezas compartidas (ver C-03 en [06](06-decisiones-de-implementa
 | QA-52 | Alta común en `/signup` y confirmación por mail. | Igual que antes: "¡Cuenta creada!" y después el login. |
 | QA-53 | Abrí un enlace de confirmación ya usado de un alta común. | Vuelve a `/login` con el aviso de enlace inválido, como antes. |
 | QA-54 | Recuperar contraseña desde `/reset-password`. | Igual que antes. |
-| QA-55 | Dashboard de un emprendedor. | Sigue mostrando la calculadora y el catálogo, y suma los accesos a Licitaciones y Proveedores. |
+| QA-55 | Dashboard de un emprendedor (flujo 2). | Sigue mostrando sus cálculos, sin accesos ni avisos de licitaciones. |
+| QA-56 | En el flujo 1, tocá "Licitaciones" en el navbar. | Va a `/licitaciones`. El sidebar muestra Licitaciones y Proveedores. "Catálogo" vuelve a `/insumos`, con Insumos y Productos en el sidebar. |
+| QA-57 | En el navbar del flujo 1, tocá "Flujo 2". En el dashboard, tocá "Flujo 1". | Pasa al dashboard y vuelve a `/insumos`. En el flujo 1 el selector está en el navbar y no aparece flotante. |
+| QA-58 | Abrí una orden de compra y tocá imprimir. | La impresión no incluye el navbar ni el sidebar. |
 
 ## 9. Fuera de alcance
 

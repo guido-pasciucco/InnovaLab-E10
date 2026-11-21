@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { cancelTender } from "@/app/licitaciones/actions";
+import { cancelTender } from "@/app/(flujo-1)/licitaciones/actions";
 import { useFormDataAction } from "@/components/forms/use-form-data-action";
 import { FormBanner } from "@/components/ui/page-shell";
 

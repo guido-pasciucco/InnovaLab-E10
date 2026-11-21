@@ -29,10 +29,6 @@ export default async function SuppliersPage() {
       eyebrow="Licitaciones"
       title="Proveedores"
       description="Invitá a tus proveedores con un enlace personal. Solo los proveedores registrados con vos pueden participar en tus licitaciones."
-      links={[
-        { href: "/licitaciones", label: "Licitaciones" },
-        { href: "/dashboard", label: "Volver al dashboard" },
-      ]}
     >
       <Card title="Invitar a un proveedor" id="invitar">
         <p className="text-sm text-fg-muted">

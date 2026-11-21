@@ -3,30 +3,39 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// TEMPORARY: switches between the new flow (1: sidebar + catalogs) and the
-// current flow (2: dashboard + wizard) while both coexist. Delete this file
-// and its usage in app/layout.tsx once flow 2 is removed.
+// TEMPORARY: switches between the new flow (1: navbar + sidebar, catalogs and
+// tenders) and the current flow (2: dashboard + wizard) while both coexist.
+// Flow 1 shows it in its navbar (AppNavbar); flow 2 shows it floating, from
+// app/layout.tsx. Delete this file and its usages once flow 2 is removed.
+type FlowId = 1 | 2;
+
 const FLOWS = [
-  { id: 1, label: "Flujo 1", href: "/insumos", prefixes: ["/insumos", "/products"] },
-  { id: 2, label: "Flujo 2", href: "/dashboard", prefixes: ["/dashboard", "/paso-", "/resultados"] },
+  { id: 1, label: "Flujo 1", href: "/insumos" },
+  { id: 2, label: "Flujo 2", href: "/dashboard" },
 ] as const;
 
-function flowFromPathname(pathname: string) {
-  return FLOWS.find((flow) => flow.prefixes.some((prefix) => pathname.startsWith(prefix)));
+const FLOW_ONE_PATHS = ["/insumos", "/products", "/licitaciones", "/proveedores"];
+const FLOW_TWO_PREFIXES = ["/dashboard", "/paso-", "/resultados"];
+
+function under(pathname: string, path: string): boolean {
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
-export function FlowSwitcher() {
-  const pathname = usePathname();
-  const current = flowFromPathname(pathname);
+export function flowFromPathname(pathname: string): FlowId | null {
+  // The public invite link lives under /proveedores but belongs to no flow.
+  if (pathname.startsWith("/proveedores/invitacion/")) return null;
+  if (FLOW_ONE_PATHS.some((path) => under(pathname, path))) return 1;
+  if (FLOW_TWO_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return 2;
+  return null;
+}
 
-  // Only signed-in app screens belong to a flow; public pages show nothing.
-  if (!current) return null;
-
+// The two-option pill; `current` is highlighted.
+export function FlowSwitch({ current }: { current: FlowId }) {
   return (
-    <nav aria-label="Cambiar de flujo" className="flex justify-end px-4 pt-3">
+    <nav aria-label="Cambiar de flujo">
       <div className="inline-flex gap-1 rounded-full bg-surface p-1 shadow-sm">
         {FLOWS.map((flow) => {
-          const active = flow.id === current.id;
+          const active = flow.id === current;
           return (
             <Link
               key={flow.id}
@@ -44,5 +53,18 @@ export function FlowSwitcher() {
         })}
       </div>
     </nav>
+  );
+}
+
+// Floating switcher for flow 2 screens. Flow 1 has it in its navbar, and
+// public pages show nothing.
+export function FlowSwitcher() {
+  const pathname = usePathname();
+  if (flowFromPathname(pathname) !== 2) return null;
+
+  return (
+    <div className="flex justify-end px-4 pt-3">
+      <FlowSwitch current={2} />
+    </div>
   );
 }

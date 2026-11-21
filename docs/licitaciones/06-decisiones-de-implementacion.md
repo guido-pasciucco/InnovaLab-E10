@@ -58,7 +58,7 @@ Si el emprendedor abre un enlace que generó él, la aplicación le recuerda que
 
 ### N-09. A dónde entra cada cuenta
 
-Una cuenta de proveedor que nunca usó el lado del emprendedor (sin negocio ni insumos cargados) entra directo a su panel de proveedor. Si la cuenta también compra, entra al dashboard del emprendedor, desde donde llega a todo.
+Una cuenta de proveedor que nunca usó el lado del emprendedor (sin negocio ni insumos cargados) entra directo a su panel de proveedor. Si la cuenta también compra, entra al flujo 1 del emprendedor (`/insumos`), desde donde llega a todo. Al iniciar sesión, la aplicación pasa por `/inicio`, que decide a cuál de los dos va.
 
 ### N-10. Lo que la primera versión no permite
 
@@ -133,7 +133,7 @@ El aviso de RN-18 aparece cuando termina la primera ronda y sigue visible en la 
 
 Todos los avisos se ven solo en los paneles de la aplicación (RN-24).
 
-- **Emprendedor**, en el dashboard y en Licitaciones: insumos sin ofertas tras la primera ronda (mientras esté pendiente) y licitación cerrada, con el cuadro listo o desierta (durante 7 días).
+- **Emprendedor**, en Licitaciones: insumos sin ofertas tras la primera ronda (mientras esté pendiente) y licitación cerrada, con el cuadro listo o desierta (durante 7 días).
 - **Proveedor**, en su panel: invitación nueva (mientras no haya ofertado), ronda nueva con nuevo precio objetivo (desde la segunda ronda, una vez que ofertó), pedido de negociación, nota de agradecimiento, licitación cerrada y licitación cancelada (estas dos, durante 7 días).
 - El aviso de cancelación al proveedor no está en RN-24. Se agregó porque, sin él, un proveedor no se entera de que ya no puede ofertar.
 - **Alternativa:** marcar los avisos como leídos. Necesita guardar qué vio cada persona; se dejó para cuando haga falta.
@@ -269,7 +269,7 @@ Las páginas usan rutas en español, como `/insumos`: `/proveedores` (emprendedo
 - El servicio de alta de cuentas acepta datos extra para guardar en la cuenta. El alta de proveedor guarda ahí sus datos hasta que confirma el mail. El alta normal no cambia.
 - La ruta que recibe los enlaces de confirmación trata la confirmación de un proveedor como un alta: si falla, vuelve a `/login`, igual que el alta común.
 - El login acepta `?next=` (saneado con `safeNextPath`) para volver al enlace de invitación después de ingresar.
-- El dashboard manda al panel de proveedor a las cuentas de proveedor sin negocio propio y suma accesos a Licitaciones y Proveedores.
+- Iniciar sesión lleva a `/inicio`, que manda al panel de proveedor a las cuentas de proveedor sin negocio propio y a `/insumos` al resto. El dashboard (flujo 2) mantiene esa misma redirección para quien entre directo.
 - Un marco de página compartido (`components/ui/page-shell.tsx`) da a las pantallas nuevas el mismo encabezado que el dashboard y el catálogo.
 
 ### C-04. La lógica de rondas es pura y el reloj se inyecta
@@ -283,6 +283,15 @@ Publicar implica varias filas de insumos. El formulario revisa cada fila con las
 ### C-06. Verificación independiente
 
 El cambio toca alta de cuentas y enlaces de un solo uso, así que además de los tests lo revisó un verificador independiente contra estas especificaciones. No encontró bloqueantes. Sus advertencias se corrigieron en el último commit: atar los datos en espera al enlace, la oferta vigente por precio, sin porcentaje contra un precio de catálogo 0, negociar solo con quien ofertó, el texto de la nota, el aviso y la licitación desierta en el historial, la confirmación desde otro dispositivo y la redirección del dashboard.
+
+### C-07. Licitaciones en el flujo 1, con navbar
+
+La vista del emprendedor está dividida en dos flujos mientras conviven (PR #278): el flujo 1, con sidebar y catálogos, y el flujo 2, con dashboard y asistente. Licitaciones vive en el flujo 1. Decisión pedida por el equipo el 21 de noviembre de 2026.
+
+- Las pantallas del emprendedor (`/licitaciones` y `/proveedores`) están en el grupo de rutas `app/(flujo-1)`. La página pública del enlace de invitación y el panel del proveedor (`/proveedor`) quedan fuera de los flujos.
+- El flujo 1 tiene un navbar arriba con el menú de secciones ("Catálogo" y "Licitaciones") y el selector de flujo. El sidebar muestra las páginas de la sección elegida: Insumos y Productos, o Licitaciones y Proveedores. La configuración está en `components/app-shell/nav-sections.ts`.
+- El selector de flujo aparece en el navbar del flujo 1 y flotante en el flujo 2. Sigue siendo temporal: se borra cuando se elimine el flujo 2.
+- El dashboard ya no tiene accesos ni avisos de licitaciones. Los avisos del emprendedor se ven en Licitaciones.
 
 ## Entrega
 

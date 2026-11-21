@@ -2,14 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, ShoppingBasket } from "lucide-react";
 
 import LogoutButton from "@/app/dashboard/logout-button";
 
-const NAV_ITEMS = [
-  { href: "/insumos", label: "Insumos", icon: ShoppingBasket },
-  { href: "/products", label: "Productos", icon: Package },
-] as const;
+import { isActivePath, sectionFromPathname } from "./nav-sections";
 
 type AppSidebarProps = {
   userName: string;
@@ -17,13 +13,15 @@ type AppSidebarProps = {
   businessName: string;
 };
 
-// Basic sidebar for the new flow (flow 1). Placeholder until the UX/UI
-// redesign defines the final navigation.
+// Basic sidebar for the new flow (flow 1): the pages of the section chosen in
+// the navbar. Placeholder until the UX/UI redesign defines the final
+// navigation.
 export function AppSidebar({ userName, userEmail, businessName }: AppSidebarProps) {
   const pathname = usePathname();
+  const section = sectionFromPathname(pathname);
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-6 border-b border-border-default bg-surface p-4 md:min-h-screen md:w-64 md:border-r md:border-b-0">
+    <aside className="flex w-full print:hidden shrink-0 flex-col gap-6 border-b border-border-default bg-surface p-4 md:min-h-screen md:w-64 md:border-r md:border-b-0">
       <div>
         <p className="text-lg font-bold text-brand-green-700">Calculadora de Costos</p>
         {businessName && <p className="mt-1 truncate text-sm text-fg-muted">{businessName}</p>}
@@ -31,8 +29,8 @@ export function AppSidebar({ userName, userEmail, businessName }: AppSidebarProp
 
       <nav aria-label="Principal">
         <ul className="flex gap-2 md:flex-col">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
+          {section.items.map(({ href, label, icon: Icon }) => {
+            const active = isActivePath(pathname, href);
             return (
               <li key={href}>
                 <Link

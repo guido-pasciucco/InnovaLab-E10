@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { createSupplierInvite } from "@/app/proveedores/actions";
+import { createSupplierInvite } from "@/app/(flujo-1)/proveedores/actions";
 import { useFormDataAction } from "@/components/forms/use-form-data-action";
 import { FormBanner } from "@/components/ui/page-shell";
 import { PrimaryButton } from "@/components/ui/primary-button";
