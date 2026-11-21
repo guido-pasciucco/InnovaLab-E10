@@ -84,3 +84,4 @@ El diagrama es del 13 de noviembre de 2026. Estas decisiones, registradas en [Es
 | ES-01 (20 nov 2026) | La cotización se hace por rondas automáticas con precio objetivo, no en una ventana única. |
 | ES-02 (20 nov 2026) | La nota *Techo opcional* queda reemplazada: el precio de partida es obligatorio y la aplicación sugiere el precio del catálogo. |
 | ES-04 (21 nov 2026) | La nota *Temporizador* queda definida: el aviso llega al terminar la primera ronda sin ofertas, y la licitación puede cerrar desierta. |
+| ES-05 (21 nov 2026) | *Cotiza canasta o ítems* se hace siempre por ítem: la canasta solo agrupa insumos, y el proveedor puede cotizar solo algunos. |

@@ -19,7 +19,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-02 | Precio de partida: obligatorio u opcional | Decidida (20 nov 2026) |
 | ES-03 | Duración de la licitación y de las rondas | Decidida (20 nov 2026) |
 | ES-04 | Aviso cuando nadie oferta | Decidida (21 nov 2026) |
-| ES-05 | Cotización por canasta o por ítem | Abierta |
+| ES-05 | Cotización por canasta o por ítem | Decidida (21 nov 2026) |
 | ES-06 | Qué habilita la negociación | Abierta |
 | ES-07 | Qué proveedores "venden ese insumo" | Abierta |
 | ES-08 | Proveedor ligado a un emprendedor vs. dashboard unificado | Abierta |
@@ -27,22 +27,9 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-10 | Canal de las notificaciones | Abierta |
 | ES-11 | Orden de compra y nota de agradecimiento en la primera versión | Abierta |
 | ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
+| ES-13 | Insumo sin ofertas dentro de una canasta | Abierta |
 
 ## Abiertas
-
-### ES-05. Cotización por canasta o por ítem
-
-- **Estado:** Abierta
-- **Fuentes:** RN-02, RN-13, RN-14, CC-02; diagrama de compra (tarea *Cotiza canasta o ítems*).
-- **Qué dicen las reglas de negocio:**
-  - **RN-02:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. […]"
-  - **RN-13:** "Al cierre, la aplicación arma un cuadro comparativo por insumo con la última oferta de cada proveedor, la diferencia contra el precio de partida y contra el último precio registrado del insumo."
-  - **RN-14:** "El emprendedor decide con qué proveedor contacta para comprar cada insumo. Puede repartir la compra por ítem y negociar. […]"
-  - **CC-02:** "El precio que se carga es el precio unitario final acordado, expresado en la unidad de medida del catálogo. Si la compra se reparte entre varios proveedores, se carga el promedio ponderado por las cantidades compradas."
-- **Contexto:** se puede publicar por insumo o por canasta, y el cuadro comparativo es por insumo. Si un proveedor cotiza la canasta completa con un solo precio, no se puede comparar ítem por ítem ni repartir la compra.
-- **A definir:** si la oferta de canasta exige precio por ítem; si un proveedor puede cotizar solo algunos ítems de la canasta.
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-06. Qué habilita la negociación
 
@@ -132,6 +119,19 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Decisión:** —
 - **Fecha:** —
 
+### ES-13. Insumo sin ofertas dentro de una canasta
+
+- **Estado:** Abierta
+- **Fuentes:** RN-18, RN-19, RN-20; surge de la decisión de ES-05.
+- **Qué dicen las reglas de negocio:**
+  - **RN-18:** "Si al terminar la primera ronda ningún proveedor ofertó, la aplicación avisa al emprendedor una sola vez. […]"
+  - **RN-19:** "Si la licitación cierra sin ninguna oferta, queda desierta: […]"
+  - **RN-20:** "En una canasta, el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. […]"
+- **Contexto:** como un proveedor puede cotizar solo algunos insumos (ES-05), un insumo de la canasta puede quedar sin ninguna oferta mientras los demás sí reciben. RN-18 y RN-19 hablan de la licitación entera, no de cada insumo.
+- **A definir:** si el aviso de RN-18 también se manda cuando un solo insumo no tiene ofertas; si ese insumo queda desierto por separado mientras el resto de la canasta sigue.
+- **Decisión:** —
+- **Fecha:** —
+
 ## Decididas
 
 ### ES-01. Rondas: si existen en la primera versión
@@ -179,7 +179,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Por qué:** las rondas automáticas necesitan un punto de partida. Como todo insumo licitado está en el Maestro de Insumos (RN-01), siempre hay un precio para sugerir y el emprendedor nunca tiene que inventar uno. La confidencialidad entre proveedores no se toca.
 - **Ejemplo:** la harina figura en el catálogo a $1.000 el kilo. Al publicar, el precio de partida aparece en $1.000. El emprendedor lo baja a $950 porque sabe que hay mejores precios, y las rondas arrancan de $950.
 - **Qué no decide:**
-  - Cómo se sugiere el precio de partida de una canasta (ES-05).
+  - Cómo se sugiere el precio de partida de una canasta (ES-05). *Resuelto el 21 nov 2026 en ES-05: el precio de partida va por insumo, así que se sugiere el precio de catálogo de cada uno.*
   - Si la pantalla avisa que el precio de partida lo van a ver los proveedores. Se recomendó, porque si el emprendedor deja la sugerencia, los proveedores ven cuánto paga hoy, que es lo que RN-07 protege. No está decidido.
 - **Reglas que cambia:** RN-02.
 - **Fecha:** 20 de noviembre de 2026.
@@ -235,6 +235,36 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Ejemplo:** publica a las 10:00 con 4 rondas de 6 h. A las 16:00 termina la primera ronda y nadie ofertó. La aplicación le avisa: "Nadie ofertó todavía en la licitación N° 12. Podés dejarla seguir o cancelarla."
 - **Qué no decide:** por qué canal llega el aviso (ES-10).
 - **Reglas que cambia:** agrega RN-18 (aviso sin ofertas) y RN-19 (licitación desierta).
+- **Fecha:** 21 de noviembre de 2026.
+
+### ES-05. Cotización por canasta o por ítem
+
+- **Estado:** Decidida
+- **Fuentes:** RN-02, RN-10, RN-13, RN-14, CC-02; diagrama de compra (tarea *Cotiza canasta o ítems*).
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **RN-02:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. […]"
+  - **RN-10:** "En cada ronda el proveedor puede mejorar su oferta con un precio menor al suyo anterior (llegue o no al objetivo) o ratificarla. […]"
+  - **RN-13:** "Al cierre, la aplicación arma un cuadro comparativo por insumo con la última oferta de cada proveedor, la diferencia contra el precio de partida y contra el último precio registrado del insumo."
+  - **RN-14:** "El emprendedor decide con qué proveedor contacta para comprar cada insumo. Puede repartir la compra por ítem y negociar. […]"
+  - **CC-02:** "El precio que se carga es el precio unitario final acordado, expresado en la unidad de medida del catálogo. Si la compra se reparte entre varios proveedores, se carga el promedio ponderado por las cantidades compradas."
+- **Contexto:** se puede publicar por insumo o por canasta, y el cuadro comparativo es por insumo. Si un proveedor cotiza la canasta completa con un solo precio, no se puede comparar insumo por insumo, ni repartir la compra, ni sacar el precio por unidad para actualizar el catálogo.
+- **Opciones consideradas:**
+  1. Precio por ítem, siempre: la canasta solo agrupa insumos.
+  2. Precio total de la canasta: rompe RN-13, RN-14 y CC-02.
+  3. Precio por ítem más un descuento opcional por llevar todo: complica mucho el cuadro comparativo y las rondas.
+- **Decisión:** opción 1. Una canasta solo agrupa varios insumos en una misma licitación. El precio de partida, el precio objetivo y las ofertas van siempre por insumo. Un proveedor puede cotizar solo algunos insumos de la canasta.
+- **Por qué:** mantiene funcionando el cuadro comparativo por insumo, el reparto de la compra y la actualización del catálogo. Permitir cotizar solo algunos insumos evita dejar afuera a los proveedores que no venden todo, y así hay más competencia.
+- **Ejemplo:**
+
+  | Insumo | Proveedor A | Proveedor B |
+  | --- | --- | --- |
+  | Harina (kg) | $900 | $950 |
+  | Azúcar (kg) | $1.200 | $1.100 |
+  | Manteca (kg) | no cotiza | $4.000 |
+
+  El emprendedor compra la harina a A, y el azúcar y la manteca a B.
+- **Qué no decide:** qué pasa si un insumo de la canasta no recibe ninguna oferta (ES-13).
+- **Reglas que cambia:** RN-02; agrega RN-20.
 - **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla

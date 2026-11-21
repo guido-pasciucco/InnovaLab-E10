@@ -28,7 +28,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | ID | Regla |
 | --- | --- |
 | RN-01 | Solo se licitan insumos del Maestro de Insumos. Las cantidades se sugieren a partir de recetas y producción planificada si existen; si no, se cargan a mano. |
-| RN-02 | El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida, la duración de cada ronda (6, 12 o 24 hs; 6 hs por defecto) y la cantidad de rondas (de 2 a 5; 4 por defecto). La duración de la licitación es la cantidad de rondas por la duración de cada ronda. El precio de partida es obligatorio: la aplicación sugiere el precio actual del insumo en el Maestro de Insumos y el emprendedor puede dejarlo o cambiarlo. Cada licitación recibe un número correlativo. *(Modificada el 20 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
+| RN-02 | El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida, la duración de cada ronda (6, 12 o 24 hs; 6 hs por defecto) y la cantidad de rondas (de 2 a 5; 4 por defecto). La duración de la licitación es la cantidad de rondas por la duración de cada ronda. El precio de partida es obligatorio: la aplicación sugiere el precio actual del insumo en el Maestro de Insumos y el emprendedor puede dejarlo o cambiarlo. Una canasta agrupa varios insumos en una misma licitación: el precio de partida, el precio objetivo y las ofertas van siempre por insumo. Cada licitación recibe un número correlativo. *(Modificada el 20 y el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 | RN-03 | Una vez publicada, la licitación no se modifica: solo puede cancelarse antes del cierre. Un insumo no puede estar en dos licitaciones activas a la vez (para esta versión, el desarrollo solo contempla una licitación activa por vez). |
 | RN-04 | Los precios ofertados son precios finales puestos en destino (impuestos y flete incluidos), por unidad de medida. Es la misma base que usa la Calculadora de Costos. |
 
@@ -50,6 +50,7 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | RN-11 | El emprendedor decide a qué proveedores se notifica cada ronda. Un proveedor excluido deja de recibir comunicaciones, sin aviso y su última oferta se conserva a título informativo. |
 | RN-12 | La licitación cierra sola al vencer la duración. No se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires). |
 | RN-18 | Si al terminar la primera ronda ningún proveedor ofertó, la aplicación avisa al emprendedor una sola vez. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelarla. No puede sumar proveedores: para invitar a otros, la cancela y publica una nueva. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
+| RN-20 | En una canasta, el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. RN-10 se aplica insumo por insumo. En el cuadro comparativo, un insumo que el proveedor no cotizó figura sin oferta. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 
 ### D. Cierre y compra
 
@@ -145,3 +146,10 @@ Se agregan dos reglas para cuando nadie oferta. No reemplazan texto anterior.
 
 - **RN-18** (en *C. Rondas*): "Si al terminar la primera ronda ningún proveedor ofertó, la aplicación avisa al emprendedor una sola vez. El emprendedor puede dejarla seguir, que es lo que pasa si no hace nada, o cancelarla. No puede sumar proveedores: para invitar a otros, la cancela y publica una nueva."
 - **RN-19** (en *D. Cierre y compra*): "Si la licitación cierra sin ninguna oferta, queda desierta: no se arma cuadro comparativo, queda guardada en el historial y el emprendedor puede publicar otra."
+
+### 21 de noviembre de 2026 — RN-02 y nueva RN-20 (ES-05)
+
+La canasta solo agrupa insumos: todo se cotiza por insumo, y un proveedor puede cotizar solo algunos.
+
+- **RN-02:** se agrega la frase "Una canasta agrupa varios insumos en una misma licitación: el precio de partida, el precio objetivo y las ofertas van siempre por insumo." El resto del texto no cambia.
+- **RN-20** (nueva, en *C. Rondas*): "En una canasta, el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. RN-10 se aplica insumo por insumo. En el cuadro comparativo, un insumo que el proveedor no cotizó figura sin oferta."
