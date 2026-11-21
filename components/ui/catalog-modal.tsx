@@ -6,8 +6,6 @@ type CatalogModalProps = {
   title: string;
   onClose: () => void;
   children: ReactNode;
-  // "md" fits a short form; "lg" is for wide content such as multi-row forms or
-  // detail tables.
   size?: "md" | "lg";
 };
 
@@ -16,11 +14,12 @@ const SIZE_CLASS = {
   lg: "max-w-2xl",
 } as const;
 
-// Accessible dialog shared by both catalogs (Insumos and Productos) so create,
-// edit and detail views look and behave the same. It closes on Escape, backdrop
-// click and the close button, and locks background scrolling while open. It has
-// no open/closed prop: the parent renders it conditionally, so its content only
-// mounts while the dialog is visible.
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea, input:not([type="hidden"]), select, [tabindex]:not([tabindex="-1"])';
+
+// Accessible dialog shared by both catalogs (Insumos and Productos). It closes on
+// Escape, backdrop click and the close button, locks background scrolling and
+// traps/restores focus while open.
 export function CatalogModal({
   title,
   onClose,
@@ -29,25 +28,77 @@ export function CatalogModal({
 }: CatalogModalProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
 
   useEffect(() => {
+    triggerRef.current = (document.activeElement as HTMLElement | null) ?? null;
     closeRef.current?.focus();
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCloseRef.current();
+    const getFocusables = (): HTMLElement[] => {
+      const root = contentRef.current ?? dialogRef.current;
+      if (!root) return [];
+      return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+        (el) => !el.hasAttribute("disabled"),
+      );
     };
+
+    // Move focus to the first field of the content once it is mounted.
+    const focusTimer = window.setTimeout(() => {
+      const focusables = getFocusables();
+      if (focusables.length > 0) focusables[0].focus();
+      else closeRef.current?.focus();
+    }, 0);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusables = getFocusables();
+      if (focusables.length === 0) {
+        event.preventDefault();
+        closeRef.current?.focus();
+        return;
+      }
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey) {
+        if (active === first || active === closeRef.current) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
+      // Restore focus to the element that opened the modal.
+      const trigger = triggerRef.current;
+      if (trigger && typeof trigger.focus === "function") {
+        trigger.focus();
+      }
     };
   }, []);
 
@@ -59,6 +110,7 @@ export function CatalogModal({
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -79,7 +131,7 @@ export function CatalogModal({
           </button>
         </div>
 
-        <div className="mt-4">{children}</div>
+        <div ref={contentRef} className="mt-4">{children}</div>
       </div>
     </div>
   );
