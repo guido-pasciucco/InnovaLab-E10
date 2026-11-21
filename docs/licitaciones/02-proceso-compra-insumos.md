@@ -74,3 +74,12 @@ Proceso de la funcionalidad nueva, en BPMN 2.0. Un proceso, un carril por respon
 - Las tres rayas en las tareas del proveedor indican que varios cotizan a la vez, y la flecha circular de *Cotiza* indica que puede bajar el precio.
 - La aplicación muestra las ofertas y no adjudica.
 - La flecha verde punteada une un paso con lo que queda guardado.
+
+## Diferencias con decisiones posteriores
+
+El diagrama es del 13 de noviembre de 2026. Estas decisiones, registradas en [Especificaciones](04-especificaciones.md), cambian lo que muestra:
+
+| Decisión | Qué cambia en el diagrama |
+| --- | --- |
+| ES-01 (20 nov 2026) | La cotización se hace por rondas automáticas con precio objetivo, no en una ventana única. |
+| ES-02 (20 nov 2026) | La nota *Techo opcional* queda reemplazada: el precio de partida es obligatorio y la aplicación sugiere el precio del catálogo. |

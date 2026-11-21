@@ -16,7 +16,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ID | Tema | Estado |
 | --- | --- | --- |
 | ES-01 | Rondas: si existen en la primera versión | Decidida (20 nov 2026) |
-| ES-02 | Precio de partida: obligatorio u opcional | Abierta |
+| ES-02 | Precio de partida: obligatorio u opcional | Decidida (20 nov 2026) |
 | ES-03 | Duración de la licitación y de las rondas | Abierta |
 | ES-04 | Aviso cuando nadie oferta | Abierta |
 | ES-05 | Cotización por canasta o por ítem | Abierta |
@@ -29,21 +29,6 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
 
 ## Abiertas
-
-### ES-02. Precio de partida: obligatorio u opcional
-
-- **Estado:** Abierta
-- **Fuentes:** RN-02, RN-09, RN-10; diagrama de compra (nota *Techo opcional*).
-- **Qué dicen las reglas de negocio:**
-  - **Precio de partida:** "Techo inicial que publica el emprendedor. Ninguna oferta puede superarlo."
-  - **RN-02:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. Cada licitación recibe un número correlativo."
-  - **RN-09:** "En cada ronda (6 hs por defecto, parametrizable) el emprendedor define el % de baja y la aplicación calcula el nuevo precio objetivo. El objetivo es una referencia, no una obligación."
-  - **RN-10:** "[…] la primera oferta no puede superar el precio de partida. […]"
-  - **RN-13:** "Al cierre, la aplicación arma un cuadro comparativo por insumo con la última oferta de cada proveedor, la diferencia contra el precio de partida y contra el último precio registrado del insumo."
-- **Contexto:** RN-02 lo pone entre los datos que se publican, y RN-09 calcula el primer precio objetivo a partir de él. El diagrama dice que el emprendedor puede no fijarlo y los proveedores igual cotizan.
-- **A definir:** si es opcional, cómo se calcula el precio objetivo de la primera ronda, qué límite tiene la primera oferta (RN-10) y contra qué se compara en el cuadro comparativo (RN-13).
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-03. Duración de la licitación y de las rondas
 
@@ -197,6 +182,32 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Ejemplo:** precio de partida $1.000 el kilo y 10% de baja. El precio objetivo pasa de $1.000 a $900 en la segunda ronda y a $810 en la tercera, sin que el emprendedor haga nada.
 - **Qué no decide:** la duración de las rondas y de la licitación (ES-03); qué pasa si no hay precio de partida (ES-02); si el emprendedor puede excluir proveedores entre rondas (ES-12); si el % de baja puede cambiarse después de publicar.
 - **Reglas que cambia:** RN-09.
+- **Fecha:** 20 de noviembre de 2026.
+
+### ES-02. Precio de partida: obligatorio u opcional
+
+- **Estado:** Decidida
+- **Fuentes:** RN-01, RN-02, RN-07, RN-09, RN-10, RN-13; diagrama de compra (nota *Techo opcional*).
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **Precio de partida:** "Techo inicial que publica el emprendedor. Ninguna oferta puede superarlo."
+  - **RN-01:** "Solo se licitan insumos del Maestro de Insumos. […]"
+  - **RN-02:** "El emprendedor publica, por insumo (o canasta), la cantidad, las especificaciones, el precio de partida y la duración de la licitación. Cada licitación recibe un número correlativo."
+  - **RN-07:** "Ningún proveedor ve el precio de compra de referencia del emprendedor, su catálogo ni sus recetas."
+  - **RN-09:** "En cada ronda (6 hs por defecto, parametrizable) el emprendedor define el % de baja y la aplicación calcula el nuevo precio objetivo. El objetivo es una referencia, no una obligación."
+  - **RN-10:** "[…] la primera oferta no puede superar el precio de partida. […]"
+  - **RN-13:** "Al cierre, la aplicación arma un cuadro comparativo por insumo con la última oferta de cada proveedor, la diferencia contra el precio de partida y contra el último precio registrado del insumo."
+- **Contexto:** RN-02 lo pone entre los datos que se publican, y las rondas automáticas (ES-01) calculan el primer precio objetivo a partir de él. El diagrama dice que el emprendedor puede no fijarlo y los proveedores igual cotizan.
+- **Opciones consideradas:**
+  1. Obligatorio, como dicen las reglas.
+  2. Opcional, como dice el diagrama. Si las rondas arrancan de la mejor oferta, el precio objetivo revela esa oferta a todos y rompe RN-06; evitarlo exige un objetivo distinto por proveedor.
+  3. Obligatorio, con sugerencia: la aplicación propone el precio actual del insumo en el Maestro de Insumos y el emprendedor lo deja o lo cambia.
+- **Decisión:** opción 3. El precio de partida es obligatorio. Al publicar, la aplicación sugiere el precio actual del insumo en el Maestro de Insumos, y el emprendedor puede dejarlo o cambiarlo.
+- **Por qué:** las rondas automáticas necesitan un punto de partida. Como todo insumo licitado está en el Maestro de Insumos (RN-01), siempre hay un precio para sugerir y el emprendedor nunca tiene que inventar uno. La confidencialidad entre proveedores no se toca.
+- **Ejemplo:** la harina figura en el catálogo a $1.000 el kilo. Al publicar, el precio de partida aparece en $1.000. El emprendedor lo baja a $950 porque sabe que hay mejores precios, y las rondas arrancan de $950.
+- **Qué no decide:**
+  - Cómo se sugiere el precio de partida de una canasta (ES-05).
+  - Si la pantalla avisa que el precio de partida lo van a ver los proveedores. Se recomendó, porque si el emprendedor deja la sugerencia, los proveedores ven cuánto paga hoy, que es lo que RN-07 protege. No está decidido.
+- **Reglas que cambia:** RN-02.
 - **Fecha:** 20 de noviembre de 2026.
 
 ## Plantilla
