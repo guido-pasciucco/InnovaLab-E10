@@ -48,7 +48,7 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 
 - **Decisión:** el catálogo de insumos del MVP incluye además una pestaña **Packaging**: mismo CRUD, mismo buscador y mismo formulario; se diferencia solo por `kind` (`supply` / `packaging`). Se reutiliza después en presentaciones (P12).
 - **Por qué:** la guía de pantallas (Malena, P08) lo propuso y el equipo lo aceptó; no cambia la estructura de datos del backend más allá del campo `kind`.
-- **Estado:** implementado. La guía, en su apartado de campos del insumo, deja abierta la diferencia con esta decisión — ver pendiente de Bloque 1.
+- **Estado:** implementado. El formulario de packaging todavía usa los campos de unidad en texto libre — ver pendiente de Bloque 1.
 
 #### El insumo no lleva "unidad de compra" y la unidad de medida se selecciona
 
@@ -173,7 +173,8 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 
 ### Bloque 1 — Insumos
 
-- El formulario implementado sigue el modelo de la guía Malena / #239 (unidad de compra + unidad mínima + equivalencia, en texto libre) en lugar del catálogo precargado de 4 familias sin unidad de compra. Pedido de alineación: #260.
+- ~~El formulario implementado sigue el modelo de la guía Malena / #239 (unidad de compra + unidad mínima + equivalencia, en texto libre).~~ **Resuelto en #260 (PR #263):** el formulario de insumos usa un desplegable con el catálogo de 4 familias y deriva la unidad mínima y la equivalencia; ya no las pide.
+- **Packaging** conserva el formulario anterior (unidad de compra, unidad mínima y equivalencia en texto libre). Su alineación depende de definir las presentaciones (Bloque 2).
 
 ### Bloque 2 — Productos y recetas
 

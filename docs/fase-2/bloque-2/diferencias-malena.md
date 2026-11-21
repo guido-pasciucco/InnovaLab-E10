@@ -109,5 +109,5 @@
 
 - Datos históricos y "Cerrar cálculo" (decisión ya tomada por Alejandro, fuera de Productos).
 - Menú lateral y apartado "Costos" en tres pestañas (es de costos/tablero, no del bloque de productos).
-- Campos del insumo ("unidad de compra" vs unidad de medida): es del bloque de insumos de Alejandro; la decisión coincide con el formulario y la alineación de la implementación está pedida.
+- Campos del insumo ("unidad de compra" vs unidad de medida): es del bloque de insumos de Alejandro; la decisión coincide con el formulario y la implementación ya está alineada (#260, PR #263).
 - Fórmulas de prorrateo y equilibrio: son del bloque de costos y del tablero.

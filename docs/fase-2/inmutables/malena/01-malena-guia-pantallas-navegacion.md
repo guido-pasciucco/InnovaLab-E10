@@ -1,5 +1,7 @@
 # INNOVA LAB 2026 / PRODUCTO DIGITAL
 
+> **Registro histórico.** Esta guía se conserva tal como la escribió Malena, como foto de su versión de las decisiones. No se actualiza: donde difiere de lo decidido, manda el registro de decisiones de la fase (`04-decisiones.md`) y los documentos `bloque-N/diferencias-malena.md` explican cada diferencia.
+
 ## Guía de pantallas y navegación
 
 **ESPECIFICACIÓN PARA UX/UI · Documento de trabajo**

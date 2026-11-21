@@ -26,7 +26,7 @@
 ### Referencia / material inmutable o de apoyo
 - `inmutables/analisis-flujo-costos.md`: análisis del flujo y huecos detectados.
 - `inmutables/flujo-del-modelo-calculadora-de-costos-numera.md`: flujo del modelo (NUMERA) y correlación con issues.
-- `inmutables/malena/01-malena-guia-pantallas-navegacion.md`: guía de pantallas y navegación (Malena).
+- `inmutables/malena/01-malena-guia-pantallas-navegacion.md`: guía de pantallas y navegación (Malena). Se conserva sin cambios como registro histórico de su versión.
 - `inmutables/preguntas/06-decision-cierre-calculo.md`: material de trabajo sobre cierre de cálculo.
 
 ## Convenciones
