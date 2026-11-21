@@ -10,6 +10,7 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - Al decidir, se completa **Decisión** y **Fecha**, y el punto pasa a la sección *Decididas*. Si la decisión cambia una regla, se actualiza también la regla en el documento de reglas.
 - Si una decisión cambia después, se agrega la fecha nueva y qué cambió. No se borra la anterior.
 - Para agregar un punto, usar la plantilla del final.
+- Si lo que se quiere revisar es una decisión que ya está tomada, va en [Decisiones en duda](05-decisiones-en-duda.md).
 
 ## Resumen
 
