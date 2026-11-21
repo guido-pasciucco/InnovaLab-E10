@@ -26,24 +26,11 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 | ES-08 | Proveedor ligado a un emprendedor vs. dashboard unificado | Decidida (21 nov 2026) |
 | ES-09 | Enlace de registro: vencimiento y verificación | Decidida (21 nov 2026) |
 | ES-10 | Canal de las notificaciones | Decidida (21 nov 2026) |
-| ES-11 | Orden de compra y nota de agradecimiento en la primera versión | Abierta |
+| ES-11 | Orden de compra y nota de agradecimiento en la primera versión | Decidida (21 nov 2026) |
 | ES-12 | Proveedores en carrera con rondas automáticas | Abierta |
 | ES-13 | Insumo sin ofertas dentro de una canasta | Decidida (21 nov 2026) |
 
 ## Abiertas
-
-### ES-11. Orden de compra y nota de agradecimiento en la primera versión
-
-- **Estado:** Abierta
-- **Fuentes:** RN-15, RN-16.
-- **Qué dicen las reglas de negocio:**
-  - **RN-15:** "Con lo acordado, la aplicación puede generar una orden de compra por proveedor, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo."
-  - **RN-16:** "Si el emprendedor lo ordena, la aplicación envía a los proveedores no elegidos una nota de agradecimiento idéntica para todos, sin revelar precios ni resultados, y les avisa de próxima licitación cuando se publique por medio de mail. Puede existir consentimiento del proveedor y registro de la respuesta."
-  - **RN-17:** "Se guarda de forma inmodificable todo el proceso (ofertas, rondas, % de baja, decisiones y órdenes de compra, si las hubiera), con fecha y hora. […]"
-- **Contexto:** las dos reglas dicen que la aplicación "puede" hacerlo, y RN-17 habla de órdenes de compra "si las hubiera". Ninguno de los dos diagramas incluye la orden de compra ni la nota.
-- **A definir:** si entran en la primera versión o quedan para después.
-- **Decisión:** —
-- **Fecha:** —
 
 ### ES-12. Proveedores en carrera con rondas automáticas
 
@@ -336,9 +323,37 @@ Documento vivo para ir cerrando lo que las [reglas de negocio](01-reglas-de-nego
 - **Consecuencia:** nadie se entera de un aviso si no entra al panel. Un proveedor que no entra seguido se pierde rondas; no se rompe nada, porque si no responde se toma como que ratifica (RN-10), pero las rondas pierden fuerza. El emprendedor puede avisarles por su cuenta, por ejemplo por WhatsApp, como ya hace con el enlace de registro.
 - **Ejemplo:** Don José publica una licitación a las 10:00. Molino A no recibe ningún mail; ve la invitación cuando entra a su panel a las 13:00 y oferta. A las 16:00 empieza la segunda ronda; Molino A la ve la próxima vez que entra.
 - **Qué no decide:**
-  - Qué pasa con la nota de agradecimiento y el aviso de próxima licitación que RN-16 manda por mail (ES-11).
+  - Qué pasa con la nota de agradecimiento y el aviso de próxima licitación que RN-16 manda por mail (ES-11). *Resuelto el 21 nov 2026 en ES-11: la nota se muestra en el panel y el aviso por mail se saca.*
   - Si la aplicación ofrece algo para que el emprendedor avise más fácil por su cuenta, como copiar un mensaje listo para WhatsApp.
 - **Reglas que cambia:** agrega RN-24.
+- **Fecha:** 21 de noviembre de 2026.
+
+### ES-11. Orden de compra y nota de agradecimiento en la primera versión
+
+- **Estado:** Decidida
+- **Fuentes:** objetivo de la funcionalidad (sección 1), RN-15, RN-16, RN-17, CC-02; ES-07; ES-10.
+- **Qué dicen las reglas de negocio** (antes de la decisión):
+  - **Objetivo:** "Liberar tiempo del emprendedor en la búsqueda de precios de sus principales insumos y simplificar la generación de órdenes de compra por cantidad. […]"
+  - **RN-15:** "Con lo acordado, la aplicación puede generar una orden de compra por proveedor, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo."
+  - **RN-16:** "Si el emprendedor lo ordena, la aplicación envía a los proveedores no elegidos una nota de agradecimiento idéntica para todos, sin revelar precios ni resultados, y les avisa de próxima licitación cuando se publique por medio de mail. Puede existir consentimiento del proveedor y registro de la respuesta."
+  - **RN-17:** "Se guarda de forma inmodificable todo el proceso (ofertas, rondas, % de baja, decisiones y órdenes de compra, si las hubiera), con fecha y hora. […]"
+  - **CC-02:** "El precio que se carga es el precio unitario final acordado, expresado en la unidad de medida del catálogo. […]"
+- **Contexto:** las dos reglas dicen que la aplicación "puede" hacerlo, y ninguno de los diagramas incluye la orden de compra ni la nota. Pero la orden de compra está en el objetivo de la funcionalidad, y sus datos casi todos existen ya: el precio final acordado de cada insumo se carga igual para actualizar el costo (CC-02). RN-16 pide mails, y la aplicación no los manda (ES-10).
+- **Opciones consideradas:**
+  1. Las dos en la primera versión, adaptadas a que no hay mails.
+  2. Solo la nota en la primera versión y la orden de compra después: más liviano, pero deja afuera parte del objetivo.
+- **Decisión:** opción 1.
+
+  | Tema | Decisión |
+  | --- | --- |
+  | Orden de compra | Al adjudicar, la aplicación arma una por cada proveedor adjudicado, con lo acordado. El emprendedor completa entrega y pago, y obtiene una página lista para imprimir o guardar como PDF desde el navegador. La envía él por su cuenta. |
+  | Nota de agradecimiento | Si el emprendedor toca "Enviar agradecimiento", los proveedores no elegidos ven en su panel el mismo texto para todos, sin precios ni resultados. |
+  | Aviso de próxima licitación por mail | Se saca: no hay mails (ES-10), y en la próxima licitación vuelven a aparecer preseleccionados (ES-07). |
+  | Consentimiento del proveedor | Se saca: era para los mails. |
+- **Por qué:** la orden de compra es parte del objetivo y reutiliza datos que ya se cargan. La nota en el panel cuesta poco y respeta que no hay mails.
+- **Ejemplo:** Don José negocia la harina con A a $880 y le adjudica 100 kg; el azúcar y la manteca se los adjudica a B. La aplicación arma la orden N° 1 para A (harina, 100 kg × $880 = $88.000, entrega el martes en el local, pago por transferencia a 15 días) y la orden N° 2 para B. Don José las guarda en PDF y las manda por WhatsApp. Toca "Enviar agradecimiento" y D, que ofertó pero no fue elegido, ve en su panel: "La licitación N° 12 terminó. Gracias por participar."
+- **Qué no decide:** si la nota también les llega a los proveedores invitados que no ofertaron.
+- **Reglas que cambia:** RN-15 y RN-16.
 - **Fecha:** 21 de noviembre de 2026.
 
 ## Plantilla

@@ -62,8 +62,8 @@ Liberar tiempo del emprendedor en la búsqueda de precios de sus principales ins
 | RN-13 | Al cierre, la aplicación arma un cuadro comparativo por insumo con la última oferta de cada proveedor, la diferencia contra el precio de partida y contra el último precio registrado del insumo. |
 | RN-14 | El emprendedor decide con qué proveedor contacta para comprar cada insumo. Puede repartir la compra por ítem y negociar. Las ofertas son de referencia (no vinculantes) y no obligan a ninguna de las partes. |
 | RN-21 | Cuando el emprendedor elige negociar con un proveedor, la aplicación le avisa a ese proveedor y le comparte el contacto del emprendedor. La negociación sigue fuera de la aplicación, y su inicio queda registrado en el historial. *(Agregada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
-| RN-15 | Con lo acordado, la aplicación puede generar una orden de compra por proveedor, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo. |
-| RN-16 | Si el emprendedor lo ordena, la aplicación envía a los proveedores no elegidos una nota de agradecimiento idéntica para todos, sin revelar precios ni resultados, y les avisa de próxima licitación cuando se publique por medio de mail. Puede existir consentimiento del proveedor y registro de la respuesta. |
+| RN-15 | Con lo acordado, la aplicación genera una orden de compra por cada proveedor adjudicado, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo. El emprendedor completa las condiciones de entrega y pago, y obtiene una página lista para imprimir o guardar como PDF; la envía él por su cuenta. *(Modificada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
+| RN-16 | Si el emprendedor lo ordena, la aplicación muestra en el panel de los proveedores no elegidos una nota de agradecimiento idéntica para todos, sin revelar precios ni resultados. *(Modificada el 21 nov 2026, ver [Historial de cambios](#historial-de-cambios).)* |
 
 ### E. Trazabilidad
 
@@ -202,3 +202,12 @@ Se define el enlace de invitación y qué se verifica del proveedor. No reemplaz
 Se define el canal de los avisos: solo el panel de la aplicación. No reemplaza texto anterior. RN-16 todavía menciona el mail; se resuelve en ES-11.
 
 - **RN-24** (nueva, en la nueva sección *F. Avisos*): "Todos los avisos de la licitación se muestran solo en el panel de la aplicación: invitaciones, rondas nuevas con su precio objetivo, pedidos de negociación, insumos sin ofertas y cierre con el cuadro comparativo listo. La aplicación no envía mails, WhatsApp ni SMS por estos avisos. El único mail es el de confirmación de cuenta al registrarse."
+
+### 21 de noviembre de 2026 — RN-15 y RN-16 (ES-11)
+
+La orden de compra y la nota de agradecimiento entran en la primera versión, adaptadas a que la aplicación no manda mails.
+
+- **RN-15, texto anterior:** "Con lo acordado, la aplicación puede generar una orden de compra por proveedor, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo."
+- **RN-15, texto nuevo:** "Con lo acordado, la aplicación genera una orden de compra por cada proveedor adjudicado, con ítems, cantidades, precio unitario, total, condiciones de entrega y pago, fecha y número correlativo. El emprendedor completa las condiciones de entrega y pago, y obtiene una página lista para imprimir o guardar como PDF; la envía él por su cuenta."
+- **RN-16, texto anterior:** "Si el emprendedor lo ordena, la aplicación envía a los proveedores no elegidos una nota de agradecimiento idéntica para todos, sin revelar precios ni resultados, y les avisa de próxima licitación cuando se publique por medio de mail. Puede existir consentimiento del proveedor y registro de la respuesta."
+- **RN-16, texto nuevo:** "Si el emprendedor lo ordena, la aplicación muestra en el panel de los proveedores no elegidos una nota de agradecimiento idéntica para todos, sin revelar precios ni resultados."

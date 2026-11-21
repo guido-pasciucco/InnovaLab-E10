@@ -86,3 +86,5 @@ El diagrama es del 13 de noviembre de 2026. Estas decisiones, registradas en [Es
 | ES-04 (21 nov 2026) | La nota *Temporizador* queda definida: el aviso llega al terminar la primera ronda sin ofertas, y la licitación puede cerrar desierta. |
 | ES-05 (21 nov 2026) | *Cotiza canasta o ítems* se hace siempre por ítem: la canasta solo agrupa insumos, y el proveedor puede cotizar solo algunos. |
 | ES-06 (21 nov 2026) | *Habilita datos del proveedor* significa avisarle al proveedor y pasarle el contacto del emprendedor. El emprendedor ya veía los datos del proveedor desde el inicio. |
+| ES-10 (21 nov 2026) | Los avisos a proveedores y al emprendedor se ven solo en el panel de la aplicación, sin mails. |
+| ES-11 (21 nov 2026) | Después de *Adjudica*, la aplicación arma una orden de compra por proveedor adjudicado y, si el emprendedor lo pide, muestra una nota de agradecimiento a los no elegidos. Ninguna de las dos está en el diagrama. |
