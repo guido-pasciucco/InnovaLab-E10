@@ -32,7 +32,7 @@ export async function acquireHelpLeaseService(
   const nowIso = now.toISOString();
 const windowStartedAtIso = windowStartedAt.toISOString();
 const activeUntilIso = activeUntil.toISOString();
-  
+
 const rows = await db.execute<LeaseRow>(sql`
   INSERT INTO help_usage (
     user_id, window_started_at, request_count, active_lease_id, active_until
@@ -68,7 +68,7 @@ const rows = await db.execute<LeaseRow>(sql`
 
 
   if (rows.length === 0) {
-    
+
 const state = await db.execute<{ rate_limited: boolean }>(sql`
   SELECT (
     window_started_at > ${windowStartedAtIso}::text::timestamptz
