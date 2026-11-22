@@ -30,9 +30,9 @@ test("signup, confirm the email through Mailpit, log in and reach flow 1 (catalo
 
   await loginPage.goto();
   await loginPage.logIn(user);
-  await expect(page).toHaveURL("/insumos");
+  await expect(page).toHaveURL("/inicio");
 
   // Assert
-  await expect(page.getByRole("heading", { name: "Insumos y packaging" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bienvenida" })).toBeVisible();
   await expect(page.getByRole("complementary").getByText(user.email)).toBeVisible();
 });

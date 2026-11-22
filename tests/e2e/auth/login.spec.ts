@@ -9,7 +9,7 @@ test("a confirmed user logs in and gets a session", async ({ page, user, loginPa
 
   // Assert: the form pushes to "/insumos", so the session cookie set by the
   // Server Action lets the protected page render.
-  await expect(page).toHaveURL("/insumos");
+  await expect(page).toHaveURL("/inicio");
 });
 
 test("wrong credentials show an error and keep the user on /login", async ({ page, user, loginPage }) => {

@@ -430,12 +430,12 @@ export async function listSupplierEmprendedoresService(
 export async function getHomePathService(
   userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
-): Promise<"/proveedor" | "/insumos"> {
+): Promise<"/proveedor" | "/inicio"> {
   const supplier = await getSupplierService(userId, db);
-  if (!supplier) return "/insumos";
+  if (!supplier) return "/inicio";
   const [[business], [supply]] = await Promise.all([
     db.select({ id: businesses.id }).from(businesses).where(eq(businesses.ownerUserId, userId)).limit(1),
     db.select({ id: supplies.id }).from(supplies).where(eq(supplies.userId, userId)).limit(1),
   ]);
-  return business || supply ? "/insumos" : "/proveedor";
+  return business || supply ? "/inicio" : "/proveedor";
 }

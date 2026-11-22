@@ -60,7 +60,7 @@ test("a user sets a new password from the reset email", async ({
   await loginPage.logIn({ email: user.email, password: newPassword });
   // The login form pushes to /insumos; reaching it proves the new password
   // works and the session cookie was set.
-  await expect(page).toHaveURL("/insumos");
+  await expect(page).toHaveURL("/inicio");
 });
 
 test("an unknown email gets the same neutral confirmation and no form", async ({
