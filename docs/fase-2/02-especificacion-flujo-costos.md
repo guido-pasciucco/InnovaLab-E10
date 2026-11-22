@@ -68,7 +68,7 @@ La página inicial/dashboard no fuerza un orden ni bloquea secciones: todas las 
 - La clasificación **compra por cantidad / por unidad** no se usa: la receta solo declara cantidad usada y su unidad, de la misma familia que el insumo (bloque 2).
 - **Borrado:** libre en el MVP (ninguna receta referencia insumos todavía); con recetas, se bloquea hasta quitar la referencia.
 
-> **Packaging:** el catálogo suma una pestaña Packaging (mismo CRUD/buscador, diferenciada por `kind`). El formulario implementado no coincide con los campos decididos (catálogo precargado de unidades, sin "unidad de compra"); la alineación está pedida en #260.
+> **Packaging:** el catálogo suma una pestaña Packaging (mismo CRUD/buscador, diferenciada por `kind`). El formulario de insumos ya usa el catálogo precargado de unidades, sin "unidad de compra" (#260, PR #263); el de packaging conserva los campos de unidad en texto libre.
 
 ---
 
