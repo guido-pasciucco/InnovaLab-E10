@@ -1,4 +1,4 @@
-import { HELP_THREAD_LIMIT, type HelpMessage } from "@/lib/schemas/help/help";
+import { HELP_VISIBLE_THREAD_LIMIT, type HelpMessage } from "@/lib/schemas/help/help";
 
 const STORAGE_KEY_PREFIX = "numora-ayuda";
 
@@ -20,7 +20,10 @@ export function readHelpThread(storage: Pick<Storage, "getItem">, userId: string
           (item.role === "user" || item.role === "assistant") &&
           typeof item.content === "string",
       )
-      .slice(-HELP_THREAD_LIMIT);
+      // Visible history, not model context: the whole session stays readable
+      // (see HELP_VISIBLE_THREAD_LIMIT). The API only ever receives the last
+      // HELP_THREAD_LIMIT messages, sliced at request time.
+      .slice(-HELP_VISIBLE_THREAD_LIMIT);
   } catch {
     return [];
   }
@@ -33,7 +36,7 @@ export function writeHelpThread(
 ): void {
   storage.setItem(
     helpThreadStorageKey(userId),
-    JSON.stringify(messages.slice(-HELP_THREAD_LIMIT)),
+    JSON.stringify(messages.slice(-HELP_VISIBLE_THREAD_LIMIT)),
   );
 }
 

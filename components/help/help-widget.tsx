@@ -2,12 +2,19 @@
 
 import { MessageCircle, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { HELP_THREAD_LIMIT, type HelpMessage } from "@/lib/schemas/help/help";
+import type { HelpMessage } from "@/lib/schemas/help/help";
 import {
   createHelpRequestGuard,
   readHelpThread,
   writeHelpThread,
 } from "@/lib/help/client-session";
+import {
+  appendAssistantTurn,
+  appendUserMessage,
+  toModelContext,
+  withAssistantSnapshot,
+} from "@/lib/help/thread";
+import { HelpMarkdown } from "./help-markdown";
 
 type HelpWidgetProps = {
   enabled: boolean;
@@ -17,6 +24,33 @@ type HelpWidgetProps = {
 export function HelpWidget({ enabled, userId }: HelpWidgetProps) {
   if (!enabled) return null;
   return <HelpWidgetSession key={userId ?? "signed-out"} userId={userId} />;
+}
+
+// One bubble of the conversation. User messages stay plain text; assistant
+// replies are rendered as safe Markdown (see help-markdown.tsx).
+export function HelpMessageItem({
+  message,
+  streaming,
+}: {
+  message: HelpMessage;
+  streaming: boolean;
+}) {
+  if (message.role === "user") {
+    return (
+      <p className="max-w-[85%] self-end rounded-2xl bg-action-primary px-3 py-2 text-sm text-on-action-primary">
+        {message.content}
+      </p>
+    );
+  }
+  return (
+    <div className="max-w-[85%] self-start rounded-2xl bg-surface-tint px-3 py-2 text-sm text-fg">
+      {message.content ? (
+        <HelpMarkdown content={message.content} />
+      ) : streaming ? (
+        <span>…</span>
+      ) : null}
+    </div>
+  );
 }
 
 function HelpWidgetSession({ userId }: Pick<HelpWidgetProps, "userId">) {
@@ -50,7 +84,9 @@ function HelpWidgetSession({ userId }: Pick<HelpWidgetProps, "userId">) {
     const content = draft.trim();
     if (!content || pending) return;
 
-    const next = [...messages, { role: "user" as const, content }].slice(-HELP_THREAD_LIMIT);
+    // Visible history keeps every message; only the last turn window travels
+    // to the API (HELP_THREAD_LIMIT), so older answers stay on screen.
+    const next = appendUserMessage(messages, content);
     setMessages(next);
     setDraft("");
     setError(null);
@@ -62,7 +98,7 @@ function HelpWidgetSession({ userId }: Pick<HelpWidgetProps, "userId">) {
       const response = await fetch("/api/help", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({ messages: toModelContext(next) }),
         signal: controller.signal,
       });
 
@@ -79,9 +115,7 @@ function HelpWidgetSession({ userId }: Pick<HelpWidgetProps, "userId">) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let answer = "";
-      setMessages((current) =>
-        [...current, { role: "assistant" as const, content: "" }].slice(-HELP_THREAD_LIMIT),
-      );
+      setMessages((current) => appendAssistantTurn(current));
 
       while (true) {
         const { done, value } = await reader.read();
@@ -92,13 +126,7 @@ function HelpWidgetSession({ userId }: Pick<HelpWidgetProps, "userId">) {
         }
         answer += decoder.decode(value, { stream: true });
         const snapshot = answer;
-        setMessages((current) => {
-          const updated = [...current];
-          const last = updated.at(-1);
-          if (last?.role !== "assistant") return current;
-          updated[updated.length - 1] = { role: "assistant", content: snapshot };
-          return updated;
-        });
+        setMessages((current) => withAssistantSnapshot(current, snapshot));
       }
     } catch (caught) {
       if (isCurrent() && !(caught instanceof DOMException && caught.name === "AbortError")) {
@@ -137,16 +165,11 @@ function HelpWidgetSession({ userId }: Pick<HelpWidgetProps, "userId">) {
               </p>
             ) : null}
             {messages.map((message, index) => (
-              <p
+              <HelpMessageItem
                 key={`${message.role}-${index}`}
-                className={
-                  message.role === "user"
-                    ? "max-w-[85%] self-end rounded-2xl bg-action-primary px-3 py-2 text-sm text-on-action-primary"
-                    : "max-w-[85%] self-start rounded-2xl bg-surface-tint px-3 py-2 text-sm text-fg"
-                }
-              >
-                {message.content || (pending ? "…" : "")}
-              </p>
+                message={message}
+                streaming={pending}
+              />
             ))}
             {error ? <p className="text-sm text-danger">{error}</p> : null}
           </div>

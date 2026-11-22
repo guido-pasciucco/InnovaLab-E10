@@ -1,8 +1,18 @@
 import { z } from "zod";
 import { helpMessageField } from "./fields";
 
+// The window of the thread sent to the model on each request. Older messages
+// stay visible in the chat but are no longer part of the API context.
 export const HELP_THREAD_LIMIT = 6;
 export const HELP_THREAD_CHARACTER_LIMIT = 6_000;
+
+// Visible history kept in the browser for the session. It is independent of
+// HELP_THREAD_LIMIT: the person keeps reading the whole conversation while
+// only the last turn window travels to the API. Documented roll-off: past
+// this limit the oldest messages leave the visible history (they are never
+// silently cut down to six). 100 messages of at most 2.000 characters fit
+// comfortably in sessionStorage.
+export const HELP_VISIBLE_THREAD_LIMIT = 100;
 
 // The visit thread. The last turn is the new question.
 export const helpRequestSchema = z
