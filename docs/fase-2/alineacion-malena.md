@@ -183,7 +183,7 @@ Con borrado lógico (D12), "dar de baja" significa marcar como borrado; la prote
 ## Diferencias menores
 
 - **Borrado lógico (D12) vs. eliminación con confirmación.** Malena habla de eliminación confirmada; la decisión de Alejandro permite recuperar lo borrado. Es una diferencia de comportamiento, no de presentación: conviene informarla para que la guía de Malena no prometa una eliminación definitiva.
-- **Unidad de compra vs. unidad de medida.** La ficha de catálogo de Malena todavía muestra "unidad de compra" y "costo por unidad mínima", mientras que el formulario ya pide cantidad + unidad de medida seleccionable y no solicita envases. La decisión de Alejandro coincide con el formulario. El número #260 sigue abierto por la implementación del formulario de insumos.
+- **Unidad de compra vs. unidad de medida.** La ficha de catálogo de Malena todavía muestra "unidad de compra" y "costo por unidad mínima", mientras que el formulario ya pide cantidad + unidad de medida seleccionable y no solicita envases. La decisión de Alejandro coincide con el formulario. La implementación del formulario de insumos quedó resuelta en #260 (PR #263).
 - **Orden del recorrido.** Malena presenta un recorrido secuencial (acceso → insumos → producto → presentaciones → capacidad → costos → resultados). Alejandro decidió en la especificación la navegación por destinos, sin pasos obligatorios. Conviene confirmar que el orden de Malena es una sugerencia de uso y no un bloqueo de pantallas.
 
 ## Lo que las decisiones de Alejandro ya resuelven

@@ -24,7 +24,7 @@ El catálogo de insumos del negocio: carga, consulta, edición y borrado de cada
 
 **Por qué (según Alejandro):** con la unidad fija y con equivalencias de familia, el sistema deriva el costo por unidad de medida una vez y todas las recetas lo comparten, con conversión automática dentro de la familia. La "unidad de compra" es redundante: el precio se asigna siempre a "la cantidad + unidad de medida" declaradas.
 
-**Estado:** decisión tomada por Alejandro; la implementación actual (formulario) todavía sigue el modelo de la guía de Malena (unidad de compra + texto libre). La alineación está pedida y abierta en **#260**. Si la guía de Malena sigue pidiendo "unidad de compra" como campo, conviene alinear la ficha con la decisión de Alejandro (cantidad + unidad de medida, selección).
+**Estado:** decisión tomada por Alejandro e **implementada** en #260 (PR #263): el formulario de insumos pide cantidad + unidad de medida desde un desplegable y deriva la unidad mínima y la equivalencia. El formulario de packaging conserva los campos en texto libre. La guía de Malena se conserva sin cambios como registro histórico de su versión (ver la nota al inicio de la guía).
 
 ## Diferencia 2 — La naturaleza de la pestaña Packaging
 
@@ -56,4 +56,4 @@ El catálogo de insumos del negocio: carga, consulta, edición y borrado de cada
 - Menú lateral y sus opciones, onboarding e Inicio/Configuraciones (alcance del menú en general; no del Bloque 1).
 - Presentaciones, costo variable por presentación y capacidad (Bloque 2).
 - Costos indirectos, precio y equilibrio (Bloque 3); tablero (Bloque 4).
-- Implementación pendiente #260 (alinear el formulario implementado con la decisión de Alejandro).
+- Alineación del formulario de packaging con el catálogo de unidades (depende de las presentaciones del Bloque 2).
