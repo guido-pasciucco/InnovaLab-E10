@@ -197,6 +197,13 @@
       "when": 1795370857208,
       "tag": "20261122180737_thick_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1795371630259,
+      "tag": "20261122182030_fine_patriot",
+      "breakpoints": true
     }
   ]
 }
