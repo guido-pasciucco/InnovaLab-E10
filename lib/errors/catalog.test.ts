@@ -56,6 +56,7 @@ describe("ERROR_CATALOG", () => {
     expect(ERROR_CATALOG.AUTH_EMAIL_TAKEN).toMatchObject({ status: 409 });
     expect(ERROR_CATALOG.AUTH_SIGNOUT_FAILED).toMatchObject({ status: 500 });
     expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 422 });
+    expect(ERROR_CATALOG.KNOWLEDGE_UNAVAILABLE).toMatchObject({ status: 503, logLevel: "error" });
   });
 
   it("exposes the product and supply-in-use codes", () => {
