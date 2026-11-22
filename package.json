@@ -18,7 +18,6 @@
     "db:push": "bunx drizzle-kit push",
     "db:migrate:local": "DIRECT_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bunx drizzle-kit migrate",
     "db:reset:local": "supabase db reset && bun run db:migrate:local",
-    "db:seed": "bun --conditions=react-server scripts/seed/costs.ts",
     "test": "vitest run --project unit",
     "test:int": "vitest run --project integration",
     "test:e2e": "playwright test",
@@ -30,7 +29,6 @@
     "deploy": "bun run deploy:migrate && bunx vercel --prod",
     "deploy:migrate": "bun --env-file=.env.deploy scripts/deploy/migrate.ts",
     "deploy:backfill-variable-costs": "bun --conditions=react-server scripts/deploy/backfill-variable-costs.ts",
-    "deploy:seed": "bun --env-file=.env.deploy --conditions=react-server scripts/seed/costs.ts --remote",
     "deploy:preview": "bunx vercel",
     "deploy:env": "bun scripts/deploy/env-sync.ts"
   },

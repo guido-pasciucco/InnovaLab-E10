@@ -29,7 +29,7 @@ export default async function AccountCreatedPage() {
       <div className="flex flex-col items-center gap-4">
         <CheckCircle aria-hidden="true" className="size-14 text-link" strokeWidth={1.5} />
         <Link
-          href="/paso-1"
+          href="/products"
           className="flex h-10 w-full items-center justify-center rounded-md bg-action-primary px-4 text-sm font-bold text-on-action-primary shadow-[0_4px_10px_rgba(37,213,73,0.35)] transition hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus lg:h-[44px] lg:text-base"
         >
           Ir a configuración inicial
