@@ -1,17 +1,18 @@
 import { requireUser } from "@/lib/auth/require-user";
 import { getProfileSummaryService } from "@/lib/services/profile";
-import { getUserDefaultBusiness } from "@/lib/services/supplies";
+import { getUserDefaultBusiness, listSuppliesService } from "@/lib/services/supplies";
+import { listPeriodCostsService } from "@/lib/services/business-cost";
 import { listProductsService } from "@/lib/services/products";
-import { listSuppliesService } from "@/lib/services/supplies";
 
 // P07 — Inicio / bienvenida del área privada (flujo 1).
 export default async function InicioPage() {
   const user = await requireUser();
-  const [profile, business, supplies, products] = await Promise.all([
+  const [profile, business, supplies, products, periodCosts] = await Promise.all([
     getProfileSummaryService(user.id),
     getUserDefaultBusiness(user.id),
     listSuppliesService(user.id),
     listProductsService(user.id),
+    listPeriodCostsService(user.id),
   ]);
 
   const userName = profile.displayName ?? user.email ?? "";
@@ -20,6 +21,9 @@ export default async function InicioPage() {
   const packagingCount = supplies.filter((s) => s.kind === "packaging").length;
   const productCount = products.length;
   const readyProducts = products.filter((p) => p.variableCosts !== null).length;
+  const pendingProducts = products.filter((p) => p.variableCosts === null).length;
+  const hasPeriodCosts = periodCosts.lines.length > 0;
+  const indirectTotal = periodCosts.total;
 
   return (
     <main className="min-h-[calc(100vh-4rem)] px-4 py-8 sm:px-6">
@@ -49,15 +53,15 @@ export default async function InicioPage() {
                 👋 Primeros pasos
               </p>
               <p className="mt-1 text-sm text-brand-green-700">
-                Te guiamos paso a paso: cargá tus insumos, armá tus productos y
-                obtené precios y resultados.
+                Te sugerimos empezar por cargar tus insumos y armar tus productos.
+                El recorrido es guiado y podés retomarlo cuando quieras.
               </p>
             </div>
             <a
               href="/insumos"
               className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
-              Empezar tutorial
+              Cargar insumos
             </a>
           </div>
         </section>
@@ -115,13 +119,23 @@ export default async function InicioPage() {
             </div>
             <div className="rounded-2xl bg-surface p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase text-fg-muted">Costos indirectos</p>
-              <p className="mt-2 text-3xl font-bold text-fg">—</p>
-              <p className="mt-1 text-xs text-fg-muted">cargalos en Costos</p>
+              <p className="mt-2 text-3xl font-bold text-fg">
+                {hasPeriodCosts ? `$ ${indirectTotal}` : "—"}
+              </p>
+              <p className="mt-1 text-xs text-fg-muted">
+                {hasPeriodCosts ? "del mes" : "cargalos en Costos"}
+              </p>
             </div>
             <div className="rounded-2xl bg-surface p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase text-fg-muted">Tablero</p>
-              <p className="mt-2 text-3xl font-bold text-fg">Pendiente</p>
-              <p className="mt-1 text-xs text-fg-muted">faltan resultados</p>
+              <p className="mt-2 text-3xl font-bold text-fg">
+                {productCount > 0 && readyProducts === productCount ? "Listo" : "Pendiente"}
+              </p>
+              <p className="mt-1 text-xs text-fg-muted">
+                {productCount > 0 && readyProducts === productCount
+                  ? "resultados disponibles"
+                  : "faltan datos"}
+              </p>
             </div>
           </div>
         </section>
@@ -130,30 +144,50 @@ export default async function InicioPage() {
         <section className="rounded-2xl bg-surface p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-fg">Tareas pendientes</h2>
           <ul className="mt-3 space-y-2 text-sm text-fg-muted">
-            <li className="flex items-center gap-2">
-              <span className="text-amber-500" aria-hidden="true">●</span>
-              Completar la receta y el rendimiento de los productos sin costo variable.
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-amber-500" aria-hidden="true">●</span>
-              Cargar los gastos indirectos del mes.
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-amber-500" aria-hidden="true">●</span>
-              Definir la capacidad mensual de cada producto.
-            </li>
+            {supplyCount === 0 && (
+              <li className="flex items-center gap-2">
+                <span className="text-amber-500" aria-hidden="true">●</span>
+                <a href="/insumos" className="text-brand-green-700 hover:underline">
+                  Cargar tus insumos y packaging
+                </a>
+              </li>
+            )}
+            {productCount === 0 && (
+              <li className="flex items-center gap-2">
+                <span className="text-amber-500" aria-hidden="true">●</span>
+                <a href="/products" className="text-brand-green-700 hover:underline">
+                  Crear tu primer producto y su receta
+                </a>
+              </li>
+            )}
+            {pendingProducts > 0 && (
+              <li className="flex items-center gap-2">
+                <span className="text-amber-500" aria-hidden="true">●</span>
+                <a href="/products" className="text-brand-green-700 hover:underline">
+                  Completar la receta y el rendimiento de {pendingProducts} producto
+                  {pendingProducts === 1 ? "" : "s"}
+                </a>
+              </li>
+            )}
+            {!hasPeriodCosts && productCount > 0 && (
+              <li className="flex items-center gap-2">
+                <span className="text-amber-500" aria-hidden="true">●</span>
+                <a href="/period-costs" className="text-brand-green-700 hover:underline">
+                  Cargar los gastos indirectos del mes
+                </a>
+              </li>
+            )}
+            {supplyCount > 0 && productCount > 0 && pendingProducts === 0 && hasPeriodCosts && (
+              <li className="flex items-center gap-2">
+                <span className="text-green-600" aria-hidden="true">●</span>
+                Todo listo para ver el tablero.
+              </li>
+            )}
           </ul>
         </section>
 
-        {/* Configuraciones / datos históricos (por definir) */}
-        <section className="rounded-2xl border border-dashed border-border-default p-4 text-sm text-fg-muted">
-          <p>
-            <strong className="text-fg">Configuraciones</strong> y{" "}
-            <strong className="text-fg">Datos históricos</strong> (alcance por
-            definir con el equipo): volver a ver el onboarding, ayuda, ajustes de
-            cuenta y consulta de cálculos de períodos anteriores.
-          </p>
-        </section>
+        {/* Configuraciones / datos históricos (por definir) — solo en dev */}
+        {/* (eliminado de la UI final; se coordina con UX/UI) */}
       </div>
     </main>
   );
