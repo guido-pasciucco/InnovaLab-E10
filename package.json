@@ -18,6 +18,7 @@
     "db:push": "bunx drizzle-kit push",
     "db:migrate:local": "DIRECT_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres bunx drizzle-kit migrate",
     "db:reset:local": "supabase db reset && bun run db:migrate:local",
+    "knowledge:ingest": "bun --conditions=react-server --env-file=.env.local scripts/knowledge/ingest.ts",
     "test": "vitest run --project unit",
     "test:int": "vitest run --project integration",
     "test:e2e": "playwright test",
@@ -33,10 +34,12 @@
     "deploy:env": "bun scripts/deploy/env-sync.ts"
   },
   "dependencies": {
+    "@ai-sdk/amazon-bedrock": "5.0.142",
     "@hookform/resolvers": "^5.9.1",
     "@react-pdf/renderer": "^4.9.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
+    "ai": "7.0.173",
     "decimal.js": "^10.6.0",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",

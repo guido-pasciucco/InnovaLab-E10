@@ -4,7 +4,7 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = process.cwd();
-const DROP_MIGRATION = "drizzle/20261122180737_thick_living_mummy.sql";
+const DROP_MIGRATION = "drizzle/20261123202736_drop_legacy_calculator_tables.sql";
 
 function sources(directory: string): string[] {
   return readdirSync(directory).flatMap((name) => {
@@ -38,14 +38,16 @@ describe("legacy calculator removal", () => {
     }
   });
 
-  it("appends the DROP migration to the journal without gaps", () => {
+  it("keeps the DROP migration in the journal without gaps", () => {
     const journal = JSON.parse(readFileSync(join(ROOT, "drizzle/meta/_journal.json"), "utf8"));
-    expect(journal.entries.at(-1)).toMatchObject({
-      tag: "20261122180737_thick_living_mummy",
-    });
     journal.entries.forEach((entry: { idx: number }, index: number) => {
       expect(entry.idx).toBe(index);
     });
+    const dropIndex = journal.entries.findIndex(
+      (entry: { tag: string }) => entry.tag === "20261123202736_drop_legacy_calculator_tables",
+    );
+    expect(dropIndex).toBeGreaterThanOrEqual(0);
+    expect(journal.entries[dropIndex]).toMatchObject({ idx: dropIndex });
   });
 
   it("leaves no /paso- links in app/ or components/", () => {
