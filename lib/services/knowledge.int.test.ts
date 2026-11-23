@@ -1,4 +1,4 @@
-import { eq, like } from "drizzle-orm";
+import { eq, like, sql } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { getDrizzleClient, type Db } from "@/lib/db/client";
@@ -77,6 +77,85 @@ describe("ingestKnowledgeDocumentsService", () => {
     expect(result.removed).toBe(2);
     expect(rows.map((row) => row.content)).toEqual(["Texto nuevo."]);
     expect(droppedRows).toHaveLength(0);
+  });
+
+  it("keeps the stored rows untouched when the embedder fails", async () => {
+    const stored = { sourcePath: `${prefix}a.md`, markdown: "# A\n\nTexto inicial.\n" };
+    await ingestKnowledgeDocumentsService([stored], async (values) => values.map(() => vector(0)), db);
+    const failing: EmbedTexts = async () => {
+      throw new Error("Bedrock no respondió");
+    };
+
+    const run = ingestKnowledgeDocumentsService(
+      [
+        { ...stored, markdown: "# A\n\nTexto cambiado.\n" },
+        { sourcePath: `${prefix}b.md`, markdown: "# B\n\nDocumento nuevo.\n" },
+      ],
+      failing,
+      db,
+      prefix,
+    );
+
+    await expect(run).rejects.toThrow("Bedrock no respondió");
+    const rows = await db
+      .select({ sourcePath: knowledgeChunks.sourcePath, content: knowledgeChunks.content })
+      .from(knowledgeChunks)
+      .where(like(knowledgeChunks.sourcePath, `${prefix}%`));
+    expect(rows).toEqual([{ sourcePath: stored.sourcePath, content: "Texto inicial." }]);
+  });
+
+  it("keeps no transaction open while the embedder waits for Bedrock", async () => {
+    let openTransactions = -1;
+    const embedTexts: EmbedTexts = async (values) => {
+      const [row] = await db.execute<{ n: number }>(sql`
+        select count(*)::int as n
+        from pg_stat_activity
+        where datname = current_database()
+          and state like 'idle in transaction%'
+          and query ilike '%knowledge_chunks%'
+      `);
+      openTransactions = row.n;
+      return values.map(() => vector(0));
+    };
+
+    await ingestKnowledgeDocumentsService(
+      [{ sourcePath: `${prefix}a.md`, markdown: "# A\n\nTexto.\n" }],
+      embedTexts,
+      db,
+    );
+
+    expect(openTransactions).toBe(0);
+  });
+
+  it("stores one row when a document repeats the same fragment", async () => {
+    const repeated = "# A\n\nMismo texto.\n\n# A\n\nMismo texto.\n";
+
+    const result = await ingestKnowledgeDocumentsService(
+      [{ sourcePath: `${prefix}a.md`, markdown: repeated }],
+      async (values) => values.map(() => vector(0)),
+      db,
+    );
+
+    expect(result.inserted).toBe(1);
+  });
+});
+
+describe("knowledge_chunks permissions", () => {
+  it.each(["anon", "authenticated"])("denies reading and writing as %s", async (role) => {
+    const asRole = (statement: ReturnType<typeof sql>) =>
+      db.transaction(async (tx) => {
+        await tx.execute(sql.raw(`set local role ${role}`));
+        await tx.execute(statement);
+      });
+
+    const read = asRole(sql`select count(*) from knowledge_chunks`);
+    const write = asRole(sql`
+      insert into knowledge_chunks (source_path, heading, content, content_hash, embedding)
+      values ('x', 'x', 'x', 'x', ${JSON.stringify(vector(0))}::vector)
+    `);
+
+    await expect(read).rejects.toMatchObject({ cause: { code: "42501" } });
+    await expect(write).rejects.toMatchObject({ cause: { code: "42501" } });
   });
 });
 

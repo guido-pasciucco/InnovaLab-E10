@@ -10,6 +10,9 @@ import { AppError } from "@/lib/errors/app-error";
 // the dimension stays 1024 because knowledge_chunks.embedding is vector(1024).
 export const DEFAULT_EMBEDDING_MODEL = "amazon.titan-embed-text-v2:0";
 const BEDROCK_REGION = "us-east-1";
+// Titan takes one text per request. Without a cap, embedMany sends every
+// request of a long document at once and Bedrock may throttle them.
+export const MAX_PARALLEL_EMBEDDING_CALLS = 5;
 
 export type EmbedTexts = (values: string[]) => Promise<number[][]>;
 
@@ -42,6 +45,7 @@ export function createBedrockEmbedder(
       // Titan accepts 256, 512 or 1024. The column is fixed at 1024.
       dimensions: KNOWLEDGE_EMBEDDING_DIMENSIONS,
       providerOptions: { bedrock: { normalize: true } },
+      maxParallelCalls: MAX_PARALLEL_EMBEDDING_CALLS,
       maxRetries: 2,
     });
     for (const embedding of embeddings) {
