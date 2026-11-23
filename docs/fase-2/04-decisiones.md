@@ -155,6 +155,18 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 - **Avisos:** con capacidad 0 o vacía se muestra el aviso de D9; con errores de renglón, los de D10.
 - **Alcance:** los estados vacíos y el contador del listado son detalle de implementación, no requieren decisión de negocio adicional; el listado ya muestra la capacidad cargada (D3).
 
+### Bloque 3 — Costos indirectos
+
+#### D15 — Gastos del período: catálogo, período, `notes` y duplicados (#285)
+
+- **Decisión (UI):** la pantalla usa el mismo patrón que Insumos y Productos — tabla de solo lectura, `+ Nuevo`, buscador por concepto, contador en el título y un único `CatalogModal` de alta/edición con concepto e importe del mes. El borrado pide confirmación. El total es reactivo en el cliente (`sumMoney`) y el servidor lo recalcula desde las filas guardadas. El menú a la izquierda no vive en la pantalla: lo aporta el layout de flujo 1, donde "Gastos del período" es un destino del sidebar.
+- **Decisión (período):** se mantiene el **mes actual de `America/Argentina/Buenos_Aires`** como período de la vista. El servicio ya acepta `period` para consultas futuras, pero **no se incluye selector de mes** en esta entrega: consultar otro mes requiere definir antes la regla de edición histórica (D7). Las filas quedan separadas por mes y el total nunca mezcla períodos.
+- **Decisión (`notes`):** la columna `business_cost_lines.notes` existe pero **no se expone** en servicios ni en UI. Se conserva sin uso para no migrar datos; si se necesita una nota, se decide su interfaz en otro issue.
+- **Decisión (duplicados):** se **permiten** dos líneas con el mismo concepto en un mes. No hay constraint único de `(business_id, period, concept)`. Cada línea se edita y se borra por separado y el total del mes es la suma de todas.
+- **Lo que NO hace esta pantalla:** no prorratea los indirectos entre productos (eso es **#244**, todavía en otra rama), no calcula precio ni equilibrio (#246), no es multi-negocio y no copia líneas al wizard legacy (`source_business_cost_id` es otro flujo). Es fija e indirecta por definición: el servidor fuerza `behavior=fixed` y `traceability=indirect`, y el cliente no puede enviar esas dimensiones.
+- **Tests:** `lib/services/business-cost.int.test.ts` cubre la edición atómica de concepto + importe, los duplicados, la separación por mes y el aislamiento por dueño; `tests/e2e/period-costs/period-costs.spec.ts` cubre el catálogo completo, incluida la confirmación de borrado y el sidebar.
+- **Capturas:** `docs/qa/issue-285-period-costs.png` (catálogo con el sidebar del flujo 1) y `docs/qa/issue-285-period-costs-modal.png` (modal único de alta/edición).
+
 ## Decisiones pendientes
 
 ### General
@@ -189,7 +201,10 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 
 ### Bloque 3 — Costos indirectos
 
-- Fórmulas de prorrateo y reparto (hereda ambigüedades de #246, #244: cuota, equilibrio en pesos, "importancia de cada gasto").
+- ~~Modelo de período de la vista Gastos del período~~ **Resuelto en #285 (D15):** mes actual de Argentina sin selector; el servicio ya acepta `period` para el futuro.
+- ~~Exponer `notes` en el catálogo~~ **Resuelto en #285 (D15):** se conserva la columna sin uso; no va en el formulario.
+- ~~Regla de duplicados de concepto en el mes~~ **Resuelto en #285 (D15):** se permiten; el total suma todas las líneas.
+- Fórmulas de prorrateo y reparto (hereda ambigüedades de #246, #244: cuota, equilibrio en pesos, "importancia de cada gasto"). Sigue **abierto** y fuera de #285: el reparto vive en #244.
 - La planilla #250 es el oráculo para validar las fórmulas; sin ella no hay cómo verificar.
 
 ### Bloque 4 — Tablero

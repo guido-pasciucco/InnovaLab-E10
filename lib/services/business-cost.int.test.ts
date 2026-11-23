@@ -15,8 +15,7 @@ import {
   addPeriodCostLineService,
   listPeriodCostsService,
   removePeriodCostLineService,
-  updatePeriodCostLineAmountService,
-  updatePeriodCostLineConceptService,
+  updatePeriodCostLineService,
 } from "./business-cost";
 
 // Integration tests against the local Supabase stack. One pool per file.
@@ -162,34 +161,35 @@ describe("addPeriodCostLineService", () => {
       ),
     ).rejects.toBeInstanceOf(ZodError);
   });
-});
 
-describe("updatePeriodCostLineAmountService", () => {
-  it("updates the amount without changing the concept", async () => {
+  // Decision #285: there is no unique constraint on
+  // (business_id, period, concept). Two lines with the same concept are two
+  // independent expenses; each can be edited or deleted on its own.
+  it("allows two lines with the same concept and sums both into the total", async () => {
     const userId = await makeUser();
-    const created = await addPeriodCostLineService(
+    await addPeriodCostLineService(
       userId,
-      { period: PERIOD, concept: "Alquiler del taller", amountPeriod: "150000.00" },
+      { period: PERIOD, concept: "Alquiler", amountPeriod: "100000.00" },
+      db,
+    );
+    await addPeriodCostLineService(
+      userId,
+      { period: PERIOD, concept: "Alquiler", amountPeriod: "50000.00" },
       db,
     );
 
-    const updated = await updatePeriodCostLineAmountService(
-      userId,
-      created.id,
-      { amountPeriod: "165000.00" },
-      db,
-    );
+    const result = await listPeriodCostsService(userId, { period: PERIOD }, db);
 
-    expect(updated).toMatchObject({
-      id: created.id,
-      concept: "Alquiler del taller",
-      amountPeriod: "165000.00",
-    });
+    expect(result.lines.map((line) => line.concept)).toEqual([
+      "Alquiler",
+      "Alquiler",
+    ]);
+    expect(result.total).toBe("150000.00");
   });
 });
 
-describe("updatePeriodCostLineConceptService", () => {
-  it("updates the concept without changing the amount", async () => {
+describe("updatePeriodCostLineService", () => {
+  it("updates the concept and the amount of the same line in one call", async () => {
     const userId = await makeUser();
     const created = await addPeriodCostLineService(
       userId,
@@ -197,18 +197,39 @@ describe("updatePeriodCostLineConceptService", () => {
       db,
     );
 
-    const updated = await updatePeriodCostLineConceptService(
+    const updated = await updatePeriodCostLineService(
       userId,
       created.id,
-      { concept: "Alquiler del local" },
+      { concept: "Alquiler del local", amountPeriod: "165000.50" },
       db,
     );
 
     expect(updated).toMatchObject({
       id: created.id,
       concept: "Alquiler del local",
-      amountPeriod: "150000.00",
+      amountPeriod: "165000.50",
     });
+    const listed = await listPeriodCostsService(userId, { period: PERIOD }, db);
+    expect(listed.lines).toHaveLength(1);
+    expect(listed.total).toBe("165000.50");
+  });
+
+  it("rejects VALIDATION when either field of the pair is invalid", async () => {
+    const userId = await makeUser();
+    const created = await addPeriodCostLineService(
+      userId,
+      { period: PERIOD, concept: "Alquiler", amountPeriod: "150000.00" },
+      db,
+    );
+
+    await expect(
+      updatePeriodCostLineService(
+        userId,
+        created.id,
+        { concept: "Alquiler", amountPeriod: "-1" },
+        db,
+      ),
+    ).rejects.toBeInstanceOf(ZodError);
   });
 });
 
@@ -254,7 +275,12 @@ describe("owner scoping", () => {
 
     expect(listB.lines.map((line) => line.concept)).toEqual(["Alquiler de B"]);
     await expect(
-      updatePeriodCostLineAmountService(userB, lineA.id, { amountPeriod: "1.00" }, db),
+      updatePeriodCostLineService(
+        userB,
+        lineA.id,
+        { concept: "Robado", amountPeriod: "1.00" },
+        db,
+      ),
     ).rejects.toMatchObject({ code: "COST_CATALOG_LINE_NOT_FOUND" });
     await expect(removePeriodCostLineService(userB, lineA.id, db)).rejects.toMatchObject({
       code: "COST_CATALOG_LINE_NOT_FOUND",
