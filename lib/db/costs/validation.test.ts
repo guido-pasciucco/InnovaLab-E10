@@ -5,8 +5,6 @@ import {
   addPeriodCostLineInputSchema,
   createBusinessCostLineInputSchema,
   listPeriodCostsOptionsSchema,
-  updatePeriodCostLineAmountInputSchema,
-  updatePeriodCostLineConceptInputSchema,
   updatePeriodCostLineInputSchema,
 } from "./validation";
 import { periodCostLineSchema } from "@/lib/schemas/costs/period-costs";
@@ -182,22 +180,6 @@ describe("listPeriodCostsOptionsSchema", () => {
     expect(
       fieldErrors(listPeriodCostsOptionsSchema, { period: "2026-13" }),
     ).toEqual({ period: ["El período debe tener el formato AAAA-MM."] });
-  });
-});
-
-describe("updatePeriodCostLineAmountInputSchema", () => {
-  it("reports the amount message", () => {
-    expect(
-      fieldErrors(updatePeriodCostLineAmountInputSchema, { amountPeriod: "" }),
-    ).toEqual({ amountPeriod: ["El importe es obligatorio."] });
-  });
-});
-
-describe("updatePeriodCostLineConceptInputSchema", () => {
-  it("reports the concept message", () => {
-    expect(
-      fieldErrors(updatePeriodCostLineConceptInputSchema, { concept: "" }),
-    ).toEqual({ concept: ["Escribí el concepto del costo."] });
   });
 });
 

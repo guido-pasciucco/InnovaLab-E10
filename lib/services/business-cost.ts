@@ -9,8 +9,6 @@ import { businessCostLines, type BusinessCostLine } from "@/lib/db/costs/table";
 import {
   addPeriodCostLineInputSchema,
   listPeriodCostsOptionsSchema,
-  updatePeriodCostLineAmountInputSchema,
-  updatePeriodCostLineConceptInputSchema,
   updatePeriodCostLineInputSchema,
   type ListPeriodCostsOptions,
 } from "@/lib/db/costs/validation";
@@ -166,62 +164,6 @@ export async function addPeriodCostLineService(
 
     return created;
   });
-}
-
-export async function updatePeriodCostLineAmountService(
-  userId: VerifiedUserId,
-  lineId: string,
-  input: unknown,
-  db: Db = getDrizzleClient(),
-): Promise<BusinessCostLine> {
-  const { amountPeriod } = updatePeriodCostLineAmountInputSchema.parse(input);
-  const id = requirePeriodCostLineId(lineId);
-  const businessId = await requireBusinessId(userId, db);
-
-  const [updated] = await db
-    .update(businessCostLines)
-    .set({ amountPeriod })
-    .where(
-      and(
-        eq(businessCostLines.id, id),
-        eq(businessCostLines.businessId, businessId),
-      ),
-    )
-    .returning();
-
-  if (!updated) {
-    throw new AppError("COST_CATALOG_LINE_NOT_FOUND");
-  }
-
-  return updated;
-}
-
-export async function updatePeriodCostLineConceptService(
-  userId: VerifiedUserId,
-  lineId: string,
-  input: unknown,
-  db: Db = getDrizzleClient(),
-): Promise<BusinessCostLine> {
-  const { concept } = updatePeriodCostLineConceptInputSchema.parse(input);
-  const id = requirePeriodCostLineId(lineId);
-  const businessId = await requireBusinessId(userId, db);
-
-  const [updated] = await db
-    .update(businessCostLines)
-    .set({ concept })
-    .where(
-      and(
-        eq(businessCostLines.id, id),
-        eq(businessCostLines.businessId, businessId),
-      ),
-    )
-    .returning();
-
-  if (!updated) {
-    throw new AppError("COST_CATALOG_LINE_NOT_FOUND");
-  }
-
-  return updated;
 }
 
 // Used by the catalog modal: the concept and the amount are saved in one

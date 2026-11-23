@@ -15,8 +15,6 @@ import {
   addPeriodCostLineService,
   listPeriodCostsService,
   removePeriodCostLineService,
-  updatePeriodCostLineAmountService,
-  updatePeriodCostLineConceptService,
   updatePeriodCostLineService,
 } from "./business-cost";
 
@@ -190,54 +188,6 @@ describe("addPeriodCostLineService", () => {
   });
 });
 
-describe("updatePeriodCostLineAmountService", () => {
-  it("updates the amount without changing the concept", async () => {
-    const userId = await makeUser();
-    const created = await addPeriodCostLineService(
-      userId,
-      { period: PERIOD, concept: "Alquiler del taller", amountPeriod: "150000.00" },
-      db,
-    );
-
-    const updated = await updatePeriodCostLineAmountService(
-      userId,
-      created.id,
-      { amountPeriod: "165000.00" },
-      db,
-    );
-
-    expect(updated).toMatchObject({
-      id: created.id,
-      concept: "Alquiler del taller",
-      amountPeriod: "165000.00",
-    });
-  });
-});
-
-describe("updatePeriodCostLineConceptService", () => {
-  it("updates the concept without changing the amount", async () => {
-    const userId = await makeUser();
-    const created = await addPeriodCostLineService(
-      userId,
-      { period: PERIOD, concept: "Alquiler del taller", amountPeriod: "150000.00" },
-      db,
-    );
-
-    const updated = await updatePeriodCostLineConceptService(
-      userId,
-      created.id,
-      { concept: "Alquiler del local" },
-      db,
-    );
-
-    expect(updated).toMatchObject({
-      id: created.id,
-      concept: "Alquiler del local",
-      amountPeriod: "150000.00",
-    });
-  });
-});
-
 describe("updatePeriodCostLineService", () => {
   it("updates the concept and the amount of the same line in one call", async () => {
     const userId = await makeUser();
@@ -324,9 +274,6 @@ describe("owner scoping", () => {
     const listB = await listPeriodCostsService(userB, { period: PERIOD }, db);
 
     expect(listB.lines.map((line) => line.concept)).toEqual(["Alquiler de B"]);
-    await expect(
-      updatePeriodCostLineAmountService(userB, lineA.id, { amountPeriod: "1.00" }, db),
-    ).rejects.toMatchObject({ code: "COST_CATALOG_LINE_NOT_FOUND" });
     await expect(
       updatePeriodCostLineService(
         userB,
