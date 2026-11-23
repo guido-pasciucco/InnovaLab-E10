@@ -78,6 +78,14 @@ export const updatePeriodCostLineConceptInputSchema = z.object({
   concept: conceptField,
 });
 
+// The catalog modal edits concept and amount together. One validated pair
+// keeps the save atomic: two sequential patches could leave a half-saved line
+// if the second one failed. It uses the same field rules as the create input.
+export const updatePeriodCostLineInputSchema = z.object({
+  concept: conceptField,
+  amountPeriod: amountField,
+});
+
 export const createCalcCostLineInputSchema = createInsertSchema(calcCostLines, {
   scenarioId: uuidString.nullish(),
   sourceBusinessCostId: uuidString.nullish(),
@@ -156,6 +164,9 @@ export type UpdatePeriodCostLineAmountInput = z.infer<
 >;
 export type UpdatePeriodCostLineConceptInput = z.infer<
   typeof updatePeriodCostLineConceptInputSchema
+>;
+export type UpdatePeriodCostLineInput = z.infer<
+  typeof updatePeriodCostLineInputSchema
 >;
 export type CreateCalcCostLineInput = z.infer<typeof createCalcCostLineInputSchema>;
 export type AddCalcCostLineInput = z.infer<typeof addCalcCostLineInputSchema>;

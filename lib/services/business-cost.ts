@@ -11,6 +11,7 @@ import {
   listPeriodCostsOptionsSchema,
   updatePeriodCostLineAmountInputSchema,
   updatePeriodCostLineConceptInputSchema,
+  updatePeriodCostLineInputSchema,
   type ListPeriodCostsOptions,
 } from "@/lib/db/costs/validation";
 import { uuidString } from "@/lib/db/formats";
@@ -30,6 +31,13 @@ import { getOrCreateDefaultBusiness } from "./calculations";
 //
 // The story does not include prorating these expenses between products (#244)
 // nor the selling price, so this service only stores and reads the period set.
+//
+// Scope decisions closed with #285 (see docs/fase-2/04-decisiones.md):
+// - Period: the screen shows the current month in Argentina. `period` stays an
+//   option of the read/add services for future queries, but no selector ships.
+// - `notes`: the column exists but is not part of the catalog; it stays unused.
+// - Duplicates: two lines with the same concept are allowed, each one is
+//   editable and the month's total is the sum of all of them.
 
 const ARGENTINA_TIME_ZONE = "America/Argentina/Buenos_Aires";
 
@@ -201,6 +209,37 @@ export async function updatePeriodCostLineConceptService(
   const [updated] = await db
     .update(businessCostLines)
     .set({ concept })
+    .where(
+      and(
+        eq(businessCostLines.id, id),
+        eq(businessCostLines.businessId, businessId),
+      ),
+    )
+    .returning();
+
+  if (!updated) {
+    throw new AppError("COST_CATALOG_LINE_NOT_FOUND");
+  }
+
+  return updated;
+}
+
+// Used by the catalog modal: the concept and the amount are saved in one
+// UPDATE so the row can never end up with a new concept and an old amount (or
+// the other way around) when a request fails halfway.
+export async function updatePeriodCostLineService(
+  userId: VerifiedUserId,
+  lineId: string,
+  input: unknown,
+  db: Db = getDrizzleClient(),
+): Promise<BusinessCostLine> {
+  const { concept, amountPeriod } = updatePeriodCostLineInputSchema.parse(input);
+  const id = requirePeriodCostLineId(lineId);
+  const businessId = await requireBusinessId(userId, db);
+
+  const [updated] = await db
+    .update(businessCostLines)
+    .set({ concept, amountPeriod })
     .where(
       and(
         eq(businessCostLines.id, id),
