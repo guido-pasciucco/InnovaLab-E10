@@ -3,6 +3,7 @@ import { getProfileSummaryService } from "@/lib/services/profile";
 import { getUserDefaultBusiness, listSuppliesService } from "@/lib/services/supplies";
 import { listPeriodCostsService } from "@/lib/services/business-cost";
 import { listProductsService } from "@/lib/services/products";
+import { moneyFormat } from "@/components/supplies/format";
 
 // P07 — Inicio / bienvenida del área privada (flujo 1).
 export default async function InicioPage() {
@@ -54,7 +55,6 @@ export default async function InicioPage() {
               </p>
               <p className="mt-1 text-sm text-brand-green-700">
                 Te sugerimos empezar por cargar tus insumos y armar tus productos.
-                El recorrido es guiado y podés retomarlo cuando quieras.
               </p>
             </div>
             <a
@@ -120,7 +120,7 @@ export default async function InicioPage() {
             <div className="rounded-2xl bg-surface p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase text-fg-muted">Costos indirectos</p>
               <p className="mt-2 text-3xl font-bold text-fg">
-                {hasPeriodCosts ? `$ ${indirectTotal}` : "—"}
+                {hasPeriodCosts ? moneyFormat.format(Number(indirectTotal)) : "—"}
               </p>
               <p className="mt-1 text-xs text-fg-muted">
                 {hasPeriodCosts ? "del mes" : "cargalos en Costos"}
@@ -129,11 +129,13 @@ export default async function InicioPage() {
             <div className="rounded-2xl bg-surface p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase text-fg-muted">Tablero</p>
               <p className="mt-2 text-3xl font-bold text-fg">
-                {productCount > 0 && readyProducts === productCount ? "Listo" : "Pendiente"}
+                {productCount > 0 && readyProducts === productCount
+                  ? "En progreso"
+                  : "Pendiente"}
               </p>
               <p className="mt-1 text-xs text-fg-muted">
                 {productCount > 0 && readyProducts === productCount
-                  ? "resultados disponibles"
+                  ? "costo variable listo, faltan resultados"
                   : "faltan datos"}
               </p>
             </div>
