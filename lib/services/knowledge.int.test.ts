@@ -148,14 +148,18 @@ describe("knowledge_chunks permissions", () => {
         await tx.execute(statement);
       });
 
-    const read = asRole(sql`select count(*) from knowledge_chunks`);
-    const write = asRole(sql`
-      insert into knowledge_chunks (source_path, heading, content, content_hash, embedding)
-      values ('x', 'x', 'x', 'x', ${JSON.stringify(vector(0))}::vector)
-    `);
-
-    await expect(read).rejects.toMatchObject({ cause: { code: "42501" } });
-    await expect(write).rejects.toMatchObject({ cause: { code: "42501" } });
+    // Each statement is started only when its rejection assertion is attached:
+    // starting both up front leaves the second promise without a handler while
+    // the first is awaited, and an early rejection becomes an unhandled rejection.
+    await expect(asRole(sql`select count(*) from knowledge_chunks`)).rejects.toMatchObject({
+      cause: { code: "42501" },
+    });
+    await expect(
+      asRole(sql`
+        insert into knowledge_chunks (source_path, heading, content, content_hash, embedding)
+        values ('x', 'x', 'x', 'x', ${JSON.stringify(vector(0))}::vector)
+      `),
+    ).rejects.toMatchObject({ cause: { code: "42501" } });
   });
 });
 
