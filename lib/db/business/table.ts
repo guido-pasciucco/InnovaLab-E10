@@ -194,9 +194,14 @@ export const presentations = pgTable("presentations", {
 
 // One row per packaging item used by a presentation (box + label + tape).
 // The FK to `supplies` deliberately uses NO ACTION, mirroring
-// `product_ingredients`: a packaging row still referenced by a live
-// presentation cannot be deleted. The service returns the friendly
-// SUPPLY_IN_USE code and this constraint is the last line of defense.
+// `product_ingredients`: a packaging row still referenced by a presentation
+// cannot be deleted. Drizzle cannot model DEFERRABLE, so the custom migration
+// 20261123222357_presentation_packaging_fk_deferrable.sql adds it: the check
+// waits for commit, letting a profile/business cascade remove the presentation
+// packaging and the supply in one transaction (account deletion) while a
+// direct supply DELETE still fails. The supplies service does not check this
+// reference yet: until the presentations service adds a friendly
+// SUPPLY_IN_USE, this constraint is the only guard.
 export const presentationPackaging = pgTable("presentation_packaging", {
   id: uuid("id").defaultRandom().primaryKey(),
   presentationId: uuid("presentation_id")
