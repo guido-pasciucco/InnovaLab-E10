@@ -1,24 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getHomePathService } from "@/lib/services/suppliers";
-import { CalculationList, NewCalculationButton } from "@/components/dashboard/calculation-list";
-import { TOTAL_STEPS } from "@/components/calculator/wizard/wizard-steps";
+
 import { requireUser } from "@/lib/auth/require-user";
-import { listUserCalculationsService } from "@/lib/services/calculations";
 import { getProfileSummaryService } from "@/lib/services/profile";
+import { getHomePathService } from "@/lib/services/suppliers";
 import LogoutButton from "./logout-button";
-
-const dateFormat = new Intl.DateTimeFormat("es-AR", { dateStyle: "medium" });
-
-function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="rounded-3xl bg-surface p-5 shadow-sm">
-      <p className="text-xs font-semibold tracking-wide text-fg-muted uppercase">{label}</p>
-      <p className="mt-3 text-3xl font-bold text-fg">{value}</p>
-      {hint && <p className="mt-2 text-sm text-fg-muted">{hint}</p>}
-    </div>
-  );
-}
 
 // Protected page: the session is validated server-side (requireUser) and every
 // piece of data below is read from the DB, filtered by the session user id.
@@ -27,13 +13,7 @@ export default async function DashboardPage() {
   // A supplier account without a business of its own belongs in the supplier
   // panel (docs/licitaciones, annex 03), not in the emprendedor dashboard.
   if ((await getHomePathService(user.id)) === "/proveedor") redirect("/proveedor");
-  const [profile, calculations] = await Promise.all([
-    getProfileSummaryService(user.id),
-    listUserCalculationsService(user.id),
-  ]);
-
-  const furthest = calculations.reduce((max, c) => Math.max(max, c.currentStep), 0);
-  const latest = calculations[0];
+  const profile = await getProfileSummaryService(user.id);
   const initial = (profile.displayName ?? user.email ?? "?").charAt(0).toUpperCase();
 
   return (
@@ -43,7 +23,7 @@ export default async function DashboardPage() {
           <div>
             <h1 className="text-3xl font-bold text-fg sm:text-4xl">Dashboard</h1>
             <p className="mt-2 max-w-xl text-base text-fg-muted">
-              Retomá tus cálculos donde los dejaste o empezá uno nuevo.
+              Administrá tus insumos, productos y gastos del negocio.
             </p>
           </div>
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
@@ -54,12 +34,11 @@ export default async function DashboardPage() {
               Volver al inicio
             </Link>
             <Link
-              href="/period-costs"
-              className="inline-flex min-h-11 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              href="/products"
+              className="inline-flex min-h-11 items-center justify-center rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
-              Gastos del período
+              Mis productos
             </Link>
-            <NewCalculationButton />
           </div>
         </header>
 
@@ -92,33 +71,21 @@ export default async function DashboardPage() {
           <LogoutButton />
         </section>
 
-        <section aria-label="Resumen" className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            label="Total de cálculos"
-            value={String(calculations.length)}
-            hint="Guardados en tu cuenta"
-          />
-          <StatCard
-            label="Avance más alto"
-            value={furthest > 0 ? `Paso ${furthest} de ${TOTAL_STEPS}` : "—"}
-            hint={furthest > 0 ? "Entre todos tus cálculos" : "Todavía sin cálculos"}
-          />
-          <div className="rounded-3xl bg-action-primary-pressed p-5 text-white shadow-sm">
-            <p className="text-xs font-semibold tracking-wide uppercase opacity-80">
-              Último cálculo
-            </p>
-            <p className="mt-3 truncate text-2xl font-bold">
-              {latest ? latest.productName : "—"}
-            </p>
-            <p className="mt-2 text-sm opacity-80">
-              {latest ? `Actualizado ${dateFormat.format(latest.updatedAt)}` : "Empezá uno nuevo"}
-            </p>
-          </div>
-        </section>
-
-        <section aria-label="Mis cálculos">
-          <h2 className="mb-3 text-lg font-semibold text-fg">Mis cálculos</h2>
-          <CalculationList items={calculations} />
+        <section aria-label="Accesos" className="grid gap-4 sm:grid-cols-3">
+          {[
+            { href: "/insumos", label: "Insumos", hint: "Catálogo de compras y packaging" },
+            { href: "/products", label: "Productos", hint: "Recetas y presentaciones" },
+            { href: "/period-costs", label: "Gastos del período", hint: "Costos fijos del mes" },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-3xl bg-surface p-5 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <p className="text-lg font-semibold text-fg">{item.label}</p>
+              <p className="mt-2 text-sm text-fg-muted">{item.hint}</p>
+            </Link>
+          ))}
         </section>
       </div>
     </main>

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { FlowSwitcher } from "@/components/flow-switcher";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -73,8 +72,6 @@ export default function RootLayout({
 
         {/* Wrapper presentacional para evitar duplicar <main> */}
         <div className="relative z-10 flex flex-col min-h-full flex-1">
-          {/* TEMPORARY: flow 1 / flow 2 switcher, remove with flow 2. */}
-          <FlowSwitcher />
           {children}
         </div>
       </body>
