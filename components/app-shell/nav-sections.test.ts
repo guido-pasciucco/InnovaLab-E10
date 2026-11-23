@@ -10,6 +10,16 @@ describe("NAV_SECTIONS", () => {
       expect.objectContaining({ href: "/period-costs", label: "Gastos del período" }),
     );
   });
+
+  it("lists the total cost per product after the period costs", () => {
+    const catalog = NAV_SECTIONS.find((section) => section.id === "catalogo");
+    const hrefs = catalog?.items.map((item) => item.href);
+
+    expect(catalog?.items).toContainEqual(
+      expect.objectContaining({ href: "/total-costs", label: "Costo total" }),
+    );
+    expect(hrefs?.indexOf("/total-costs")).toBeGreaterThan(hrefs?.indexOf("/period-costs") ?? Infinity);
+  });
 });
 
 describe("sectionFromPathname", () => {
@@ -17,6 +27,7 @@ describe("sectionFromPathname", () => {
     { path: "/insumos", section: "catalogo" },
     { path: "/products", section: "catalogo" },
     { path: "/period-costs", section: "catalogo" },
+    { path: "/total-costs", section: "catalogo" },
     { path: "/licitaciones", section: "licitaciones" },
     { path: "/proveedores", section: "licitaciones" },
   ])("selects the $section section for $path", ({ path, section }) => {

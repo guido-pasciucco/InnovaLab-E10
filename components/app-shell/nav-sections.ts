@@ -1,4 +1,4 @@
-import { Gavel, Package, ShoppingBasket, Truck, Wallet, type LucideIcon } from "lucide-react";
+import { Calculator, Gavel, Package, ShoppingBasket, Truck, Wallet, type LucideIcon } from "lucide-react";
 
 // Flow 1 navigation: the navbar switches between sections and the sidebar
 // lists the pages of the current section.
@@ -15,6 +15,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
       { href: "/insumos", label: "Insumos", icon: ShoppingBasket },
       { href: "/products", label: "Productos", icon: Package },
       { href: "/period-costs", label: "Gastos del período", icon: Wallet },
+      { href: "/total-costs", label: "Costo total", icon: Calculator },
     ],
   },
   {
