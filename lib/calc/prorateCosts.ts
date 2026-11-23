@@ -3,20 +3,18 @@ import Decimal from "decimal.js";
 // Pure prorrateo of the period indirect costs over the catalog products
 // (issue #244). The period lines are the indirect costs of the month (rental,
 // services, and so on); the products carry the monthly capacity that absorbs
-// them and their variable unit cost, which comes from the recipe and excludes
-// the indirects.
+// them and, when it is available, their variable unit cost, which comes from
+// the recipe and excludes the indirects.
 //
 // The prorrateo is the simple capacity-based one agreed in the phase-2 flow
-// docs: every cost is spread by the participation of each product (its
-// capacity over the sum of the capacities) and the indirect cost per unit is
-// the period total over that sum:
+// docs and confirmed by the DATA spreadsheet (#250): the participation of a
+// product is its capacity over the sum of the capacities, and the indirect
+// cost per unit is the period total over that sum:
 //
-//   assigned_i = Σ amount_L × capacity_i / Σ capacity_j
+//   share_i    = capacity_i / Σ capacity_j
+//   assigned_i = Σ amount_L × share_i
 //   indirect_i = assigned_i / capacity_i = Σ amount_L / Σ capacity_j
 //   unit_i     = variableUnit_i + indirect_i        (#244: costo total unitario)
-//
-// For a single product the spread over lines collapses to the period total, so
-// the engine returns the same unit cost the cost totals compute for one volume.
 //
 // Money stays a Decimal until it leaves the function. Each returned amount is
 // rounded once, from full precision, with ROUND_HALF_UP to 2 decimals. Rounding
@@ -25,12 +23,13 @@ import Decimal from "decimal.js";
 
 const FINAL_MONEY_DECIMALS = 2;
 const FINAL_MONEY_ROUNDING = Decimal.ROUND_HALF_UP;
+const SHARE_DECIMALS = 4;
 
 export type MoneyString = string;
 
 export type ProrationCostLine = {
   id: string;
-  // Indirect period cost of one line (alquiler, servicio, ...).
+  // Indirect period cost of one line (alquiler, servicio, ...). Never negative.
   amount: string;
 };
 
@@ -40,20 +39,26 @@ export type ProrationProduct = {
   // integer: a product that is not going to be produced cannot absorb an
   // indirect cost this month.
   capacity: number;
-  // Variable unit cost of the product recipe, indirects excluded.
-  variableUnit: string;
+  // Variable unit cost of the product recipe, indirects excluded. `null` when
+  // the recipe cannot be costed yet: the product still absorbs its indirect
+  // share, but it has no total unit cost (never a misleading 0).
+  variableUnit: string | null;
 };
 
 export type ProratedCost = {
   productId: string;
   capacity: number;
-  variableUnit: string;
+  // Participation of the product: capacity over the sum of capacities, as a
+  // ratio with 4 decimals ("0.9000" is 90 %). Display only.
+  share: string;
+  variableUnit: MoneyString | null;
   // Portion of the period indirect costs that one unit of the product absorbs.
-  indirectUnit: string;
+  indirectUnit: MoneyString;
   // Total unit cost: variable + indirect. The #244 "costo total unitario".
-  unitCost: string;
-  // Indirect cost absorbed by the product for the period: assigned / capacity.
-  fixedShare: string;
+  // `null` when the variable cost is not available.
+  unitCost: MoneyString | null;
+  // Indirect cost absorbed by the product for the whole period.
+  fixedShare: MoneyString;
 };
 
 export type ProrationErrorCode = "INVALID_AMOUNT" | "INVALID_CAPACITY" | "NO_CAPACITY";
@@ -62,10 +67,10 @@ export type ProrationResult =
   | { ok: true; costs: readonly ProratedCost[] }
   | { ok: false; code: ProrationErrorCode };
 
-function parseDecimal(raw: string): Decimal | undefined {
+function parseNonNegative(raw: string): Decimal | undefined {
   try {
     const value = new Decimal(raw);
-    return value.isFinite() ? value : undefined;
+    return value.isFinite() && !value.isNegative() ? value : undefined;
   } catch {
     return undefined;
   }
@@ -81,7 +86,8 @@ function asMoney(value: Decimal): MoneyString {
  *
  * - Sin productos no hay con qué prorratear: `NO_CAPACITY`.
  * - La capacidad debe ser un entero positivo: `INVALID_CAPACITY`.
- * - Los importes deben ser montos válidos: `INVALID_AMOUNT`.
+ * - Los importes (gastos y costo variable) deben ser montos no negativos:
+ *   `INVALID_AMOUNT`.
  */
 export function calculateProration(input: {
   lines: readonly ProrationCostLine[];
@@ -91,43 +97,47 @@ export function calculateProration(input: {
     return { ok: false, code: "NO_CAPACITY" };
   }
 
-  let capacitySum = 0;
+  let capacitySum = new Decimal(0);
   for (const product of input.products) {
-    if (!Number.isInteger(product.capacity) || product.capacity <= 0) {
+    if (!Number.isSafeInteger(product.capacity) || product.capacity <= 0) {
       return { ok: false, code: "INVALID_CAPACITY" };
     }
-    capacitySum += product.capacity;
+    capacitySum = capacitySum.plus(product.capacity);
   }
 
   let totalFixed = new Decimal(0);
   for (const line of input.lines) {
-    const amount = parseDecimal(line.amount);
+    const amount = parseNonNegative(line.amount);
     if (amount === undefined) {
       return { ok: false, code: "INVALID_AMOUNT" };
     }
     totalFixed = totalFixed.plus(amount);
   }
 
+  const indirectPerUnit = totalFixed.div(capacitySum);
+
   const costs: ProratedCost[] = [];
   for (const product of input.products) {
-    const variableUnit = parseDecimal(product.variableUnit);
-    if (variableUnit === undefined) {
-      return { ok: false, code: "INVALID_AMOUNT" };
-    }
-
     const capacity = new Decimal(product.capacity);
-    // Assigned share of the period total to this product, then the per-unit
-    // portion it absorbs. The variable cost is added on top, never absorbed.
-    const assigned = totalFixed.times(capacity).div(new Decimal(capacitySum));
-    const indirect = assigned.div(capacity);
+
+    let variableUnit: Decimal | null = null;
+    if (product.variableUnit !== null) {
+      const parsed = parseNonNegative(product.variableUnit);
+      if (parsed === undefined) {
+        return { ok: false, code: "INVALID_AMOUNT" };
+      }
+      variableUnit = parsed;
+    }
 
     costs.push({
       productId: product.id,
       capacity: product.capacity,
-      variableUnit: product.variableUnit,
-      indirectUnit: asMoney(indirect),
-      unitCost: asMoney(variableUnit.plus(indirect)),
-      fixedShare: asMoney(assigned),
+      share: capacity.div(capacitySum).toFixed(SHARE_DECIMALS, FINAL_MONEY_ROUNDING),
+      variableUnit: variableUnit === null ? null : asMoney(variableUnit),
+      indirectUnit: asMoney(indirectPerUnit),
+      // The variable cost is added on top, never absorbed.
+      unitCost: variableUnit === null ? null : asMoney(variableUnit.plus(indirectPerUnit)),
+      fixedShare: asMoney(totalFixed.times(capacity).div(capacitySum)),
     });
   }
 
