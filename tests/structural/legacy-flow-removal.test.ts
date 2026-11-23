@@ -4,7 +4,7 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = process.cwd();
-const DROP_MIGRATION = "drizzle/20261122180737_thick_living_mummy.sql";
+const DROP_MIGRATION = "drizzle/20261123202736_drop_legacy_calculator_tables.sql";
 
 function sources(directory: string): string[] {
   return readdirSync(directory).flatMap((name) => {
@@ -44,7 +44,7 @@ describe("legacy calculator removal", () => {
       expect(entry.idx).toBe(index);
     });
     const dropIndex = journal.entries.findIndex(
-      (entry: { tag: string }) => entry.tag === "20261122180737_thick_living_mummy",
+      (entry: { tag: string }) => entry.tag === "20261123202736_drop_legacy_calculator_tables",
     );
     expect(dropIndex).toBeGreaterThanOrEqual(0);
     expect(journal.entries[dropIndex]).toMatchObject({ idx: dropIndex });

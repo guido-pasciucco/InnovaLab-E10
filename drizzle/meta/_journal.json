@@ -194,15 +194,22 @@
     {
       "idx": 27,
       "version": "7",
-      "when": 1795370857208,
-      "tag": "20261122180737_thick_living_mummy",
+      "when": 1795371767578,
+      "tag": "20261122182247_chat_datos_knowledge_chunks",
       "breakpoints": true
     },
     {
       "idx": 28,
       "version": "7",
-      "when": 1795371630259,
-      "tag": "20261122182030_fine_patriot",
+      "when": 1795465656447,
+      "tag": "20261123202736_drop_legacy_calculator_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1795465661714,
+      "tag": "20261123202741_presentations_tables",
       "breakpoints": true
     }
   ]

@@ -267,6 +267,13 @@ export const ERROR_CATALOG = {
     message: "Primero elegí a ese proveedor para al menos un insumo.",
     logLevel: "silent",
   },
+
+  // Knowledge search (chat-datos, #279). No route reads it until stage 3.
+  KNOWLEDGE_UNAVAILABLE: {
+    status: 503,
+    message: "La búsqueda de documentos no está disponible.",
+    logLevel: "error",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;
