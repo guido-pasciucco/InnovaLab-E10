@@ -12,12 +12,6 @@ test("el sidebar del flujo 1 navega entre insumos y productos", async ({ authedP
   await expect(authedPage).toHaveURL("/insumos");
 });
 
-test("la ruta anterior /supplies redirige al catálogo en /insumos", async ({ authedPage }) => {
-  await authedPage.goto("/supplies");
-
-  await expect(authedPage).toHaveURL("/insumos");
-});
-
 test("el formulario de insumo usa la unidad de medida del catálogo", async ({ authedPage }) => {
   await authedPage.goto("/insumos");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();

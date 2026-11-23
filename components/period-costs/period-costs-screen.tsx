@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { PeriodCostsTable } from "./period-costs-table";
 import { formatPeriodLabel, type PeriodCostLineView } from "./period-costs-values";
 
@@ -31,12 +29,6 @@ export function PeriodCostsScreen({ period, lines, total }: PeriodCostsScreenPro
               repetirlos producto por producto.
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            Volver al dashboard
-          </Link>
         </header>
 
         <section
