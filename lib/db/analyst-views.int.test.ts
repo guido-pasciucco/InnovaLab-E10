@@ -4,12 +4,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ANALYST_VIEWS, type AnalystView } from "@/lib/analyst/views";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 
+import { seedAnalystData } from "../../tests/support/factories/analyst-data";
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
-import { businesses, productIngredients, products } from "./business/table";
-import { calculations, costingSetup, pricingInputs, scenarios } from "./calculation/table";
-import { businessCostLines, calcCostLines } from "./costs/table";
-import { supplies } from "./supplies/table";
 
 // Guards the schema `analyst` (migration chat_datos_analyst_views): the only
 // thing the chat agent can read. Each view must return the rows of the session
@@ -43,8 +40,8 @@ beforeAll(async () => {
   db = getDrizzleClient();
   userA = await createUser();
   userB = await createUser();
-  idsA = await seedUserData(userA, "A");
-  idsB = await seedUserData(userB, "B");
+  idsA = (await seedAnalystData(db, userA.id, "A")).ids;
+  idsB = (await seedAnalystData(db, userB.id, "B")).ids;
 });
 
 afterAll(async () => {
@@ -55,77 +52,6 @@ afterAll(async () => {
     globalThis.__drizzleClient = undefined;
   }
 });
-
-// One row per view for the user, so each test can compare exact ids.
-async function seedUserData(user: CreatedUser, label: string): Promise<Record<ViewName, string>> {
-  const [business] = await db
-    .insert(businesses)
-    .values({ ownerUserId: user.id, name: `Negocio ${label}` })
-    .returning({ id: businesses.id });
-  const [product] = await db
-    .insert(products)
-    .values({ businessId: business.id, name: `Producto ${label}` })
-    .returning({ id: products.id });
-  const [supply] = await db
-    .insert(supplies)
-    .values({ userId: user.id, name: `Insumo ${label}`, purchasePrice: "100.00" })
-    .returning({ id: supplies.id });
-  const [recipeLine] = await db
-    .insert(productIngredients)
-    .values({ productId: product.id, supplyId: supply.id, unit: "unidad", quantity: "2" })
-    .returning({ id: productIngredients.id });
-  const [expense] = await db
-    .insert(businessCostLines)
-    .values({
-      businessId: business.id,
-      period: "2026-11",
-      concept: `Alquiler ${label}`,
-      behavior: "fixed",
-      traceability: "indirect",
-      amountPeriod: "1000.00",
-    })
-    .returning({ id: businessCostLines.id });
-  const [calculation] = await db
-    .insert(calculations)
-    .values({ userId: user.id, businessId: business.id, productId: product.id })
-    .returning({ id: calculations.id });
-  await db.insert(costingSetup).values({
-    calculationId: calculation.id,
-    currency: "ARS",
-    period: "Mensual",
-    unit: "caja",
-    volume: 10,
-  });
-  await db.insert(pricingInputs).values({
-    calculationId: calculation.id,
-    marginConvention: "sobre_precio",
-    expectedMarginPct: "30",
-  });
-  const [costLine] = await db
-    .insert(calcCostLines)
-    .values({
-      calculationId: calculation.id,
-      concept: `Costo ${label}`,
-      behavior: "variable",
-      traceability: "direct",
-      amount: "50.00",
-    })
-    .returning({ id: calcCostLines.id });
-  const [scenario] = await db
-    .insert(scenarios)
-    .values({ calculationId: calculation.id, name: `Escenario ${label}`, isBase: true })
-    .returning({ id: scenarios.id });
-
-  return {
-    products: product.id,
-    supplies: supply.id,
-    recipe_lines: recipeLine.id,
-    business_expenses: expense.id,
-    calculations: calculation.id,
-    calculation_cost_lines: costLine.id,
-    scenarios: scenario.id,
-  };
-}
 
 // Runs a statement the way the executor will: inside a transaction, with the
 // session user written to `app.user_id`, as the role `analyst_reader`.

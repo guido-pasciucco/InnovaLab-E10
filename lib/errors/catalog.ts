@@ -274,6 +274,25 @@ export const ERROR_CATALOG = {
     message: "La búsqueda de documentos no está disponible.",
     logLevel: "error",
   },
+
+  // Read-only SQL for the chat agent (chat-datos, #279). The model, not the
+  // user, writes the query: `details.reason` tells the model what to fix and
+  // is not meant for the screen. Nothing reads these codes until stage 3.
+  ANALYST_QUERY_REJECTED: {
+    status: 422,
+    message: "La consulta no está permitida.",
+    logLevel: "silent",
+  },
+  ANALYST_QUERY_FAILED: {
+    status: 422,
+    message: "La consulta no se pudo ejecutar.",
+    logLevel: "silent",
+  },
+  ANALYST_QUERY_TIMEOUT: {
+    status: 504,
+    message: "La consulta tardó demasiado.",
+    logLevel: "warn",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;

@@ -98,6 +98,34 @@ Devuelve el SQL sin el `;` final, listo para que el ejecutor lo envuelva como `S
 
 **Cómo cambiar la lista.** Agregar una función es una línea en `ALLOWED_FUNCTIONS` y un caso en `sql-guard.fixtures.ts`. El test de integración ejecuta cada consulta aceptada con el rol real, así que una función que no existe se detecta. Agregar una vista es una migración más una entrada en `lib/analyst/views.ts`.
 
+### Ejecutor
+
+`runAnalystQueryService` (`lib/services/analyst-query.ts`) es la única puerta por la que el SQL del modelo llega a la base. Recibe el id verificado del usuario y el texto de la consulta. Hace esto, en orden:
+
+1. Valida las opciones y pasa el SQL por el validador. Si lo rechaza, lanza `ANALYST_QUERY_REJECTED` con la razón en español.
+2. Abre una transacción `READ ONLY`.
+3. Dentro de ella escribe `app.user_id`, el `statement_timeout` y el `search_path = analyst`, y cambia al rol `analyst_reader` con `SET LOCAL ROLE`. Todo vale solo hasta el final de la transacción, así que ninguna conexión del pool queda con un usuario o rol puestos.
+4. Ejecuta la consulta envuelta como `select * from (<sql>) limit n+1`. El `n+1` sirve para saber si había más filas sin traerlas todas.
+
+Devuelve `{ sql, columns, rows, truncated, durationMs }`. Si hay más de `n` filas, devuelve las primeras `n` y `truncated: true`; el agente debe decir que el listado está cortado y usar `count`, `sum` o `avg` para los totales, que no se ven afectados por el límite.
+
+| Opción | Valor por defecto | Rango |
+| --- | --- | --- |
+| `maxRows` (`ANALYST_MAX_ROWS`) | 30 | 1 a 1000 |
+| `statementTimeoutMs` (`ANALYST_STATEMENT_TIMEOUT_MS`) | 3000 | 10 a 30000 |
+
+Para cambiar el valor por defecto se edita la constante. Con pocos datos ninguno de los dos límites se nota; el tiempo máximo importa cuando una consulta cruza varias vistas sobre muchos registros.
+
+| Código | Cuándo | Qué hace el agente |
+| --- | --- | --- |
+| `ANALYST_QUERY_REJECTED` | El validador no la aceptó | Reescribe la consulta con la razón recibida |
+| `ANALYST_QUERY_FAILED` | Postgres la rechazó por un error de la consulta (columna inexistente, división por cero, nombres de columna repetidos) | Corrige y reintenta, con la razón recibida |
+| `ANALYST_QUERY_TIMEOUT` | Pasó el tiempo máximo | Acota la consulta (un mes, menos cruces) |
+
+Cualquier otro error (conexión caída, por ejemplo) se propaga sin tocar: es un fallo del servidor, no de la consulta.
+
+Si una consulta devuelve dos columnas con el mismo nombre (por ejemplo `select *` de un `JOIN` entre vistas que comparten `id`), se rechaza con un mensaje que pide poner alias, porque las filas se devuelven como objetos y una columna pisaría a la otra.
+
 ### Si se abandona el agente
 
 Se quita con una migración nueva, nunca editando esta:
@@ -112,3 +140,5 @@ DROP ROLE analyst_reader;
 `lib/analyst/sql-guard.test.ts` cubre el validador con consultas válidas y con más de 60 casos de rechazo, cada uno con el motivo esperado. `lib/analyst/sql-guard.int.test.ts` ejecuta en Postgres, con el rol real, cada consulta que el validador acepta.
 
 `lib/db/analyst-views.int.test.ts` (Postgres local) comprueba que cada vista devuelve solo las filas del usuario de la sesión, que sin usuario no devuelve nada, que cada vista y columna tiene comentario, y que `analyst_reader`, `anon` y `authenticated` no pueden leer tablas reales, escribir ni crear objetos.
+
+`lib/services/analyst-query.int.test.ts` prueba el recorrido completo, sin el modelo: cada vista devuelve solo las filas del usuario (incluso con 24 consultas simultáneas de dos usuarios), 16 intentos de ataque se rechazan (cambiar de usuario con `set_config`, leer el catálogo, tablas reales, `reset role`, varias sentencias), el límite de filas y el `truncated`, el tiempo máximo, los errores de la consulta y que el pool no queda con usuario ni rol. Incluye un test que muestra que, sin el validador, `set_config` sí cambiaría de usuario: deja a la vista que el validador es una barrera obligatoria.
