@@ -1,6 +1,7 @@
 import { sql, type SQL } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { ANALYST_VIEWS, type AnalystView } from "@/lib/analyst/views";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
@@ -14,16 +15,10 @@ import { supplies } from "./supplies/table";
 // thing the chat agent can read. Each view must return the rows of the session
 // user and nothing else, and the role must not reach anything outside it.
 
-const VIEWS = [
-  "products",
-  "supplies",
-  "recipe_lines",
-  "business_expenses",
-  "calculations",
-  "calculation_cost_lines",
-  "scenarios",
-] as const;
-type ViewName = (typeof VIEWS)[number];
+// Same list the SQL validator uses: the "exactly the views" test below fails if
+// the database and the validator disagree.
+const VIEWS = ANALYST_VIEWS;
+type ViewName = AnalystView;
 
 // Views Postgres opens to every role by default (extension statistics). They
 // show query shapes, never row values; the SQL validator still limits the

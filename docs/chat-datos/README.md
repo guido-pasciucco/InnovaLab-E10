@@ -73,10 +73,30 @@ Antes de borrar o cambiar el tipo de una de esas columnas, recreá la vista en l
 ### Advertencias
 
 - **Probar la migración en Supabase antes de mergear.** Crear el rol `analyst_reader` y hacer `GRANT analyst_reader TO postgres` funciona en local, pero en Supabase el usuario `postgres` no es superusuario y no se puede probar desde acá. `bun run deploy` aplica las migraciones a producción: si esta falla, el deploy de cualquiera del equipo queda bloqueado. Lo recomendado es ensayarla antes en un proyecto de Supabase aparte (por ejemplo, el de São Paulo) y recién después mergear.
-- **`set_config` es el punto sensible.** El filtro por usuario depende de `app.user_id`. Si el SQL del modelo lograra llamar a `set_config('app.user_id', ...)`, podría cambiar de usuario. La defensa es el validador de SQL (etapa 2, bloque siguiente), que rechaza esa función y cualquiera fuera de una lista permitida, más los tests de aislamiento. Además tendría que conocer el UUID de otro usuario, y ninguna vista lo expone.
+- **`set_config` es el punto sensible.** El filtro por usuario depende de `app.user_id`. Si el SQL del modelo lograra llamar a `set_config('app.user_id', ...)`, podría cambiar de usuario. La defensa es el validador de SQL (ver "Validador de SQL"), que rechaza esa función y cualquiera fuera de una lista permitida, más los tests de aislamiento. Además tendría que conocer el UUID de otro usuario, y ninguna vista lo expone.
 - **El rol hereda permisos abiertos de Postgres.** Puede ejecutar funciones de extensiones (por ejemplo `pgcrypto`, `vector`) y leer `extensions.pg_stat_statements`, porque Postgres las deja abiertas a todos los roles. No se pueden cerrar sin afectar a Supabase. Por eso el validador no puede omitirse y el test de permisos lista esas dos vistas de forma explícita.
 - **Orden de migraciones.** Esta migración se genera sobre la última de la etapa 1. Si otro PR con migraciones se mergea antes (por ejemplo el #259), hay que regenerarla para que quede después en el orden de Drizzle.
 - **Límites del primer lanzamiento.** Hoy `calculations.status` siempre es `draft`, y un cálculo continuado se edita en el lugar, así que su `created_at` no cambia. Cualquier comparación mensual depende de esa convención.
+
+### Validador de SQL
+
+`lib/analyst/sql-guard.ts` revisa el SQL del modelo antes de que llegue a la base. Lo lee con el parser real de PostgreSQL ([`libpg-query`](../dependencies/libpg-query.md)) y recorre todo el árbol con una **lista de permitidos**: lo que no se nombra explícitamente se rechaza. La regla de partida es simple: **solo pasa una consulta `SELECT` (o `WITH ... SELECT`); cualquier otra sentencia se rechaza**.
+
+| Se permite | Se rechaza |
+| --- | --- |
+| Una sola sentencia `SELECT` o `WITH ... SELECT`, con `UNION`, `JOIN`, subconsultas y ventanas | Dos o más sentencias en un mismo texto, y toda sentencia que no sea un `SELECT`: por ejemplo `INSERT`, `UPDATE`, `DELETE`, `DROP`, `TRUNCATE`, `CREATE`, `SET`, `COPY`, `EXPLAIN` y `DO`. También un `DELETE` escondido dentro de un `WITH` |
+| Las 7 vistas de `analyst`, con o sin el prefijo `analyst.` | Cualquier otra relación: `pg_catalog`, `information_schema`, `public`, `auth`, `extensions` |
+| Agregados, redondeo, fechas, texto y ventanas (lista en `sql-guard.ts`) | `set_config`, `current_setting`, `pg_sleep`, `pg_read_file`, funciones en `FROM` (`generate_series`, `dblink`) y toda función fuera de la lista |
+| Conversiones a números, texto, fechas e intervalos | `regclass`, `regproc`, arreglos, `current_user`, `session_user` |
+| Operadores aritméticos, de comparación, `LIKE` y `BETWEEN` | `WITH RECURSIVE`, `SELECT INTO`, `FOR UPDATE`, parámetros (`$1`), operadores con esquema |
+
+Las razones del rechazo están escritas en español y para el modelo: dicen qué cambiar, por ejemplo qué vistas existen.
+
+Un nombre sin esquema solo se acepta si es una de las 7 vistas o un `WITH` definido en el mismo alcance. Esto importa: con `search_path = analyst`, Postgres busca primero en `pg_catalog`, así que `select * from pg_roles` llegaría al catálogo si el validador no lo frenara.
+
+Devuelve el SQL sin el `;` final, listo para que el ejecutor lo envuelva como `SELECT * FROM (...) LIMIT n`. Las posiciones que da el parser son en **bytes**; el validador lo tiene en cuenta para que las tildes y la `ñ` no corten la consulta. El ejecutor debe poner un salto de línea antes del paréntesis de cierre, para que un comentario `--` al final no se lo coma.
+
+**Cómo cambiar la lista.** Agregar una función es una línea en `ALLOWED_FUNCTIONS` y un caso en `sql-guard.fixtures.ts`. El test de integración ejecuta cada consulta aceptada con el rol real, así que una función que no existe se detecta. Agregar una vista es una migración más una entrada en `lib/analyst/views.ts`.
 
 ### Si se abandona el agente
 
@@ -88,5 +108,7 @@ DROP ROLE analyst_reader;
 ```
 
 ### Tests
+
+`lib/analyst/sql-guard.test.ts` cubre el validador con consultas válidas y con más de 60 casos de rechazo, cada uno con el motivo esperado. `lib/analyst/sql-guard.int.test.ts` ejecuta en Postgres, con el rol real, cada consulta que el validador acepta.
 
 `lib/db/analyst-views.int.test.ts` (Postgres local) comprueba que cada vista devuelve solo las filas del usuario de la sesión, que sin usuario no devuelve nada, que cada vista y columna tiene comentario, y que `analyst_reader`, `anon` y `authenticated` no pueden leer tablas reales, escribir ni crear objetos.
