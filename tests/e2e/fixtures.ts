@@ -1,7 +1,6 @@
 import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
 import { createUser, deleteUser, findUserIdByEmail, type CreatedUser } from "../support/factories/user";
 import { signInSessionCookies } from "./helpers/session";
-import { DashboardPage } from "./pages/dashboard.page";
 import { LoginPage } from "./pages/login.page";
 import { ResetPasswordPage } from "./pages/reset-password.page";
 import { SignupPage } from "./pages/signup.page";
@@ -29,7 +28,6 @@ type Fixtures = {
   authedPage: Page;
   loginPage: LoginPage;
   signupPage: SignupPage;
-  dashboardPage: DashboardPage;
   resetPasswordPage: ResetPasswordPage;
   updatePasswordPage: UpdatePasswordPage;
 };
@@ -84,7 +82,6 @@ export const test = base.extend<Fixtures>({
 
   loginPage: async ({ page }, provide) => provide(new LoginPage(page)),
   signupPage: async ({ page }, provide) => provide(new SignupPage(page)),
-  dashboardPage: async ({ page }, provide) => provide(new DashboardPage(page)),
   resetPasswordPage: async ({ page }, provide) => provide(new ResetPasswordPage(page)),
   updatePasswordPage: async ({ page }, provide) => provide(new UpdatePasswordPage(page)),
 });
