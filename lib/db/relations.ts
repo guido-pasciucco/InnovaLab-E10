@@ -2,6 +2,8 @@ import { relations } from "drizzle-orm";
 
 import {
   businesses,
+  presentationPackaging,
+  presentations,
   productIngredients,
   products,
 } from "./business/table";
@@ -35,6 +37,7 @@ export const productsRelations = relations(products, ({ many, one }) => ({
     references: [businesses.id],
   }),
   ingredients: many(productIngredients),
+  presentations: many(presentations),
 }));
 
 export const productIngredientsRelations = relations(
@@ -61,10 +64,33 @@ export const businessCostLinesRelations = relations(
   }),
 );
 
+export const presentationsRelations = relations(presentations, ({ many, one }) => ({
+  product: one(products, {
+    fields: [presentations.productId],
+    references: [products.id],
+  }),
+  packaging: many(presentationPackaging),
+}));
+
+export const presentationPackagingRelations = relations(
+  presentationPackaging,
+  ({ one }) => ({
+    presentation: one(presentations, {
+      fields: [presentationPackaging.presentationId],
+      references: [presentations.id],
+    }),
+    supply: one(supplies, {
+      fields: [presentationPackaging.supplyId],
+      references: [supplies.id],
+    }),
+  }),
+);
+
 export const suppliesRelations = relations(supplies, ({ many, one }) => ({
   user: one(profiles, {
     fields: [supplies.userId],
     references: [profiles.id],
   }),
   ingredients: many(productIngredients),
+  packagingLines: many(presentationPackaging),
 }));
