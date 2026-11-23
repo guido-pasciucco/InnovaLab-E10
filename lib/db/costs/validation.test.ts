@@ -3,15 +3,19 @@ import { z } from "zod";
 
 import {
   addCalcCostLineInputSchema,
+  addPeriodCostLineInputSchema,
   addVariableCalcCostLineInputSchema,
   calcCostLineRowSchema,
   createBusinessCostLineInputSchema,
   createCalcCostLineInputSchema,
   listCalcCostLinesOptionsSchema,
+  listPeriodCostsOptionsSchema,
   saveOwnLaborInputSchema,
   updateCalcCostLineAmountInputSchema,
   updateCalcCostLineConceptInputSchema,
   updateCalcCostLineYieldInputSchema,
+  updatePeriodCostLineAmountInputSchema,
+  updatePeriodCostLineConceptInputSchema,
 } from "./validation";
 
 // DB tests cover shared-field wiring and removal of server-controlled fields
@@ -25,6 +29,7 @@ const SERVER_ID = "6f1c2b7e-3d4a-4f5b-9c8d-1e2f3a4b5c6d";
 const SERVER_TIMESTAMP = new Date("2026-01-01T00:00:00.000Z");
 
 const validBusinessCostLine = {
+  period: "2026-11",
   concept: "Alquiler del taller",
   behavior: "fixed",
   traceability: "indirect",
@@ -118,6 +123,96 @@ describe("createBusinessCostLineInputSchema", () => {
     expect(result).not.toHaveProperty("businessId");
     expect(result).not.toHaveProperty("createdAt");
     expect(result).not.toHaveProperty("updatedAt");
+  });
+
+  it.each([["2026-13"], ["2026-1"], ["11-2026"], [""]])(
+    "rejects the period %j with the shared message",
+    (period) => {
+      expect(
+        fieldErrors(createBusinessCostLineInputSchema, {
+          ...validBusinessCostLine,
+          period,
+        }),
+      ).toEqual({ period: ["El período debe tener el formato AAAA-MM."] });
+    },
+  );
+});
+
+describe("addPeriodCostLineInputSchema", () => {
+  it("accepts a concept and an amount without a period", () => {
+    expect(
+      addPeriodCostLineInputSchema.safeParse({
+        concept: "Alquiler del taller",
+        amountPeriod: "150000.00",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts an explicit period", () => {
+    expect(
+      addPeriodCostLineInputSchema.safeParse({
+        period: "2026-11",
+        concept: "Alquiler del taller",
+        amountPeriod: "150000.00",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("does not let the client set behavior, traceability or the owner", () => {
+    const result = addPeriodCostLineInputSchema.parse({
+      period: "2026-11",
+      concept: "Alquiler del taller",
+      amountPeriod: "150000.00",
+      behavior: "variable",
+      traceability: "direct",
+      businessId: SERVER_ID,
+    });
+
+    expect(result).toEqual({
+      period: "2026-11",
+      concept: "Alquiler del taller",
+      amountPeriod: "150000.00",
+    });
+  });
+
+  it("reports the shared concept and amount messages", () => {
+    expect(
+      fieldErrors(addPeriodCostLineInputSchema, {
+        concept: "",
+        amountPeriod: "-1",
+      }),
+    ).toEqual({
+      concept: ["Escribí el concepto del costo."],
+      amountPeriod: ["El importe no puede ser negativo."],
+    });
+  });
+});
+
+describe("listPeriodCostsOptionsSchema", () => {
+  it("accepts an empty options object", () => {
+    expect(listPeriodCostsOptionsSchema.safeParse({}).success).toBe(true);
+  });
+
+  it("rejects an invalid period", () => {
+    expect(
+      fieldErrors(listPeriodCostsOptionsSchema, { period: "2026-13" }),
+    ).toEqual({ period: ["El período debe tener el formato AAAA-MM."] });
+  });
+});
+
+describe("updatePeriodCostLineAmountInputSchema", () => {
+  it("reports the amount message", () => {
+    expect(
+      fieldErrors(updatePeriodCostLineAmountInputSchema, { amountPeriod: "" }),
+    ).toEqual({ amountPeriod: ["El importe es obligatorio."] });
+  });
+});
+
+describe("updatePeriodCostLineConceptInputSchema", () => {
+  it("reports the concept message", () => {
+    expect(
+      fieldErrors(updatePeriodCostLineConceptInputSchema, { concept: "" }),
+    ).toEqual({ concept: ["Escribí el concepto del costo."] });
   });
 });
 

@@ -19,6 +19,8 @@ type CostLinesTableProps = {
   listLabel: string;
   // Caption of the sum under the list, e.g. "Subtotal fijos".
   subtotalLabel: string;
+  // Label of the button that opens a new row, e.g. "Agregar concepto".
+  addLabel?: string;
   // Forwarded to each row: see CostLineRowItem.
   amountLabel?: string;
   yieldUnit?: string;
@@ -32,6 +34,7 @@ export function CostLinesTable({
   actions,
   listLabel,
   subtotalLabel,
+  addLabel = "Agregar concepto",
   amountLabel,
   yieldUnit,
 }: CostLinesTableProps) {
@@ -142,7 +145,7 @@ export function CostLinesTable({
         onClick={handleAddRow}
         className="min-h-[54px] short:min-h-11 w-full rounded-[14px] border border-brand-green-500 bg-brand-green-50 px-4 py-3 short:py-2 text-base font-semibold text-brand-green-700 transition-colors hover:bg-brand-green-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600"
       >
-        Agregar concepto
+        {addLabel}
       </button>
     </div>
   );

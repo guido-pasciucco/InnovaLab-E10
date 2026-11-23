@@ -12,14 +12,10 @@ import {
   updateCalcCostLineAmountInputSchema,
 } from "@/lib/db/costs/validation";
 import { AppError } from "@/lib/errors/app-error";
+import { sumMoney } from "@/lib/money/sum";
 import { amountField } from "@/lib/schemas/costs/fields";
 
-import {
-  renameCalcCostLine,
-  requireDraftId,
-  requireLineId,
-  sumMoney,
-} from "./cost";
+import { renameCalcCostLine, requireDraftId, requireLineId } from "./cost";
 
 // Own labor and indirect costs of the calculator draft (paso 4).
 // Own labor is one line per draft: hours of the month x hourly rate. The

@@ -65,6 +65,8 @@ jobs:
         run: bun run scripts/ci/e2e-env.ts
       - name: Apply migrations
         run: bun run db:migrate:local
+      - name: Run PostgreSQL integration suite
+        run: bun run test:int
       - name: Run the complete E2E suite
         # Playwright builds Next itself. Do not swallow its exit code or build twice.
         run: bun run test:e2e

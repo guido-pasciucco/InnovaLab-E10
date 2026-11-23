@@ -32,6 +32,13 @@ describe("ERROR_CATALOG", () => {
     });
   });
 
+  it("exposes COST_CATALOG_LINE_NOT_FOUND as a silent 404", () => {
+    expect(ERROR_CATALOG.COST_CATALOG_LINE_NOT_FOUND).toMatchObject({
+      status: 404,
+      logLevel: "silent",
+    });
+  });
+
   it("exposes the step 7 scenario codes", () => {
     expect(ERROR_CATALOG.CALC_SCENARIO_NOT_FOUND).toMatchObject({ status: 404, logLevel: "silent" });
     expect(ERROR_CATALOG.CALC_SCENARIO_LIMIT_REACHED).toMatchObject({ status: 409 });
@@ -49,5 +56,21 @@ describe("ERROR_CATALOG", () => {
     expect(ERROR_CATALOG.AUTH_EMAIL_TAKEN).toMatchObject({ status: 409 });
     expect(ERROR_CATALOG.AUTH_SIGNOUT_FAILED).toMatchObject({ status: 500 });
     expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 422 });
+  });
+
+  it("exposes the product and supply-in-use codes", () => {
+    expect(ERROR_CATALOG.PRODUCT_NOT_FOUND).toMatchObject({
+      status: 404,
+      logLevel: "silent",
+    });
+    expect(ERROR_CATALOG.SUPPLY_IN_USE).toMatchObject({
+      status: 409,
+      logLevel: "silent",
+      message: expect.stringContaining("todas las recetas"),
+    });
+    expect(ERROR_CATALOG.SUPPLY_NOT_INGREDIENT).toMatchObject({
+      status: 422,
+      logLevel: "silent",
+    });
   });
 });
