@@ -8,7 +8,7 @@ import {
   costLineGridClass,
   type CostLine,
   type CostLineActions,
-} from "@/components/calculator/cost-line-row-item";
+} from "@/components/period-costs/cost-line-row-item";
 
 type CostLinesTableProps = {
   lines: readonly CostLine[];

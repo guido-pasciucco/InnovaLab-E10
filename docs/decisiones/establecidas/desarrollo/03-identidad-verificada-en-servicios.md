@@ -61,7 +61,7 @@ Opción E:
 2. **Todo servicio con owner-scoping recibe `userId: VerifiedUserId`.** Un `string` cualquiera, incluido un id leído del input, no compila.
 3. **Las puertas pasan `user.id`** de `requireUser()`. Llaman al guard una vez y no crean cliente de sesión para el servicio.
 4. **Sin `*ForUser`.** Los servicios componen entre sí pasando el mismo `VerifiedUserId` que recibieron. `getDraftCalculationId`, `saveCalculatorSetupService` y `getCalculatorDraftSetupService` son a la vez la API de las puertas y la de composición.
-5. **Casts permitidos sólo donde se crea la cuenta.** Además de `getSessionUserService`, sólo castean a `VerifiedUserId` el seed (`scripts/seed/costs.ts`) y la factory de tests (`tests/support/factories/user.ts`), porque crean el usuario por la Admin API. Cualquier `as VerifiedUserId` fuera de esos tres lugares es una señal de revisión.
+5. **Casts permitidos sólo donde se crea la cuenta.** Además de `getSessionUserService`, sólo castean a `VerifiedUserId` la factory de tests (`tests/support/factories/user.ts`), porque crea el usuario por la Admin API. Cualquier `as VerifiedUserId` fuera de esos dos lugares es una señal de revisión.
 
 ## Qué garantiza y qué no
 

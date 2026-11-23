@@ -8,8 +8,8 @@ import {
   renamePeriodCostLine,
   updatePeriodCostLineAmount,
 } from "@/app/period-costs/actions";
-import { CostLinesTable } from "@/components/calculator/cost-lines-table";
-import type { CostLineActions } from "@/components/calculator/cost-line-row-item";
+import { CostLinesTable } from "@/components/period-costs/cost-lines-table";
+import type { CostLineActions } from "@/components/period-costs/cost-line-row-item";
 import { toCostLine, type PeriodCostLineView } from "./period-costs-values";
 
 type PeriodCostsTableProps = {

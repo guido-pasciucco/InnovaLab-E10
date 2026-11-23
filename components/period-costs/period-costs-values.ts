@@ -1,4 +1,4 @@
-import type { CostLine } from "@/components/calculator/cost-line-row-item";
+import type { CostLine } from "@/components/period-costs/cost-line-row-item";
 
 // Pure helpers for the period expenses screen (#243). Kept apart from the
 // component so the mapping and the month label are testable without rendering.

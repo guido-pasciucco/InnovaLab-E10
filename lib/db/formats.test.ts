@@ -3,14 +3,7 @@ import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
 import { businesses, products } from "./business/table";
-import {
-  calculations,
-  computedResults,
-  costingSetup,
-  pricingInputs,
-  scenarios,
-} from "./calculation/table";
-import { businessCostLines, calcCostLines } from "./costs/table";
+import { businessCostLines } from "./costs/table";
 import { profiles } from "./profile/table";
 import { moneyString, quantityString } from "./formats";
 
@@ -78,13 +71,7 @@ describe("column precision", () => {
       businesses,
       products,
       profiles,
-      calculations,
-      costingSetup,
-      pricingInputs,
-      scenarios,
-      computedResults,
       businessCostLines,
-      calcCostLines,
     ];
 
     const numeric = tables.flatMap((table) =>

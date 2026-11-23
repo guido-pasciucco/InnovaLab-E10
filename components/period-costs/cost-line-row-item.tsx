@@ -9,7 +9,7 @@ import {
   type Ref,
 } from "react";
 
-import { CostLineDeleteButton } from "@/components/calculator/cost-line-delete-button";
+import { CostLineDeleteButton } from "@/components/period-costs/cost-line-delete-button";
 import type { ServiceResult } from "@/lib/errors/catalog";
 import { conceptField, yieldField } from "@/lib/schemas/costs/fields";
 import { formatARSCompact, parseAmountInput } from "@/lib/money/format";
