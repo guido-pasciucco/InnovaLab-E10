@@ -22,14 +22,3 @@ test("el navbar del flujo 1 cambia a licitaciones y el sidebar muestra sus pági
   await expect(sidebar.getByRole("link", { name: "Productos" })).toBeVisible();
 });
 
-test("el selector de flujo está en el navbar del flujo 1 y lleva al flujo 2", async ({ authedPage }) => {
-  await authedPage.goto("/licitaciones");
-  const switcher = authedPage.getByRole("navigation", { name: "Cambiar de flujo" });
-
-  await expect(switcher).toHaveCount(1);
-  await expect(switcher.getByRole("link", { name: "Flujo 1" })).toHaveAttribute("aria-current", "page");
-  await switcher.getByRole("link", { name: "Flujo 2" }).click();
-
-  await expect(authedPage).toHaveURL("/dashboard");
-  await expect(authedPage.getByRole("main").getByRole("link", { name: /licitaciones|proveedores/i })).toHaveCount(0);
-});

@@ -28,6 +28,7 @@ La columna **Dueño** indica qué rol del equipo es responsable del módulo (ver
 | `db.ts` | Placeholder `server-only` | Temporal | Backend |
 | `db/` | Persistencia en servidor (Drizzle): tablas, migraciones y cliente `getDrizzleClient()`; la consumen los servicios de `services/` ([ADR 02](../docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)) | Activa | Backend |
 | `services/` | Lógica de negocio del servidor compartida por Server Actions y Route Handlers (transport-agnostic: recibe valores, devuelve datos planos) | Nueva (acuerdo vigente) | Backend |
+| `knowledge/` | Fragmentado puro de la documentación para la búsqueda del agente (#279). No toca la base ni la red | Activa | Backend |
 | `supabase/` | Clientes Supabase por runtime (`proxy`, `rsc`) — solo servidor | Activa | Backend |
 | `types/` | Tipos compartidos (p. ej. `FormState` del estado de forms) | Activa | **Backend** (si son del dominio) |
 

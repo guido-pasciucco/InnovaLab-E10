@@ -1,15 +1,15 @@
 import { expect, test } from "../fixtures";
 
-test("signing out ends the session", async ({ authedPage, dashboardPage }) => {
+test("signing out from the flow 1 sidebar ends the session", async ({ authedPage }) => {
   // Arrange
-  await dashboardPage.goto();
-  await expect(dashboardPage.heading).toBeVisible();
+  await authedPage.goto("/insumos");
+  const profile = authedPage.getByRole("region", { name: "Perfil" });
 
   // Act
-  await dashboardPage.signOut();
+  await profile.getByRole("button", { name: "Sign out" }).click();
 
   // Assert: back on /login, and the protected page now bounces there too.
   await expect(authedPage).toHaveURL("/login");
-  await dashboardPage.goto();
+  await authedPage.goto("/insumos");
   await expect(authedPage).toHaveURL("/login");
 });

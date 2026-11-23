@@ -5,13 +5,21 @@ import { businessNameField, businessTypeField } from "@/lib/schemas/business/fie
 import { productNameField } from "@/lib/schemas/calculator-setup/fields";
 import {
   monthlyCapacityField,
+  presentationNameField,
+  presentationUnitsField,
   recipeQuantityField,
   recipeSupplyIdField,
   recipeUnitField,
 } from "@/lib/schemas/products/fields";
 import { recipeYieldField } from "@/lib/schemas/recipe-yield/fields";
 import { quantityString } from "../formats";
-import { businesses, productIngredients, products } from "./table";
+import {
+  businesses,
+  presentationPackaging,
+  presentations,
+  productIngredients,
+  products,
+} from "./table";
 
 // ---------------------------------------------------------------------------
 // Zod schemas derived from the Drizzle tables (server-side persistence, ADR 02).
@@ -29,6 +37,15 @@ export const productRowSchema = createSelectSchema(products);
 
 export const productIngredientRowSchema = createSelectSchema(
   productIngredients,
+  { quantity: quantityString },
+);
+
+export const presentationRowSchema = createSelectSchema(presentations, {
+  unitsPerPresentation: quantityString,
+});
+
+export const presentationPackagingRowSchema = createSelectSchema(
+  presentationPackaging,
   { quantity: quantityString },
 );
 
@@ -69,6 +86,26 @@ export const productIngredientInputSchema = z.object({
   unit: recipeUnitField,
 });
 
+export const createPresentationInputSchema = createInsertSchema(presentations, {
+  name: presentationNameField,
+  unitsPerPresentation: presentationUnitsField,
+}).omit({
+  id: true,
+  productId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const presentationPackagingInputSchema = z.object({
+  supplyId: recipeSupplyIdField,
+  quantity: recipeQuantityField,
+  unit: recipeUnitField,
+});
+
+export const savePresentationInputSchema = createPresentationInputSchema.extend({
+  packaging: z.array(presentationPackagingInputSchema),
+});
+
 export const saveProductInputSchema = z
   .object({
     name: productNameField,
@@ -99,7 +136,16 @@ export const saveProductInputSchema = z
 export type BusinessRow = z.infer<typeof businessRowSchema>;
 export type ProductRow = z.infer<typeof productRowSchema>;
 export type ProductIngredientRow = z.infer<typeof productIngredientRowSchema>;
+export type PresentationRow = z.infer<typeof presentationRowSchema>;
+export type PresentationPackagingRow = z.infer<
+  typeof presentationPackagingRowSchema
+>;
 
 export type CreateBusinessInput = z.infer<typeof createBusinessInputSchema>;
 export type CreateProductInput = z.infer<typeof createProductInputSchema>;
 export type SaveProductInput = z.infer<typeof saveProductInputSchema>;
+export type CreatePresentationInput = z.infer<typeof createPresentationInputSchema>;
+export type PresentationPackagingInput = z.infer<
+  typeof presentationPackagingInputSchema
+>;
+export type SavePresentationInput = z.infer<typeof savePresentationInputSchema>;
