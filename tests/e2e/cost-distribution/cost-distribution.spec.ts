@@ -45,14 +45,16 @@ test("shows the total cost of a product from its capacity and the period expense
   await authedPage.goto("/total-costs");
 
   const row = authedPage.getByRole("row", { name: /Pan flauta/ });
-  // 120.000 / 120 u. = 1.000 per unit; the variable cost is 250 g * 0,75 / 12.
+  // 120.000 / 120 u. = 1.000 per unit. The supply form is filled without a
+  // quantity, so it is 1 kg for $18.750 and the variable cost is
+  // 250 g * 18,75 / 12 = 390,63.
   await expect(row).toContainText("100 %");
   await expect(row).toContainText("$ 120.000,00");
   await expect(row).toContainText("$ 1.000,00");
-  await expect(row).toContainText("$ 1.015,63");
+  await expect(row).toContainText("$ 1.390,63");
 
   await authedPage.reload();
-  await expect(authedPage.getByRole("row", { name: /Pan flauta/ })).toContainText("$ 1.015,63");
+  await expect(authedPage.getByRole("row", { name: /Pan flauta/ })).toContainText("$ 1.390,63");
 
   await authedPage.getByText("¿Cómo se distribuyó?").click();
   await expect(authedPage.getByText("Suma de capacidades")).toBeVisible();
