@@ -4,6 +4,7 @@ import type { VerifiedUserId } from "./auth";
 import Decimal from "decimal.js";
 import { and, asc, count, desc, eq } from "drizzle-orm";
 
+import { calculateProration, type ProratedCost } from "@/lib/calc/prorateCosts";
 import { compareScenarios, MAX_SCENARIOS } from "@/lib/calc/compareScenarios";
 import { calculations, scenarios } from "@/lib/db/calculation/table";
 import { updateScenarioInputSchema } from "@/lib/db/calculation/validation";
@@ -16,9 +17,11 @@ import type {
   ScenarioComparisonView,
 } from "@/lib/types/calculator";
 
+import { listPeriodCostsService } from "./business-cost";
 import type { Tx } from "./calculations";
 import { getCalculatorCostSummaryService, getDraftCalculationId } from "./calculator";
 import { getCalculatorPricingInputsService } from "./pricing";
+import { listProductsService } from "./products";
 
 // Step 7 persistence: the scenarios of the user's draft. The base is the
 // calculation as entered in steps 1-6 and is never edited here; alternatives
@@ -112,13 +115,71 @@ async function listScenarios(db: Db, draftId: string): Promise<CalculatorScenari
 }
 
 /**
+ * #244: prorratea los costos indirectos del período (#243) sobre la capacidad
+ * mensual de los productos activos del catálogo (#242) y devuelve el costo
+ * total unitario (variable + indirecto) que el cálculo compara.
+ *
+ * La participación es por capacidad: cada producto absorbe la parte del total
+ * que le corresponde sobre la suma de las capacidades de los productos activos.
+ *
+ * Devuelve null cuando no hay capacidad cargada para prorratear: sin capacidad
+ * no hay costo total que mostrar, y la comparación queda sin figures.
+ *
+ * @throws AppError CALC_COST_SUMMARY_FAILED when the proration engine rejects
+ * the period indirect costs (see calculateProration).
+ */
+async function calculateTotalUnitCostForComparison(
+  userId: VerifiedUserId,
+  draftId: string,
+  variableUnit: string,
+  db: Db,
+): Promise<ProratedCost | null> {
+  const periodCosts = await listPeriodCostsService(userId, {}, db);
+
+  const [calculationRow] = await db
+    .select({ productId: calculations.productId })
+    .from(calculations)
+    .where(eq(calculations.id, draftId))
+    .limit(1);
+  const calculationProductId = calculationRow?.productId ?? null;
+
+  const catalog = await listProductsService(userId, db);
+  const catalogProducts = catalog
+    .map((product) => ({
+      id: product.id,
+      capacity: product.monthlyCapacity ?? 0,
+      variableUnit: product.variableCosts?.unitCost ?? variableUnit,
+    }))
+    .filter((product) => product.capacity > 0);
+
+  const proration = calculateProration({
+    lines: periodCosts.lines.map((line) => ({ id: line.id, amount: line.amountPeriod })),
+    products: catalogProducts,
+  });
+
+  if (!proration.ok) {
+    if (proration.code === "NO_CAPACITY" || proration.code === "INVALID_CAPACITY") {
+      return null;
+    }
+    throw new AppError("CALC_COST_SUMMARY_FAILED", undefined, { cause: proration });
+  }
+
+  const totalUnitCost = calculationProductId
+    ? proration.costs.find((cost) => cost.productId === calculationProductId)
+    : undefined;
+
+  return totalUnitCost ?? null;
+}
+
+/**
  * Read model for step 7: the draft's scenarios, base first, and their
  * comparison computed with the pure engine from the persisted costs and
  * margin. The first visit creates the base scenario ("Base", no overrides);
  * a unique index makes that insert safe when two tabs open the step at once.
  *
  * @throws AppError CALC_COST_SUMMARY_FAILED when the engine rejects the
- * persisted cost lines (see getCalculatorCostSummaryService).
+ * persisted cost lines (see getCalculatorCostSummaryService) or when the
+ * proration engine rejects the period indirect costs (see calculateProration).
  */
 export async function getScenarioComparisonService(
   userId: VerifiedUserId,
@@ -150,10 +211,23 @@ export async function getScenarioComparisonService(
     return { calculationId: draftId, scenarios: list, inputs: null, comparison: null };
   }
 
+  const totalUnitCost = await calculateTotalUnitCostForComparison(
+    userId,
+    draftId,
+    costs.variableUnit,
+    db,
+  );
+
+  if (totalUnitCost === null) {
+    // Sin capacidad cargada no hay costo total que comparar (#244): sin total
+    // no hay figures, igual que con costos o margen faltantes.
+    return { calculationId: draftId, scenarios: list, inputs: null, comparison: null };
+  }
+
   const inputs: ScenarioComparisonInputs = {
     totalFixed: costs.totalFixed,
     variableUnit: costs.variableUnit,
-    unitCost: costs.unitCost,
+    unitCost: totalUnitCost.unitCost,
     volume: costs.volume,
     marginPct: pricing.expectedMarginPct,
   };

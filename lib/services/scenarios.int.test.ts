@@ -3,12 +3,14 @@ import type { VerifiedUserId } from "./auth";
 import { ZodError } from "zod";
 import { asc, eq } from "drizzle-orm";
 
-import { scenarios } from "@/lib/db/calculation/table";
+import { businesses, products } from "@/lib/db/business/table";
+import { calculations, scenarios } from "@/lib/db/calculation/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
+import { addPeriodCostLineService } from "./business-cost";
 import { getDraftCalculationId, saveCalculatorSetupService } from "./calculator";
 import { addCalcCostLineService, addVariableCalcCostLineService } from "./cost";
 import { saveExpectedMarginService } from "./pricing";
@@ -36,6 +38,10 @@ const validSetup = {
 } as const;
 
 const MISSING_ID = "00000000-0000-4000-8000-000000000000";
+
+// The month the comparison reads the period indirect costs from; the service
+// resolves the same key for the current month when no period is sent.
+const PERIOD = "2026-11";
 
 let db: Db;
 const users: CreatedUser[] = [];
@@ -87,6 +93,28 @@ async function makeUserWithPricedDraft(): Promise<{ user: CreatedUser; calculati
   await addVariableCalcCostLineService(draft.user.id, { concept: "Envase", amount: "2500" }, db);
   await saveExpectedMarginService(draft.user.id, { expectedMarginPct: "30" }, db);
   return draft;
+}
+
+// #244: the comparison prorates the period indirect costs over the product
+// capacity, so the comparison context needs both: a period indirect cost and a
+// monthly capacity on the product of the draft.
+async function addProrationContext(
+  userId: VerifiedUserId,
+  calculationId: string,
+  db: Db,
+): Promise<void> {
+  await addPeriodCostLineService(userId, { period: PERIOD, concept: "Alquiler del taller", amountPeriod: "320000" }, db);
+  const [calculation] = await db
+    .select({ productId: calculations.productId })
+    .from(calculations)
+    .where(eq(calculations.id, calculationId))
+    .limit(1);
+  const [product] = await db
+    .select()
+    .from(products)
+    .where(eq(products.id, calculation.productId))
+    .limit(1);
+  await db.update(products).set({ monthlyCapacity: 200 }).where(eq(products.id, product.id));
 }
 
 async function getScenarioRows(calculationId: string) {
@@ -141,6 +169,7 @@ describe("getScenarioComparisonService", () => {
 
   it("compares the base built from the persisted costs and margin", async () => {
     const { user, calculationId } = await makeUserWithPricedDraft();
+    await addProrationContext(user.id, calculationId, db);
 
     const result = await getScenarioComparisonService(user.id, db);
 
@@ -158,14 +187,48 @@ describe("getScenarioComparisonService", () => {
     });
   });
 
+  it("prorates the period indirect costs over the whole active catalog of the business", async () => {
+    const { user, calculationId } = await makeUserWithPricedDraft();
+    // The draft product absorbs 200 of monthly capacity and a second active
+    // product absorbs 300: the period total is split by capacity participation.
+    await addProrationContext(user.id, calculationId, db);
+    const [business] = await db
+      .insert(businesses)
+      .values({ ownerUserId: user.id, name: "InnovaLab" })
+      .returning();
+    await db.insert(products).values({
+      name: "Salsas artesanales",
+      monthlyCapacity: 300,
+      yieldQuantity: 1,
+      businessId: business.id,
+      isActive: true,
+    });
+
+    const result = await getScenarioComparisonService(user.id, db);
+
+    // Two active products, capacities 200 + 300 -> indirect rate = 320.000 / 500
+    // = 640 per unit; the calculation's product total = 2500 + 640 = 3140. With a
+    // single-product spread it would have been 320.000 / 200 = 1600 per unit.
+    // The product with the bigger capacity (300) absorbs more indirects in total
+    // than the calculation's product (200).
+    expect(result.inputs).toEqual({
+      totalFixed: "320000.00",
+      variableUnit: "2500.00",
+      unitCost: "3140.00",
+      volume: 200,
+      marginPct: "30",
+    });
+  });
+
   it("returns each alternative with its deltas against the base", async () => {
-    const { user } = await makeUserWithPricedDraft();
+    const { user, calculationId } = await makeUserWithPricedDraft();
     const alternativeId = await addAlternative(user.id);
     await updateScenarioService(
       user.id,
       { scenarioId: alternativeId, name: "Precio redondo", priceOverride: "5000", volumeOverride: null },
       db,
     );
+    await addProrationContext(user.id, calculationId, db);
 
     const result = await getScenarioComparisonService(user.id, db);
 
@@ -178,6 +241,15 @@ describe("getScenarioComparisonService", () => {
       breakEvenUnits: "128",
       delta: { marginPoints: "-12.00", profit: "-171428.57", breakEvenUnits: "32" },
     });
+  });
+
+  it("returns the scenarios without a comparison while the product has no capacity to absorb", async () => {
+    const { user } = await makeUserWithPricedDraft();
+
+    const result = await getScenarioComparisonService(user.id, db);
+
+    expect(result.scenarios).toHaveLength(1);
+    expect(result).toMatchObject({ inputs: null, comparison: null });
   });
 
   it("returns the scenarios without a comparison while the margin is missing", async () => {
