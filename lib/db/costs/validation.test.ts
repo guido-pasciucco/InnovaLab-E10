@@ -5,9 +5,9 @@ import {
   addPeriodCostLineInputSchema,
   createBusinessCostLineInputSchema,
   listPeriodCostsOptionsSchema,
-  updatePeriodCostLineAmountInputSchema,
-  updatePeriodCostLineConceptInputSchema,
+  updatePeriodCostLineInputSchema,
 } from "./validation";
+import { periodCostLineSchema } from "@/lib/schemas/costs/period-costs";
 
 // DB tests cover shared-field wiring and removal of server-controlled fields
 // (see TEST.md). The rules themselves live in lib/schemas/costs/fields.ts.
@@ -183,18 +183,21 @@ describe("listPeriodCostsOptionsSchema", () => {
   });
 });
 
-describe("updatePeriodCostLineAmountInputSchema", () => {
-  it("reports the amount message", () => {
+describe("updatePeriodCostLineInputSchema", () => {
+  it("accepts the concept and the amount the catalog modal sends", () => {
     expect(
-      fieldErrors(updatePeriodCostLineAmountInputSchema, { amountPeriod: "" }),
-    ).toEqual({ amountPeriod: ["El importe es obligatorio."] });
+      updatePeriodCostLineInputSchema.safeParse({
+        concept: "Alquiler",
+        amountPeriod: "150000.00",
+      }).success,
+    ).toBe(true);
   });
-});
 
-describe("updatePeriodCostLineConceptInputSchema", () => {
-  it("reports the concept message", () => {
-    expect(
-      fieldErrors(updatePeriodCostLineConceptInputSchema, { concept: "" }),
-    ).toEqual({ concept: ["Escribí el concepto del costo."] });
+  it("shows the same amount message as the modal's form contract", () => {
+    const input = { concept: "Alquiler", amountPeriod: "-1" };
+
+    expect(fieldErrors(updatePeriodCostLineInputSchema, input)).toEqual(
+      fieldErrors(periodCostLineSchema, input),
+    );
   });
 });

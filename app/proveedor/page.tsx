@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import LogoutButton from "@/app/dashboard/logout-button";
+import LogoutButton from "@/components/auth/logout-button";
 import { formatDateTime } from "@/components/tenders/format";
 import { PhaseBadge, roundLabel } from "@/components/tenders/phase-badge";
 import { Card, PageShell } from "@/components/ui/page-shell";
