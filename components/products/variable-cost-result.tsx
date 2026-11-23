@@ -7,6 +7,10 @@ type VariableCostResultProps = {
   // A new product has no saved calculation yet: explain the empty state instead
   // of showing a zero that would look like a real result.
   pending?: boolean;
+  // While editing, the client only owns the previously saved calculation. If
+  // the form changed, say so instead of presenting the old amount as current
+  // (#288 QA). The engine is deliberately not re-run on the client.
+  stale?: boolean;
 };
 
 function money(value: string): string {
@@ -22,8 +26,10 @@ export function VariableCostResult({
   costs,
   unavailableCode = null,
   pending = false,
+  stale = false,
 }: VariableCostResultProps) {
   const hasCosts = costs !== null && costs !== undefined;
+  const isStale = stale && hasCosts;
 
   return (
     <section
@@ -32,22 +38,30 @@ export function VariableCostResult({
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-default bg-surface-tint px-4 py-2">
         <p className="text-xs font-bold tracking-[0.12em] text-fg-muted uppercase">
-          Resultado calculado
+          {isStale ? "Último resultado guardado" : "Resultado calculado"}
         </p>
-        <span className="rounded-full border border-border-default bg-surface px-2 py-0.5 text-[11px] font-semibold text-fg-muted">
-          Solo lectura
+        <span
+          className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+            isStale
+              ? "border-warning/40 bg-warning-subtle text-warning"
+              : "border-border-default bg-surface text-fg-muted"
+          }`}
+        >
+          {isStale ? "Cambios sin guardar" : "Solo lectura"}
         </span>
       </div>
 
       <div className="flex flex-wrap items-end justify-between gap-3 px-4 py-3">
         <div className="min-w-0 space-y-0.5">
           <p className="text-sm font-semibold text-fg">Costo variable por unidad</p>
-          <p className="text-xs text-fg-muted">
-            {hasCosts
-              ? `Costo de ingredientes: ${money(costs.ingredientsCost)}`
-              : pending
-                ? "Se calculará cuando guardes la receta y el rendimiento."
-                : "Completá la receta y el rendimiento para calcularlo."}
+          <p role={isStale ? "status" : undefined} className="text-xs text-fg-muted">
+            {isStale
+              ? "Los cambios en ingredientes, cantidades o rendimiento se calculan al guardar."
+              : hasCosts
+                ? `Costo de ingredientes: ${money(costs.ingredientsCost)}`
+                : pending
+                  ? "Se calculará cuando guardes la receta y el rendimiento."
+                  : "Completá la receta y el rendimiento para calcularlo."}
           </p>
         </div>
         <p className="text-2xl font-bold tabular-nums text-fg">

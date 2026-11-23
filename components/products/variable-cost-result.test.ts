@@ -36,6 +36,18 @@ describe("VariableCostResult", () => {
     expect(html).toContain("Costo de ingredientes: $ 1.753,50");
   });
 
+  it("labels the saved amount as stale while the form has unsaved edits", () => {
+    const html = render({ stale: true });
+
+    expect(html).toContain("Último resultado guardado");
+    expect(html).toContain("Cambios sin guardar");
+    expect(html).toContain(
+      "Los cambios en ingredientes, cantidades o rendimiento se calculan al guardar.",
+    );
+    expect(html).not.toContain("Solo lectura");
+    expect(html).toContain("$ 1.753,50");
+  });
+
   it("explains the empty state of a new product without showing a zero", () => {
     const html = render({ costs: null, pending: true });
 

@@ -185,7 +185,7 @@ export function ProductForm({
     handleSubmit,
     setError,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(schema),
     defaultValues: toDefaultValues(product),
@@ -257,7 +257,11 @@ export function ProductForm({
         title="¿Qué estás calculando?"
         description="Ponéle nombre y cargá cuántas unidades pensás fabricar este mes."
       >
-        <FormGrid className="grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* #288 QA: FormGrid already ships grid-cols-2, so overriding it with
+            grid-cols-1 lost on mobile. stackOnMobile owns the breakpoint.
+            The min-height reserves two label lines on desktop so both inputs
+            start at the same height. */}
+        <FormGrid stackOnMobile className="sm:[&_label]:min-h-12">
           <TextField
             label="Nombre del producto"
             placeholder="Pan flauta"
@@ -428,6 +432,10 @@ export function ProductForm({
           costs={product?.variableCosts ?? null}
           unavailableCode={product?.variableCostsUnavailableCode ?? null}
           pending={!product}
+          // Only the saved calculation is available on the client; when the
+          // form is dirty we label it as the previous result instead of
+          // implying it already reflects the edits (#288 QA).
+          stale={Boolean(product && isDirty && product.variableCosts)}
         />
       </FormSection>
 
