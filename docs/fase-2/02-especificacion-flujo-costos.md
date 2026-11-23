@@ -133,6 +133,13 @@ Para cada producto, dentro de `/productos`:
 - **Entra desde:** el menú de navegación (destino Costos indirectos), el dashboard o Productos, en cualquier momento (ver "Navegación general").
 - **Estado visible:** resumen de costos indirectos cargados, costo total por producto y precio sugerido antes de confirmar.
 
+### Estado de la implementación (#244)
+
+- **Pantalla:** `/total-costs` ("Costo total" en el menú, guía P15). Muestra por producto la capacidad, la participación, el gasto asignado del mes, el costo variable, el gasto indirecto y el costo total por unidad, con el detalle "¿Cómo se distribuyó?".
+- **Cálculo:** `lib/calc/prorateCosts.ts` (motor puro) y `lib/services/cost-distribution.ts` (lectura en vivo, sin persistir): participación = capacidad ÷ suma de capacidades; gasto indirecto por unidad = gastos del mes ÷ suma de capacidades; costo total = costo variable + ese gasto. Es la regla que DATA deja por defecto en #250; sigue pendiente la confirmación del equipo (ver Huecos).
+- **Regla de capacidad (D9):** solo entran al reparto los productos con capacidad > 0. Sin capacidades o sin gastos del período no se muestra costo total.
+- **Producto sin costo variable:** absorbe su parte de los gastos, pero su costo total se muestra como "No disponible" con el motivo, no como $ 0.
+
 ### Huecos
 
 - **"Importancia de cada gasto" sin regla** (#244): el issue habla de "promedio ajustado según la importancia de cada gasto", pero no define cómo se pondera. La fórmula que sigue trata los costos indirectos como un solo total.
