@@ -85,6 +85,9 @@ export type PortfolioProduct = {
   marginPct: string;
   // Units of this product at the break-even, exact at 4 decimals ("37.5000").
   breakEvenUnits: string;
+  // Whole units of this product to sell, rounded up from the unrounded quota
+  // ("38"). Rounding the 4-decimal value instead would turn 100.00001 into 100.
+  breakEvenUnitsWhole: string;
   breakEvenSales: MoneyString;
 };
 
@@ -116,8 +119,8 @@ type PortfolioSuccess = {
   totals: PortfolioTotals;
   // Products left out because their capacity is 0 (D9).
   excludedProductIds: readonly string[];
-  // At least one product sells below its variable cost. It does not abort the
-  // calculation: the dashboard shows a warning.
+  // At least one product sells at or below its variable cost (contribution
+  // ≤ 0). It does not abort the calculation: the dashboard shows a warning.
   hasNegativeContribution: boolean;
 };
 
@@ -220,7 +223,7 @@ export function calculatePortfolioBreakEven(input: PortfolioInput): PortfolioRes
     const unitCost = variableUnit.plus(indirectUnit);
     const decrease = price.minus(unitCost);
 
-    if (contribution.lt(0)) {
+    if (contribution.lte(0)) {
       hasNegativeContribution = true;
     }
 
@@ -264,6 +267,7 @@ export function calculatePortfolioBreakEven(input: PortfolioInput): PortfolioRes
       contributionUnit: asMoney(row.contribution),
       marginPct: asFourDecimals(row.marginPct),
       breakEvenUnits: asUnits(quota),
+      breakEvenUnitsWhole: quota.toFixed(0, Decimal.ROUND_CEIL),
       breakEvenSales: asMoney(quota.times(row.price)),
     };
   });

@@ -43,10 +43,10 @@ export type BreakEvenExcludedProduct = {
   reason: BreakEvenExclusionReason;
 };
 
+// The whole quota ("38") comes from the engine as breakEvenUnitsWhole, rounded
+// up from the unrounded quota; the exact value is breakEvenUnits.
 export type BreakEvenRow = PortfolioProduct & {
-  // Quota rounded up to whole units ("38"); the exact value is breakEvenUnits.
-  breakEvenUnitsWhole: string;
-  // Price ≤ variable cost: the row is shown with a warning.
+  // Price ≤ variable cost (contribution ≤ 0): the row is shown with a warning.
   hasNegativeContribution: boolean;
 };
 
