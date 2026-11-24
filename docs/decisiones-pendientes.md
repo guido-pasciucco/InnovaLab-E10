@@ -45,7 +45,7 @@ Las decisiones abiertas de **licitaciones** no se incluyen en este recolector.
 
 - **P-04** — Las issues hablan de "promedio ajustado según la importancia de cada gasto" sin definir cómo se pondera. Hoy los indirectos son un solo total repartido por capacidad.
 - **P-05** — Interpretación final de la cuota por producto, del equilibrio en pesos y de la prueba de cierre. Las fórmulas propuestas necesitan validación contra la planilla.
-- **P-06** — La especificación dice "cada producto" pero no aclara si el porcentaje es uno solo para todos o individual. La convención margen-vs-recargo ya está resuelta; este punto no.
+- **P-06** — La especificación dice "cada producto" pero no aclara si el porcentaje es uno solo para todos o individual; ese punto sigue abierto. La convención margen-vs-recargo tampoco puede darse por cerrada: quedó pendiente de decisión para el responsable del precio sugerido, con ambas opciones y sus diferencias explicadas.
 - **P-07** — Los indirectos son "del mes" pero no hay modelo de período: ¿un solo cálculo vigente o histórico? La edición histórica también bloquea el selector de mes.
 - **P-09** — Sin la planilla #250 no hay oráculo para verificar ninguna fórmula. Es la dependencia de QA más importante del flujo.
 
