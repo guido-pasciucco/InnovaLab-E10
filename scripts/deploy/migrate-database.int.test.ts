@@ -23,8 +23,11 @@ const journal = JSON.parse(readFileSync(join(root, "meta/_journal.json"), "utf8"
 // database that already has the rest of main. Later files, such as the analyst
 // views, use a newer timestamp so production does not skip them; a partial
 // history must not record those timestamps first, or the repair is skipped.
-const repair = journal.entries.find((e) => e.tag === "20261124153914_reconcile_help_usage");
-if (!repair) throw new Error("help usage repair migration missing from the journal");
+const repair = (() => {
+  const entry = journal.entries.find((e) => e.tag === "20261124153914_reconcile_help_usage");
+  if (!entry) throw new Error("help usage repair migration missing from the journal");
+  return entry;
+})();
 const later = journal.entries.filter((e) => e.when > repair.when);
 const mora = journal.entries.filter((e) => e.when === 1795287505824 || e.when === 1795287593887);
 const main = journal.entries.filter((e) => !mora.includes(e) && e !== repair && !later.includes(e));
