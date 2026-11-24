@@ -145,9 +145,13 @@ Centraliza las decisiones de producto/arquitectura del flujo de costos multi-pro
 
 #### D13 — Packaging en presentaciones: referencia del catálogo y suma al costo
 
-- **Decisión:** las presentaciones de un producto seleccionan ítems de **packaging del catálogo** (mismo `kind`) indicando la cantidad. Su costo unitario se suma al costo de la receta y se normaliza con el rendimiento (D1) para obtener el **CVU de esa presentación**.
-- **Fuente única:** el precio del packaging se carga una sola vez, en la pestaña Packaging del catálogo de insumos; la presentación solo referencia, no vuelve a cargarlo.
-- **Alcance:** esta decisión define el vínculo con packaging; la entidad "presentación" en sí todavía no está modelada en el spec.
+- **Estado:** vigente desde el 2026-11-23. Antes estuvo descartada de momento, pendiente de comprensión y validación con Malena.
+- **Decisión:** cada producto puede tener **presentaciones** (por ejemplo, "Unidad" o "Caja x6"). Cada una tiene un nombre que no se repite en el producto, una cantidad entera de unidades mayor que 0 y una lista opcional de **packaging del catálogo**, cada uno con su cantidad y una unidad de la misma familia que el packaging.
+- **Cálculo:** `costo de la presentación = costo de la receta × unidades ÷ rendimiento + Σ costo del packaging`. El packaging no se divide por el rendimiento: se suma entero a la presentación que lo usa.
+- **Fuente única:** el packaging se carga una sola vez en la pestaña Packaging del catálogo, con cantidad y unidad del mismo catálogo de unidades que los insumos. La presentación solo lo referencia; si cambia el precio del packaging, cambia el costo de todas las presentaciones que lo usan.
+- **Pantalla:** las presentaciones se ven en una pantalla propia del producto (P12), a la que se llega desde el listado o el detalle del producto. Muestra por separado el costo variable de elaborar una unidad y el de cada presentación, con su desglose. Si falta un dato (receta incompleta, rendimiento inválido, packaging sin precio), lo avisa en vez de mostrar $0 como si fuera válido. No suma gastos indirectos.
+- **Protección:** un packaging usado por una presentación no se puede borrar ni cambiar de tipo o de familia de unidad; primero hay que quitarlo de las presentaciones que lo usan (misma regla que D11 para los insumos de una receta).
+- **Fuera de alcance:** la capacidad de cada presentación (Diferencia 1·bis, pendiente) y el precio de venta.
 
 #### D14 — UX en `/productos`: capacidad arriba y CVU en vivo
 
