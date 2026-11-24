@@ -194,7 +194,7 @@ export const ERROR_CATALOG = {
     logLevel: "silent",
   },
 
-  // Suppliers (supply tenders, docs/licitaciones RN-22 and RN-23)
+  // Suppliers (supply tenders, docs/flujos/09-licitaciones.md RN-22 and RN-23)
   SUPPLIER_INVITE_INVALID: {
     // Unknown, already used or expired link: all look the same.
     status: 410,
@@ -225,7 +225,7 @@ export const ERROR_CATALOG = {
     logLevel: "silent",
   },
 
-  // Supply tenders (docs/licitaciones)
+  // Supply tenders (docs/flujos/09-licitaciones.md)
   TENDER_NOT_FOUND: {
     // Missing, foreign or non-uuid tender id: all look the same.
     status: 404,

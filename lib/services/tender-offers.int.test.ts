@@ -15,7 +15,7 @@ import {
   submitOffersService,
 } from "./tenders";
 
-// Integration tests for supplier offers (docs/licitaciones RN-06, RN-08,
+// Integration tests for supplier offers (docs/flujos/09-licitaciones.md RN-06, RN-08,
 // RN-10, RN-12, RN-20) against the local Supabase stack.
 
 const HOUR = 60 * 60 * 1000;

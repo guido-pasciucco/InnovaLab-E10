@@ -18,7 +18,7 @@ import {
   publishTenderService,
 } from "./tenders";
 
-// Integration tests for publishing tenders (docs/licitaciones RN-01 to RN-07,
+// Integration tests for publishing tenders (docs/flujos/09-licitaciones.md RN-01 to RN-07,
 // RN-09, RN-12) against the local Supabase stack.
 
 const HOUR = 60 * 60 * 1000;
