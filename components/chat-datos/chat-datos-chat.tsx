@@ -2,12 +2,14 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { ArrowUp, Mic } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from "react";
 
 import { FormBanner } from "@/components/ui/page-shell";
 import { CHAT_DATOS_MAX_QUESTION_CHARS } from "@/lib/chat-datos/request";
 
 import { Answer } from "./answer";
+import { bindDictation, joinDictation, speechRecognitionCtor, type DictationEngine } from "./dictation";
 import { buildChatRequestBody, describeChatError, messageText, toAnswerView } from "./messages";
 import { readChatSession, writeChatSession } from "./session";
 
@@ -28,15 +30,28 @@ const transport = new DefaultChatTransport({
 const composerClass =
   "flex w-full items-end gap-2 rounded-[28px] border border-border-default bg-surface px-2 py-2 shadow-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus";
 
+function subscribeToDictation() {
+  return () => undefined;
+}
+
+function dictationSupported() {
+  return speechRecognitionCtor() !== null;
+}
+
 export function ChatDatosChat() {
   const { messages, sendMessage, setMessages, status, error, clearError } = useChat({
     id: "chat-datos",
     transport,
   });
   const [input, setInput] = useState("");
+  const [listening, setListening] = useState(false);
+  const [micMessage, setMicMessage] = useState<string | null>(null);
+  const canDictate = useSyncExternalStore(subscribeToDictation, dictationSupported, () => false);
   const endRef = useRef<HTMLLIElement>(null);
   const hydrated = useRef(false);
   const cleared = useRef(false);
+  const engineRef = useRef<DictationEngine | null>(null);
+  const inputBeforeDictation = useRef("");
 
   const busy = status === "submitted" || status === "streaming";
   const errorText = describeChatError(error);
@@ -64,12 +79,61 @@ export function ChatDatosChat() {
     if (list) list.scrollTop = list.scrollHeight;
   }, [messages, waiting]);
 
+  useEffect(() => {
+    return () => engineRef.current?.stop();
+  }, []);
+
+  function stopDictation() {
+    const engine = engineRef.current;
+    engineRef.current = null;
+    engine?.stop();
+    setListening(false);
+  }
+
   function ask(question: string) {
     const text = question.trim();
     if (text === "" || busy) return;
+    stopDictation();
     clearError();
     setInput("");
     void sendMessage({ text });
+  }
+
+  function toggleMic() {
+    if (engineRef.current) {
+      stopDictation();
+      return;
+    }
+    const Ctor = speechRecognitionCtor();
+    if (!Ctor || busy) return;
+    const engine = new Ctor();
+    inputBeforeDictation.current = input;
+    bindDictation(engine, {
+      onTranscript: (spoken) => {
+        if (engineRef.current !== engine) return;
+        setMicMessage(null);
+        setInput(joinDictation(inputBeforeDictation.current, spoken, CHAT_DATOS_MAX_QUESTION_CHARS));
+      },
+      onEnd: () => {
+        if (engineRef.current !== engine) return;
+        engineRef.current = null;
+        setListening(false);
+      },
+      onError: (message) => {
+        if (engineRef.current !== engine) return;
+        setMicMessage(message);
+      },
+    });
+    engineRef.current = engine;
+    setMicMessage(null);
+    setListening(true);
+    try {
+      engine.start();
+    } catch {
+      engineRef.current = null;
+      setListening(false);
+      setMicMessage("No se pudo usar el micrófono.");
+    }
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -85,6 +149,7 @@ export function ChatDatosChat() {
   }
 
   function reset() {
+    stopDictation();
     clearError();
     cleared.current = true;
     setMessages([]);
@@ -93,7 +158,7 @@ export function ChatDatosChat() {
 
   const composer = (
     <form onSubmit={handleSubmit} className="w-full space-y-2 pr-16">
-      <FormBanner message={errorText} />
+      <FormBanner message={errorText ?? micMessage} />
       <div className={composerClass}>
         <textarea
           aria-label="Tu pregunta"
@@ -101,18 +166,42 @@ export function ChatDatosChat() {
           rows={1}
           maxLength={CHAT_DATOS_MAX_QUESTION_CHARS}
           autoComplete="off"
-          placeholder="Escribí tu pregunta"
+          placeholder={listening ? "Te escucho…" : "Escribí tu pregunta"}
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={handleKeyDown}
           className="max-h-40 min-h-12 flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-fg outline-none placeholder:text-fg-muted"
         />
-        <button
-          type="submit"
-          disabled={busy || input.trim() === ""}
-          className="mb-1 inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-action-primary text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-action-disabled disabled:text-fg-disabled"
-        >
-          {busy ? "…" : "Enviar"}
-        </button>
+        {listening && (
+          <span className="sr-only" role="status">
+            Escuchando
+          </span>
+        )}
+        {canDictate && (
+          <button
+            type="button"
+            aria-label={listening ? "Dejar de escuchar" : "Hablar"}
+            aria-pressed={listening}
+            disabled={busy}
+            onClick={toggleMic}
+            className={`mb-1 inline-flex size-9 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:text-fg-disabled ${
+              listening
+                ? "bg-action-primary text-on-action-primary hover:bg-action-primary-hover"
+                : "text-fg-muted hover:bg-brand-green-50 hover:text-brand-green-700"
+            }`}
+          >
+            <Mic aria-hidden="true" size={18} />
+          </button>
+        )}
+        {input.trim() !== "" && (
+          <button
+            type="submit"
+            aria-label="Enviar"
+            disabled={busy}
+            className="mb-1 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-action-primary text-on-action-primary hover:bg-action-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-action-disabled disabled:text-fg-disabled"
+          >
+            <ArrowUp aria-hidden="true" size={18} strokeWidth={2.5} />
+          </button>
+        )}
       </div>
       {!empty && (
         <button

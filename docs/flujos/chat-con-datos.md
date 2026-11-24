@@ -141,3 +141,13 @@ DROP ROLE analyst_reader;
 `lib/db/analyst-views.int.test.ts` (Postgres local) comprueba que cada vista devuelve solo las filas del usuario de la sesión, que sin usuario no devuelve nada, que cada vista y columna tiene comentario, y que `analyst_reader`, `anon` y `authenticated` no pueden leer tablas reales, escribir ni crear objetos.
 
 `lib/services/analyst-query.int.test.ts` prueba el recorrido completo, sin el modelo: cada vista devuelve solo las filas del usuario (incluso con 24 consultas simultáneas de dos usuarios), 16 intentos de ataque se rechazan (cambiar de usuario con `set_config`, leer el catálogo, tablas reales, `reset role`, varias sentencias), el límite de filas y el `truncated`, el tiempo máximo, los errores de la consulta y que el pool no queda con usuario ni rol. Incluye un test que muestra que, sin el validador, `set_config` sí cambiaría de usuario: deja a la vista que el validador es una barrera obligatoria.
+
+## Micrófono de la pantalla
+
+El botón del micrófono usa el reconocimiento de voz del navegador. La pantalla solo recibe el texto. El audio no se guarda en la base ni se envía a AWS.
+
+En Chrome y Edge el navegador manda la grabación al servicio de reconocimiento de Google, junto con el dominio del sitio, el idioma del navegador y el idioma de la página (`es-AR`). No manda cookies, ni la cuenta de InnovaLab, ni el catálogo, ni la conversación. Google no publica cuánto tiempo conserva esa grabación.
+
+En Firefox el botón no aparece: ese navegador no tiene esta función.
+
+El texto que queda en el cuadro se envía al chat recién cuando la persona manda la pregunta, igual que si lo hubiera escrito.
