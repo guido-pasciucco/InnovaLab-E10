@@ -47,6 +47,8 @@ describe("supply units catalog", () => {
     expect(getSupplyUnit("litro")?.value).toBe("L");
     expect(getSupplyUnit("milímetros")?.value).toBe("mm");
     expect(getSupplyUnit("docenas")?.value).toBe("docena");
+    expect(getSupplyUnit("gr")?.value).toBe("g");
+    expect(getSupplyUnit("uds")?.value).toBe("unidad");
     expect(canonicalSupplyUnit(" litros ")).toBe("L");
   });
 

@@ -59,6 +59,7 @@ function normalizeUnitKey(value: string): string {
 // Aliases accept common spellings (kilo, litros, docenas) for the same unit.
 const UNIT_ALIASES: Record<string, SupplyUnitValue> = {
   g: "g",
+  gr: "g",
   gramo: "g",
   gramos: "g",
   kg: "kg",
@@ -84,6 +85,8 @@ const UNIT_ALIASES: Record<string, SupplyUnitValue> = {
   metros: "m",
   unidad: "unidad",
   unidades: "unidad",
+  ud: "unidad",
+  uds: "unidad",
   u: "unidad",
   un: "unidad",
   par: "par",
