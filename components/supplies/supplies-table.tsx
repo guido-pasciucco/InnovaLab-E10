@@ -100,7 +100,7 @@ export function SuppliesTable({
               Unidad mínima
             </th>
             <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
-              Costo/unidad
+              Costo por unidad mínima
             </th>
             <th
               scope="col"
