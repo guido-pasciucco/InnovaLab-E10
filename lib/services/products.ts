@@ -11,6 +11,8 @@ import { convertRecipeQuantityToMinimumUnits } from "@/lib/calc/recipeUnits";
 
 import {
   businesses,
+  presentationPackaging,
+  presentations,
   productIngredients,
   products,
   type Product,
@@ -726,9 +728,9 @@ export async function removeSupplyFromProductService(
   );
 }
 
-// Soft delete: the product disappears from the catalog but keeps its recipe
-// and its calculations. The exact behavior once DATA confirms it is still open
-// (#255); this is the recommended baseline.
+// Soft delete: the product row stays with is_active = false (D32). Its recipe,
+// presentations and packaging are removed in the same transaction (D34), so a
+// supply used only by this product can be deleted afterwards.
 export async function deleteProductService(
   userId: VerifiedUserId,
   productId: string,
@@ -751,6 +753,25 @@ export async function deleteProductService(
     if (!owned) {
       return false;
     }
+
+    const presentationRows = await tx
+      .select({ id: presentations.id })
+      .from(presentations)
+      .where(eq(presentations.productId, productId));
+
+    if (presentationRows.length > 0) {
+      await tx.delete(presentationPackaging).where(
+        inArray(
+          presentationPackaging.presentationId,
+          presentationRows.map((row) => row.id),
+        ),
+      );
+    }
+
+    await tx.delete(presentations).where(eq(presentations.productId, productId));
+    await tx
+      .delete(productIngredients)
+      .where(eq(productIngredients.productId, productId));
 
     await tx
       .update(products)

@@ -2,12 +2,19 @@
 import { ZodError } from "zod/v4";
 
 import { eq } from "drizzle-orm";
+import {
+  businesses,
+  presentationPackaging,
+  presentations,
+  productIngredients,
+  products,
+} from "@/lib/db/business/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
-import { businesses, products } from "@/lib/db/business/table";
 import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
+import { backfillProductVariableCosts } from "./product-variable-cost-backfill";
 import {
   createProductService,
   deleteProductService,
@@ -15,8 +22,8 @@ import {
   listProductsService,
   updateProductService,
 } from "./products";
-import { backfillProductVariableCosts } from "./product-variable-cost-backfill";
-import { createSupplyService } from "./supplies";
+import { createPresentationService } from "./presentations";
+import { createSupplyService, deleteSupplyService } from "./supplies";
 
 // Integration tests against the local Supabase stack (.env.test URLs are
 // local-only; loadTestEnv throws otherwise). One db client per file, closed in
@@ -627,7 +634,78 @@ describe("products service", () => {
     await expect(listProductsService(user.id, db)).resolves.toHaveLength(0);
     expect(await getProductService(user.id, product.id, db)).toBeNull();
   });
-
+  it("drops the recipe and presentations when a product is deleted", async () => {
+    const user = await makeUser();
+    const flour = await makeSupply(user.id);
+    const box = await makeSupply(user.id, {
+      kind: "packaging",
+      name: "Caja",
+      purchasePrice: "5000.00",
+      purchaseQuantity: "50",
+      purchaseUnit: "unidad",
+    });
+    const product = await makeProduct(user.id, flour.id);
+    const presentation = await createPresentationService(
+      user.id,
+      product.id,
+      {
+        name: "Caja x6",
+        unitsPerPresentation: "6",
+        packaging: [{ supplyId: box.id, quantity: "1", unit: "unidad" }],
+      },
+      db,
+    );
+    expect(presentation).not.toBeNull();
+  
+    expect(await deleteProductService(user.id, product.id, db)).toBe(true);
+  
+    const [row] = await db
+      .select({ isActive: products.isActive })
+      .from(products)
+      .where(eq(products.id, product.id));
+    expect(row?.isActive).toBe(false);
+  
+    const ingredients = await db
+      .select({ id: productIngredients.id })
+      .from(productIngredients)
+      .where(eq(productIngredients.productId, product.id));
+    const presentationRows = await db
+      .select({ id: presentations.id })
+      .from(presentations)
+      .where(eq(presentations.productId, product.id));
+    const packagingRows = await db
+      .select({ id: presentationPackaging.id })
+      .from(presentationPackaging)
+      .where(eq(presentationPackaging.presentationId, presentation!.id));
+  
+    expect(ingredients).toHaveLength(0);
+    expect(presentationRows).toHaveLength(0);
+    expect(packagingRows).toHaveLength(0);
+  
+    expect(await deleteSupplyService(user.id, flour.id, db)).toBe(true);
+    expect(await deleteSupplyService(user.id, box.id, db)).toBe(true);
+  });
+  
+  it("keeps SUPPLY_IN_USE when another active product still uses the supply", async () => {
+    const user = await makeUser();
+    const flour = await makeSupply(user.id);
+    const deleted = await makeProduct(user.id, flour.id);
+    await createProductService(
+      user.id,
+      {
+        name: "Medialunas",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: flour.id, quantity: "250", unit: "g" }],
+      },
+      db,
+    );
+  
+    expect(await deleteProductService(user.id, deleted.id, db)).toBe(true);
+    await expect(deleteSupplyService(user.id, flour.id, db)).rejects.toMatchObject({
+      code: "SUPPLY_IN_USE",
+    });
+  });
+  
   it("keeps products isolated by owner", async () => {
     const userA = await makeUser();
     const userB = await makeUser();
