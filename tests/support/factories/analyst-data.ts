@@ -1,8 +1,7 @@
 import type { AnalystView } from "@/lib/analyst/views";
 import type { Db } from "@/lib/db/client";
-import { businesses, productIngredients, products } from "@/lib/db/business/table";
-import { calculations, costingSetup, pricingInputs, scenarios } from "@/lib/db/calculation/table";
-import { businessCostLines, calcCostLines } from "@/lib/db/costs/table";
+import { businesses, presentationPackaging, presentations, productIngredients, products } from "@/lib/db/business/table";
+import { businessCostLines } from "@/lib/db/costs/table";
 import { supplies } from "@/lib/db/supplies/table";
 
 // Seeds exactly one row per `analyst` view for a user, so tests can compare ids
@@ -43,36 +42,14 @@ export async function seedAnalystData(db: Db, userId: string, label: string): Pr
       amountPeriod: "1000.00",
     })
     .returning({ id: businessCostLines.id });
-  const [calculation] = await db
-    .insert(calculations)
-    .values({ userId, businessId: business.id, productId: product.id })
-    .returning({ id: calculations.id });
-  await db.insert(costingSetup).values({
-    calculationId: calculation.id,
-    currency: "ARS",
-    period: "Mensual",
-    unit: "caja",
-    volume: 10,
-  });
-  await db.insert(pricingInputs).values({
-    calculationId: calculation.id,
-    marginConvention: "sobre_precio",
-    expectedMarginPct: "30",
-  });
-  const [costLine] = await db
-    .insert(calcCostLines)
-    .values({
-      calculationId: calculation.id,
-      concept: `Costo ${label}`,
-      behavior: "variable",
-      traceability: "direct",
-      amount: "50.00",
-    })
-    .returning({ id: calcCostLines.id });
-  const [scenario] = await db
-    .insert(scenarios)
-    .values({ calculationId: calculation.id, name: `Escenario ${label}`, isBase: true })
-    .returning({ id: scenarios.id });
+  const [presentation] = await db
+    .insert(presentations)
+    .values({ productId: product.id, name: `Caja ${label}`, unitsPerPresentation: "6" })
+    .returning({ id: presentations.id });
+  const [packaging] = await db
+    .insert(presentationPackaging)
+    .values({ presentationId: presentation.id, supplyId: supply.id, unit: "unidad", quantity: "1" })
+    .returning({ id: presentationPackaging.id });
 
   return {
     businessId: business.id,
@@ -81,9 +58,8 @@ export async function seedAnalystData(db: Db, userId: string, label: string): Pr
       supplies: supply.id,
       recipe_lines: recipeLine.id,
       business_expenses: expense.id,
-      calculations: calculation.id,
-      calculation_cost_lines: costLine.id,
-      scenarios: scenario.id,
+      presentations: presentation.id,
+      presentation_packaging: packaging.id,
     },
   };
 }
