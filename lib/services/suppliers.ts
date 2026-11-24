@@ -424,18 +424,18 @@ export async function listSupplierEmprendedoresService(
   return rows.map((row) => ({ ...row, ownerName: row.ownerName ?? UNNAMED_OWNER }));
 }
 
-// Where a signed-in account lands: a supplier that has never used the
-// emprendedor side (no business and no catalog) goes to its panel; everyone
-// else goes to flow 1 (the emprendedor catalogs).
-export async function getHomePathService(
+// A supplier that has never used the emprendedor side (no business and no
+// catalog). The UI decides where such an account lands; this only answers
+// which kind of account it is.
+export async function isSupplierOnlyService(
   userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
-): Promise<"/proveedor" | "/inicio"> {
+): Promise<boolean> {
   const supplier = await getSupplierService(userId, db);
-  if (!supplier) return "/inicio";
+  if (!supplier) return false;
   const [[business], [supply]] = await Promise.all([
     db.select({ id: businesses.id }).from(businesses).where(eq(businesses.ownerUserId, userId)).limit(1),
     db.select({ id: supplies.id }).from(supplies).where(eq(supplies.userId, userId)).limit(1),
   ]);
-  return business || supply ? "/inicio" : "/proveedor";
+  return !business && !supply;
 }

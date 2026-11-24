@@ -3,6 +3,12 @@ import { describe, expect, it } from "vitest";
 import { NAV_SECTIONS, sectionFromPathname } from "./nav-sections";
 
 describe("NAV_SECTIONS", () => {
+  it("opens the catalog sidebar with the home page", () => {
+    const catalog = NAV_SECTIONS.find((section) => section.id === "catalogo");
+
+    expect(catalog?.items[0]).toEqual(expect.objectContaining({ href: "/inicio", label: "Inicio" }));
+  });
+
   it("lists period costs in the catalog sidebar items", () => {
     const catalog = NAV_SECTIONS.find((section) => section.id === "catalogo");
 
@@ -24,6 +30,7 @@ describe("NAV_SECTIONS", () => {
 
 describe("sectionFromPathname", () => {
   it.each([
+    { path: "/inicio", section: "catalogo" },
     { path: "/insumos", section: "catalogo" },
     { path: "/products", section: "catalogo" },
     { path: "/period-costs", section: "catalogo" },

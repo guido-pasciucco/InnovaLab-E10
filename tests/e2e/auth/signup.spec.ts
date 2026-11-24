@@ -4,7 +4,7 @@ import { waitForAuthLink } from "../helpers/mailpit";
 
 // Signup is the subject here, so the account is created through the UI and
 // confirmed with the real Mailpit link (front door end to end).
-test("signup, confirm the email through Mailpit, log in and reach flow 1 (catalog)", async ({
+test("signup, confirm the email through Mailpit, log in and reach the home page", async ({
   page,
   cleanup,
   signupPage,
