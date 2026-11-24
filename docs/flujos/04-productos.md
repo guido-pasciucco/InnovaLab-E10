@@ -78,7 +78,7 @@ costo transferido           = cantidad reutilizada × costo unitario registrado 
 costo total del lote derivado = costo transferido + costos adicionales de transformación
 ```
 
-Si esta sección llega a implementarse, el sistema debe impedir reutilizar más de lo disponible, transferir el precio de venta en lugar del costo, usar la misma unidad en dos lotes derivados, crear un lote derivado con cantidad cero y romper el vínculo con el origen. Estas reglas son una **propuesta documentada**, no una decisión en alcance: su implementación está diferida a largo plazo (P-20 en `docs/decisiones-pendientes.md`) y requiere acuerdo previo con el equipo.
+Si esta sección llega a implementarse, el sistema debe impedir reutilizar más de lo disponible, transferir el precio de venta en lugar del costo, usar la misma unidad en dos lotes derivados, crear un lote derivado con cantidad cero y romper el vínculo con el origen. Estas reglas son una **propuesta documentada**, no una decisión en alcance: su implementación está diferida a largo plazo y requiere acuerdo previo con el equipo.
 
 ## Ciclo de vida
 

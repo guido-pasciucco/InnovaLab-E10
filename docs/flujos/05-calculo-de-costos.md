@@ -32,7 +32,7 @@ costo total unitarioᵢ = CVUᵢ + gasto indirecto por unidad
 ```
 
 - Un producto sin CVU absorbe su parte de los gastos, pero su costo total se muestra como **"No disponible"** con el motivo, nunca como `$ 0`.
-- Decisión tomada el 2026-11-24 (P-15): la "cantidad producida" que absorbe los indirectos es la **capacidad normal planeada** que el usuario carga en cada producto ("¿Cuántas unidades pensás fabricar este mes?"). No se usa producción real —ese dato no existe en el catálogo— ni un campo separado de "producción esperada", que sería equivalente y no cambiaría ningún número. Si la producción efectiva se desvía de lo planeado, la foto de "Cerrar cálculo" congela el valor del mes.
+- La "cantidad producida" que absorbe los indirectos es la **capacidad normal planeada** que el usuario carga en cada producto ("¿Cuántas unidades pensás fabricar este mes?"). No se usa producción real —ese dato no existe en el catálogo— ni un campo separado de "producción esperada", que sería equivalente y no cambiaría ningún número. Si la producción efectiva se desvía de lo planeado, la foto de "Cerrar cálculo" congela el valor del mes.
 - Queda abierta la regla de "importancia de cada gasto": hoy los indirectos se tratan como un solo total.
 
 ## Precio y margen

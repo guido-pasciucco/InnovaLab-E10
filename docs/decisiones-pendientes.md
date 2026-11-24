@@ -67,7 +67,7 @@ Las decisiones abiertas de **licitaciones** tienen su propio recolector: `docs/f
 - **P-17** — Definir qué componentes integran el costo base del precio sugerido.
 - **P-18** — Cómo se cargan y asignan los gastos generales compartidos entre productos, sin duplicar el fijo.
 - **P-19** — Incluir o no comisiones porcentuales por venta en el MVP.
-- **P-20** — Tratamiento de mermas y desperdicios. Diferida el 2026-11-24: es una idea a largo plazo, no algo para implementar ahora; requiere conversación y acuerdo con el equipo antes de entrar en alcance. La sección de mermas de `docs/flujos/04-productos.md` quedó como propuesta documentada, no como regla vigente.
+- **P-20** — Tratamiento de mermas y desperdicios. Diferida: es una idea a largo plazo, no algo para implementar ahora; requiere conversación y acuerdo con el equipo antes de entrar en alcance. Las reglas de mermas quedan como propuesta documentada, no como norma vigente.
 - **P-21** — Reglas de redondeo monetario y de unidades del punto de equilibrio.
 - **P-22** — Acordar qué resultados son proyecciones y cuáles pueden basarse en datos reales.
 - **P-23** — Validar el modelo con el mentor y con al menos dos rubros distintos.
