@@ -58,12 +58,22 @@ describe("createSupplyInputSchema", () => {
     ).toBe(true);
   });
 
-  it("keeps free-text purchase units for packaging", () => {
+  it("rejects a free-text purchase unit for packaging", () => {
+    expect(
+      fieldErrors(createSupplyInputSchema, {
+        ...validInput,
+        kind: "packaging",
+        purchaseUnit: "caja",
+      }),
+    ).toEqual({ purchaseUnit: ["Elegí una unidad de compra del catálogo."] });
+  });
+
+  it("accepts a catalog unit for packaging", () => {
     expect(
       createSupplyInputSchema.safeParse({
         ...validInput,
         kind: "packaging",
-        purchaseUnit: "caja",
+        purchaseUnit: "unidad",
       }).success,
     ).toBe(true);
   });

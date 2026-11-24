@@ -16,6 +16,7 @@ import { ProductsTable } from "./products-table";
 type ProductsCatalogProps = {
   initialProducts: ProductItem[];
   supplies: RecipeSupplyOption[];
+  presentationNames?: Readonly<Record<string, string[]>>;
 };
 
 // Client wrapper that mirrors the supplies catalog: the section owns the list,
@@ -23,6 +24,7 @@ type ProductsCatalogProps = {
 export function ProductsCatalog({
   initialProducts,
   supplies,
+  presentationNames = {},
 }: ProductsCatalogProps) {
   const [products, setProducts] = useState<ProductItem[]>(initialProducts);
   const [editing, setEditing] = useState<ProductItem | null>(null);
@@ -172,6 +174,7 @@ export function ProductsCatalog({
 
         <ProductsTable
           products={filtered}
+          presentationNames={presentationNames}
           busy={isDeleting}
           searchActive={query !== ""}
           onView={handleView}

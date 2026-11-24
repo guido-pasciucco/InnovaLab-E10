@@ -50,17 +50,13 @@ const supplyInputObjectSchema = createInsertSchema(supplies, supplyInputShape).o
   updatedAt: true,
 });
 
-// New supplies must pick a unit from the catalog. Updates cannot enforce this
+// New supplies and packaging must pick a unit from the catalog. Updates cannot enforce this
 // here because a legacy row may keep its stored unknown unit; the service
 // compares the payload with the persisted row before accepting it.
 export const createSupplyInputSchema = supplyInputObjectSchema.superRefine((value, ctx) => {
   const hasValidLength = value.purchaseUnit.length > 0 && value.purchaseUnit.length <= 40;
 
-  if (
-    value.kind === "supply" &&
-    hasValidLength &&
-    getSupplyUnit(value.purchaseUnit) === null
-  ) {
+  if (hasValidLength && getSupplyUnit(value.purchaseUnit) === null) {
     ctx.addIssue({
       code: "custom",
       path: ["purchaseUnit"],

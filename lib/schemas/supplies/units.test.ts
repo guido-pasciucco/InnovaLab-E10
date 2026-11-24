@@ -85,28 +85,25 @@ describe("supply units catalog", () => {
     expect(resolveSupplyFamily("bolsa", "caja")).toBeNull();
   });
 
-  it("derives units for supplies and preserves them for packaging", () => {
+  it("derives units from the catalog for supplies and packaging alike", () => {
     expect(
-      resolveSupplyUnits("supply", "kg", {
-        minimumUnit: "kg",
-        conversionFactor: "1",
-      }),
+      resolveSupplyUnits("kg"),
     ).toEqual({ minimumUnit: "g", conversionFactor: "1000" });
 
     expect(
-      resolveSupplyUnits("packaging", "kg", {
-        minimumUnit: "kg",
-        conversionFactor: "1",
-      }),
-    ).toEqual({ minimumUnit: "kg", conversionFactor: "1" });
+      resolveSupplyUnits("docena"),
+    ).toEqual({ minimumUnit: "unidad", conversionFactor: "12" });
+  });
+
+  it("returns null when packaging uses a unit outside the catalog", () => {
+    expect(
+      resolveSupplyUnits("caja"),
+    ).toBeNull();
   });
 
   it("returns null when a supply uses a unit outside the catalog", () => {
     expect(
-      resolveSupplyUnits("supply", "bolsa", {
-        minimumUnit: "unidad",
-        conversionFactor: "1",
-      }),
+      resolveSupplyUnits("bolsa"),
     ).toBeNull();
   });
 
@@ -201,7 +198,30 @@ describe("resolveSupplyUnitsForUpdate", () => {
     ).toBeNull();
   });
 
-  it("keeps packaging free-text units and technical values", () => {
+  it("derives packaging technical values from the catalog on update", () => {
+    expect(
+      resolveSupplyUnitsForUpdate(
+        {
+          kind: "packaging",
+          purchaseUnit: "unidad",
+          minimumUnit: "unidad",
+          conversionFactor: "1",
+        },
+        {
+          kind: "packaging",
+          purchaseUnit: "media docena",
+          minimumUnit: "bolsa",
+          conversionFactor: "100",
+        },
+      ),
+    ).toEqual({
+      purchaseUnit: "media docena",
+      minimumUnit: "unidad",
+      conversionFactor: "6",
+    });
+  });
+
+  it("rejects a packaging update with a free-text unit", () => {
     expect(
       resolveSupplyUnitsForUpdate(
         {
@@ -217,10 +237,6 @@ describe("resolveSupplyUnitsForUpdate", () => {
           conversionFactor: "100",
         },
       ),
-    ).toEqual({
-      purchaseUnit: "caja",
-      minimumUnit: "bolsa",
-      conversionFactor: "100",
-    });
+    ).toBeNull();
   });
 });

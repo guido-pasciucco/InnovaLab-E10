@@ -5,6 +5,8 @@ import { businessNameField, businessTypeField } from "@/lib/schemas/business/fie
 import { productNameField } from "@/lib/schemas/calculator-setup/fields";
 import {
   monthlyCapacityField,
+  PACKAGING_DUPLICATE_MESSAGE,
+  packagingSupplyIdField,
   presentationNameField,
   presentationUnitsField,
   recipeQuantityField,
@@ -97,14 +99,30 @@ export const createPresentationInputSchema = createInsertSchema(presentations, {
 });
 
 export const presentationPackagingInputSchema = z.object({
-  supplyId: recipeSupplyIdField,
+  supplyId: packagingSupplyIdField,
   quantity: recipeQuantityField,
   unit: recipeUnitField,
 });
 
-export const savePresentationInputSchema = createPresentationInputSchema.extend({
-  packaging: z.array(presentationPackagingInputSchema),
-});
+// One row per packaging in a presentation: the form rejects duplicates and the
+// unique index enforces the same rule under concurrency.
+export const savePresentationInputSchema = createPresentationInputSchema
+  .extend({ packaging: z.array(presentationPackagingInputSchema) })
+  .superRefine((value, ctx) => {
+    const seen = new Set<string>();
+
+    value.packaging.forEach((item, index) => {
+      if (seen.has(item.supplyId)) {
+        ctx.addIssue({
+          code: "custom",
+          message: PACKAGING_DUPLICATE_MESSAGE,
+          path: ["packaging", index, "supplyId"],
+        });
+      }
+
+      seen.add(item.supplyId);
+    });
+  });
 
 export const saveProductInputSchema = z
   .object({

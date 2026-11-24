@@ -199,9 +199,10 @@ export const presentations = pgTable("presentations", {
 // 20261123222357_presentation_packaging_fk_deferrable.sql adds it: the check
 // waits for commit, letting a profile/business cascade remove the presentation
 // packaging and the supply in one transaction (account deletion) while a
-// direct supply DELETE still fails. The supplies service does not check this
-// reference yet: until the presentations service adds a friendly
-// SUPPLY_IN_USE, this constraint is the only guard.
+// direct supply DELETE still fails. The supplies service checks this reference
+// first and returns a friendly SUPPLY_IN_USE; this constraint is the last line
+// of defense. The unit must belong to the packaging's catalog family; the
+// presentations service validates it before writing.
 export const presentationPackaging = pgTable("presentation_packaging", {
   id: uuid("id").defaultRandom().primaryKey(),
   presentationId: uuid("presentation_id")

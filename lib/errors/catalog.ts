@@ -168,17 +168,29 @@ export const ERROR_CATALOG = {
     logLevel: "silent",
   },
   SUPPLY_IN_USE: {
-    // A recipe references the supply, so deleting it or changing its type/unit
-    // would invalidate saved quantities.
+    // A recipe or a presentation references the supply, so deleting it or
+    // changing its type/unit would invalidate saved quantities.
     status: 409,
     message:
-      "Ese insumo se usa en una o más recetas. Sacalo de todas las recetas que lo usan antes de borrarlo o cambiar su tipo o unidad.",
+      "Ese insumo o packaging se usa en una o más recetas o presentaciones. Sacalo de todas las recetas y presentaciones que lo usan antes de borrarlo o cambiar su tipo o unidad.",
     logLevel: "silent",
   },
   SUPPLY_NOT_INGREDIENT: {
     // Packaging lives in the same catalog but can never be a recipe ingredient.
     status: 422,
     message: "El packaging no se puede usar como ingrediente.",
+    logLevel: "silent",
+  },
+  SUPPLY_NOT_PACKAGING: {
+    // Only packaging rows can be attached to a presentation (#298).
+    status: 422,
+    message: "Solo podés sumar packaging a una presentación: los insumos van en la receta.",
+    logLevel: "silent",
+  },
+  PRESENTATION_NOT_FOUND: {
+    // Missing, foreign or non-uuid presentation id: all look the same.
+    status: 404,
+    message: "No encontramos esa presentación.",
     logLevel: "silent",
   },
 

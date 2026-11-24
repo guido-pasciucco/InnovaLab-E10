@@ -4,7 +4,7 @@
 >
 > Convenciones: "la guía de Malena" se refiere a las pantallas P10–P13 de su documento de pantallas y navegación. Las decisiones D# corresponden a la especificación de Alejandro (Fase 2).
 >
-> ⚠️ **Estado de presentaciones y packaging:** Alejandro todavía no termina de entender el modelo; sus definiciones en esos temas (Diferencia 1·bis, 2 y 3; D13) quedan **descartadas de momento** y pendientes de comprensión y validación con Malena. No deben tomarse como decisiones vigentes.
+> **Estado de presentaciones y packaging (2026-11-23):** las Diferencias 2 y 3 quedaron resueltas con D13, que sigue la guía de Malena (P08 y P12). La Diferencia 1·bis (capacidad de las presentaciones) sigue pendiente de revisión.
 
 
 ## En qué coinciden (no requiere discusión)
@@ -49,7 +49,7 @@
 
 ## Diferencia 2 — Presentaciones como entidad (costo variable por presentación)
 
-> **Descartada de momento (pendiente de comprensión y validación con Malena).** Alejandro todavía no termina de entender qué es una presentación y cómo se calcula su costo.
+> **Resuelta (D13, 2026-11-23).** Se adopta la propuesta de Malena: P12 es una pantalla propia del producto, con las dos cifras separadas, la lista editable de presentaciones (nombre libre, unidades enteras y varios ítems de packaging con cantidad) y los avisos cuando falta un dato. El costo de la presentación es `costo de la receta × unidades ÷ rendimiento + Σ costo del packaging`. Antes estuvo descartada de momento.
 
 
 **Lo que propone Malena (guía P12):** presentaciones como lista editable de cada producto: nombre configurable (no lista fija x4/x6/x12), unidades contenidas, packaging con cantidades, desglose de cómo se calculó y **dos cifras separadas**: costo variable de elaborar una unidad y costo variable de la presentación comercial. Además, estados: receta incompleta, packaging sin precio, rendimiento inválido, y no mostrar $0 cuando faltan datos.
@@ -70,7 +70,7 @@
 
 ## Diferencia 3 — Protección del packaging referenciado
 
-> **Descartada de momento (pendiente de comprensión y validación con Malena).** Depende de entender cómo funcionan las presentaciones y el packaging; queda sin confirmar.
+> **Resuelta (D13, 2026-11-23).** El packaging usado por una presentación no se puede borrar ni cambiar de tipo o de familia de unidad, con la misma regla que el insumo usado por una receta. Antes estuvo descartada de momento.
 
 
 **Lo que propone Malena (guía P08 y P12):** la misma protección que ya se aplica al insumo —bloquear el borrado si está en uso— debe aplicarse al **packaging vinculado a presentaciones**, validada en la interfaz y en el backend.

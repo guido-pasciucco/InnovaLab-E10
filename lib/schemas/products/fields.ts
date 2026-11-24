@@ -141,3 +141,20 @@ export const presentationUnitsField = z
       .positive({ error: PRESENTATION_UNITS_INVALID_MESSAGE })
       .max(1_000_000, { error: PRESENTATION_UNITS_INVALID_MESSAGE }),
   );
+
+// Packaging lines of a presentation (P12, #298). Packaging uses the same unit
+// catalog as supplies, so a line may pick any unit of its packaging's family.
+export const PACKAGING_UNIT_FAMILY_MESSAGE =
+  "Elegí una unidad de medida de la misma familia que el packaging.";
+export const PACKAGING_DUPLICATE_MESSAGE = "Ese packaging ya está en la presentación.";
+export const PRESENTATION_NAME_TAKEN_MESSAGE =
+  "Ya hay una presentación con ese nombre en este producto.";
+
+export const packagingSupplyIdField = z.uuid({
+  error: "Elegí un packaging de tu catálogo.",
+});
+
+export const packagingSupplyField = z
+  .string({ error: "Elegí un packaging de tu catálogo." })
+  .trim()
+  .min(1, { error: "Elegí un packaging de tu catálogo." });

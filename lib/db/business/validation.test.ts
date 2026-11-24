@@ -319,4 +319,24 @@ describe("savePresentationInputSchema", () => {
     ]);
     expect(result.unitsPerPresentation).toBe(6);
   });
+
+  it("rejects the same packaging twice", () => {
+    const line = { supplyId: SERVER_ID, quantity: "1", unit: "unidad" };
+
+    expect(
+      fieldErrors(savePresentationInputSchema, {
+        ...validPresentation,
+        packaging: [line, line],
+      }),
+    ).toEqual({ packaging: ["Ese packaging ya está en la presentación."] });
+  });
+
+  it("asks for a packaging of the catalog when the id is not a uuid", () => {
+    expect(
+      fieldErrors(savePresentationInputSchema, {
+        ...validPresentation,
+        packaging: [{ supplyId: "caja", quantity: "1", unit: "unidad" }],
+      }),
+    ).toEqual({ packaging: ["Elegí un packaging de tu catálogo."] });
+  });
 });

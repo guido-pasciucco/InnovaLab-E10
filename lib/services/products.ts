@@ -3,6 +3,7 @@ import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
 import {
   adaptCatalogVariableCosts,
+  type CatalogPresentation,
   type CatalogSupply,
 } from "@/lib/calc/adaptCatalogVariableCosts";
 import { calculateVariableCosts } from "@/lib/calc/calculateVariableCosts";
@@ -73,10 +74,23 @@ type PersistedVariableCosts = {
   variableCostCalculatedAt: Date | null;
 };
 
-/** Computes a current cost from source records without using rounded output. */
+/** A presentation as the cost engine reads it: units plus packaging lines. */
+export type PresentationForCost = {
+  id: string;
+  name: string;
+  unitsPerPresentation: string;
+  packaging: { supplyId: string; quantity: string; unit: string }[];
+};
+
+/**
+ * Computes a current cost from source records without using rounded output.
+ * Presentations are optional: the persisted product cost never includes them,
+ * while the P12 view (#298) passes them to get each presentation's cost.
+ */
 export function deriveProductVariableCosts(
   product: Pick<ProductItem, "yieldQuantity" | "recipe">,
   catalog: readonly CatalogSupply[],
+  presentations: readonly PresentationForCost[] = [],
 ): ProductVariableCostsState {
   if (product.yieldQuantity === null) {
     return { variableCosts: null, variableCostsUnavailableCode: "MISSING_YIELD" };
@@ -105,9 +119,39 @@ export function deriveProductVariableCosts(
 
   const recipeForCost = normalizedRecipe as ProductItem["recipe"];
 
+  // Packaging lines are converted to the packaging's minimum unit, exactly like
+  // recipe lines (2 docenas → 24 unidades).
+  const presentationsForCost = presentations.map((presentation) => ({
+    ...presentation,
+    packaging: presentation.packaging.map((line) => {
+      const supply = catalogById.get(line.supplyId);
+      if (!supply) return line;
+
+      const quantity = convertRecipeQuantityToMinimumUnits(line.quantity, line.unit);
+      if (quantity === null) return null;
+
+      return { ...line, quantity, unit: supply.minimumUnit };
+    }),
+  }));
+
+  if (
+    presentationsForCost.some((presentation) =>
+      presentation.packaging.some((line) => line === null),
+    )
+  ) {
+    return { variableCosts: null, variableCostsUnavailableCode: "UNSUPPORTED_RECIPE_UNIT" };
+  }
+
+  const usedSupplyIds = new Set([
+    ...product.recipe.map((ingredient) => ingredient.supplyId),
+    ...presentations.flatMap((presentation) =>
+      presentation.packaging.map((line) => line.supplyId),
+    ),
+  ]);
+
   const adapted = adaptCatalogVariableCosts({
-    catalog: product.recipe.flatMap((ingredient) => {
-      const supply = catalogById.get(ingredient.supplyId);
+    catalog: [...usedSupplyIds].flatMap((supplyId) => {
+      const supply = catalogById.get(supplyId);
       return supply ? [supply] : [];
     }),
     recipe: {
@@ -118,7 +162,7 @@ export function deriveProductVariableCosts(
         unit: ingredient.unit,
       })),
     },
-    presentations: [],
+    presentations: presentationsForCost as CatalogPresentation[],
   });
 
   if (!adapted.ok) {
@@ -166,7 +210,7 @@ function persistenceFromVariableCosts(
 // numeric(14,4) always returns four decimals ("250.0000"). The recipe form
 // accepts up to four and must be able to round-trip the saved value, so the API
 // trims trailing zeros without changing the stored precision.
-function toFormQuantity(value: string): string {
+export function toFormQuantity(value: string): string {
   if (!value.includes(".")) return value;
 
   const trimmed = value.replace(/0+$/, "").replace(/\.$/, "");

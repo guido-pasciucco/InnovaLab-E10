@@ -1,6 +1,6 @@
 // Catalog of measurement units for supplies. The user picks one unit when
 // creating a supply; the system derives the minimum unit and the conversion
-// factor from this table. Packaging keeps its own free-text units for now.
+// factor from this table. Packaging uses the same catalog (#298).
 
 export const SUPPLY_UNIT_VALUES = [
   "g",
@@ -162,17 +162,11 @@ export type ResolvedSupplyUnits = SupplyUnits & {
   purchaseUnit: string;
 };
 
-// Supplies derive their technical columns from the selected catalog unit.
-// Packaging keeps whatever the user entered. A supply outside the catalog
-// returns null: callers must decide whether it is a legacy row being preserved
-// or a new/manipulated unit to reject.
-export function resolveSupplyUnits(
-  kind: string,
-  purchaseUnit: string,
-  fallback: SupplyUnits,
-): SupplyUnits | null {
-  if (kind !== "supply") return fallback;
-
+// Supplies and packaging derive their technical columns from the selected
+// catalog unit; the submitted minimum unit and factor are ignored. A unit
+// outside the catalog returns null: callers must decide whether it is a legacy
+// supply being preserved or a new/manipulated unit to reject.
+export function resolveSupplyUnits(purchaseUnit: string): SupplyUnits | null {
   const unit = getSupplyUnit(purchaseUnit);
   if (!unit) return null;
 
@@ -185,20 +179,11 @@ export function resolveSupplyUnits(
 // Resolves an edit against the row that is actually stored. A legacy supply
 // may keep a unit outside the catalog only when the payload repeats that same
 // stored value; its technical columns come from the row, never from the
-// payload. Any other unknown unit is rejected (null). Packaging keeps the
-// existing free-text behaviour.
+// payload. Any other unknown unit is rejected (null), packaging included.
 export function resolveSupplyUnitsForUpdate(
   existing: SupplyUnitState,
   input: SupplyUnitState,
 ): ResolvedSupplyUnits | null {
-  if (input.kind !== "supply") {
-    return {
-      purchaseUnit: input.purchaseUnit,
-      minimumUnit: input.minimumUnit,
-      conversionFactor: input.conversionFactor,
-    };
-  }
-
   const unit = getSupplyUnit(input.purchaseUnit);
   if (unit) {
     return {
@@ -209,6 +194,7 @@ export function resolveSupplyUnitsForUpdate(
   }
 
   const keepsStoredLegacyUnit =
+    input.kind === "supply" &&
     existing.kind === "supply" &&
     input.purchaseUnit === existing.purchaseUnit;
 

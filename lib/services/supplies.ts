@@ -18,6 +18,7 @@ import {
   resolveSupplyUnitsForUpdate,
 } from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
+import { isSupplyUsedByPresentation } from "./presentations";
 import { recalculatePersistedProductVariableCostsTx } from "./products";
 import {
   lockVariableCostSupplies,
@@ -48,13 +49,8 @@ export async function createSupplyService(
   db: Db = getDrizzleClient(),
 ): Promise<SupplyRow> {
   const supply = createSupplyInputSchema.parse(input);
-  const unit = getSupplyUnit(supply.purchaseUnit);
-  const purchaseUnit =
-    supply.kind === "supply" ? (unit?.value ?? supply.purchaseUnit) : supply.purchaseUnit;
-  const units = resolveSupplyUnits(supply.kind, purchaseUnit, {
-    minimumUnit: supply.minimumUnit,
-    conversionFactor: supply.conversionFactor,
-  });
+  const purchaseUnit = getSupplyUnit(supply.purchaseUnit)?.value ?? supply.purchaseUnit;
+  const units = resolveSupplyUnits(purchaseUnit);
 
   if (!units) {
     throw new AppError("VALIDATION", {
@@ -154,7 +150,9 @@ export async function updateSupplyService(
         .from(productIngredients)
         .where(eq(productIngredients.supplyId, supplyId))
         .limit(1);
-      if (used) throw new AppError("SUPPLY_IN_USE");
+      if (used || (await isSupplyUsedByPresentation(tx, supplyId))) {
+        throw new AppError("SUPPLY_IN_USE");
+      }
     }
 
     if (affectedProductIds.length > 0) {
@@ -209,16 +207,16 @@ export async function deleteSupplyService(
     return false;
   }
 
-  // A recipe owns the quantity, not the supply: deleting the supply would
-  // leave the recipe pointing at nothing. The service returns the friendly
-  // SUPPLY_IN_USE code; the deferrable FK is the last line of defense.
+  // A recipe or a presentation owns the quantity, not the supply: deleting it
+  // would leave them pointing at nothing. The service returns the friendly
+  // SUPPLY_IN_USE code; the deferrable FKs are the last line of defense.
   const [used] = await db
     .select({ id: productIngredients.id })
     .from(productIngredients)
     .where(eq(productIngredients.supplyId, supplyId))
     .limit(1);
 
-  if (used) {
+  if (used || (await isSupplyUsedByPresentation(db, supplyId))) {
     throw new AppError("SUPPLY_IN_USE");
   }
 
