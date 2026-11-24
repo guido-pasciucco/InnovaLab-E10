@@ -6,7 +6,7 @@ Documento de planificación, no de reglas vigentes. Las reglas que hoy rigen est
 - **Extracción:** las observaciones no están en el texto imprimible del PDF. Se leyeron los objetos de anotación (`/Text` y `/Highlight`) del archivo: 22 anotaciones con texto de autor y 15 globos `/Popup` sin contenido, que se descartaron.
 - **Autores de las notas:** `ariel` (notas de texto, 21 y 22 de noviembre de 2026) y `alelex10` (resaltados, 22 y 23 de noviembre de 2026).
 - **Estado:** los 22 hallazgos del PDF y el requerimiento H-23 tienen su decisión o estado registrado al 24 de noviembre de 2026. Nada se implementó ni se commiteó: este documento es solo planificación.
-- **Destino:** este documento alimenta las issues que se crearán después. No se crearon issues en este cambio.
+- **Destino:** este documento alimentó cuatro issues agrupadas por unidad de trabajo (guido-pasciucco/InnovaLab-E10#306 a #309). Los hallazgos sin trabajo pendiente no generan issue.
 
 ## Decisiones tomadas
 
@@ -304,8 +304,21 @@ Notas que el equipo decidió no hacer ahora pero quiere conservar para una versi
 | H-20 | Chat interno entre emprendedor y proveedor | 24 nov 2026 | Idea condicionada a tiempo ("si hay tiempo"); la negociación sigue por fuera de la aplicación |
 | H-17 | Rediseñar los avisos por ronda | 24 nov 2026 | "No es importante por ahora"; hoy existen avisos básicos derivados del estado, solo en el panel |
 
+## Issues creadas
+
+Se agruparon las unidades de trabajo en cuatro issues, en lugar de abrir una por hallazgo.
+
+| Issue | Hallazgos | Unidad de trabajo |
+| --- | --- | --- |
+| guido-pasciucco/InnovaLab-E10#306 | H-14, H-15 | Feedback del formulario de ofertas y botón de cancelar del aviso sin ofertas |
+| guido-pasciucco/InnovaLab-E10#307 | H-05, H-16 | Horas de ronda y cantidad de rondas configurables |
+| guido-pasciucco/InnovaLab-E10#308 | H-09 | Varios borradores de licitación |
+| guido-pasciucco/InnovaLab-E10#309 | H-23 | Registro público y licitaciones visibles sin invitaciones |
+
+Los hallazgos decididos "sin cambios" y los diferidos a *Ideas a futuro* no generan issues adicionales.
+
 ## 3. Fuera de alcance de este documento
 
 - ❌ **Cambios en `docs/flujos/`** — los hallazgos todavía no son reglas vigentes; ese cambio requiere una decisión explícita del equipo.
-- ❌ **Issues en GitHub** — se crearán a partir de los grupos C-01 a C-07 cuando se definan las prioridades.
+- ❌ **Más issues en GitHub** — ya se crearon cuatro; los hallazgos sin trabajo pendiente no justifican una issue propia.
 - ❌ **Cambios de código** — este PR es solo planificación.
