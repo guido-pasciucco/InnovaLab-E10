@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateBreakEven } from "./calculateBreakEven";
 import {
   calculatePortfolioBreakEven,
   type PortfolioInput,
 } from "./calculatePortfolioBreakEven";
 
-// Illustrative example from docs/fase-2/bloque-4/spec-backend-tablero.md §6.
+// Illustrative example for the break-even view (#246).
 // It is NOT the DATA example (#250): it only pins the expected behavior.
 //   period fixed costs: 150000.00
 //   A: capacity 200, CVU 800, price 1400
@@ -91,28 +90,22 @@ describe("calculatePortfolioBreakEven", () => {
     });
   });
 
-  it("matches calculateBreakEven for a single product", () => {
-    const input: PortfolioInput = {
+  it("reduces to the single-product break-even when there is one product", () => {
+    // Contribution 200 - 60 = 140; units 1000 / 140 = 7.142857...;
+    // sales 1000 / (140 / 200) = 1428.5714...
+    const result = calculatePortfolioBreakEven({
       periodFixedCosts: "1000",
       products: [
         { id: "only", name: "Only", capacity: 10, variableUnit: "60", price: "200" },
       ],
-    };
-    const wizard = calculateBreakEven({
-      price: "200",
-      variableUnit: "60",
-      totalFixed: "1000",
-      volume: 10,
     });
-    const result = calculatePortfolioBreakEven(input);
 
-    expect(wizard.ok).toBe(true);
     expect(result.ok).toBe(true);
-    if (!wizard.ok || !result.ok) return;
-    expect(result.totals.breakEvenUnits).toBe(wizard.breakEvenUnitsExact);
-    expect(result.totals.breakEvenUnitsWhole).toBe(wizard.breakEvenUnits);
-    expect(result.totals.breakEvenSales).toBe(wizard.breakEvenSales);
-    expect(result.products[0].contributionUnit).toBe(wizard.contributionUnit);
+    if (!result.ok) return;
+    expect(result.totals.breakEvenUnits).toBe("7.1429");
+    expect(result.totals.breakEvenUnitsWhole).toBe("8");
+    expect(result.totals.breakEvenSales).toBe("1428.57");
+    expect(result.products[0].contributionUnit).toBe("140.00");
   });
 
   it("keeps the closing check exact when the mix repeats decimals", () => {

@@ -27,7 +27,7 @@ import Decimal from "decimal.js";
 // Money and quantities stay Decimals until they leave the function. Every
 // returned amount is rounded once, from full precision, with ROUND_HALF_UP:
 // rounding the mix or the units first would drift the closing check.
-// The margin is measured on the selling price (ADR 0003):
+// The margin is measured on the selling price (decision D29):
 //
 //   marginPct_i = (price_i - unitCost_i) / price_i × 100
 
@@ -49,7 +49,7 @@ export type PortfolioProductInput = {
   capacity: number;
   // CVU: recipe cost divided by the recipe yield (#241). Indirects excluded.
   variableUnit: string;
-  // Suggested selling price, already resolved by #245. Must be > 0.
+  // Suggested selling price, resolved by the pricing service (#312). Must be > 0.
   price: string;
 };
 
@@ -102,8 +102,8 @@ export type PortfolioTotals = {
   contributionRatio: string;
   // Exact units at 4 decimals ("225.0000").
   breakEvenUnits: string;
-  // Whole units to sell, rounded up ("225"), same convention as
-  // calculateBreakEven.breakEvenUnits.
+  // Whole units to sell, rounded up ("225"): a fraction of a product cannot
+  // be sold.
   breakEvenUnitsWhole: string;
   breakEvenSales: MoneyString;
   // Σ (quota × contribution). Equals periodFixedCosts when nothing is rounded.
