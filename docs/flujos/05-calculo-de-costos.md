@@ -53,20 +53,7 @@ La base es el costo total unitario: el costo variable de la receta y las present
 
 ## Trabajo propio
 
-Cada costo responde tres preguntas independientes: ¿cambia si produzco más? (fijo/variable), ¿se puede asignar al producto? (directo/indirecto) y ¿el tiempo lo pone el emprendedor? (sí/no).
-
-- El trabajo propio **entra en `totalPeriodo`** por su comportamiento fijo o variable; la vista de trabajo propio es informativa y **no se suma de nuevo** (0001).
-- Se registra como dato propio, nunca se deduce del texto del concepto (0002).
-
-El valor por hora se sugiere con datos del negocio, no con una tarifa de mercado:
-
-```text
-horas totales           = días trabajados × horas por día
-horas productivas       = horas totales − horas de tareas generales (compras, administración, ventas)
-valor sugerido por hora = remuneración mensual deseada ÷ horas productivas
-```
-
-Es un piso editable y su cálculo debe mostrarse. Si las horas productivas son cero, no se puede sugerir un valor: se piden datos o se carga uno manual. En cada receta se registra solo el **tiempo efectivo de elaboración**; las tareas generales ya se descontaron al calcular las horas productivas y no se suman otra vez. El personal contratado se carga como directo cuando su tiempo es medible por producto, y como indirecto cuando es un sueldo mensual con cargas: se reparte por tiempo de producción.
+El trabajo propio del emprendedor es **un gasto fijo más** del período: se carga en *Gastos del período* como cualquier otro concepto (por ejemplo "Mi sueldo — $ 300.000"), sin marca propia ni carga por horas, y se reparte por capacidad con el resto de los gastos. El personal contratado con sueldo mensual se carga igual.
 
 ## Equilibrio y tablero
 
@@ -152,10 +139,10 @@ Si el precio es igual o menor al costo variable unitario, la contribución es ce
 - El dinero se calcula en decimal, sin redondeos intermedios; se redondea a dos decimales recién al mostrar o persistir.
 - Las cantidades físicas conservan la precisión ingresada: `1,275 kg` no se convierte en `1,28 kg` para calcular.
 - Un cálculo guardado conserva precios, cantidades, porcentajes, tiempos y reglas. Cambiar el precio de un insumo afecta cálculos futuros, **nunca resultados históricos**.
-- Cada cálculo registra: producto y versión de receta, insumos con cantidades y precios, unidades producidas y vendibles, mermas y reutilizaciones, horas y valor de la mano de obra, otros costos directos, indirectos del período, criterio y porcentajes de reparto, margen, precio sugerido y precio elegido, y fecha.
+- Cada cálculo registra: producto y versión de receta, insumos con cantidades y precios, unidades producidas y vendibles, mermas y reutilizaciones, otros costos directos, indirectos del período, criterio y porcentajes de reparto, margen, precio sugerido y precio elegido, y fecha.
 
 El motor conserva la precisión como fracción exacta con numerador y denominador, y redondea recién al mostrar el importe.
 
 ## Decisiones aplicables
 
-En este flujo rigen el recálculo en vivo, la foto del cierre con correcciones auditadas, el prorrateo por capacidad, el mes actual para los gastos, y las reglas de trabajo propio, recargo sobre el costo total y margen real informado por separado.
+En este flujo rigen el recálculo en vivo, la foto del cierre con correcciones auditadas, el prorrateo por capacidad, el mes actual para los gastos, el trabajo propio como un gasto fijo más, el recargo sobre el costo total y margen real informado por separado.

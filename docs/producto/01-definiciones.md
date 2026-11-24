@@ -63,11 +63,7 @@ Si el costo **cambia con la cantidad producida**: `fixed` o `variable`.
 Si el costo **se puede atribuir directamente a este producto**: `direct` o `indirect`.
 *Que se pueda "rastrear" hasta el producto. Lo indirecto hay que repartirlo con un criterio.*
 
-**`is_own_labor` (trabajo propio)**
-El valor del tiempo que el emprendedor pone él mismo, marcado con `true` en su propio renglón: es un **booleano**. Es una **tercera dimensión independiente** — no es un valor de `behavior` ni de `traceability`, porque ese renglón también es fijo o variable y directo o indirecto, y por su `behavior` entra en el total del período.
-*Labor = mano de obra; own = propia. Se separa porque es el costo que más se olvida. Fue confirmada como dimensión aparte en #76 (2026-10-17), y entra en el total por decisión 0001 — El trabajo propio SÍ entra en totalPeriodo. Columna `is_own_labor` agregada por #91, con un índice único parcial (`calc_cost_lines_own_labor_uq`) que permite a lo sumo un renglón de trabajo propio por cálculo. El porqué de registrarlo aparte del concepto está en 0002 — El trabajo propio se registra aparte del concepto.*
-
-> **No existe `category`.** El modelo confirmado el 2026-10-17 (ver #76) tiene tres datos independientes (`behavior`, `traceability`, `is_own_labor`) y ningún enum de cuatro categorías ni `categoryToAxes`. Cómo agrupa la UI las filas es una decisión abierta del dueño de la historia (ver #75).
+> **No existe `category`.** El modelo confirmado el 2026-10-17 (ver #76) tiene dos datos independientes (`behavior`, `traceability`) y ningún enum de cuatro categorías ni `categoryToAxes`. Cómo agrupa la UI las filas es una decisión abierta del dueño de la historia (ver #75).
 
 **`amount` vs `amount_period`**
 `amount`: importe del renglón en el cálculo. `amount_period`: importe del catálogo, expresado por período (ej. por mes). El mes al que pertenece vive en `business_cost_lines.period` (`AAAA-MM`).
@@ -75,9 +71,6 @@ El valor del tiempo que el emprendedor pone él mismo, marcado con `true` en su 
 **`allocation_pct`**
 Porcentaje de un costo indirecto que se le asigna a este producto.
 *Allocation = asignación/prorrateo.*
-
-**`hours`, `hourly_rate`**
-Horas y valor por hora, para cargar trabajo propio como horas × tarifa. No los usa H2.
 
 **`margin_convention`**
 Sobre qué se calcula el margen: sobre el costo (*markup*) o sobre el precio de venta. El mismo 30 % da precios distintos según la convención.
