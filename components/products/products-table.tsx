@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
+
 import type { ProductItem } from "@/lib/schemas/products/products";
 import { formatMonthlyCapacity } from "./monthly-capacity";
 
 type ProductsTableProps = {
   products: ProductItem[];
+  presentationNames?: Readonly<Record<string, string[]>>;
   busy?: boolean;
   searchActive?: boolean;
   onView: (product: ProductItem) => void;
@@ -14,9 +17,10 @@ type ProductsTableProps = {
 
 // Same list pattern as the supplies catalog: one card, a header row and one row
 // per product with its actions on the right. Products add "Ver receta" because
-// the recipe is their detail view.
+// the recipe is their detail view, and "Presentaciones" opens P12 (#298).
 export function ProductsTable({
   products,
+  presentationNames = {},
   busy = false,
   searchActive = false,
   onView,
@@ -60,6 +64,9 @@ export function ProductsTable({
             <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
               Receta
             </th>
+            <th scope="col" className="min-w-40 px-3 py-3 font-semibold text-fg-muted">
+              Presentaciones
+            </th>
             <th
               scope="col"
               className="px-3 py-3 whitespace-nowrap text-right font-semibold text-fg-muted"
@@ -80,6 +87,9 @@ export function ProductsTable({
                   ? "1 insumo"
                   : `${product.recipe.length} insumos`}
               </td>
+              <td className="min-w-40 px-3 py-3 text-fg-muted">
+                {presentationNames[product.id]?.join(", ") || "Sin presentaciones"}
+              </td>
               <td className="px-3 py-3 whitespace-nowrap text-right">
                 <div className="inline-flex gap-2">
                   <button
@@ -91,6 +101,13 @@ export function ProductsTable({
                   >
                     Ver receta
                   </button>
+                  <Link
+                    href={`/products/${product.id}/presentations`}
+                    aria-label={`Presentaciones de ${product.name}`}
+                    className="inline-flex min-h-9 items-center rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  >
+                    Presentaciones
+                  </Link>
                   <button
                     type="button"
                     onClick={() => onEdit(product)}

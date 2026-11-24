@@ -5,7 +5,7 @@ import { expect, test } from "../fixtures";
 // through React state alone could race with fast typing and turn it into
 // "2.000,50"; the parser-only tests did not catch that.
 test("formatea el precio de compra al tipearlo carácter por carácter", async ({ authedPage }) => {
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
 
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await expect(authedPage.getByRole("dialog")).toBeVisible();

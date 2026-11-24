@@ -12,7 +12,7 @@ type PeriodCostsScreenProps = {
 // Presentation of the period expenses screen (#243, catalog pattern in #285).
 // It takes the data the page read from the server, so it renders the same with
 // the real lines and with a preview. The page shell — including the left
-// sidebar of flow 1 — comes from the (flujo-1) layout.
+// sidebar of flow 1 — comes from the (business) layout.
 export function PeriodCostsScreen({ period, lines, total }: PeriodCostsScreenProps) {
   return (
     <main className="px-4 py-10 sm:px-6">

@@ -4,7 +4,7 @@ import { expect, test } from "../fixtures";
 // publish, saves the draft, and finds it again from the tender list.
 test("sin proveedores se cargan los insumos, se guarda el borrador y se retoma", async ({ authedPage }) => {
   // Arrange: one catalog supply and no supplier.
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
   await authedPage.getByRole("textbox", { name: "Precio de compra" }).fill("18750");

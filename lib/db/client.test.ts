@@ -28,7 +28,7 @@ describe("getDrizzleClient", () => {
 
     expect(db.query.profiles).toBeDefined();
     expect(db.query.businessCostLines).toBeDefined();
-    expect(db.query.calcCostLines).toBeDefined();
+    expect(db.query.products).toBeDefined();
   });
 
   it("reuses the same client across calls and module reloads", async () => {

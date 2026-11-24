@@ -5,9 +5,9 @@ import type { CatalogVariableCostsAdapterErrorCode } from "@/lib/calc/adaptCatal
 import type { VariableCostsErrorCode, VariableCostsSuccess } from "@/lib/calc/calculateVariableCosts";
 import { recipeYieldField } from "../recipe-yield/fields";
 import {
-  canonicalSupplyUnit,
-  getSupplyUnit,
-  resolveSupplyFamily,
+  getSupplyUnitBasis,
+  getSupplyUnitFamily,
+  isRecipeUnitAllowed,
   type SupplyUnitFamily,
 } from "@/lib/schemas/supplies/units";
 import {
@@ -49,16 +49,15 @@ const productFormObjectSchema = z.object({
 // is. Filtering here (instead of in the page) keeps the regression covered by
 // a pure unit test and gives the page a single mapping function.
 //
-// The default unit is the supply's minimum unit, which is also the unit of the
-// migrated recipe rows. Users can switch to any other catalog unit in the same
-// family (for example g → kg) and the service converts for costing.
+// The default unit is the minimum unit of the supply's purchase unit (kg → g).
+// Users can switch to any other catalog unit in the same family (for example
+// g → kg) and the service converts for costing.
 export function toRecipeSupplyOptions(
   supplies: readonly {
     id: string;
     name: string;
     kind: string;
     purchaseUnit: string;
-    minimumUnit: string;
   }[],
 ): RecipeSupplyOption[] {
   return supplies
@@ -66,9 +65,8 @@ export function toRecipeSupplyOptions(
     .map((supply) => ({
       id: supply.id,
       name: supply.name,
-      family: resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit),
-      defaultUnit: canonicalSupplyUnit(supply.minimumUnit || supply.purchaseUnit),
-      minimumUnit: supply.minimumUnit,
+      family: getSupplyUnitFamily(supply.purchaseUnit),
+      defaultUnit: getSupplyUnitBasis(supply.purchaseUnit)?.minimumUnit ?? "",
     }));
 }
 
@@ -112,22 +110,7 @@ export function createProductFormSchema(
       // The unit rule already reports empty or overlong values.
       if (!item.unit || item.unit.length > 40) return;
 
-      const catalogUnit = getSupplyUnit(item.unit);
-      const keepsLegacyUnit =
-        catalogUnit === null &&
-        supply.family === null &&
-        item.unit === supply.defaultUnit;
-
-      if (!catalogUnit && !keepsLegacyUnit) {
-        ctx.addIssue({
-          code: "custom",
-          message: RECIPE_UNIT_FAMILY_MESSAGE,
-          path: ["recipe", index, "unit"],
-        });
-        return;
-      }
-
-      if (catalogUnit && supply.family !== catalogUnit.family) {
+      if (!isRecipeUnitAllowed(supply.family, item.unit)) {
         ctx.addIssue({
           code: "custom",
           message: RECIPE_UNIT_FAMILY_MESSAGE,
@@ -173,5 +156,4 @@ export type RecipeSupplyOption = {
   name: string;
   family: SupplyUnitFamily | null;
   defaultUnit: string;
-  minimumUnit: string;
 };

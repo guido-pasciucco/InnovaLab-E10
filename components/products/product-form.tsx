@@ -19,17 +19,14 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { saveProduct } from "@/app/(flujo-1)/products/actions";
+import { saveProduct } from "@/app/(business)/products/actions";
 import type {
   ProductFormValues,
   ProductItem,
   RecipeSupplyOption,
 } from "@/lib/schemas/products/products";
 import { createProductFormSchema } from "@/lib/schemas/products/products";
-import {
-  getSupplyUnitsForFamily,
-  isRecipeUnitAllowed,
-} from "@/lib/schemas/supplies/units";
+import { getSupplyUnitsForFamily } from "@/lib/schemas/supplies/units";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import {
@@ -41,6 +38,7 @@ import { FormGrid } from "@/components/ui/form-grid";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
+import { emptyRecipeRow, toProductFormDefaults } from "./product-form-defaults";
 import { RecipeYieldField } from "./recipe-yield-field";
 import { VariableCostResult } from "./variable-cost-result";
 
@@ -59,38 +57,6 @@ const SERVER_FIELDS: readonly Path<ProductFormValues>[] = [
   "recipe",
 ];
 
-// Empty row used when the form opens or the user adds another ingredient.
-function emptyRecipeRow(): ProductFormValues["recipe"][number] {
-  return { supplyId: "", quantity: "", unit: "" };
-}
-
-function toDefaultValues(product: ProductItem | null): ProductFormValues {
-  const monthlyCapacity =
-    product?.monthlyCapacity === null || product?.monthlyCapacity === undefined
-      ? ""
-      : String(product.monthlyCapacity);
-
-  if (!product) {
-    return {
-      name: "",
-      monthlyCapacity,
-      yieldQuantity: "",
-      recipe: [emptyRecipeRow()],
-    };
-  }
-
-  return {
-    name: product.name,
-    monthlyCapacity,
-    yieldQuantity: product.yieldQuantity ?? "",
-    recipe: product.recipe.map((item) => ({
-      supplyId: item.supplyId,
-      quantity: item.quantity,
-      unit: item.unit,
-    })),
-  };
-}
-
 function recipeArrayMessage(errors: FieldErrors<ProductFormValues>): string | undefined {
   const recipe = errors.recipe as
     | { message?: string; root?: { message?: string } }
@@ -99,32 +65,16 @@ function recipeArrayMessage(errors: FieldErrors<ProductFormValues>): string | un
   return recipe?.message ?? recipe?.root?.message;
 }
 
-// Catalog units of the selected supply's family, plus the stored value when it
-// predates the catalog (legacy rows must stay visible and editable).
+// Catalog units of the selected supply's family.
 function recipeUnitOptions(
   supply: RecipeSupplyOption | undefined,
-  currentUnit: string,
 ): { value: string; label: string }[] {
-  if (!supply) return [];
+  if (!supply?.family) return [];
 
-  const options = supply.family
-    ? getSupplyUnitsForFamily(supply.family).map((unit) => ({
-        value: unit.value,
-        label: unit.label,
-      }))
-    : supply.defaultUnit
-      ? [{ value: supply.defaultUnit, label: `${supply.defaultUnit} (actual)` }]
-      : [];
-
-  if (
-    currentUnit &&
-    !options.some((option) => option.value === currentUnit) &&
-    isRecipeUnitAllowed(supply, currentUnit)
-  ) {
-    options.push({ value: currentUnit, label: `${currentUnit} (actual)` });
-  }
-
-  return options;
+  return getSupplyUnitsForFamily(supply.family).map((unit) => ({
+    value: unit.value,
+    label: unit.label,
+  }));
 }
 
 // #288: the mockup shows Datos / Receta / Costeo as separate tabs. Tabs would be
@@ -188,7 +138,7 @@ export function ProductForm({
     formState: { errors, isDirty },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: toDefaultValues(product),
+    defaultValues: toProductFormDefaults(product),
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -302,7 +252,7 @@ export function ProductForm({
               El packaging no se usa como ingrediente de la receta.
             </p>
             <Link
-              href="/insumos"
+              href="/supplies"
               className="mt-1 inline-block font-semibold text-link underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
               Cargá tu catálogo de insumos
@@ -325,10 +275,9 @@ export function ProductForm({
               const selectedSupply = suppliesById.get(
                 recipeValues?.[index]?.supplyId ?? "",
               );
-              const unitOptions = recipeUnitOptions(
-                selectedSupply,
-                recipeValues?.[index]?.unit ?? "",
-              );
+              // main simplified the unit catalog: options come only from the
+              // selected supply's family (#288 visual work keeps this rule).
+              const unitOptions = recipeUnitOptions(selectedSupply);
               const supplyField = register(`recipe.${index}.supplyId`);
 
               return (

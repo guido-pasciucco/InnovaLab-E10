@@ -4,7 +4,7 @@ import { waitForAuthLink } from "../helpers/mailpit";
 
 // Signup is the subject here, so the account is created through the UI and
 // confirmed with the real Mailpit link (front door end to end).
-test("signup, confirm the email through Mailpit, log in and reach flow 1 (catalog)", async ({
+test("signup, confirm the email through Mailpit, log in and reach the home page", async ({
   page,
   cleanup,
   signupPage,
@@ -30,9 +30,9 @@ test("signup, confirm the email through Mailpit, log in and reach flow 1 (catalo
 
   await loginPage.goto();
   await loginPage.logIn(user);
-  await expect(page).toHaveURL("/insumos");
+  await expect(page).toHaveURL("/inicio");
 
   // Assert
-  await expect(page.getByRole("heading", { name: "Insumos y packaging" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bienvenida" })).toBeVisible();
   await expect(page.getByRole("complementary").getByText(user.email)).toBeVisible();
 });

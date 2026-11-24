@@ -3,7 +3,7 @@ import { expect, test } from "../fixtures";
 test("CatalogModal atrapa el foco y lo restituye al cerrar", async ({
   authedPage,
 }) => {
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   const trigger = authedPage.getByRole("button", { name: "+ Nuevo" });
   await trigger.click();
 

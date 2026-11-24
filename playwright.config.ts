@@ -26,7 +26,9 @@ export default defineConfig({
   // Reject focused suites locally as well as in GitHub Actions.
   forbidOnly: true,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // One worker everywhere: parallel workers against the same local Supabase
+  // stack time out server actions and race the profile trigger.
+  workers: 1,
   reporter: process.env.CI
     ? [["github"], ["json", { outputFile: "test-results/report.json" }]]
     : "list",

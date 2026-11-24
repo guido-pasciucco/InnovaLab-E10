@@ -31,7 +31,7 @@ export function SiteHeader({ startHref, isSignedIn }: { startHref: string; isSig
 
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
-            href={isSignedIn ? "/dashboard" : "/login"}
+            href={isSignedIn ? "/inicio" : "/login"}
             className="hidden min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-fg transition-colors hover:bg-surface hover:text-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus md:inline-flex"
           >
             {isSignedIn ? "Dashboard" : "Iniciar sesión"}

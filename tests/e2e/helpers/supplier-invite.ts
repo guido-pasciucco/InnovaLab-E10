@@ -1,7 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
 // Generates a personal supplier invite link from the emprendedor's
-// /proveedores screen (docs/licitaciones RN-23) and returns it. The link is
+// /proveedores screen (docs/flujos/09-licitaciones.md RN-23) and returns it. The link is
 // shown only once, in a read-only field.
 export async function generateInviteLink(ownerPage: Page, label: string): Promise<string> {
   await ownerPage.goto("/proveedores");

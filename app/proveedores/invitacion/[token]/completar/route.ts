@@ -14,7 +14,7 @@ import { createRscSupabaseClient } from "@/lib/supabase/rsc";
 type Context = { params: Promise<{ token: string }> };
 
 // Where the supplier's confirmation email continues after /auth/confirm
-// opened the session (docs/licitaciones RN-23: the email is confirmed before
+// opened the session (docs/flujos/09-licitaciones.md RN-23: the email is confirmed before
 // the supplier account exists). Writes the supplier row and the link to the
 // emprendedor from the data kept in the account metadata, then opens the
 // supplier panel. On failure it goes back to the invite page, which explains

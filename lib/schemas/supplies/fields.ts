@@ -26,21 +26,15 @@ export const supplyKindField = z.enum(["supply", "packaging"], {
 });
 
 export const purchaseUnitField = z
-  .string({ error: "Escribí la unidad de compra (ej: kg, caja, docena)." })
+  .string({ error: "Elegí la unidad de compra (ej: kg, docena, unidad)." })
   .trim()
-  .min(1, { error: "Escribí la unidad de compra (ej: kg, caja, docena)." })
+  .min(1, { error: "Elegí la unidad de compra (ej: kg, docena, unidad)." })
   .max(40, { error: "La unidad de compra debe tener como máximo 40 caracteres." });
 
-// Supplies use the closed catalog; packaging keeps its free-text unit. The
-// message is shared by the create gate and the edit service.
+// Supplies and packaging use the closed catalog of units. The message is shared
+// by the server gate and the services.
 export const SUPPLY_UNIT_CATALOG_MESSAGE =
   "Elegí una unidad de compra del catálogo.";
-
-export const minimumUnitField = z
-  .string({ error: "Escribí la unidad mínima (ej: g, ml, unidad)." })
-  .trim()
-  .min(1, { error: "Escribí la unidad mínima (ej: g, ml, unidad)." })
-  .max(40, { error: "La unidad mínima debe tener como máximo 40 caracteres." });
 
 // The amount is a decimal string, never a float, so no money rule leaks into
 // the domain and no cent is lost on the way in.
@@ -96,37 +90,5 @@ export const purchaseQuantityField = z
   .pipe(
     z.string().regex(/^\d+(\.\d{1,4})?$/, {
       error: "La cantidad debe tener hasta 4 decimales.",
-    }),
-  );
-
-// How many minimum units one purchase unit contains: 1000 for kg→g, 12 for
-// docena→unidad, 100 for a 100-unit box. The form suggests it for the common
-// metric pairs; the user can always override it.
-export const conversionFactorField = z
-  .string({ error: "La equivalencia debe ser un número." })
-  .trim()
-  .pipe(
-    z.string().min(1, {
-      error: "Indicá cuántas unidades mínimas trae la unidad de compra.",
-    }),
-  )
-  .pipe(
-    z.string().regex(amountShape, {
-      error: "La equivalencia debe ser un número.",
-    }),
-  )
-  .pipe(
-    z.string().refine((v) => !v.startsWith("-") && /[1-9]/.test(v), {
-      error: "La equivalencia debe ser mayor que cero.",
-    }),
-  )
-  .pipe(
-    z.string().refine((v) => v.split(".")[0].length <= 10, {
-      error: "La equivalencia es demasiado grande.",
-    }),
-  )
-  .pipe(
-    z.string().regex(/^\d+(\.\d{1,4})?$/, {
-      error: "La equivalencia debe tener hasta 4 decimales.",
     }),
   );

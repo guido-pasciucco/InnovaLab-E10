@@ -1,9 +1,9 @@
 ﻿import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ZodError } from "zod/v4";
 
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
-import { businesses, productIngredients, products } from "@/lib/db/business/table";
+import { businesses, products } from "@/lib/db/business/table";
 import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
@@ -29,8 +29,6 @@ type SupplyInput = {
   purchasePrice: string;
   purchaseQuantity: string;
   purchaseUnit: string;
-  minimumUnit: string;
-  conversionFactor: string;
 };
 
 const validSupply: SupplyInput = {
@@ -39,8 +37,6 @@ const validSupply: SupplyInput = {
   purchasePrice: "18750.00",
   purchaseQuantity: "25",
   purchaseUnit: "kg",
-  minimumUnit: "g",
-  conversionFactor: "1000",
 };
 
 const MISSING_ID = "00000000-0000-0000-0000-000000000000";
@@ -215,8 +211,6 @@ describe("products service", () => {
       purchasePrice: "1.00",
       purchaseQuantity: "1",
       purchaseUnit: "unidad",
-      minimumUnit: "unidad",
-      conversionFactor: "1",
     });
 
     const product = await createProductService(
@@ -249,8 +243,6 @@ describe("products service", () => {
       purchasePrice: "0.00",
       purchaseQuantity: "1",
       purchaseUnit: "unidad",
-      minimumUnit: "unidad",
-      conversionFactor: "1",
     });
     const product = await makeProduct(user.id, supply.id, "unidad", "1");
 
@@ -269,8 +261,6 @@ describe("products service", () => {
       purchasePrice: "1.00",
       purchaseQuantity: "1",
       purchaseUnit: "unidad",
-      minimumUnit: "unidad",
-      conversionFactor: "1",
     });
     const product = await makeProduct(user.id, supply.id, "unidad", "1");
 
@@ -299,8 +289,6 @@ describe("products service", () => {
       purchasePrice: "1.00",
       purchaseQuantity: "1",
       purchaseUnit: "unidad",
-      minimumUnit: "unidad",
-      conversionFactor: "1",
     });
     const product = await makeProduct(user.id, supply.id, "unidad", "1");
     const before = await persistedVariableCosts(product.id);
@@ -351,43 +339,12 @@ describe("products service", () => {
     });
   });
 
-  it("persists a typed unavailable state for a legacy recipe the engine cannot calculate", async () => {
-    const user = await makeUser();
-    const [legacy] = await db
-      .insert(supplies)
-      .values({
-        userId: user.id,
-        kind: "supply",
-        name: "Insumo heredado",
-        purchasePrice: "10.00",
-        purchaseQuantity: "1",
-        purchaseUnit: "bolsa",
-        minimumUnit: "bolsa",
-        conversionFactor: "1",
-      })
-      .returning();
-    if (!legacy) throw new Error("legacy supply was not created");
-
-    const product = await makeProduct(user.id, legacy.id, "bolsa", "1");
-
-    await expect(persistedVariableCosts(product.id)).resolves.toMatchObject({
-      status: "unavailable",
-      unitAmount: null,
-      unitNumerator: null,
-      recipeAmount: null,
-      unavailableCode: "UNSUPPORTED_RECIPE_UNIT",
-      calculatedAt: expect.any(Date),
-    });
-  });
-
   it("backfills pending products with a yield once and leaves ready results intact", async () => {
     const user = await makeUser();
     const supply = await makeSupply(user.id, {
       purchasePrice: "1.00",
       purchaseQuantity: "1",
       purchaseUnit: "unidad",
-      minimumUnit: "unidad",
-      conversionFactor: "1",
     });
     const product = await makeProduct(user.id, supply.id, "unidad", "1");
 
@@ -475,56 +432,29 @@ describe("products service", () => {
     ).rejects.toMatchObject({ code: "VALIDATION" });
   });
 
-  it("preserves a legacy unit when the supply predates the catalog", async () => {
-    const user = await makeUser();
-    const [legacy] = await db
-      .insert(supplies)
-      .values({
-        userId: user.id,
-        kind: "supply",
-        name: "Harina a granel",
-        purchasePrice: "1000.00",
-        purchaseQuantity: "1",
-        purchaseUnit: "bolsa",
-        minimumUnit: "bolsa",
-        conversionFactor: "1",
-      })
-      .returning();
+  it.each(["bolsa", "g"])(
+    "rejects the line unit %s for a supply whose unit is outside the catalog",
+    async (unit) => {
+      const user = await makeUser();
+      const [legacy] = await db
+        .insert(supplies)
+        .values({
+          userId: user.id,
+          kind: "supply",
+          name: "Harina a granel",
+          purchasePrice: "1000.00",
+          purchaseQuantity: "1",
+          purchaseUnit: "bolsa",
+        })
+        .returning();
 
-    if (!legacy) throw new Error("legacy supply was not created");
+      if (!legacy) throw new Error("legacy supply was not created");
 
-    const product = await makeProduct(user.id, legacy.id, "bolsa", "1");
-
-    expect(product.recipe[0]).toEqual({
-      supplyId: legacy.id,
-      supplyName: legacy.name,
-      quantity: "1",
-      unit: "bolsa",
-    });
-  });
-
-  it("rejects a different free-text unit for a legacy supply", async () => {
-    const user = await makeUser();
-    const [legacy] = await db
-      .insert(supplies)
-      .values({
-        userId: user.id,
-        kind: "supply",
-        name: "Harina a granel",
-        purchasePrice: "1000.00",
-        purchaseQuantity: "1",
-        purchaseUnit: "bolsa",
-        minimumUnit: "bolsa",
-        conversionFactor: "1",
-      })
-      .returning();
-
-    if (!legacy) throw new Error("legacy supply was not created");
-
-    await expect(
-      makeProduct(user.id, legacy.id, "caja", "1"),
-    ).rejects.toMatchObject({ code: "VALIDATION" });
-  });
+      await expect(makeProduct(user.id, legacy.id, unit, "1")).rejects.toMatchObject({
+        code: "VALIDATION",
+      });
+    },
+  );
 
   it("lists created products with their recipe", async () => {
     const user = await makeUser();
@@ -766,8 +696,6 @@ describe("products service", () => {
         purchasePrice: "1000.00",
         purchaseQuantity: "1",
         purchaseUnit: "bolsa",
-        minimumUnit: "bolsa",
-        conversionFactor: "1",
       })
       .returning();
 
@@ -798,30 +726,5 @@ describe("products service", () => {
         fieldErrors: { recipe: ["Elegí una unidad de medida de la misma familia que el insumo."] },
       },
     });
-  });
-
-  it("backfills unit from the supply's minimum unit", async () => {
-    const user = await makeUser();
-    const supply = await makeSupply(user.id);
-    const product = await makeProduct(user.id, supply.id);
-
-    await db
-      .update(productIngredients)
-      .set({ unit: null })
-      .where(eq(productIngredients.productId, product.id));
-
-    await db.execute(sql`
-      UPDATE "product_ingredients" AS "pi"
-      SET "unit" = "s"."minimum_unit"
-      FROM "supplies" AS "s"
-      WHERE "pi"."supply_id" = "s"."id"
-    `);
-
-    const rows = await db
-      .select()
-      .from(productIngredients)
-      .where(eq(productIngredients.productId, product.id));
-
-    expect(rows[0]?.unit).toBe(supply.minimumUnit);
   });
 });

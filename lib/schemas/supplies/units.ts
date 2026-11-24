@@ -1,6 +1,6 @@
-// Catalog of measurement units for supplies. The user picks one unit when
-// creating a supply; the system derives the minimum unit and the conversion
-// factor from this table. Packaging keeps its own free-text units for now.
+// Catalog of measurement units for supplies and packaging. The user picks one
+// unit; the minimum unit and the conversion factor are derived from this table
+// whenever they are needed and are never stored.
 
 export const SUPPLY_UNIT_VALUES = [
   "g",
@@ -56,9 +56,10 @@ function normalizeUnitKey(value: string): string {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-// Aliases keep existing free-text rows usable while the catalog is rolled out.
+// Aliases accept common spellings (kilo, litros, docenas) for the same unit.
 const UNIT_ALIASES: Record<string, SupplyUnitValue> = {
   g: "g",
+  gr: "g",
   gramo: "g",
   gramos: "g",
   kg: "kg",
@@ -84,6 +85,8 @@ const UNIT_ALIASES: Record<string, SupplyUnitValue> = {
   metros: "m",
   unidad: "unidad",
   unidades: "unidad",
+  ud: "unidad",
+  uds: "unidad",
   u: "unidad",
   un: "unidad",
   par: "par",
@@ -113,110 +116,28 @@ export function getSupplyUnitsForFamily(
   return SUPPLY_UNITS.filter((unit) => unit.family === family);
 }
 
-// A legacy supply may have a free-text purchase unit but a catalog minimum
-// unit (for example, "bolsa" bought in g). The minimum unit is enough to infer
-// the family; both unknown means the row predates the catalog entirely.
-export function resolveSupplyFamily(
-  purchaseUnit: string,
-  minimumUnit: string,
-): SupplyUnitFamily | null {
-  return getSupplyUnitFamily(purchaseUnit) ?? getSupplyUnitFamily(minimumUnit);
+// Single source of truth for whether a recipe or packaging line's unit is valid
+// for a supply: it must be a catalog unit of the supply's family. Used by both
+// the forms and the services, so the two cannot diverge.
+export function isRecipeUnitAllowed(family: SupplyUnitFamily | null, unit: string): boolean {
+  const catalogUnit = getSupplyUnit(unit);
+  return family !== null && catalogUnit !== null && catalogUnit.family === family;
 }
 
-// Single source of truth for whether a recipe line's unit is valid for a given
-// supply. Used by both the form (to decide which stored values stay visible) and
-// the service (to validate before writing), so the two cannot diverge.
-export function isRecipeUnitAllowed(
-  supply: { family: SupplyUnitFamily | null; minimumUnit: string },
-  unit: string,
-): boolean {
-  const trimmed = unit.trim();
-  if (trimmed === "") return false;
-
-  const catalogUnit = getSupplyUnit(trimmed);
-  if (catalogUnit) {
-    return supply.family !== null && catalogUnit.family === supply.family;
-  }
-
-  // Legacy free-text unit: only when the supply predates the catalog and the line
-  // repeats its stored (canonicalized) minimum unit.
-  return (
-    supply.family === null &&
-    canonicalSupplyUnit(trimmed) === canonicalSupplyUnit(supply.minimumUnit)
-  );
-}
-
-export type SupplyUnits = {
+export type SupplyUnitBasis = {
   minimumUnit: string;
   conversionFactor: string;
 };
 
-export type SupplyUnitState = {
-  kind: string;
-  purchaseUnit: string;
-  minimumUnit: string;
-  conversionFactor: string;
-};
-
-export type ResolvedSupplyUnits = SupplyUnits & {
-  purchaseUnit: string;
-};
-
-// Supplies derive their technical columns from the selected catalog unit.
-// Packaging keeps whatever the user entered. A supply outside the catalog
-// returns null: callers must decide whether it is a legacy row being preserved
-// or a new/manipulated unit to reject.
-export function resolveSupplyUnits(
-  kind: string,
-  purchaseUnit: string,
-  fallback: SupplyUnits,
-): SupplyUnits | null {
-  if (kind !== "supply") return fallback;
-
+// The minimum unit and conversion factor of a purchase unit are never stored:
+// they always come from this catalog (kg → g × 1000, docena → unidad × 12).
+// A unit outside the catalog returns null and has no cost.
+export function getSupplyUnitBasis(purchaseUnit: string): SupplyUnitBasis | null {
   const unit = getSupplyUnit(purchaseUnit);
   if (!unit) return null;
 
   return {
     minimumUnit: unit.minimumUnit,
     conversionFactor: unit.factor,
-  };
-}
-
-// Resolves an edit against the row that is actually stored. A legacy supply
-// may keep a unit outside the catalog only when the payload repeats that same
-// stored value; its technical columns come from the row, never from the
-// payload. Any other unknown unit is rejected (null). Packaging keeps the
-// existing free-text behaviour.
-export function resolveSupplyUnitsForUpdate(
-  existing: SupplyUnitState,
-  input: SupplyUnitState,
-): ResolvedSupplyUnits | null {
-  if (input.kind !== "supply") {
-    return {
-      purchaseUnit: input.purchaseUnit,
-      minimumUnit: input.minimumUnit,
-      conversionFactor: input.conversionFactor,
-    };
-  }
-
-  const unit = getSupplyUnit(input.purchaseUnit);
-  if (unit) {
-    return {
-      purchaseUnit: unit.value,
-      minimumUnit: unit.minimumUnit,
-      conversionFactor: unit.factor,
-    };
-  }
-
-  const keepsStoredLegacyUnit =
-    existing.kind === "supply" &&
-    input.purchaseUnit === existing.purchaseUnit;
-
-  if (!keepsStoredLegacyUnit) return null;
-
-  return {
-    purchaseUnit: existing.purchaseUnit,
-    minimumUnit: existing.minimumUnit,
-    conversionFactor: existing.conversionFactor,
   };
 }

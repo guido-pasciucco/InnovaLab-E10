@@ -7,8 +7,6 @@ import { handleActionErrors } from "@/lib/errors/handle-action-errors";
 import {
   addPeriodCostLineService,
   removePeriodCostLineService,
-  updatePeriodCostLineAmountService,
-  updatePeriodCostLineConceptService,
   updatePeriodCostLineService,
 } from "@/lib/services/business-cost";
 
@@ -18,40 +16,6 @@ const PERIOD_COSTS_PATH = "/period-costs";
 // the business from the session user, so the client never sends an owner or a
 // business id. `revalidatePath` re-renders the page with the saved lines and
 // the total the server derived from them.
-
-export const addPeriodCostLine = handleActionErrors(async (input: unknown) => {
-  const user = await requireUser();
-
-  const line = await addPeriodCostLineService(user.id, input);
-
-  revalidatePath(PERIOD_COSTS_PATH);
-
-  return { id: line.id };
-});
-
-export const renamePeriodCostLine = handleActionErrors(
-  async (lineId: string, input: unknown) => {
-    const user = await requireUser();
-
-    const line = await updatePeriodCostLineConceptService(user.id, lineId, input);
-
-    revalidatePath(PERIOD_COSTS_PATH);
-
-    return { id: line.id };
-  },
-);
-
-export const updatePeriodCostLineAmount = handleActionErrors(
-  async (lineId: string, input: unknown) => {
-    const user = await requireUser();
-
-    const line = await updatePeriodCostLineAmountService(user.id, lineId, input);
-
-    revalidatePath(PERIOD_COSTS_PATH);
-
-    return { id: line.id };
-  },
-);
 
 export const removePeriodCostLine = handleActionErrors(async (lineId: string) => {
   const user = await requireUser();
@@ -72,8 +36,7 @@ type SavePeriodCostLineInput = {
 };
 
 // Single entry point of the catalog modal (#285): one call saves both fields,
-// so a failed save cannot leave a line half edited. The previous fine-grained
-// actions stay available for the wizard and existing callers. The saved row is
+// so a failed save cannot leave a line half edited. The saved row is
 // returned so the client can refresh its list and total without a round trip.
 export const savePeriodCostLine = handleActionErrors(
   async (_prev: unknown, data: SavePeriodCostLineInput) => {
