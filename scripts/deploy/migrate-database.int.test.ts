@@ -18,9 +18,16 @@ const root = join(process.cwd(), "drizzle");
 const journal = JSON.parse(readFileSync(join(root, "meta/_journal.json"), "utf8")) as {
   entries: { idx: number; tag: string; when: number }[];
 };
-const repair = journal.entries.at(-1)!;
+// Drizzle runs a migration only when its timestamp is newer than the newest one
+// already recorded. The help-usage repair has to remain that migration for a
+// database that already has the rest of main. Later files, such as the analyst
+// views, use a newer timestamp so production does not skip them; a partial
+// history must not record those timestamps first, or the repair is skipped.
+const repair = journal.entries.find((e) => e.tag === "20261124153914_reconcile_help_usage");
+if (!repair) throw new Error("help usage repair migration missing from the journal");
+const later = journal.entries.filter((e) => e.when > repair.when);
 const mora = journal.entries.filter((e) => e.when === 1795287505824 || e.when === 1795287593887);
-const main = journal.entries.filter((e) => !mora.includes(e) && e !== repair);
+const main = journal.entries.filter((e) => !mora.includes(e) && e !== repair && !later.includes(e));
 const created: { name: string; client: postgres.Sql; folder: string }[] = [];
 const userId = "a251a2fd-6c13-4c42-bb5c-7842a3398242";
 const leaseId = "a251a2fd-6c13-4c42-bb5c-7842a3398243";
@@ -180,7 +187,7 @@ describe("Mora forward migration on local PostgreSQL", () => {
 
   it("repairs a partially applied history and revokes table, PUBLIC and column grants", async () => {
     const { client, folder, url } = await database();
-    await apply(url, folder, journal.entries.filter((e) => e !== mora[1] && e !== repair));
+    await apply(url, folder, journal.entries.filter((e) => e !== mora[1] && e !== repair && !later.includes(e)));
     await seed(client, true);
     await client.unsafe(`GRANT SELECT ON public.help_usage TO PUBLIC, anon;
       GRANT UPDATE (request_count) ON public.help_usage TO authenticated;`);
