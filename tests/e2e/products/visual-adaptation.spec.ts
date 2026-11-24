@@ -5,7 +5,7 @@ import { expect, test } from "../fixtures";
 // inputs on desktop, and must never present an unsaved edit as a recalculated
 // cost. The engine still runs only on the server, on save.
 async function createSupply(page: Page, name: string, price: string) {
-  await page.goto("/insumos");
+  await page.goto("/supplies");
   await page.getByRole("button", { name: "+ Nuevo" }).click();
   await page.getByLabel("Nombre del insumo").fill(name);
   await page.getByRole("textbox", { name: "Precio de compra" }).fill(price);
