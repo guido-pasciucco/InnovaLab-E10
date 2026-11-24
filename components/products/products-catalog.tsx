@@ -184,7 +184,12 @@ export function ProductsCatalog({
       </section>
 
       {showForm && (
-        <CatalogModal title={formTitle} onClose={handleCancel} size="lg">
+        <CatalogModal
+          title={formTitle}
+          description="Datos, receta y rendimiento en un solo lugar."
+          onClose={handleCancel}
+          size="lg"
+        >
           <ProductForm
             product={editing}
             supplies={supplies}
@@ -197,6 +202,7 @@ export function ProductsCatalog({
       {viewing && (
         <CatalogModal
           title={viewing.name}
+          description="Receta guardada y costo variable calculado."
           onClose={() => setViewingId(null)}
           size="lg"
         >
