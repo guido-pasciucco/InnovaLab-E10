@@ -26,6 +26,14 @@ describe("NAV_SECTIONS", () => {
     );
     expect(hrefs?.indexOf("/total-costs")).toBeGreaterThan(hrefs?.indexOf("/period-costs") ?? Infinity);
   });
+
+  it("lists pricing right after the total cost", () => {
+    const catalog = NAV_SECTIONS.find((section) => section.id === "catalogo");
+    const hrefs = catalog?.items.map((item) => item.href);
+
+    expect(catalog?.items).toContainEqual(expect.objectContaining({ href: "/precios", label: "Precios" }));
+    expect(hrefs?.indexOf("/precios")).toBe((hrefs?.indexOf("/total-costs") ?? -2) + 1);
+  });
 });
 
 describe("sectionFromPathname", () => {
@@ -35,6 +43,7 @@ describe("sectionFromPathname", () => {
     { path: "/products", section: "catalogo" },
     { path: "/period-costs", section: "catalogo" },
     { path: "/total-costs", section: "catalogo" },
+    { path: "/precios", section: "catalogo" },
     { path: "/licitaciones", section: "licitaciones" },
     { path: "/proveedores", section: "licitaciones" },
   ])("selects the $section section for $path", ({ path, section }) => {
