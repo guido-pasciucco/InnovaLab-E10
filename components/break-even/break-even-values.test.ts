@@ -60,12 +60,13 @@ describe("toBreakEvenView", () => {
     });
     expect(view.rows[0]).toMatchObject({
       price: "$ 1.800,00",
-      marginPct: "16,6667 %",
-      mixPct: "33,3333 %",
+      marginPct: "16,67 %",
+      mixPct: "33,33 %",
       quotaWhole: "63 u.",
       quotaExact: "62,5 u. exactas",
     });
     expect(view.closingContribution).toBe("$ 150.000,00");
+    expect(view.expenses).toBe("$ 150.000,00");
   });
 
   it.each([
@@ -80,6 +81,7 @@ describe("toBreakEvenView", () => {
       result({ status: status as BreakEvenStatus, rows: [], totals: null }),
     );
     expect(view.banner).toMatchObject({ title });
+    expect(view.banner?.href).not.toBe("/pricing");
     expect(view.summary).toBeNull();
     expect(view.rows).toEqual([]);
   });
@@ -99,10 +101,10 @@ describe("toBreakEvenView", () => {
 
     expect(view.hasNegativeContribution).toBe(true);
     expect(view.rows[0].hasNegativeContribution).toBe(true);
-    expect(view.exclusions.map(({ message }) => message)).toEqual([
-      "Sin capacidad mensual: no participa de la mezcla.",
-      "Sin costo variable: completá su receta.",
-      "Sin precio: definí su margen.",
+    expect(view.exclusions.map(({ message, href }) => [message, href])).toEqual([
+      ["Sin capacidad mensual: no participa de la mezcla.", "/products"],
+      ["Sin costo variable: completá su receta.", "/products"],
+      ["Sin precio: cargale un recargo.", "/precios"],
     ]);
   });
 });

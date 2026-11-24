@@ -29,8 +29,8 @@ const STATUS_CONTENT: Record<
   },
   no_prices: {
     title: "Faltan los precios",
-    text: "Definí el margen de tus productos para obtener sus precios de venta.",
-    href: "/pricing",
+    text: "Cargá un recargo en Precios para obtener el precio sugerido de tus productos.",
+    href: "/precios",
     action: "Ir a precios",
   },
   incomplete: {
@@ -42,15 +42,27 @@ const STATUS_CONTENT: Record<
   no_break_even: {
     title: "No se alcanza el punto de equilibrio",
     text: "La contribución de la mezcla es cero o negativa. Revisá precios y costos variables.",
-    href: "/pricing",
+    href: "/precios",
     action: "Revisar precios",
   },
 };
 
-const EXCLUSION_MESSAGES = {
-  NO_CAPACITY: "Sin capacidad mensual: no participa de la mezcla.",
-  NO_VARIABLE_COST: "Sin costo variable: completá su receta.",
-  NO_PRICE: "Sin precio: definí su margen.",
+const EXCLUSION_CONTENT = {
+  NO_CAPACITY: {
+    message: "Sin capacidad mensual: no participa de la mezcla.",
+    href: "/products",
+    action: "Cargar capacidad",
+  },
+  NO_VARIABLE_COST: {
+    message: "Sin costo variable: completá su receta.",
+    href: "/products",
+    action: "Completar receta",
+  },
+  NO_PRICE: {
+    message: "Sin precio: cargale un recargo.",
+    href: "/precios",
+    action: "Ir a precios",
+  },
 } as const;
 
 export type BreakEvenViewRow = {
@@ -73,7 +85,8 @@ export type BreakEvenView = {
   summary: null | { expenses: string; units: string; sales: string };
   rows: BreakEvenViewRow[];
   closingContribution: string | null;
-  exclusions: Array<BreakEvenExcludedProduct & { message: string }>;
+  expenses: string;
+  exclusions: Array<BreakEvenExcludedProduct & { message: string; href: string; action: string }>;
   hasNegativeContribution: boolean;
 };
 
@@ -84,8 +97,12 @@ function decimal(value: string, maximumFractionDigits = 4): string {
   }).format(Number(value));
 }
 
+// Percentages are shown with two decimals and a comma ("66,67 %").
 function percent(value: string): string {
-  return `${decimal(value)} %`;
+  return `${new Intl.NumberFormat("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value))} %`;
 }
 
 export function toBreakEvenView(result: BreakEven): BreakEvenView {
@@ -115,9 +132,10 @@ export function toBreakEvenView(result: BreakEven): BreakEvenView {
     closingContribution: result.totals
       ? formatARS(result.totals.closingContribution)
       : null,
+    expenses: formatARS(result.totalExpenses),
     exclusions: result.excluded.map((product) => ({
       ...product,
-      message: EXCLUSION_MESSAGES[product.reason],
+      ...EXCLUSION_CONTENT[product.reason],
     })),
     hasNegativeContribution: result.hasNegativeContribution,
   };

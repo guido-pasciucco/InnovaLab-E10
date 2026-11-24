@@ -86,9 +86,11 @@ export function BreakEvenScreen({ view, chart }: { view: BreakEvenView; chart?: 
           </section>
         )}
 
+        {chart}
+
         {view.hasNegativeContribution && (
           <p className="rounded-[16px] bg-warning-subtle p-4 text-sm text-fg">
-            Al menos un producto tiene contribución negativa. El cálculo usa la mezcla completa;
+            Al menos un producto tiene contribución cero o negativa. El cálculo usa la mezcla completa;
             revisá los productos señalados.
           </p>
         )}
@@ -115,12 +117,12 @@ export function BreakEvenScreen({ view, chart }: { view: BreakEvenView; chart?: 
                   <tr className="border-b border-border-control">
                     {[
                       "Producto",
-                      "Precio",
-                      "Costo variable",
-                      "Contribución",
+                      "Precio sugerido",
+                      "Costo variable (por unidad)",
+                      "Contribución (por unidad)",
                       "Margen real",
                       "Mezcla",
-                      "Cuota",
+                      "Cuota (unidades)",
                     ].map((label, index) => (
                       <th
                         key={label}
@@ -142,8 +144,9 @@ export function BreakEvenScreen({ view, chart }: { view: BreakEvenView; chart?: 
           <section aria-labelledby="closing-check" className="rounded-3xl bg-surface-tint p-5">
             <h2 id="closing-check" className="font-semibold text-fg">Prueba de cierre</h2>
             <p className="mt-1 text-sm text-fg-muted">
-              La contribución de las cuotas exactas cubre los gastos del mes: {" "}
-              <strong className="text-fg">{view.closingContribution}</strong>.
+              Σ cuota exacta × contribución:{" "}
+              <strong className="text-fg">{view.closingContribution}</strong>. Gastos del mes:{" "}
+              <strong className="text-fg">{view.expenses}</strong>.
             </p>
           </section>
         )}
@@ -154,14 +157,21 @@ export function BreakEvenScreen({ view, chart }: { view: BreakEvenView; chart?: 
             <ul className="mt-3 space-y-2">
               {view.exclusions.map((product) => (
                 <li key={product.productId} className="text-sm text-fg-muted">
-                  <strong className="text-fg">{product.name}:</strong> {product.message}
+                  <strong className="text-fg">{product.name}:</strong> {product.message}{" "}
+                  <Link href={product.href} className="font-semibold text-link underline underline-offset-2">
+                    {product.action}
+                  </Link>
                 </li>
               ))}
             </ul>
           </section>
         )}
 
-        {chart}
+        {view.rows.length > 0 && (
+          <p className="text-xs text-fg-muted">
+            Sin costos de venta: los precios no incluyen comisiones por venta ni impuestos.
+          </p>
+        )}
       </div>
     </main>
   );

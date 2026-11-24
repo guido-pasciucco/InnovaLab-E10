@@ -29,6 +29,7 @@ const readyView: BreakEvenView = {
     },
   ],
   closingContribution: "$ 150.000,00",
+  expenses: "$ 150.000,00",
   exclusions: [],
   hasNegativeContribution: false,
 };
@@ -59,7 +60,7 @@ describe("BreakEvenScreen", () => {
       banner: {
         title: "Faltan los precios",
         text: "Definí los precios.",
-        href: "/pricing",
+        href: "/precios",
         action: "Ir a precios",
       },
       summary: null,
@@ -68,7 +69,7 @@ describe("BreakEvenScreen", () => {
     });
 
     expect(html).toContain("Faltan los precios");
-    expect(html).toContain('href="/pricing"');
+    expect(html).toContain('href="/precios"');
     expect(html).not.toContain("Resumen del mes");
     expect(html).not.toContain("<table");
   });
