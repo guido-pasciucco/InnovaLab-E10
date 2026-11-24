@@ -9,8 +9,6 @@ const validSupply = {
   purchasePrice: "18750.00",
   purchaseQuantity: "25",
   purchaseUnit: "kg",
-  minimumUnit: "g",
-  conversionFactor: "1000",
 };
 
 // Messages are defined once in fields.ts and shown on both sides: by RHF in
@@ -47,17 +45,7 @@ describe("supplySchema", () => {
     {
       field: "purchaseUnit",
       value: "",
-      message: "Escribí la unidad de compra (ej: kg, caja, docena).",
-    },
-    {
-      field: "minimumUnit",
-      value: "",
-      message: "Escribí la unidad mínima (ej: g, ml, unidad).",
-    },
-    {
-      field: "conversionFactor",
-      value: "",
-      message: "Indicá cuántas unidades mínimas trae la unidad de compra.",
+      message: "Elegí la unidad de compra (ej: kg, docena, unidad).",
     },
   ])("reports the required message when $field is empty", ({ field, value, message }) => {
     expect(fieldErrors(supplySchema, { ...validSupply, [field]: value })).toEqual({
@@ -77,21 +65,6 @@ describe("supplySchema", () => {
   it("rejects more than four quantity decimals", () => {
     expect(fieldErrors(supplySchema, { ...validSupply, purchaseQuantity: "1.23456" })).toEqual({
       purchaseQuantity: ["La cantidad debe tener hasta 4 decimales."],
-    });
-  });
-
-  it.each(["0", "-2"])(
-    "rejects the equivalence %j because the engine divides by it",
-    (conversionFactor) => {
-      expect(fieldErrors(supplySchema, { ...validSupply, conversionFactor })).toEqual({
-        conversionFactor: ["La equivalencia debe ser mayor que cero."],
-      });
-    },
-  );
-
-  it("rejects more than four equivalence decimals", () => {
-    expect(fieldErrors(supplySchema, { ...validSupply, conversionFactor: "1.23456" })).toEqual({
-      conversionFactor: ["La equivalencia debe tener hasta 4 decimales."],
     });
   });
 });

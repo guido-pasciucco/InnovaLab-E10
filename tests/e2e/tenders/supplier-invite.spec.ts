@@ -7,7 +7,7 @@ import { generateInviteLink } from "../helpers/supplier-invite";
 const INVALID_INVITE =
   "Este enlace de invitación ya no sirve: puede haber vencido o ya se usó. Pedile uno nuevo a quien te invitó.";
 
-// docs/licitaciones RN-22, RN-23 (ES-02): a new supplier signs up through
+// docs/flujos/09-licitaciones.md RN-22, RN-23 (ES-02): a new supplier signs up through
 // the emprendedor's personal link, confirms the email and lands on its
 // panel. The link works once.
 test("un proveedor nuevo se registra con el enlace, confirma el mail y entra a su panel", async ({

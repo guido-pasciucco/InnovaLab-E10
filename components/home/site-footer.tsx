@@ -23,7 +23,7 @@ const productLinks: readonly FooterLink[] = [
 const accountLinks: readonly FooterLink[] = [
   { href: "/login", label: "Iniciar sesión" },
   { href: "/signup", label: "Crear cuenta" },
-  { href: "/paso-1", label: "Calculadora" },
+  { href: "/products", label: "Calculadora" },
 ];
 
 const helpLinks: readonly FooterLink[] = [

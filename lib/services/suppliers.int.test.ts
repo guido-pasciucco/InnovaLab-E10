@@ -27,7 +27,7 @@ import {
 } from "./suppliers";
 import { createSupplyService } from "./supplies";
 
-// Integration tests for the supplier registry (docs/licitaciones RN-22,
+// Integration tests for the supplier registry (docs/flujos/09-licitaciones.md RN-22,
 // RN-23) against the local Supabase stack. Users are removed after each test;
 // their supplier rows, links and invites cascade.
 
@@ -373,7 +373,7 @@ describe("getHomePathService", () => {
     const emprendedor = await makeUser();
     await createSupplyService(
       emprendedor.id,
-      { kind: "supply", name: "Harina", purchasePrice: "100", purchaseQuantity: "1", purchaseUnit: "kg", minimumUnit: "g", conversionFactor: "1000" },
+      { kind: "supply", name: "Harina", purchasePrice: "100", purchaseQuantity: "1", purchaseUnit: "kg" },
       db,
     );
     const { token } = await createSupplierInviteService(owner.id, { label: "Vecino" }, db);

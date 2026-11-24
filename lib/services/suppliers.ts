@@ -22,7 +22,7 @@ import { signupService, type VerifiedUserId } from "@/lib/services/auth";
 
 export type { Supplier };
 
-// Supplier registry for supply tenders (docs/licitaciones RN-22 and RN-23).
+// Supplier registry for supply tenders (docs/flujos/09-licitaciones.md RN-22 and RN-23).
 //
 // - The emprendedor generates a personal invite link: single use, valid for
 //   7 days. Only the SHA-256 of the token is stored.

@@ -11,7 +11,7 @@ import {
 
 import { profiles } from "../profile/table";
 
-// Suppliers for supply tenders (docs/licitaciones, RN-22 and RN-23).
+// Suppliers for supply tenders (docs/flujos/09-licitaciones.md, RN-22 and RN-23).
 //
 // A supplier is a regular account (auth user + profile) that also has a row in
 // `suppliers`; that row is what makes the account a supplier. One account per

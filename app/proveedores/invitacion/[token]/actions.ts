@@ -15,7 +15,7 @@ import {
 import { getSiteOrigin } from "@/lib/site-origin";
 import { createRscSupabaseClient } from "@/lib/supabase/rsc";
 
-// Doors of the invite page (docs/licitaciones RN-22, RN-23). The token travels
+// Doors of the invite page (docs/flujos/09-licitaciones.md RN-22, RN-23). The token travels
 // in a hidden field; every service checks it again.
 
 function readToken(data: FormData): string {

@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth/require-user";
+import { listPresentationNamesByProductService } from "@/lib/services/presentations";
 import { listProductsService } from "@/lib/services/products";
 import { listSuppliesService } from "@/lib/services/supplies";
 import { toRecipeSupplyOptions } from "@/lib/schemas/products/products";
@@ -9,9 +10,10 @@ import { ProductsCatalog } from "@/components/products/products-catalog";
 // optimistic list while it stays on this screen.
 export default async function ProductsPage() {
   const user = await requireUser();
-  const [supplies, products] = await Promise.all([
+  const [supplies, products, presentationNames] = await Promise.all([
     listSuppliesService(user.id),
     listProductsService(user.id),
+    listPresentationNamesByProductService(user.id),
   ]);
 
   // Packaging shares the supplies table but is not an ingredient: only
@@ -29,7 +31,11 @@ export default async function ProductsPage() {
           </p>
         </header>
 
-        <ProductsCatalog initialProducts={products} supplies={supplyOptions} />
+        <ProductsCatalog
+          initialProducts={products}
+          supplies={supplyOptions}
+          presentationNames={presentationNames}
+        />
       </div>
     </main>
   );

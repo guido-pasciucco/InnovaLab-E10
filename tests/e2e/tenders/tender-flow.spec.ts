@@ -4,7 +4,7 @@ import { expect, signInContext, test } from "../fixtures";
 import { generateInviteLink } from "../helpers/supplier-invite";
 import { moveTenderToThePast } from "../helpers/tender-clock";
 
-// docs/licitaciones end to end (ES-03 to ES-10): the emprendedor publishes,
+// docs/flujos/09-licitaciones.md end to end (ES-03 to ES-10): the emprendedor publishes,
 // the supplier offers in its own session, the tender closes, and the
 // emprendedor compares, chooses and issues the purchase order.
 test("publicar, ofertar, cerrar, elegir y generar la orden de compra", async ({

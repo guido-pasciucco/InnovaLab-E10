@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import type { ProductItem } from "@/lib/schemas/products/products";
 import { formatARS } from "@/lib/money/format";
 
@@ -74,7 +76,13 @@ export function ProductRecipe({ product, onEdit }: ProductRecipeProps) {
           : `La receta usa ${product.recipe.length} insumos de tu catálogo.`}
       </p>
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-3">
+        <Link
+          href={`/products/${product.id}/presentations`}
+          className="inline-flex min-h-11 items-center rounded-[14px] border border-border-control bg-surface px-4 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          Ir a presentaciones
+        </Link>
         <button
           type="button"
           onClick={onEdit}
