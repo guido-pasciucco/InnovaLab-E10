@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 import type { SupplyKind } from "@/lib/schemas/supplies/fields";
 import type { SupplyItem } from "@/lib/schemas/supplies/supplies";
-import { getSupplyUnitBasis, getSupplyUnitFamily } from "@/lib/schemas/supplies/units";
+import { getSupplyUnitBasis } from "@/lib/schemas/supplies/units";
 import { CatalogModal } from "@/components/ui/catalog-modal";
 import { normalizeForSearch } from "@/components/ui/normalize-search";
 import { SuppliesForm } from "./supplies-form";
@@ -28,7 +28,6 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
   const [editing, setEditing] = useState<SupplyItem | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
-  const [familyFilter, setFamilyFilter] = useState("");
 
   const counts = useMemo(
     () => ({
@@ -41,24 +40,18 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
   const query = normalizeForSearch(search);
   const filtered = useMemo(() => {
     const byKind = supplies.filter((supply) => supply.kind === activeKind);
-    const byFamily = familyFilter
-      ? byKind.filter(
-          (supply) => getSupplyUnitFamily(supply.purchaseUnit) === familyFilter,
-        )
-      : byKind;
-    if (!query) return byFamily;
+    if (!query) return byKind;
 
-    return byFamily.filter((supply) =>
+    return byKind.filter((supply) =>
       [supply.name, supply.purchaseUnit, minimumUnitOf(supply.purchaseUnit)].some((value) =>
         normalizeForSearch(value).includes(query),
       ),
     );
-  }, [supplies, activeKind, familyFilter, query]);
+  }, [supplies, activeKind, query]);
 
   const handleTab = (kind: SupplyKind) => {
     setActiveKind(kind);
     setSearch("");
-    setFamilyFilter("");
   };
 
   const handleNew = () => {
@@ -138,37 +131,18 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
         </div>
 
         {counts[activeKind] > 0 && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
-            <div className="flex flex-1 flex-col gap-1">
-              <label htmlFor="supplies-search" className="text-sm font-semibold text-fg-muted">
-                Buscar
-              </label>
-              <input
-                id="supplies-search"
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Nombre, unidad de compra o unidad mínima…"
-                className="min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-4 py-2 text-base text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-              />
-            </div>
-            <div className="flex flex-col gap-1 sm:w-44">
-              <label htmlFor="supplies-family" className="text-sm font-semibold text-fg-muted">
-                Familia
-              </label>
-              <select
-                id="supplies-family"
-                value={familyFilter}
-                onChange={(event) => setFamilyFilter(event.target.value)}
-                className="min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-4 py-2 text-base text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-              >
-                <option value="">Todos</option>
-                <option value="mass">Masa</option>
-                <option value="volume">Volumen</option>
-                <option value="length">Longitud</option>
-                <option value="count">Contable</option>
-              </select>
-            </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="supplies-search" className="text-sm font-semibold text-fg-muted">
+              Buscar
+            </label>
+            <input
+              id="supplies-search"
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Nombre, unidad de compra o unidad mínima…"
+              className="min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-4 py-2 text-base text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            />
           </div>
         )}
 
@@ -176,7 +150,7 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
           supplies={filtered}
           kind={activeKind}
           onEdit={handleEdit}
-          searchActive={query !== "" || familyFilter !== ""}
+          searchActive={query !== ""}
         />
 
         {counts[activeKind] > 0 && (

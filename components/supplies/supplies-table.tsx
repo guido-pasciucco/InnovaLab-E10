@@ -84,10 +84,10 @@ export function SuppliesTable({
               Precio
             </th>
             <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
-              Uso
+              Unidad mínima
             </th>
             <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
-              Costo/uso
+              Costo por unidad mínima
             </th>
             <th
               scope="col"
