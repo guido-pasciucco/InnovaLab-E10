@@ -59,7 +59,7 @@ El trabajo propio del emprendedor es **un gasto fijo más** del período: se car
 
 El tablero muestra por producto costo total unitario, contribución y margen; y como resumen la cuota mínima de cada producto y el equilibrio en unidades y en pesos, con un gráfico del punto de equilibrio.
 
-Las fórmulas que hoy se usan como propuesta pendiente de validar con la planilla de referencia son:
+Las fórmulas que usa el tablero, todavía pendientes de validar con la planilla de referencia (#250), son:
 
 ```text
 unidadesTotales   = costos indirectos del período ÷ contribución ponderada
@@ -68,7 +68,16 @@ equilibrioEnPesos = Σ (cuotaᵢ × precio sugeridoᵢ)
 prueba de cierre  = Σ (cuotaᵢ × contribuciónᵢ) = costos indirectos del período
 ```
 
-También están abiertos el eje del gráfico, los estados vacíos y el formato de cuotas fraccionarias; esos tres puntos siguen sin regla.
+### Gráfico del punto de equilibrio
+
+El gráfico solo se muestra cuando el tablero está en estado `ready`; en el resto de los estados se muestra el mensaje correspondiente.
+
+- **Eje X:** ventas en pesos de la mezcla. Con varios productos las unidades no se suman entre sí, los pesos sí. El rango va de 0 al mayor entre la venta a capacidad plena (Σ capacidad × precio) y 1,5 × el equilibrio en pesos, para que el cruce siempre quede adentro.
+- **Líneas:** *Ingresos* (`y = ventas`), *Costos totales* (`gastos del mes + ventas × (1 − ratio de contribución)`) y *Gastos fijos* (`gastos del mes`, punteada).
+- **Cruce:** se marca en el equilibrio en pesos que devuelve el motor y se rotula "Equilibrio".
+- **Accesibilidad:** el gráfico tiene título y descripción, y una tabla alternativa con los puntos para lectores de pantalla. Se lee en el ancho de un teléfono sin scroll horizontal.
+
+El formato de cuotas fraccionarias sigue abierto (P-13).
 
 ## Histórico: "Cerrar cálculo"
 
