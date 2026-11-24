@@ -6,7 +6,7 @@ import type { HelpModel } from "@/lib/help/types";
 const getSessionUserService = vi.fn();
 const acquireHelpLeaseService = vi.fn();
 const readHelpConfig = vi.fn();
-const readHelpCorpus = vi.fn();
+const readHelpContext = vi.fn();
 const createBedrockHelpModel = vi.fn();
 
 vi.mock("@/lib/supabase/rsc", () => ({ createRscSupabaseClient: async () => ({ tag: "rsc-client" }) }));
@@ -18,7 +18,9 @@ vi.mock("@/lib/services/help-consumption", () => ({
   HELP_REQUEST_TIMEOUT_MS: 20_000,
 }));
 vi.mock("@/lib/help/config", () => ({ readHelpConfig: () => readHelpConfig() }));
-vi.mock("@/lib/help/corpus", () => ({ readHelpCorpus: () => readHelpCorpus() }));
+vi.mock("@/lib/help/corpus", () => ({
+  readHelpContext: (...args: unknown[]) => readHelpContext(...args),
+}));
 vi.mock("@/lib/help/bedrock", () => ({ createBedrockHelpModel: () => createBedrockHelpModel() }));
 
 const { POST } = await import("./route");
@@ -90,7 +92,7 @@ describe("POST /api/help", () => {
       accessKeyId: "key",
       secretAccessKey: "secret",
     });
-    readHelpCorpus.mockReturnValue("Margen: parte del precio de venta que no es costo.");
+    readHelpContext.mockReturnValue("Margen: parte del precio de venta que no es costo.");
     createBedrockHelpModel.mockReturnValue(fakeModel(yielding("Es la parte ", "del precio.")));
     getSessionUserService.mockResolvedValue(sessionUser);
     acquireHelpLeaseService.mockResolvedValue({ id: "lease-1", release: vi.fn() });
@@ -121,6 +123,28 @@ describe("POST /api/help", () => {
     expect(await response.text()).toBe("Es la parte del precio.");
     expect(acquireHelpLeaseService).toHaveBeenCalledWith(sessionUser.id);
     expect(release).toHaveBeenCalledTimes(1);
+  });
+
+  it("builds the help context from the request body and sends it as the system prompt", async () => {
+    let system = "";
+    createBedrockHelpModel.mockReturnValue(
+      fakeModel(yielding("ok"), (input) => {
+        system = (input as unknown as { system?: string }).system ?? "";
+      }),
+    );
+
+    await POST(post(validThread));
+
+    expect(readHelpContext).toHaveBeenCalledWith(validThread);
+    expect(system).toContain("Sos Mora");
+    expect(system).toContain("Margen: parte del precio de venta que no es costo.");
+  });
+
+  it("keeps the plain text contract of the response", async () => {
+    const response = await POST(post(validThread));
+
+    expect(response.headers.get("content-type")).toContain("text/plain");
+    expect(response.headers.get("cache-control")).toBe("no-store");
   });
 
   it("releases the lease when the thread fails validation", async () => {

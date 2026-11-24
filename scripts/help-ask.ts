@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createBedrockHelpModel } from "../lib/help/bedrock";
 import { readHelpConfig } from "../lib/help/config";
-import { readHelpCorpus } from "../lib/help/corpus";
+import { readHelpContext } from "../lib/help/corpus";
 import { HELP_THREAD_LIMIT, type HelpMessage } from "../lib/schemas/help/help";
 import { streamHelpReply } from "../lib/services/help";
 
@@ -46,7 +46,11 @@ if (!config) {
 }
 
 const messages = [...readThread(), { role: "user" as const, content: question }].slice(-HELP_THREAD_LIMIT);
-const stream = streamHelpReply({ messages }, createBedrockHelpModel(config), readHelpCorpus());
+const stream = streamHelpReply(
+  { messages },
+  createBedrockHelpModel(config),
+  readHelpContext({ messages }),
+);
 
 async function main(): Promise<void> {
   let answer = "";

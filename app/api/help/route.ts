@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createBedrockHelpModel } from "@/lib/help/bedrock";
 import { readHelpConfig } from "@/lib/help/config";
-import { readHelpCorpus } from "@/lib/help/corpus";
+import { readHelpContext } from "@/lib/help/corpus";
 import { AppError } from "@/lib/errors/app-error";
 import { handleRouteErrors } from "@/lib/errors/handle-route-errors";
 import { streamHelpReply } from "@/lib/services/help";
@@ -28,10 +28,12 @@ export const POST = handleRouteErrors(async (request: Request) => {
 
   let stream: ReturnType<typeof streamHelpReply>;
   try {
+    const raw = await request.json();
     stream = streamHelpReply(
-      await request.json(),
+      raw,
       createBedrockHelpModel(config),
-      readHelpCorpus(),
+      // The context depends on the question, so the body is read once here.
+      readHelpContext(raw),
       abortSignal,
     );
   } catch (error) {
