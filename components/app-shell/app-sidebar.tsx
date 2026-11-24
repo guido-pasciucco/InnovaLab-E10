@@ -5,20 +5,21 @@ import { usePathname } from "next/navigation";
 
 import LogoutButton from "@/app/dashboard/logout-button";
 
-import { isActivePath, sectionFromPathname } from "./nav-sections";
+import { isActivePath, navSections, sectionFromPathname } from "./nav-sections";
 
 type AppSidebarProps = {
   userName: string;
   userEmail: string;
   businessName: string;
+  chatDatosEnabled: boolean;
 };
 
 // Basic sidebar for the new flow (flow 1): the pages of the section chosen in
 // the navbar. Placeholder until the UX/UI redesign defines the final
 // navigation.
-export function AppSidebar({ userName, userEmail, businessName }: AppSidebarProps) {
+export function AppSidebar({ userName, userEmail, businessName, chatDatosEnabled }: AppSidebarProps) {
   const pathname = usePathname();
-  const section = sectionFromPathname(pathname);
+  const section = sectionFromPathname(pathname, navSections({ chatDatosEnabled }));
 
   return (
     <aside className="flex w-full print:hidden shrink-0 flex-col gap-6 border-b border-border-default bg-surface p-4 md:min-h-screen md:w-64 md:border-r md:border-b-0">

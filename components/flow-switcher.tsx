@@ -14,7 +14,7 @@ const FLOWS = [
   { id: 2, label: "Flujo 2", href: "/dashboard" },
 ] as const;
 
-const FLOW_ONE_PATHS = ["/insumos", "/products", "/licitaciones", "/proveedores"];
+const FLOW_ONE_PATHS = ["/insumos", "/products", "/licitaciones", "/proveedores", "/chat-datos"];
 const FLOW_TWO_PREFIXES = ["/dashboard", "/paso-", "/resultados"];
 
 function under(pathname: string, path: string): boolean {

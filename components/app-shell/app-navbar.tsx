@@ -5,19 +5,20 @@ import { usePathname } from "next/navigation";
 
 import { FlowSwitch } from "@/components/flow-switcher";
 
-import { NAV_SECTIONS, sectionFromPathname } from "./nav-sections";
+import { navSections, sectionFromPathname } from "./nav-sections";
 
 // Flow 1 navbar: the section menu (catalog, tenders) and the temporary flow
 // switcher. The sidebar lists the pages of the section chosen here.
-export function AppNavbar() {
+export function AppNavbar({ chatDatosEnabled }: { chatDatosEnabled: boolean }) {
   const pathname = usePathname();
-  const current = sectionFromPathname(pathname);
+  const sections = navSections({ chatDatosEnabled });
+  const current = sectionFromPathname(pathname, sections);
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border-default bg-surface px-4 py-2 print:hidden sm:px-6">
       <nav aria-label="Secciones">
         <ul className="flex gap-1">
-          {NAV_SECTIONS.map((section) => {
+          {sections.map((section) => {
             const active = section.id === current.id;
             return (
               <li key={section.id}>
