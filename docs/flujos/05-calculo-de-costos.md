@@ -51,6 +51,17 @@ Con costo total unitario de `$ 7.000` y recargo de `30 %`: precio `$ 9.100`, gan
 
 La base es el costo total unitario: el costo variable de la receta y las presentaciones más la parte de los gastos del mes que le toca al producto según su capacidad. No entran comisiones por venta ni impuestos, y la mano de obra ya está dentro de los gastos del período.
 
+### Recargo por defecto y por producto
+
+- El negocio tiene un **recargo por defecto** y cada producto puede tener uno **propio** que lo pisa. Un producto sin recargo propio usa el del negocio, y se puede volver a él borrando el propio.
+- Motivo: cada producto compite en un mercado distinto; con un único recargo, ajustar uno obligaría a cambiar todos. El default evita tener que cargar un recargo por producto.
+- Se guarda solo el porcentaje (`default_markup_percent` en el negocio y `markup_percent` en el producto, anulable). El precio, la ganancia y el margen real **no se guardan**: se calculan en cada lectura con el costo total que surge del reparto vigente. Así, cambiar el precio de un insumo, una capacidad o un gasto del período cambia el precio sugerido sin guardar nada más.
+- El porcentaje se carga como número de porcentaje: `30.00` es 30 %, con hasta dos decimales y un tope de 1000 %. Un recargo de cero o negativo se rechaza porque el precio quedaría igual o por debajo del costo.
+- La pantalla `/precios`, en la sección Catálogo del menú, muestra el recargo por defecto editable y una fila por producto con: Producto · Costo total (por unidad) · Recargo · Precio sugerido · Ganancia (por unidad) · Margen real. El recargo se edita en la misma fila e indica si es propio o del negocio; si es propio, ofrece volver al del negocio.
+- Recargo y margen real se nombran por separado: el porcentaje cargado nunca se rotula "margen". Los importes se muestran con `formatARS`, los porcentajes con dos decimales y coma.
+- Sin productos, sin capacidades o sin gastos del período se muestra el estado vacío con el enlace a la pantalla donde se carga el dato que falta. Un producto sin costo total muestra "No disponible" con el motivo, nunca `$ 0`; sin recargo cargado pide cargarlo y no muestra precio.
+- La leyenda lo dice explícitamente: el precio no incluye comisiones por venta ni impuestos ("sin costos de venta").
+
 ## Trabajo propio
 
 El trabajo propio del emprendedor es **un gasto fijo más** del período: se carga en *Gastos del período* como cualquier otro concepto (por ejemplo "Mi sueldo — $ 300.000"), sin marca propia ni carga por horas, y se reparte por capacidad con el resto de los gastos. El personal contratado con sueldo mensual se carga igual.

@@ -6,6 +6,8 @@ import {
   createProductInputSchema,
   savePresentationInputSchema,
   saveProductInputSchema,
+  setDefaultMarkupInputSchema,
+  setProductMarkupInputSchema,
 } from "./validation";
 
 // DB tests cover shared-field wiring and removal of server-controlled fields.
@@ -338,5 +340,23 @@ describe("savePresentationInputSchema", () => {
         packaging: [{ supplyId: "caja", quantity: "1", unit: "unidad" }],
       }),
     ).toEqual({ packaging: ["Elegí un packaging de tu catálogo."] });
+  });
+});
+
+describe("markup input schemas", () => {
+  it.each([
+    ["defaultMarkupPercent", setDefaultMarkupInputSchema],
+    ["markupPercent", setProductMarkupInputSchema],
+  ] as const)("applies the shared field rule to %s", (field, schema) => {
+    expect(schema.parse({ [field]: "30,5" })).toEqual({ [field]: "30.5" });
+    expect(schema.parse({ [field]: null })).toEqual({ [field]: null });
+    expect(fieldErrors(schema, { [field]: "0" })).toEqual({
+      [field]: ["Con un recargo de 0 o negativo el precio quedaría igual o por debajo del costo."],
+    });
+  });
+
+  it("rejects an omitted field instead of silently clearing the markup", () => {
+    expect(setProductMarkupInputSchema.safeParse({}).success).toBe(false);
+    expect(setDefaultMarkupInputSchema.safeParse({}).success).toBe(false);
   });
 });
