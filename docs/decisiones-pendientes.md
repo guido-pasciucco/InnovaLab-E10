@@ -21,7 +21,6 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 | P-12 | Estados vacíos del tablero | Abierta | Fase 2 · Bloque 4 | Tablero |
 | P-13 | Cuotas fraccionarias: precisión y formato | Abierta | Fase 2 · Bloque 4 | Tablero |
 | P-14 | Resultados que muestra el tablero y sus fórmulas | Abierta | Fase 2 · Bloque 4 | Tablero |
-| P-18 | Carga y asignación de gastos generales compartidos | Abierta | Producto · §7 y §11 | Multi-producto |
 | P-19 | Comisiones porcentuales por venta en el MVP | Abierta | Producto · §11 | Alcance del MVP |
 | P-20 | Tratamiento de mermas y desperdicios | Diferida a largo plazo | Producto · §11 | Cálculo de recetas |
 | P-21 | Redondeo monetario y unidades del equilibrio | Abierta | Producto · §11 | Contrato de precisión |
@@ -61,7 +60,6 @@ Las decisiones abiertas de **licitaciones** no se incluyen en este recolector.
 
 ### Definición conceptual del producto
 
-- **P-18** — Cómo se cargan y asignan los gastos generales compartidos entre productos, sin duplicar el fijo.
 - **P-19** — Incluir o no comisiones porcentuales por venta en el MVP.
 - **P-20** — Tratamiento de mermas y desperdicios. Diferida: es una idea a largo plazo, no algo para implementar ahora; requiere conversación y acuerdo con el equipo antes de entrar en alcance. Las reglas de mermas quedan como propuesta documentada, no como norma vigente.
 - **P-21** — Reglas de redondeo monetario y de unidades del punto de equilibrio.

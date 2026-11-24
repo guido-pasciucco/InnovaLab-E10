@@ -19,6 +19,8 @@ Bloque 3 y 4 del flujo de costos: carga de indirectos, reparto entre productos, 
 - Se **permiten líneas repetidas** con el mismo concepto en un mes; el total suma todas.
 - La columna `notes` existe pero no se expone en servicios ni en la UI.
 - Los gastos son fijos e indirectos por definición: el servidor fija esas dimensiones y el cliente no puede cambiarlas.
+- Los gastos generales compartidos se cargan **una vez** en la lista del período, sin elegir producto: un alquiler de $120.000 se cuenta como $120.000, no una vez por producto. Ese total único se reparte entre los productos con capacidad > 0 según su capacidad mensual, y la foto del mes congela el resultado.
+- Los gastos directos por producto quedan fuera de alcance: no hay carga por producto y todo lo que se guarda se trata como indirecto. Si se quieren, hace falta una forma de medir el uso o el tiempo dedicado a cada producto y una decisión propia.
 - Esta pantalla **no prorratea**, no calcula precio ni equilibrio; esas piezas son etapas separadas.
 
 ## Reparto de indirectos
