@@ -12,17 +12,9 @@ export default async function ChatDatosPage() {
   await requireUser();
 
   return (
-    <main className="px-4 py-10 sm:px-6">
-      <div className="mx-auto w-full max-w-3xl space-y-8">
-        <header>
-          <h1 className="text-3xl font-bold text-fg sm:text-4xl">Chateá con tus datos</h1>
-          <p className="mt-2 max-w-xl text-base text-fg-muted">
-            Hacé preguntas en tus palabras y recibí la respuesta con los números de tu negocio.
-          </p>
-        </header>
-
-        <ChatDatosChat />
-      </div>
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 sm:px-6">
+      <h1 className="sr-only">Chateá con tus datos</h1>
+      <ChatDatosChat />
     </main>
   );
 }

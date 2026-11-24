@@ -1,3 +1,5 @@
+import { HelpMarkdown } from "@/components/help/help-markdown";
+
 import { ChartView } from "./chart-view";
 import { EMPTY_ANSWER_TEXT, type AnswerView, type QueryView } from "./messages";
 import { ResultTable } from "./result-table";
@@ -21,13 +23,8 @@ export function Answer({ view, finished }: AnswerProps) {
   const showFallback = finished && !hasText && view.queries.length === 0;
 
   return (
-    <div className="space-y-4 rounded-3xl bg-surface p-5 text-base text-fg shadow-sm">
-      {hasText &&
-        view.text.split(/\n{2,}/).map((paragraph, index) => (
-          <p key={index} className="whitespace-pre-wrap">
-            {paragraph}
-          </p>
-        ))}
+    <div className="space-y-4 text-base text-fg">
+      {hasText && <HelpMarkdown content={view.text} />}
 
       {showFallback && <p className="text-fg-muted">{EMPTY_ANSWER_TEXT}</p>}
 

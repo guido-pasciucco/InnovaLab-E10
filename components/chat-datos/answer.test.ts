@@ -20,12 +20,13 @@ function render(view: Partial<AnswerView>, finished = true): string {
 }
 
 describe("Answer", () => {
-  it("shows the text as paragraphs", () => {
-    const html = render({ text: "Primera parte.\n\nSegunda parte." });
+  it("shows the text as paragraphs and formats bold", () => {
+    const html = render({ text: "Primera parte.\n\nSegunda con **negrita**." });
 
     expect(html.match(/<p /g)).toHaveLength(2);
     expect(html).toContain("Primera parte.");
-    expect(html).toContain("Segunda parte.");
+    expect(html).toContain("<strong>negrita</strong>");
+    expect(html).not.toContain("**negrita**");
   });
 
   it("escapes what the model wrote instead of drawing it as HTML", () => {
