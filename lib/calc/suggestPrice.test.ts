@@ -19,6 +19,24 @@ describe("suggestPrice", () => {
     ).toBe("23.08");
   });
 
+  // Validation example from issue #312: steps 1 to 3 (steps 4 and 5 are the
+  // INVALID_MARKUP and NO_MARKUP cases below).
+  it.each([
+    ["step 1, product A (business 30 %)", "7000", "30", "9100", "2100", "23.08"],
+    ["step 1, product B (own 50 %)", "1000", "50", "1500", "500", "33.33"],
+    ["step 2, product A (business 40 %)", "7000", "40", "9800", "2800", "28.57"],
+    ["step 3, product B (back to business 40 %)", "1000", "40", "1400", "400", "28.57"],
+  ])("%s", (_step, cost, markup, price, profit, marginPct) => {
+    const result = suggestPrice(cost, markup);
+    if (!result.ok) throw new Error("expected a price");
+
+    expect(result.suggestedPrice).toBe(price);
+    expect(result.profit).toBe(profit);
+    expect(
+      new Decimal(result.realMargin).times(100).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2),
+    ).toBe(marginPct);
+  });
+
   it("keeps exact decimals until display time", () => {
     const result = suggestPrice("1390.63", "30");
 
