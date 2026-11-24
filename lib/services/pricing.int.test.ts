@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { businesses, products } from "@/lib/db/business/table";
 import { supplies } from "@/lib/db/supplies/table";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
@@ -77,6 +77,18 @@ async function makeProduct(user: CreatedUser, name: string, capacity: number) {
   );
 }
 
+// Other integration files run in parallel against the same database, so every
+// lookup is scoped to the test user: an unscoped query can pick another
+// file's row with the same name.
+async function ownProducts(userId: string) {
+  const rows = await db
+    .select({ product: products })
+    .from(products)
+    .innerJoin(businesses, eq(products.businessId, businesses.id))
+    .where(eq(businesses.ownerUserId, userId));
+  return rows.map((row) => row.product);
+}
+
 async function makePricedUser(unitCost: string, capacity = 120) {
   const user = await makeUser();
   await makeProduct(user, "Pan flauta", capacity);
@@ -124,7 +136,7 @@ describe("getPricingService", () => {
     }
     await addPeriodCostLineService(user.id, { concept: "Alquiler", amountPeriod: "120000" }, db);
     await saveDefaultMarkupPercentService(user.id, { defaultMarkupPercent: "30" }, db);
-    const [pan] = await db.select().from(products).where(eq(products.name, "Pan flauta"));
+    const pan = (await ownProducts(user.id)).find((product) => product.name === "Pan flauta")!;
     await saveProductMarkupPercentService(user.id, pan.id, { markupPercent: "45" }, db);
 
     const result = await getPricingService(user.id, {}, db);
@@ -179,7 +191,10 @@ describe("getPricingService", () => {
     const { user } = await makePricedUser("120000");
     await saveDefaultMarkupPercentService(user.id, { defaultMarkupPercent: "30" }, db);
     const before = await getPricingService(user.id, {}, db);
-    const [supply] = await db.select().from(supplies).where(eq(supplies.name, flour.name));
+    const [supply] = await db
+      .select()
+      .from(supplies)
+      .where(and(eq(supplies.name, flour.name), eq(supplies.userId, user.id)));
 
     await updateSupplyService(user.id, supply.id, {
       ...flour,
@@ -195,7 +210,7 @@ describe("getPricingService", () => {
 describe("markup write services", () => {
   it("clears the business default and the product override with null", async () => {
     const { user } = await makePricedUser("120000");
-    const [product] = await db.select().from(products).limit(1);
+    const [product] = await ownProducts(user.id);
     await saveDefaultMarkupPercentService(user.id, { defaultMarkupPercent: "30" }, db);
     await saveProductMarkupPercentService(user.id, product.id, { markupPercent: "45" }, db);
 
@@ -221,7 +236,7 @@ describe("markup write services", () => {
 
   it("does not modify an inactive product", async () => {
     const { user } = await makePricedUser("120000");
-    const [product] = await db.select().from(products).limit(1);
+    const [product] = await ownProducts(user.id);
     await db.update(products).set({ isActive: false }).where(eq(products.id, product.id));
 
     await expect(
