@@ -50,8 +50,7 @@ Las rutas que redirigen (como `app/auth/confirm/route.ts`) tienen contrato de re
 
 ## Pendientes del flujo
 
-- Auditar las Server Actions de `app/(calculator)/` por autorización de recursos.
+- Auditar las Server Actions de `app/(business)/` por autorización de recursos.
 - Regla de lint que prohíba `as VerifiedUserId` fuera de los archivos permitidos.
-- Alcance del menú persistente frente al asistente legacy.
 
 El detalle y las opciones de estos puntos siguen abiertos.

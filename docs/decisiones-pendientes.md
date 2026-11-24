@@ -8,13 +8,8 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 
 | ID | Tema | Estado | Origen | Bloquea |
 | --- | --- | --- | --- | --- |
-| P-01 | Contenido de la página inicial / dashboard | Abierta | Fase 2 · General | Criterio de aceptación de `/dashboard` |
-| P-02 | Alcance del menú persistente (global vs. catálogo) | Abierta | Fase 2 · General | Layout y navegación compartida |
-| P-04 | Regla de "importancia de cada gasto" en el prorrateo | Abierta | Fase 2 · Bloque 3 | Reparto por gasto |
 | P-05 | Cuota, equilibrio en pesos y prueba de cierre | Abierta | Fase 2 · Bloque 3 | Fórmulas del equilibrio |
 | P-06 | Recargo global vs. por producto | Abierta | Fase 2 · Bloque 3 | Interfaz de precios |
-| P-07 | Modelo de período: cálculo activo vs. histórico | Abierta | Fase 2 · Bloque 3 | Edición histórica |
-| P-08 | Destino del cálculo de un solo producto (Fase 1) | Abierta | Fase 2 · Global | Reemplazo por el catálogo |
 | P-09 | Planilla #250 como oráculo de validación | Dependencia externa | Fase 2 · Bloque 3 | QA de todas las fórmulas |
 | P-10 | Eje X del gráfico del equilibrio | Abierta | Fase 2 · Bloque 4 | Gráfico multi-producto |
 | P-11 | Líneas del gráfico del equilibrio | Abierta | Fase 2 · Bloque 4 | Gráfico multi-producto |
@@ -25,6 +20,7 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 | P-21 | Redondeo monetario y unidades del equilibrio | Abierta | Producto · §11 | Contrato de precisión |
 | P-22 | Qué resultados son proyecciones y cuáles son reales | Abierta | Producto · §11 | Comunicación al usuario |
 | P-23 | Validar el modelo con el mentor y dos rubros distintos | Abierta | Producto · §11 | Validación del producto |
+| P-24 | Desactivar un producto para el cálculo sin borrarlo | Diferida | Fase 2 · Bloque 2 | Ciclo de vida del producto |
 | D-04 | Auditoría de autorización por recurso en Server Actions | Pendiente | ADR 03 | Seguridad de acciones |
 | D-05 | Regla de lint que prohíba casts a `VerifiedUserId` | Pendiente | ADR 03 | Frontera de identidad |
 | D-06 | Cache por request de `getUser` en renders | Pendiente | ADR 03 | Rendimiento de auth |
@@ -35,25 +31,17 @@ Las decisiones abiertas de **licitaciones** no se incluyen en este recolector.
 
 ## Producto y cálculo
 
-### Navegación y alcance
-
-- **P-01** — No está definido si la vista inicial será un dashboard (resumen del estado del catálogo con accesos a cada bloque) o una página inicial simple. La propuesta de "hub con una tarjeta por bloque" quedó en pausa; no es decisión tomada.
-- **P-02** — ¿El menú persistente aplica a todo el producto o solo a las rutas del catálogo? Hoy el producto tiene además el asistente `/paso-1` a `/paso-8`; si el menú es global, hay que definir cómo conviven.
-- **P-08** — El catálogo reemplazaría al cálculo de un solo producto de la Fase 1, pero no está decidido qué pasa con los cálculos existentes. Decisión de producto aparte.
-
 ### Bloque 3 — Costos indirectos, precio y equilibrio
 
-- **P-04** — Las issues hablan de "promedio ajustado según la importancia de cada gasto" sin definir cómo se pondera. Hoy los indirectos son un solo total repartido por capacidad.
 - **P-05** — Interpretación final de la cuota por producto, del equilibrio en pesos y de la prueba de cierre. Las fórmulas propuestas necesitan validación contra la planilla.
-- **P-06** — La especificación dice "cada producto" pero no aclara si el porcentaje es uno solo para todos o individual; ese punto sigue abierto. La convención margen-vs-recargo tampoco puede darse por cerrada: quedó pendiente de decisión para el responsable del precio sugerido, con ambas opciones y sus diferencias explicadas.
-- **P-07** — Los indirectos son "del mes" pero no hay modelo de período: ¿un solo cálculo vigente o histórico? La edición histórica también bloquea el selector de mes.
+- **P-06** — El recargo sobre el costo total unitario ya está decidido como convención; falta definir si el porcentaje es uno solo para todo el negocio o uno por producto. Hoy no se guarda en ningún lado, así que define dónde vive el dato y cómo es la pantalla de precios.
 - **P-09** — Sin la planilla #250 no hay oráculo para verificar ninguna fórmula. Es la dependencia de QA más importante del flujo.
 
 ### Bloque 4 — Tablero
 
 - **P-10** — Con varios productos no está definido qué significa el eje X del gráfico. La propuesta es unidades totales vendidas de la mezcla.
 - **P-11** — No está detallado qué líneas se dibujan. La propuesta es indirectos del período (constante) contra contribución acumulada de la mezcla.
-- **P-12** — Qué ve el usuario sin catálogo cerrado, sin indirectos o sin capacidades.
+- **P-12** — Qué ve el usuario en el tablero sin productos, sin gastos del período o sin capacidades cargadas.
 - **P-13** — Las cuotas pueden dar decimales; no está definido si se muestran exactas, redondeadas o como "unidades vendibles".
 - **P-14** — Qué resultados se muestran (precio sugerido, contribución, equilibro, recargo) y con qué fórmulas.
 
@@ -64,11 +52,15 @@ Las decisiones abiertas de **licitaciones** no se incluyen en este recolector.
 - **P-22** — Acordar qué resultados son proyecciones y cuáles pueden basarse en datos reales.
 - **P-23** — Validar el modelo con el mentor y con al menos dos rubros distintos.
 
+### Ciclo de vida del producto
+
+- **P-24** — Desactivar un producto para que deje de entrar en el cálculo sin borrarlo, y poder volver a activarlo. Diferida: es una mejora para más adelante; hoy borrar un producto es definitivo para el usuario.
+
 > Fuera de alcance de decisión: el formato numérico de `rendimiento` y el redondeo interno los define la implementación y no bloquean el spec.
 
 ## Desarrollo
 
-- **D-04** — Auditar las Server Actions de `app/(calculator)/`: el `VerifiedUserId` no comprueba que un `calculationId` o `businessId` del input pertenezca al usuario.
+- **D-04** — Auditar las Server Actions de `app/(business)/` (insumos, productos, licitaciones y proveedores): el `VerifiedUserId` no comprueba que un id de recurso recibido en el input pertenezca al usuario.
 - **D-05** — Regla de lint que prohíba `as VerifiedUserId` fuera de `getSessionUserService` y la factory de tests.
 - **D-06** — Decidir si se agrega cache por request de `getUser` en renders (layout + page). Una Server Action es otro request, así que el cache no une sus llamadas.
 

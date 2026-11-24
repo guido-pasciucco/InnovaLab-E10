@@ -82,7 +82,7 @@ Si esta sección llega a implementarse, el sistema debe impedir reutilizar más 
 
 ## Ciclo de vida
 
-Productos y recetas se editan y se borran siempre. El borrado es **lógico**: el registro se marca, deja de mostrarse y de entrar en los cálculos, pero no se elimina físicamente y se puede restaurar. Los snapshots cerrados no se afectan.
+Productos y recetas se editan y se borran siempre. Borrar es **definitivo para el usuario**: el producto deja de mostrarse y de entrar en los cálculos, y no hay forma de restaurarlo. Internamente el registro se conserva marcado como inactivo, así que las fotos cerradas no se afectan. Sacar un producto del cálculo sin borrarlo (desactivarlo) es una mejora diferida.
 
 ## Precisión
 
