@@ -155,7 +155,7 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
 
         {counts[activeKind] > 0 && (
           <p className="text-xs text-fg-muted">
-            El costo se normaliza a la unidad de uso. No se cargan cuentas a mano.
+            El costo por unidad mínima se calcula automáticamente a partir de la cantidad y el precio de compra. No se cargan cuentas a mano.
           </p>
         )}
       </section>
