@@ -1,4 +1,4 @@
-﻿import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ZodError } from "zod/v4";
 
 import { eq } from "drizzle-orm";
@@ -656,15 +656,15 @@ describe("products service", () => {
       db,
     );
     expect(presentation).not.toBeNull();
-  
+
     expect(await deleteProductService(user.id, product.id, db)).toBe(true);
-  
+
     const [row] = await db
       .select({ isActive: products.isActive })
       .from(products)
       .where(eq(products.id, product.id));
     expect(row?.isActive).toBe(false);
-  
+
     const ingredients = await db
       .select({ id: productIngredients.id })
       .from(productIngredients)
@@ -677,15 +677,15 @@ describe("products service", () => {
       .select({ id: presentationPackaging.id })
       .from(presentationPackaging)
       .where(eq(presentationPackaging.presentationId, presentation!.id));
-  
+
     expect(ingredients).toHaveLength(0);
     expect(presentationRows).toHaveLength(0);
     expect(packagingRows).toHaveLength(0);
-  
+
     expect(await deleteSupplyService(user.id, flour.id, db)).toBe(true);
     expect(await deleteSupplyService(user.id, box.id, db)).toBe(true);
   });
-  
+
   it("keeps SUPPLY_IN_USE when another active product still uses the supply", async () => {
     const user = await makeUser();
     const flour = await makeSupply(user.id);
@@ -699,13 +699,13 @@ describe("products service", () => {
       },
       db,
     );
-  
+
     expect(await deleteProductService(user.id, deleted.id, db)).toBe(true);
     await expect(deleteSupplyService(user.id, flour.id, db)).rejects.toMatchObject({
       code: "SUPPLY_IN_USE",
     });
   });
-  
+
   it("keeps products isolated by owner", async () => {
     const userA = await makeUser();
     const userB = await makeUser();
