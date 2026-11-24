@@ -44,3 +44,15 @@ Capturas del código final de este PR, tomadas con Playwright contra Supabase lo
 - `issue-288-edicion-costo-guardado.png` — edición con cambios sin guardar: importe anterior marcado como *Último resultado guardado*.
 
 Para regenerarlas: `bun run dev` y recorrer `/products` → `+ Nuevo` / `Ver receta` / `Editar`.
+
+## Validación en el HEAD actualizado (tras merge de `main`)
+
+| Comando | Resultado |
+| --- | --- |
+| `bun run typecheck` | OK (tras limpiar los tipos generados de rutas eliminadas por `main`) |
+| `bun run lint` | OK, 3 warnings preexistentes en `app/layout.tsx` |
+| `bun run lint:e2e` | OK |
+| `bun run test` | 784 tests OK |
+| `bunx playwright test` | 55/55 e2e OK (incluye Productos, Receta, Insumos, Packaging, Gastos del período, Presentaciones y accesibilidad del modal) |
+
+El merge fue normal (sin rebase ni force-push). Se preservaron los defaults de rendimiento y el catálogo de unidades de `main`, y su enlace a presentaciones (P12). El e2e usa la ruta canónica `/supplies`.
