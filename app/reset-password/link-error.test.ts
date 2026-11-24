@@ -14,10 +14,28 @@ describe("linkErrorMessage", () => {
     );
   });
 
-  it.each([undefined, "", "INTERNAL", "<script>", ["AUTH_LINK_INVALID", "x"]])(
-    "shows nothing for %j (only known link errors are rendered)",
-    (code) => {
-      expect(linkErrorMessage(code)).toBeNull();
-    },
-  );
+  it("explains an expired recovery session", () => {
+    expect(linkErrorMessage("AUTH_SESSION_MISSING")).toBe(
+      "Tu sesión venció. Pedí un enlace nuevo para continuar.",
+    );
+  });
+
+  it.each([
+    undefined,
+    "",
+    "INTERNAL",
+    "<script>",
+    ["AUTH_LINK_INVALID", "x"],
+    // Crafted values must not slip past the exact-match allowlist.
+    "AUTH_SESSION_MISSING ",
+    " AUTH_SESSION_MISSING",
+    "AUTH_SESSION_MISSING\n",
+    "toString",
+    "constructor",
+    "__proto__",
+    42,
+    null,
+  ])("shows nothing for %j (only known link errors are rendered)", (code) => {
+    expect(linkErrorMessage(code as string | string[] | undefined)).toBeNull();
+  });
 });
