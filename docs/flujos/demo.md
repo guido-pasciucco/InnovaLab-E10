@@ -1,8 +1,10 @@
 # Guía para presentar la demo
 
+> **Guion histórico.** Corresponde al asistente guiado de la primera versión, que ya no está en el producto. Las cifras salieron del motor de esa versión y usan la convención de margen sobre el precio de venta que dejó de regir: se conservan como registro de aquella demostración, no como ejemplo del cálculo vigente.
+
 Recorrido completo de la Calculadora de Costos, desde la landing hasta el resumen descargable. Dura **10 a 12 minutos**.
 
-El ejemplo es una emprendedora que vende **alfajores de maicena en caja de 6**. Todos los resultados de esta guía salieron del motor de cálculo real de la app, así que si cargás exactamente estos datos, vas a ver los mismos números en pantalla.
+El ejemplo es una emprendedora que vende **alfajores de maicena en caja de 6**. Los resultados corresponden al motor de esa versión antigua: si cargás estos datos en el producto actual no vas a ver los mismos números.
 
 ## Antes de empezar (el día anterior)
 

@@ -38,16 +38,16 @@ costo total unitarioᵢ = CVUᵢ + gasto indirecto por unidad
 
 ## Precio y margen
 
-El usuario ingresa un **margen sobre el precio de venta**, no un recargo sobre el costo:
+El usuario ingresa un **recargo sobre el costo total unitario**:
 
 ```text
-precio sugerido = costo unitario ÷ (1 − margen)
-recargo equivalente = margen ÷ (1 − margen)      (solo informativo)
+precio sugerido = costo total unitario × (1 + recargo)
+margen real     = (precio sugerido − costo total unitario) ÷ precio sugerido
 ```
 
-Con costo `$ 1.000` y margen `30 %`: precio `$ 1.428,57`, recargo equivalente `42,9 %`. El recargo **no se ingresa ni se elige**, solo se muestra para explicar la diferencia. Un margen de `100 %` o más no tiene precio posible y se pide corregirlo.
+Con costo total unitario de `$ 7.000` y recargo de `30 %`: precio `$ 9.100`, ganancia `$ 2.100` y margen real `23,08 %`. El recargo y el margen real son números distintos y se muestran por separado: el recargo es lo que el usuario carga, el margen real es lo que efectivamente gana sobre el precio. Un recargo de cero o negativo deja el precio igual o por debajo del costo y se pide corregirlo.
 
-Esta convención la fija la decisión 0003. Sigue abierto qué componentes integran el costo unitario que se usa como base.
+La base es el costo total unitario: el costo variable de la receta y las presentaciones más la parte de los gastos del mes que le toca al producto según su capacidad. No entran comisiones por venta ni impuestos, y la mano de obra ya está dentro de los gastos del período.
 
 ## Trabajo propio
 
@@ -163,4 +163,4 @@ El motor conserva la precisión como fracción exacta con numerador y denominado
 
 ## Decisiones aplicables
 
-En este flujo rigen el recálculo en vivo, la foto del cierre con correcciones auditadas, el prorrateo por capacidad, el mes actual para los gastos, y las reglas de trabajo propio y margen sobre el precio de venta.
+En este flujo rigen el recálculo en vivo, la foto del cierre con correcciones auditadas, el prorrateo por capacidad, el mes actual para los gastos, y las reglas de trabajo propio, recargo sobre el costo total y margen real informado por separado.
