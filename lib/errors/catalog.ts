@@ -293,6 +293,20 @@ export const ERROR_CATALOG = {
     message: "La consulta tardó demasiado.",
     logLevel: "warn",
   },
+
+  // Chat endpoint (chat-datos, #279). Invalid bodies use the generic VALIDATION.
+  CHAT_DATOS_DISABLED: {
+    // CHAT_DATOS_ENABLED is off: the route answers as if it did not exist.
+    status: 404,
+    message: "Esta función no está disponible.",
+    logLevel: "silent",
+  },
+  CHAT_DATOS_UNAVAILABLE: {
+    // Missing AWS credentials, or Bedrock could not be reached.
+    status: 503,
+    message: "El chat con tus datos no está disponible por el momento. Probá de nuevo en unos minutos.",
+    logLevel: "error",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;
