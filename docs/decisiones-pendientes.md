@@ -9,7 +9,6 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 | ID | Tema | Estado | Origen | Bloquea |
 | --- | --- | --- | --- | --- |
 | P-05 | Cuota, equilibrio en pesos y prueba de cierre | Abierta | Fase 2 · Bloque 3 | Fórmulas del equilibrio |
-| P-06 | Recargo global vs. por producto | Abierta | Fase 2 · Bloque 3 | Interfaz de precios |
 | P-09 | Planilla #250 como oráculo de validación | Dependencia externa | Fase 2 · Bloque 3 | QA de todas las fórmulas |
 | P-10 | Eje X del gráfico del equilibrio | Abierta | Fase 2 · Bloque 4 | Gráfico multi-producto |
 | P-11 | Líneas del gráfico del equilibrio | Abierta | Fase 2 · Bloque 4 | Gráfico multi-producto |
@@ -34,7 +33,6 @@ Las decisiones abiertas de **licitaciones** no se incluyen en este recolector.
 ### Bloque 3 — Costos indirectos, precio y equilibrio
 
 - **P-05** — Interpretación final de la cuota por producto, del equilibrio en pesos y de la prueba de cierre. Las fórmulas propuestas necesitan validación contra la planilla.
-- **P-06** — El recargo sobre el costo total unitario ya está decidido como convención; falta definir si el porcentaje es uno solo para todo el negocio o uno por producto. Hoy no se guarda en ningún lado, así que define dónde vive el dato y cómo es la pantalla de precios.
 - **P-09** — Sin la planilla #250 no hay oráculo para verificar ninguna fórmula. Es la dependencia de QA más importante del flujo.
 
 ### Bloque 4 — Tablero

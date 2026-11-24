@@ -63,10 +63,14 @@ describe("quantityString", () => {
 });
 
 describe("column precision", () => {
-  // The {1,10} bound above is only honest while every numeric column keeps
+  // The {1,10} bound above is only honest while every money column keeps
   // 10 integer digits. If a migration introduces another precision, this
   // fails and forces the bound to be revisited instead of drifting (BUG-004).
-  it("keeps 10 integer digits in every numeric column", () => {
+  // Markup percentages are the deliberate exception (#312): numeric(7,2)
+  // caps them at 1000.00 % and they are not money.
+  const MARKUP_COLUMNS = new Set(["default_markup_percent", "markup_percent"]);
+
+  it("keeps 10 integer digits in every money column", () => {
     const tables: PgTable[] = [
       businesses,
       products,
@@ -79,8 +83,20 @@ describe("column precision", () => {
     );
 
     expect(numeric.length).toBeGreaterThan(0);
-    for (const col of numeric) {
+    for (const col of numeric.filter((column) => !MARKUP_COLUMNS.has(column.name))) {
       expect(col.precision - col.scale).toBe(10);
     }
+  });
+
+  it("keeps the markup percentages at numeric(7,2)", () => {
+    const tables: PgTable[] = [businesses, products];
+    const markups = tables
+      .flatMap((table) => Object.values(getTableColumns(table)).filter(isNumericColumn))
+      .filter((column) => MARKUP_COLUMNS.has(column.name));
+
+    expect(markups.map((column) => [column.name, column.precision, column.scale])).toEqual([
+      ["default_markup_percent", 7, 2],
+      ["markup_percent", 7, 2],
+    ]);
   });
 });
