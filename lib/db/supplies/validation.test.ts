@@ -19,8 +19,6 @@ const validInput = {
   purchasePrice: "18750.00",
   purchaseQuantity: "25",
   purchaseUnit: "kg",
-  minimumUnit: "g",
-  conversionFactor: "1000",
 };
 
 describe("createSupplyInputSchema", () => {
@@ -86,17 +84,7 @@ describe("createSupplyInputSchema", () => {
     {
       field: "purchaseUnit",
       value: "",
-      message: "Escribí la unidad de compra (ej: kg, caja, docena).",
-    },
-    {
-      field: "minimumUnit",
-      value: "",
-      message: "Escribí la unidad mínima (ej: g, ml, unidad).",
-    },
-    {
-      field: "conversionFactor",
-      value: "0",
-      message: "La equivalencia debe ser mayor que cero.",
+      message: "Elegí la unidad de compra (ej: kg, docena, unidad).",
     },
   ])("applies the shared rule to $field", ({ field, value, message }) => {
     expect(fieldErrors(createSupplyInputSchema, { ...validInput, [field]: value })).toEqual({
@@ -110,10 +98,10 @@ describe("updateSupplyInputSchema", () => {
     expect(updateSupplyInputSchema.safeParse(validInput).success).toBe(true);
   });
 
-  it("accepts an unknown unit so the service can compare it with the stored row", () => {
+  it("rejects a unit outside the catalog, like the create gate", () => {
     expect(
-      updateSupplyInputSchema.safeParse({ ...validInput, purchaseUnit: "bolsa" }).success,
-    ).toBe(true);
+      fieldErrors(updateSupplyInputSchema, { ...validInput, purchaseUnit: "bolsa" }),
+    ).toEqual({ purchaseUnit: ["Elegí una unidad de compra del catálogo."] });
   });
 
   it("drops the server-controlled fields", () => {

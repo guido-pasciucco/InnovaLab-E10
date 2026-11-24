@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 
 import { deleteSupply } from "@/app/(flujo-1)/insumos/actions";
 import { calculateMinimumUnitPrice } from "@/lib/calc/supplyCost";
+import { getSupplyUnitBasis } from "@/lib/schemas/supplies/units";
 import type { SupplyKind } from "@/lib/schemas/supplies/fields";
 import type { SupplyItem } from "@/lib/schemas/supplies/supplies";
 import { moneyFormat, quantityFormat, unitPriceFormat } from "./format";
@@ -101,7 +102,7 @@ export function SuppliesTable({
             const unitPrice = calculateMinimumUnitPrice(
               supply.purchasePrice,
               supply.purchaseQuantity,
-              supply.conversionFactor,
+              supply.purchaseUnit,
             );
 
             return (
@@ -114,7 +115,9 @@ export function SuppliesTable({
                 <td className="px-3 py-3 whitespace-nowrap text-fg">
                   {moneyFormat.format(Number(supply.purchasePrice))}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-fg">{supply.minimumUnit}</td>
+                <td className="px-3 py-3 whitespace-nowrap text-fg">
+                  {getSupplyUnitBasis(supply.purchaseUnit)?.minimumUnit ?? "—"}
+                </td>
                 <td className="px-3 py-3 whitespace-nowrap text-fg">
                   {unitPrice ? unitPriceFormat.format(Number(unitPrice)) : "—"}
                 </td>

@@ -11,12 +11,7 @@ import {
 } from "@/lib/db/supplies/validation";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
-import { SUPPLY_UNIT_CATALOG_MESSAGE } from "@/lib/schemas/supplies/fields";
-import {
-  getSupplyUnit,
-  resolveSupplyUnits,
-  resolveSupplyUnitsForUpdate,
-} from "@/lib/schemas/supplies/units";
+import { getSupplyUnit, getSupplyUnitFamily } from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
 import { isSupplyUsedByPresentation } from "./presentations";
 import { recalculatePersistedProductVariableCostsTx } from "./products";
@@ -30,6 +25,12 @@ import {
 // form contract. Owner scoping: every query and write filters by the caller's
 // userId (VerifiedUserId, ADR 03). The service throws (ZodError, AppError);
 // doors translate. No try/catch.
+
+// The gate already rejected units outside the catalog; this stores the
+// canonical spelling ("kilo" → "kg").
+function canonicalPurchaseUnit(purchaseUnit: string): string {
+  return getSupplyUnit(purchaseUnit)?.value ?? purchaseUnit;
+}
 
 export async function listSuppliesService(
   userId: VerifiedUserId,
@@ -49,15 +50,6 @@ export async function createSupplyService(
   db: Db = getDrizzleClient(),
 ): Promise<SupplyRow> {
   const supply = createSupplyInputSchema.parse(input);
-  const purchaseUnit = getSupplyUnit(supply.purchaseUnit)?.value ?? supply.purchaseUnit;
-  const units = resolveSupplyUnits(purchaseUnit);
-
-  if (!units) {
-    throw new AppError("VALIDATION", {
-      formErrors: [],
-      fieldErrors: { purchaseUnit: [SUPPLY_UNIT_CATALOG_MESSAGE] },
-    });
-  }
 
   const [row] = await db
     .insert(supplies)
@@ -67,9 +59,7 @@ export async function createSupplyService(
       name: supply.name,
       purchasePrice: supply.purchasePrice,
       purchaseQuantity: supply.purchaseQuantity,
-      purchaseUnit,
-      minimumUnit: units.minimumUnit,
-      conversionFactor: units.conversionFactor,
+      purchaseUnit: canonicalPurchaseUnit(supply.purchaseUnit),
     })
     .returning();
 
@@ -134,16 +124,11 @@ export async function updateSupplyService(
       .limit(1);
     if (!existing) return null;
 
-    const units = resolveSupplyUnitsForUpdate(existing, supply);
-    if (!units) {
-      throw new AppError("VALIDATION", {
-        formErrors: [],
-        fieldErrors: { purchaseUnit: [SUPPLY_UNIT_CATALOG_MESSAGE] },
-      });
-    }
-
+    // Another family (kg → L) would invalidate saved recipe and packaging
+    // quantities; another unit of the same family (kg → g) would not.
     const changesRecipeMeaning =
-      supply.kind !== existing.kind || units.minimumUnit !== existing.minimumUnit;
+      supply.kind !== existing.kind ||
+      getSupplyUnitFamily(supply.purchaseUnit) !== getSupplyUnitFamily(existing.purchaseUnit);
     if (changesRecipeMeaning) {
       const [used] = await tx
         .select({ id: productIngredients.id })
@@ -171,9 +156,7 @@ export async function updateSupplyService(
         name: supply.name,
         purchasePrice: supply.purchasePrice,
         purchaseQuantity: supply.purchaseQuantity,
-        purchaseUnit: units.purchaseUnit,
-        minimumUnit: units.minimumUnit,
-        conversionFactor: units.conversionFactor,
+        purchaseUnit: canonicalPurchaseUnit(supply.purchaseUnit),
         updatedAt: new Date(),
       })
       .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))

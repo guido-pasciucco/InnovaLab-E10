@@ -48,8 +48,6 @@ const SERVER_FIELDS: readonly Path<Supply>[] = [
   "purchasePrice",
   "purchaseQuantity",
   "purchaseUnit",
-  "minimumUnit",
-  "conversionFactor",
 ];
 
 export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormProps) {
@@ -75,8 +73,6 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
           purchasePrice: supply.purchasePrice,
           purchaseQuantity: trimDecimalZeros(supply.purchaseQuantity),
           purchaseUnit: initialPurchaseUnit,
-          minimumUnit: supply.minimumUnit,
-          conversionFactor: trimDecimalZeros(supply.conversionFactor),
         }
       : {
           kind,
@@ -84,16 +80,12 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
           purchasePrice: "",
           purchaseQuantity: "1",
           purchaseUnit: "",
-          minimumUnit: "unidad",
-          conversionFactor: "1",
         },
   });
 
   const purchasePrice = useWatch({ control, name: "purchasePrice" });
   const purchaseQuantity = useWatch({ control, name: "purchaseQuantity" });
   const purchaseUnit = useWatch({ control, name: "purchaseUnit" });
-  const minimumUnit = useWatch({ control, name: "minimumUnit" });
-  const conversionFactor = useWatch({ control, name: "conversionFactor" });
 
   const hasServerFieldErrors = useServerFieldErrors(state, setError, SERVER_FIELDS);
 
@@ -110,17 +102,6 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
     if (state?.ok) onSaved();
   }, [state, onSaved]);
 
-  // Supplies and packaging derive both technical columns from the selected
-  // catalog unit. The values are still submitted because the server contract
-  // keeps them, but the user never edits them.
-  useEffect(() => {
-    const unit = getSupplyUnit(purchaseUnit);
-    if (!unit) return;
-
-    setValue("minimumUnit", unit.minimumUnit, { shouldValidate: true });
-    setValue("conversionFactor", unit.factor, { shouldValidate: true });
-  }, [purchaseUnit, setValue]);
-
   const handleSubmitAction = (data: Supply) => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -135,13 +116,10 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
 
   const nameField = register("name");
 
-  const totalUnits = calculateMinimumUnits(purchaseQuantity, conversionFactor);
-  const unitPrice = calculateMinimumUnitPrice(
-    purchasePrice,
-    purchaseQuantity,
-    conversionFactor,
-  );
-  const unitLabel = minimumUnit.trim() || "unidad mínima";
+  // The preview derives the minimum unit from the catalog, like the server.
+  const totalUnits = calculateMinimumUnits(purchaseQuantity, purchaseUnit);
+  const unitPrice = calculateMinimumUnitPrice(purchasePrice, purchaseQuantity, purchaseUnit);
+  const unitLabel = getSupplyUnit(purchaseUnit)?.minimumUnit ?? "unidad mínima";
   const showPreview =
     purchasePrice.trim() !== "" &&
     totalUnits !== null &&
@@ -231,9 +209,6 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
           ))}
         </SelectField>
       </FormGrid>
-
-      <input type="hidden" {...register("minimumUnit")} />
-      <input type="hidden" {...register("conversionFactor")} />
 
       {showPreview && (
         <div className="rounded-[14px] border border-border-tonal bg-surface-tint p-3 text-sm text-fg-muted">

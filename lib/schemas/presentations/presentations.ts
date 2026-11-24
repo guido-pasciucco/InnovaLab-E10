@@ -1,8 +1,9 @@
 import { z } from "zod";
 
 import {
-  getSupplyUnit,
-  resolveSupplyFamily,
+  getSupplyUnitBasis,
+  getSupplyUnitFamily,
+  isRecipeUnitAllowed,
   type SupplyUnitFamily,
 } from "@/lib/schemas/supplies/units";
 import {
@@ -61,7 +62,7 @@ export function createPresentationFormSchema(options: readonly PackagingOption[]
             message: "Elegí un packaging de tu catálogo.",
             path: ["packaging", index, "supplyId"],
           });
-        } else if (getSupplyUnit(item.unit)?.family !== option.family) {
+        } else if (!isRecipeUnitAllowed(option.family, item.unit)) {
           ctx.addIssue({
             code: "custom",
             message: PACKAGING_UNIT_FAMILY_MESSAGE,
@@ -90,7 +91,6 @@ export function toPackagingOptions(
     name: string;
     kind: string;
     purchaseUnit: string;
-    minimumUnit: string;
   }[],
 ): PackagingOption[] {
   return supplies
@@ -98,8 +98,8 @@ export function toPackagingOptions(
     .map((supply) => ({
       id: supply.id,
       name: supply.name,
-      family: resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit),
-      defaultUnit: getSupplyUnit(supply.minimumUnit)?.value ?? supply.minimumUnit,
+      family: getSupplyUnitFamily(supply.purchaseUnit),
+      defaultUnit: getSupplyUnitBasis(supply.purchaseUnit)?.minimumUnit ?? "",
     }));
 }
 

@@ -3,8 +3,6 @@ import { z } from "zod/v4";
 
 import { moneyString, quantityString } from "../formats";
 import {
-  conversionFactorField,
-  minimumUnitField,
   purchasePriceField,
   purchaseQuantityField,
   purchaseUnitField,
@@ -28,7 +26,6 @@ export const supplyRowSchema = createSelectSchema(supplies, {
   kind: supplyKindField,
   purchasePrice: moneyString,
   purchaseQuantity: quantityString,
-  conversionFactor: quantityString,
 });
 
 // --- Public inputs: insert/update schema minus every server-controlled field. ---
@@ -39,8 +36,6 @@ const supplyInputShape = {
   purchasePrice: purchasePriceField,
   purchaseQuantity: purchaseQuantityField,
   purchaseUnit: purchaseUnitField,
-  minimumUnit: minimumUnitField,
-  conversionFactor: conversionFactorField,
 } as const;
 
 const supplyInputObjectSchema = createInsertSchema(supplies, supplyInputShape).omit({
@@ -50,9 +45,8 @@ const supplyInputObjectSchema = createInsertSchema(supplies, supplyInputShape).o
   updatedAt: true,
 });
 
-// New supplies and packaging must pick a unit from the catalog. Updates cannot enforce this
-// here because a legacy row may keep its stored unknown unit; the service
-// compares the payload with the persisted row before accepting it.
+// Supplies and packaging must pick a unit from the catalog, on create and on
+// update: the minimum unit and the conversion factor are derived from it.
 export const createSupplyInputSchema = supplyInputObjectSchema.superRefine((value, ctx) => {
   const hasValidLength = value.purchaseUnit.length > 0 && value.purchaseUnit.length <= 40;
 
@@ -65,7 +59,7 @@ export const createSupplyInputSchema = supplyInputObjectSchema.superRefine((valu
   }
 });
 
-export const updateSupplyInputSchema = supplyInputObjectSchema;
+export const updateSupplyInputSchema = createSupplyInputSchema;
 
 // --- Inferred input/row types: single source of truth, no manual interfaces. ---
 

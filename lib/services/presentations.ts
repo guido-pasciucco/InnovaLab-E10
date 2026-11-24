@@ -25,7 +25,7 @@ import type {
 import {
   getSupplyUnit,
   isRecipeUnitAllowed,
-  resolveSupplyFamily,
+  getSupplyUnitFamily,
 } from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
 import type { Tx } from "./calculations";
@@ -119,10 +119,9 @@ async function resolvePackaging(
 
   return packaging.map((line) => {
     const supply = byId.get(line.supplyId)!;
-    const family = resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit);
     const unit = getSupplyUnit(line.unit);
 
-    if (!unit || !isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, line.unit)) {
+    if (!unit || !isRecipeUnitAllowed(getSupplyUnitFamily(supply.purchaseUnit), line.unit)) {
       throw new AppError("VALIDATION", {
         formErrors: [],
         fieldErrors: { packaging: [PACKAGING_UNIT_FAMILY_MESSAGE] },

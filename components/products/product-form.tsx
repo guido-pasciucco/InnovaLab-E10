@@ -18,10 +18,7 @@ import type {
   RecipeSupplyOption,
 } from "@/lib/schemas/products/products";
 import { createProductFormSchema } from "@/lib/schemas/products/products";
-import {
-  getSupplyUnitsForFamily,
-  isRecipeUnitAllowed,
-} from "@/lib/schemas/supplies/units";
+import { getSupplyUnitsForFamily } from "@/lib/schemas/supplies/units";
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
 import { useServerFieldErrors } from "@/components/forms/use-server-field-errors";
 import {
@@ -89,32 +86,16 @@ function recipeArrayMessage(errors: FieldErrors<ProductFormValues>): string | un
   return recipe?.message ?? recipe?.root?.message;
 }
 
-// Catalog units of the selected supply's family, plus the stored value when it
-// predates the catalog (legacy rows must stay visible and editable).
+// Catalog units of the selected supply's family.
 function recipeUnitOptions(
   supply: RecipeSupplyOption | undefined,
-  currentUnit: string,
 ): { value: string; label: string }[] {
-  if (!supply) return [];
+  if (!supply?.family) return [];
 
-  const options = supply.family
-    ? getSupplyUnitsForFamily(supply.family).map((unit) => ({
-        value: unit.value,
-        label: unit.label,
-      }))
-    : supply.defaultUnit
-      ? [{ value: supply.defaultUnit, label: `${supply.defaultUnit} (actual)` }]
-      : [];
-
-  if (
-    currentUnit &&
-    !options.some((option) => option.value === currentUnit) &&
-    isRecipeUnitAllowed(supply, currentUnit)
-  ) {
-    options.push({ value: currentUnit, label: `${currentUnit} (actual)` });
-  }
-
-  return options;
+  return getSupplyUnitsForFamily(supply.family).map((unit) => ({
+    value: unit.value,
+    label: unit.label,
+  }));
 }
 
 export function ProductForm({
@@ -252,10 +233,7 @@ export function ProductForm({
           const selectedSupply = suppliesById.get(
             recipeValues?.[index]?.supplyId ?? "",
           );
-          const unitOptions = recipeUnitOptions(
-            selectedSupply,
-            recipeValues?.[index]?.unit ?? "",
-          );
+          const unitOptions = recipeUnitOptions(selectedSupply);
           const supplyField = register(`recipe.${index}.supplyId`);
 
           return (
