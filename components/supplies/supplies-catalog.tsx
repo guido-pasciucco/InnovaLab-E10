@@ -4,12 +4,11 @@ import { useMemo, useState } from "react";
 
 import type { SupplyKind } from "@/lib/schemas/supplies/fields";
 import type { SupplyItem } from "@/lib/schemas/supplies/supplies";
-import { resolveSupplyFamily } from "@/lib/schemas/supplies/units";
+import { getSupplyUnitBasis, getSupplyUnitFamily } from "@/lib/schemas/supplies/units";
 import { CatalogModal } from "@/components/ui/catalog-modal";
 import { normalizeForSearch } from "@/components/ui/normalize-search";
 import { SuppliesForm } from "./supplies-form";
 import { SuppliesTable } from "./supplies-table";
-import { getSupplyUnitBasis } from "@/lib/schemas/supplies/units";
 
 function minimumUnitOf(purchaseUnit: string): string {
   return getSupplyUnitBasis(purchaseUnit)?.minimumUnit ?? "";
@@ -44,7 +43,7 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
     const byKind = supplies.filter((supply) => supply.kind === activeKind);
     const byFamily = familyFilter
       ? byKind.filter(
-          (supply) => resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit) === familyFilter,
+          (supply) => getSupplyUnitFamily(supply.purchaseUnit) === familyFilter,
         )
       : byKind;
     if (!query) return byFamily;
