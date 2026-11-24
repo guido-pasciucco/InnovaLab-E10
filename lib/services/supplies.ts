@@ -48,13 +48,8 @@ export async function createSupplyService(
   db: Db = getDrizzleClient(),
 ): Promise<SupplyRow> {
   const supply = createSupplyInputSchema.parse(input);
-  const unit = getSupplyUnit(supply.purchaseUnit);
-  const purchaseUnit =
-    supply.kind === "supply" ? (unit?.value ?? supply.purchaseUnit) : supply.purchaseUnit;
-  const units = resolveSupplyUnits(supply.kind, purchaseUnit, {
-    minimumUnit: supply.minimumUnit,
-    conversionFactor: supply.conversionFactor,
-  });
+  const purchaseUnit = getSupplyUnit(supply.purchaseUnit)?.value ?? supply.purchaseUnit;
+  const units = resolveSupplyUnits(purchaseUnit);
 
   if (!units) {
     throw new AppError("VALIDATION", {

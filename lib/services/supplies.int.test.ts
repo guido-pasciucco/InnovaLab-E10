@@ -172,7 +172,7 @@ describe("supplies service", () => {
     expect(supply.conversionFactor).toBe("1000.0000");
   });
 
-  it("keeps the technical units of packaging", async () => {
+  it("derives packaging technical units from the catalog", async () => {
     const user = await makeUser();
 
     const supply = await createSupplyService(
@@ -181,15 +181,28 @@ describe("supplies service", () => {
         ...validInput,
         kind: "packaging",
         name: "Bolsa kraft",
-        purchaseUnit: "caja",
+        purchaseUnit: "docena",
         minimumUnit: "bolsa",
         conversionFactor: "100",
       },
       db,
     );
 
-    expect(supply.minimumUnit).toBe("bolsa");
-    expect(supply.conversionFactor).toBe("100.0000");
+    expect(supply.purchaseUnit).toBe("docena");
+    expect(supply.minimumUnit).toBe("unidad");
+    expect(supply.conversionFactor).toBe("12.0000");
+  });
+
+  it("rejects packaging with a unit outside the catalog", async () => {
+    const user = await makeUser();
+
+    await expect(
+      createSupplyService(
+        user.id,
+        { ...validInput, kind: "packaging", name: "Bolsa kraft", purchaseUnit: "caja" },
+        db,
+      ),
+    ).rejects.toMatchObject({ name: "ZodError" });
   });
 
   it("capitalizes the first letter of the name", async () => {
