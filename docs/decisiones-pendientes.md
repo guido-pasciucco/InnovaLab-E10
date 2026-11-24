@@ -21,12 +21,11 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 | P-12 | Estados vacíos del tablero | Abierta | Fase 2 · Bloque 4 | Tablero |
 | P-13 | Cuotas fraccionarias: precisión y formato | Abierta | Fase 2 · Bloque 4 | Tablero |
 | P-14 | Resultados que muestra el tablero y sus fórmulas | Abierta | Fase 2 · Bloque 4 | Tablero |
-| P-15 | Producción real, esperada o capacidad normal | Abierta | Producto · §11 | Asignación de costos |
 | P-16 | Período mensual principal y vista anual como proyección | Abierta | Producto · §11 | Vista de períodos |
 | P-17 | Componentes del costo base del precio sugerido | Abierta | Producto · §6 y §11 | Precio sugerido |
 | P-18 | Carga y asignación de gastos generales compartidos | Abierta | Producto · §7 y §11 | Multi-producto |
 | P-19 | Comisiones porcentuales por venta en el MVP | Abierta | Producto · §11 | Alcance del MVP |
-| P-20 | Tratamiento de mermas y desperdicios | Abierta | Producto · §11 | Cálculo de recetas |
+| P-20 | Tratamiento de mermas y desperdicios | Diferida a largo plazo | Producto · §11 | Cálculo de recetas |
 | P-21 | Redondeo monetario y unidades del equilibrio | Abierta | Producto · §11 | Contrato de precisión |
 | P-22 | Qué resultados son proyecciones y cuáles son reales | Abierta | Producto · §11 | Comunicación al usuario |
 | P-23 | Validar el modelo con el mentor y dos rubros distintos | Abierta | Producto · §11 | Validación del producto |
@@ -64,12 +63,11 @@ Las decisiones abiertas de **licitaciones** tienen su propio recolector: `docs/f
 
 ### Definición conceptual del producto
 
-- **P-15** — Usar producción real, producción esperada o capacidad normal para asignar costos.
 - **P-16** — Confirmar que el período principal es mensual y que la vista anual es una proyección.
 - **P-17** — Definir qué componentes integran el costo base del precio sugerido.
 - **P-18** — Cómo se cargan y asignan los gastos generales compartidos entre productos, sin duplicar el fijo.
 - **P-19** — Incluir o no comisiones porcentuales por venta en el MVP.
-- **P-20** — Tratamiento de mermas y desperdicios.
+- **P-20** — Tratamiento de mermas y desperdicios. Diferida el 2026-11-24: es una idea a largo plazo, no algo para implementar ahora; requiere conversación y acuerdo con el equipo antes de entrar en alcance. La sección de mermas de `docs/flujos/04-productos.md` quedó como propuesta documentada, no como regla vigente.
 - **P-21** — Reglas de redondeo monetario y de unidades del punto de equilibrio.
 - **P-22** — Acordar qué resultados son proyecciones y cuáles pueden basarse en datos reales.
 - **P-23** — Validar el modelo con el mentor y con al menos dos rubros distintos.
