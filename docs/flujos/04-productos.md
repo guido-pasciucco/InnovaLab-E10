@@ -36,18 +36,18 @@ La conversión de unidades ocurre dentro de la misma familia del catálogo de in
 - La cantidad usada es **> 0**.
 - No hay otro renglón con el **mismo insumo**.
 
-Si hay error, se marca en el formulario y el renglón no entra al cálculo hasta corregirlo. Al corregirlo, todo se recalcula en vivo (D4).
+Si hay error, se marca en el formulario y el renglón no entra al cálculo hasta corregirlo. Al corregirlo, todo se recalcula en vivo.
 
 ## Capacidad y presentación de resultados
 
-- La capacidad va en el bloque principal del formulario, junto a nombre y rendimiento, visible sin scroll (D14).
+- La capacidad va en el bloque principal del formulario, junto a nombre y rendimiento, visible sin scroll.
 - El listado muestra la capacidad cargada de cada producto.
-- Con capacidad `0` o vacía se guarda igual, se avisa y se excluye del prorrateo; el CVU se calcula de todas formas porque depende de la receta, no de la capacidad (D9).
+- Con capacidad `0` o vacía se guarda igual, se avisa y se excluye del prorrateo; el CVU se calcula de todas formas porque depende de la receta, no de la capacidad.
 - La capacidad es un atributo del producto, no del período: para un mes nuevo se edita cada producto.
 
 ## Presentaciones
 
-Cada producto puede tener presentaciones —por ejemplo "Unidad" o "Caja x6"— con nombre único dentro del producto, cantidad entera de unidades mayor que 0 y una lista opcional de **packaging del catálogo**, cada uno con su cantidad y una unidad de la misma familia (D13, vigente desde 2026-11-23; antes estuvo descartada de momento).
+Cada producto puede tener presentaciones —por ejemplo "Unidad" o "Caja x6"— con nombre único dentro del producto, cantidad entera de unidades mayor que 0 y una lista opcional de **packaging del catálogo**, cada uno con su cantidad y una unidad de la misma familia (antes estuvo descartada de momento y hoy está vigente).
 
 ```text
 costo de la presentación = costo de la receta × unidades ÷ rendimiento + Σ costo del packaging
@@ -57,7 +57,7 @@ El packaging no se divide por el rendimiento: se suma entero a la presentación 
 
 La pantalla propia del producto (P12) muestra por separado el costo variable de elaborar una unidad y el de cada presentación, con su desglose. Si falta un dato —receta incompleta, rendimiento inválido o packaging sin precio— avisa en vez de mostrar `$0` como si fuera válido. No suma gastos indirectos.
 
-Un packaging usado por una presentación no se puede borrar ni cambiar de tipo o de familia de unidad: primero hay que quitarlo de las presentaciones que lo usan, la misma regla que D11 para los insumos de una receta.
+Un packaging usado por una presentación no se puede borrar ni cambiar de tipo o de familia de unidad: primero hay que quitarlo de las presentaciones que lo usan, la misma regla que para los insumos de una receta.
 
 Queda fuera de alcance la capacidad de cada presentación (Diferencia 1·bis, pendiente) y el precio de venta.
 
@@ -82,20 +82,12 @@ Si esta sección llega a implementarse, el sistema debe impedir reutilizar más 
 
 ## Ciclo de vida
 
-Productos y recetas se editan y se borran siempre. El borrado es **lógico**: el registro se marca, deja de mostrarse y de entrar en los cálculos, pero no se elimina físicamente y se puede restaurar (D12). Los snapshots cerrados no se afectan.
+Productos y recetas se editan y se borran siempre. El borrado es **lógico**: el registro se marca, deja de mostrarse y de entrar en los cálculos, pero no se elimina físicamente y se puede restaurar. Los snapshots cerrados no se afectan.
 
 ## Precisión
 
-Los importes se calculan con fracciones exactas y se redondean recién al salir del motor (`ROUND_HALF_UP`, 2 decimales). Los valores exactos se conservan como par `numerator`/`denominator` para cualquier cálculo posterior; no se reconstruyen desde el importe mostrado. Detalle técnico en `docs/dependencias/variable-costs-presentations.md`.
+Los importes se calculan con fracciones exactas y se redondean recién al salir del motor (`ROUND_HALF_UP`, 2 decimales). Los valores exactos se conservan como par `numerator`/`denominator` para cualquier cálculo posterior; no se reconstruyen desde el importe mostrado.
 
 ## Decisiones aplicables
 
-D1 (rendimiento), D2 (renglón sin modo de compra), D3 (capacidad en el producto), D4 (recálculo en vivo), D9 a D14, y la decisión de borrado referenciado D11, todas aplicadas en este flujo.
-
-Los puntos aún abiertos están en `docs/decisiones-pendientes.md`.
-
-## Fuentes
-
-- `docs/decisiones.md`.
-- `docs/dependencias/variable-costs-presentations.md`.
-- `docs/producto/01-definiciones.md` (glosario de nombres y conceptos).
+Todas las reglas de este flujo están decididas y explicadas arriba: rendimiento único, renglón sin modo de compra, capacidad en el producto, recálculo en vivo, validaciones, protección de recetas, borrado lógico y presentaciones. Los puntos que siguen abiertos son los que aún no tienen regla.

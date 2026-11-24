@@ -42,7 +42,7 @@ La configuración vive en `drizzle.config.ts` (raíz): `schema` apunta al glob `
 
 ## Qué falta
 
-- **RLS y autorización van aparte.** Estos scripts crean tablas, no políticas. Sin RLS evaluado no hay aprobación posible; la decisión de persistencia y el rol de RLS están en `docs/decisiones.md`.
+- **RLS y autorización van aparte.** Estos scripts crean tablas, no políticas. Sin RLS evaluado no hay aprobación posible; la persistencia es solo en servidor y el filtro por dueño vive en el servicio; RLS es una red secundaria.
 - **No migrar producción sin revisar.** Todo SQL generado se revisa en el PR; `db:push` está prohibido fuera del spike.
 
 ## Errores comunes
@@ -54,4 +54,4 @@ La configuración vive en `drizzle.config.ts` (raíz): `schema` apunta al glob `
 
 ## Paso siguiente
 
-Definir la estrategia de RLS —la decisión de persistencia y el rol de RLS están documentados en `docs/decisiones.md`— y cablear la conexión solo cuando el spike se apruebe.
+Definir la estrategia de RLS —la persistencia es solo en servidor y el dueño se filtra en el servicio— y cablear la conexión solo cuando el spike se apruebe.

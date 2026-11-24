@@ -54,9 +54,4 @@ Las rutas que redirigen (como `app/auth/confirm/route.ts`) tienen contrato de re
 - Regla de lint que prohíba `as VerifiedUserId` fuera de los archivos permitidos.
 - Alcance del menú persistente frente al asistente legacy.
 
-Detalle y opciones en `docs/decisiones-pendientes.md`.
-
-## Fuentes
-
-- `docs/decisiones.md`.
-- `README.md` (sección Arquitectura y Contratos).
+El detalle y las opciones de estos puntos siguen abiertos.

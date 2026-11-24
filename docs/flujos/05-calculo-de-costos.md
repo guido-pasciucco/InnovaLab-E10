@@ -22,7 +22,7 @@ Bloque 3 y 4 del flujo de costos: carga de indirectos, reparto entre productos, 
 
 ## Reparto de indirectos
 
-- Solo entran al reparto los productos con **capacidad > 0** (D9). Sin capacidades o sin gastos no se muestra costo total.
+- Solo entran al reparto los productos con **capacidad > 0**. Sin capacidades o sin gastos no se muestra costo total.
 - Regla vigente del motor de reparto:
 
 ```text
@@ -78,15 +78,15 @@ equilibrioEnPesos = Σ (cuotaᵢ × precio sugeridoᵢ)
 prueba de cierre  = Σ (cuotaᵢ × contribuciónᵢ) = costos indirectos del período
 ```
 
-También están abiertos el eje del gráfico, los estados vacíos y el formato de cuotas fraccionarias. Ver `docs/decisiones-pendientes.md`.
+También están abiertos el eje del gráfico, los estados vacíos y el formato de cuotas fraccionarias; esos tres puntos siguen sin regla.
 
 ## Histórico: "Cerrar cálculo"
 
-- Es un **botón manual** que congela todo el estado del cálculo: insumos, recetas/rendimiento, capacidades, indirectos, margen y resultados. Es una foto completa y reproducible (D5).
+- Es un **botón manual** que congela todo el estado del cálculo: insumos, recetas/rendimiento, capacidades, indirectos, margen y resultados. Es una foto completa y reproducible.
 - El catálogo en vivo **sigue editable**; la foto no bloquea ni habilita el cálculo.
-- La foto se puede corregir, pero **cada cambio queda auditado**: campo, valor anterior, valor nuevo y cuándo (D6).
-- Cada cierre se etiqueta con un **período (mes)**. El prorrateo y los cálculos siguen en vivo sobre el catálogo actual (D7).
-- Se consulta en el destino **"Datos históricos"** del menú, solo lectura (D8).
+- La foto se puede corregir, pero **cada cambio queda auditado**: campo, valor anterior, valor nuevo y cuándo.
+- Cada cierre se etiqueta con un **período (mes)**. El prorrateo y los cálculos siguen en vivo sobre el catálogo actual.
+- Se consulta en el destino **"Datos históricos"** del menú, solo lectura.
 
 ## Reglas conceptuales del cálculo
 
@@ -131,7 +131,7 @@ costo unitario total = costos directos + costos indirectos asignados
 
 El reparto se rige por **relación causa-efecto**: quien consume el recurso paga el costo. El **generador de costo** (*cost driver*) es la variable medible que operacionaliza esa relación (horas de máquina, horas de mano de obra, unidades, lotes). No existe un método de asignación universal: forzar el mismo criterio en procesos distintos produce **subsidio cruzado**, es decir, unos productos absorben costos de otros.
 
-> Los documentos de origen proponían criterios adicionales —tiempo de producción, ventas planificadas, costo directo planificado y porcentaje manual— para distintos tipos de gasto. Están registrados como alternativas, **no como regla vigente**: hoy el reparto se hace por capacidad (ver P-04 en `docs/decisiones-pendientes.md`).
+> Los documentos de origen proponían criterios adicionales —tiempo de producción, ventas planificadas, costo directo planificado y porcentaje manual— para distintos tipos de gasto. Están registrados como alternativas, **no como regla vigente**: hoy el reparto se hace por capacidad (la regla de importancia de cada gasto sigue abierta).
 
 ### Contribución, margen y comisiones
 
@@ -158,15 +158,8 @@ Si el precio es igual o menor al costo variable unitario, la contribución es ce
 - Un cálculo guardado conserva precios, cantidades, porcentajes, tiempos y reglas. Cambiar el precio de un insumo afecta cálculos futuros, **nunca resultados históricos**.
 - Cada cálculo registra: producto y versión de receta, insumos con cantidades y precios, unidades producidas y vendibles, mermas y reutilizaciones, horas y valor de la mano de obra, otros costos directos, indirectos del período, criterio y porcentajes de reparto, margen, comisiones, precio sugerido y precio elegido, y fecha.
 
-El glosario de términos está en `docs/producto/01-definiciones.md`. La precisión del motor de costos variables está en `docs/dependencias/variable-costs-presentations.md`.
+El motor conserva la precisión como fracción exacta con numerador y denominador, y redondea recién al mostrar el importe.
 
 ## Decisiones aplicables
 
-D4 (recálculo en vivo), D5–D8 (snapshot), D9 (capacidad), D15 (gastos del período), decisiones 0001 a 0003 y ADR 02.
-
-Los puntos abiertos están en `docs/decisiones-pendientes.md`.
-
-## Fuentes
-
-- `docs/decisiones.md` (reglas 0001 a 0003).
-- `docs/producto/01-definiciones.md` (glosario de nombres y conceptos).
+En este flujo rigen el recálculo en vivo, la foto del cierre con correcciones auditadas, el prorrateo por capacidad, el mes actual para los gastos, y las reglas de trabajo propio y margen sobre el precio de venta.

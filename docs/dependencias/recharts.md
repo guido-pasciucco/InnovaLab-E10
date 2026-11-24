@@ -47,4 +47,4 @@ Recharts ofrece `ReferenceLine` y `ReferenceDot` de fábrica, que son exactament
 
 ## Paso siguiente
 
-Ver `docs/producto/01-definiciones.md` para el significado de punto de equilibrio, unidades de equilibrio y ventas de equilibrio.
+Punto de equilibrio: el momento en que la contribución acumulada cubre los costos indirectos del período. Las unidades de equilibrio son la cantidad a vender para llegar a ese punto y las ventas de equilibrio son su valor en pesos.

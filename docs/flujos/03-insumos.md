@@ -43,7 +43,7 @@ No existe el campo "unidad de compra" (bolsa, caja). El envase no aporta al cál
 - El **costo por unidad se calcula una sola vez** (`precio de compra ÷ cantidad`) y todas las recetas comparten ese resultado.
 - La lista se puede **buscar por nombre o unidad de medida**.
 - Los insumos son **del negocio del usuario**: un usuario no ve ni pisa los insumos de otro.
-- **Borrado:** libre mientras ninguna receta viva referencie el insumo. Cuando exista esa referencia, el sistema bloquea el borrado, indica qué recetas lo usan y pide quitarlo primero (D11). Los snapshots cerrados conservan su propia copia.
+- **Borrado:** libre mientras ninguna receta viva referencie el insumo. Cuando exista esa referencia, el sistema bloquea el borrado, indica qué recetas lo usan y pide quitarlo primero. Los snapshots cerrados conservan su propia copia.
 - Los importes viajan como string decimal y se validan también en el servidor. Nunca `Number`.
 
 ## Packaging
@@ -55,10 +55,7 @@ Misma alta, corrección, borrado y buscador que Insumos; se diferencia solo por 
 - Catálogo de unidades y equivalencias (registro de decisiones de Fase 2, "General").
 - Insumo sin "unidad de compra", con unidad seleccionable (Fase 2, Bloque 1).
 - Packaging como pestaña del catálogo (Fase 2, Bloque 1).
-- Borrado libre en el MVP y bloqueo cuando haya recetas (D11).
-- ADR 01 — Reglas de campo compartidas entre formulario y base.
+- Borrado libre en el MVP y bloqueo cuando haya recetas: un insumo usado por una receta viva no se puede borrar.
+- Las reglas de campo se escriben una sola vez y las consumen el formulario y la base.
 
-## Fuentes
-
-- Las decisiones vigentes están aplicadas en este flujo. El material de trabajo de la Fase 2 se conserva en el historial de git.
-- `docs/decisiones.md`.
+Todas las reglas vigentes de este flujo están explicadas arriba. El material de trabajo de la Fase 2 se conserva en el historial de git.

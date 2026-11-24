@@ -103,7 +103,7 @@ Supabase Auth abstrae la capa completa de identidad: guarda usuarios en `auth.us
 
 ## Ejemplo de implementación: cálculo protegido (topología mediada, ilustrativo)
 
-Flujo completo con login vía API propia, refresh en middleware y escritura con Drizzle. Estos fragmentos son ilustrativos: el proyecto terminó usando Server Actions en lugar de `/api/*` (ver [Login y acceso](../flujos/02-login-y-acceso.md) para cuándo y cómo exponer rutas HTTP).
+Flujo completo con login vía API propia, refresh en middleware y escritura con Drizzle. Estos fragmentos son ilustrativos: el proyecto terminó usando Server Actions en lugar de `/api/*`.
 
 Paso 1 — Login mediado (`app/api/auth/login/route.ts`):
 

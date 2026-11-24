@@ -1,6 +1,6 @@
 # Decisiones pendientes — recolector único
 
-Todo lo que sigue abierto en el producto, el cálculo y la ingeniería, reunido en un solo lugar. Las decisiones **ya tomadas** viven en sus flujos (`docs/flujos/`) y en `docs/decisiones.md`; las resueltas durante la Fase 2 se dieron por cerradas y no se repiten acá.
+Todo lo que sigue abierto en el producto, el cálculo y la ingeniería, reunido en un solo lugar. Las decisiones **ya tomadas** no se repiten acá; las resueltas durante la Fase 2 se dieron por cerradas.
 
 Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este archivo, se escribe en el flujo correspondiente y se registra con fecha.
 
@@ -33,7 +33,7 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 | D-05 | Regla de lint que prohíba casts a `VerifiedUserId` | Pendiente | ADR 03 | Frontera de identidad |
 | D-06 | Cache por request de `getUser` en renders | Pendiente | ADR 03 | Rendimiento de auth |
 
-Las decisiones abiertas de **licitaciones** tienen su propio recolector: `docs/flujos/09-licitaciones-pendientes.md`.
+Las decisiones abiertas de **licitaciones** no se incluyen en este recolector.
 
 ---
 
@@ -82,13 +82,7 @@ Las decisiones abiertas de **licitaciones** tienen su propio recolector: `docs/f
 
 ## Cómo cerrar una decisión
 
-1. Escribir la regla en el flujo que corresponda, con la fecha en que se tomó.
-2. Si es una regla de negocio con identidad propia, agregarla a `docs/decisiones.md`.
-3. Sacar el ítem de este archivo y actualizar el flujo que lo referenciaba.
-4. Si la decisión cambia una regla anterior, registrar la fecha nueva y qué cambió: no se reescribe la historia.
-
-## Fuentes
-
-- Las decisiones ya cerradas de la Fase 2 están aplicadas en `docs/flujos/`; su material de trabajo se conserva en el historial de git.
-- `docs/flujos/05-calculo-de-costos.md` (reglas conceptuales y alcance).
-- `docs/decisiones.md`.
+1. Escribir la regla en el flujo que corresponda, sin fecha: git guarda el historial.
+2. Si es una regla de negocio con identidad propia, registrar la decisión con su ID, su tipo, la regla y el porqué.
+3. Sacar el ítem de este archivo y explicar la regla donde corresponda.
+4. Si la decisión cambia una regla anterior, registrar qué cambió: no se reescribe la historia.
