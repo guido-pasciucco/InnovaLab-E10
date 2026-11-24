@@ -729,7 +729,7 @@ export async function removeSupplyFromProductService(
 }
 
 // Soft delete: the product row stays with is_active = false (D32). Its recipe,
-// presentations and packaging are removed in the same transaction (D34), so a
+// presentations and packaging are removed in the same transaction (D35), so a
 // supply used only by this product can be deleted afterwards.
 export async function deleteProductService(
   userId: VerifiedUserId,

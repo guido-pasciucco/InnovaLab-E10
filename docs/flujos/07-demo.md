@@ -90,21 +90,20 @@ El ejemplo es una emprendedora que vende **alfajores de maicena en caja de 6**. 
 **Cómo presentarlo:**
 - Decí: *"Nadie compra dulce de leche para una sola caja. Cargás lo que pagás de verdad, por ejemplo el balde de 5 kg, y para cuántas cajas te alcanza. La app calcula el costo por caja."*
 
-### 7. Paso 4 · Trabajo propio e indirectos (1 min)
+### 7. Paso 4 · Gastos del mes (1 min)
 
 **Qué ingresar:**
 
 | Campo | Valor |
 | --- | --- |
-| Horas del mes | 40 |
-| Valor por hora | 3500 |
+| Gasto: Mi trabajo | 140000 |
 | Indirecto: Gas | 20000 |
 | Indirecto: Internet | 12000 |
 
 **Resultado esperado:** costo unitario **$6.213,33** por caja (costos fijos $272.000 en total).
 
 **Cómo presentarlo:**
-- Decí: *"Este es el paso que más se olvida. Las horas en la cocina también cuestan: si no las contás, el precio queda por debajo de lo que necesitás."*
+- Decí: *"Este es el gasto que más se olvida. Tu trabajo también cuesta: cargalo como un gasto más del mes, igual que el gas o internet. Si no lo contás, el precio queda por debajo de lo que necesitás."*
 - Mostrá cómo salta el costo unitario en la tarjeta en vivo.
 
 ### 8. Paso 5 · Margen y precio sugerido (1 min)
