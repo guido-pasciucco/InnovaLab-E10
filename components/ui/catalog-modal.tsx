@@ -7,6 +7,9 @@ type CatalogModalProps = {
   onClose: () => void;
   children: ReactNode;
   size?: "md" | "lg";
+  // Optional context under the title (#288). It is not part of the accessible
+  // name, so existing dialog queries keep working for the other catalogs.
+  description?: string;
 };
 
 const SIZE_CLASS = {
@@ -25,6 +28,7 @@ export function CatalogModal({
   onClose,
   children,
   size = "md",
+  description,
 }: CatalogModalProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -130,16 +134,21 @@ export function CatalogModal({
         aria-labelledby={titleId}
         className={`max-h-[90vh] w-full overflow-y-auto rounded-[24px] bg-surface p-5 shadow-xl ${SIZE_CLASS[size]}`}
       >
-        <div className="flex items-start justify-between gap-4">
-          <h2 id={titleId} className="text-lg font-semibold text-fg">
-            {title}
-          </h2>
+        <div className="flex items-start justify-between gap-4 border-b border-border-default pb-3">
+          <div className="min-w-0">
+            <h2 id={titleId} className="text-xl font-semibold tracking-tight text-fg">
+              {title}
+            </h2>
+            {description && (
+              <p className="mt-1 text-sm text-fg-muted">{description}</p>
+            )}
+          </div>
           <button
             ref={closeRef}
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="min-h-9 min-w-9 rounded-[10px] border border-border-control text-lg font-semibold text-fg-muted hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            className="min-h-9 min-w-9 shrink-0 rounded-[10px] border border-border-control text-lg font-semibold text-fg-muted hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             ×
           </button>

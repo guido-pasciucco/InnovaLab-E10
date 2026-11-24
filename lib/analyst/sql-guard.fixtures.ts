@@ -13,8 +13,8 @@ export const ACCEPTED: [string, string][] = [
     "select p.name, count(*) from analyst.products p join analyst.recipe_lines r on r.product_id = p.id group by p.name",
   ],
   [
-    "a lowest margin ranking",
-    "select product_name, round(expected_margin_pct, 1) from analyst.calculations order by expected_margin_pct asc nulls last limit 1",
+    "a presentation size ranking",
+    "select product_name, round(units_per_presentation, 1) from analyst.presentations order by units_per_presentation asc nulls last limit 1",
   ],
   [
     "a CTE used in the same statement",
@@ -34,11 +34,11 @@ export const ACCEPTED: [string, string][] = [
   ],
   [
     "date functions and casts",
-    "select date_trunc('month', created_at)::date, extract(month from created_at), cast(volume as numeric(12,2)) from analyst.calculations",
+    "select date_trunc('month', created_at)::date, extract(month from created_at), cast(units_per_presentation as numeric(12,2)) from analyst.presentations",
   ],
   [
     "CASE, COALESCE and LIKE",
-    "select case when is_own_labor then 'propio' else 'otro' end, coalesce(hours, 0) from analyst.calculation_cost_lines where concept ilike '%harina%'",
+    "select case when supply_kind = 'packaging' then 'envase' else 'insumo' end, coalesce(quantity, 0) from analyst.recipe_lines where supply_name ilike '%harina%'",
   ],
   [
     "IN, BETWEEN and EXISTS",

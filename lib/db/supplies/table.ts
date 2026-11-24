@@ -16,9 +16,10 @@ import type { SupplyKind } from "@/lib/schemas/supplies/fields";
 //
 // `kind` separates insumos from packaging without a second table: both are
 // supplies and share the same form, the difference is presentational.
-// `purchase_quantity` × `conversion_factor` is the purchase expressed in
-// `minimum_unit` (e.g. 25 kg × 1000 = 25.000 g); the cost per minimum unit is
-// purchase_price / that product (lib/calc/supplyCost.ts).
+// `purchase_unit` is a unit of the catalog (lib/schemas/supplies/units.ts) and
+// is stored as entered. Its minimum unit and conversion factor are never
+// stored: they are derived from the catalog when needed (25 kg → 25 × 1000 =
+// 25.000 g; the cost per g is purchase_price / 25.000, lib/calc/supplyCost.ts).
 // ---------------------------------------------------------------------------
 
 export const supplies = pgTable("supplies", {
@@ -33,10 +34,6 @@ export const supplies = pgTable("supplies", {
     .notNull()
     .default("1"),
   purchaseUnit: text("purchase_unit").notNull().default("unidad"),
-  minimumUnit: text("minimum_unit").notNull().default("unidad"),
-  conversionFactor: numeric("conversion_factor", { precision: 14, scale: 4 })
-    .notNull()
-    .default("1"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -45,9 +42,8 @@ export const supplies = pgTable("supplies", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 }, (table) => [
-  // Second net for the field rules: the engine divides by both values.
+  // Second net for the field rules: the engine divides by this value.
   check("supplies_purchase_quantity_positive", sql`${table.purchaseQuantity} > 0`),
-  check("supplies_conversion_factor_positive", sql`${table.conversionFactor} > 0`),
   check("supplies_kind_valid", sql`${table.kind} in ('supply', 'packaging')`),
 ]);
 

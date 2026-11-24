@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import LogoutButton from "@/app/dashboard/logout-button";
+import LogoutButton from "@/components/auth/logout-button";
 
 import { isActivePath, navSections, sectionFromPathname } from "./nav-sections";
 

@@ -59,9 +59,10 @@ export async function createUser(overrides: Partial<FakeUser> = {}): Promise<Cre
   return { ...user, id: data.user.id as VerifiedUserId };
 }
 
-// Deletes the auth user AND its profile row. `public.profiles` has no FK to
-// `auth.users` (known schema gap), so deleting the auth user alone would
-// leave an orphan profile. The secret key bypasses RLS on the table.
+// Deletes the auth user AND its profile row. `profiles.id` now has an FK to
+// `auth.users` with `ON DELETE` cascade (migration 20260928101614), so the
+// profile would go away with the user; deleting it first keeps teardown
+// explicit and idempotent. The secret key bypasses RLS on the table.
 export async function deleteUser(id: string): Promise<void> {
   const admin = adminClient();
 

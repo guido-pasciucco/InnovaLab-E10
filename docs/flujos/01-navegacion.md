@@ -1,0 +1,47 @@
+# 01 — Navegación
+
+Cómo se mueve el usuario por el producto. El área privada tiene un menú lateral persistente y una pantalla de inicio.
+
+## Menú de navegación
+
+- Sección **persistente**, presente en todas las pantallas del flujo.
+- Es el **único camino** para cambiar de sección y no desaparece al entrar a un destino.
+- No tiene estado: solo navega.
+
+## Inicio
+
+- Es el primer destino del menú (`/inicio`) y la pantalla a la que llega el usuario al iniciar sesión.
+- Resume el estado del catálogo y muestra las tareas pendientes con accesos a cada sección.
+- No fuerza un orden ni bloquea secciones. `/dashboard` solo redirige a Inicio para no romper enlaces viejos.
+
+## Destinos
+
+| Destino | Ruta | Estado |
+| --- | --- | --- |
+| Inicio | `/inicio` | Resumen y tareas pendientes |
+| Insumos | `/supplies` | Editable siempre; incluye la pestaña Packaging |
+| Productos | `/products` | Editable siempre; cada producto tiene sus presentaciones |
+| Gastos del período | `/period-costs` | Carga única para todo el negocio, mes actual |
+| Costo total | `/total-costs` | Solo lectura |
+| Licitaciones | `/licitaciones` | Sección propia del menú |
+| Proveedores | `/proveedores` | Sección propia del menú |
+| Tablero | — | Pendiente de definir |
+| Datos históricos | — | Consulta del histórico de cierres, sin construir |
+
+## Navegación por destinos, no por pasos
+
+No hay pasos obligatorios ni ventanas bloqueadas. El usuario puede cargar indirectos antes de tener productos, mirar el tablero con datos a medias o saltear secciones.
+
+Lo que existe son **dependencias de datos**, no bloqueos de interfaz:
+
+- El **prorrateo** requiere capacidades cargadas en los productos.
+- El **tablero** muestra resultados cuando existen indirectos, precios y capacidades; con datos parciales muestra estados vacíos.
+- Cualquier edición recalcula lo derivado en vivo. No hay cierre de lista para calcular.
+
+## Un solo recorrido
+
+El asistente por pasos y el cálculo de un solo producto de la Fase 1 se eliminaron. El menú lateral es la única navegación del área privada.
+
+## Fuentes
+
+- Las decisiones vigentes están aplicadas en este flujo; el material de trabajo original se conserva en el historial de git.

@@ -154,12 +154,41 @@ export const ERROR_CATALOG = {
     message: "No encontramos ese producto.",
     logLevel: "silent",
   },
+  PRODUCT_RECIPE_NEEDS_INGREDIENT: {
+    // A recipe must keep at least one ingredient; the last one cannot be removed.
+    status: 422,
+    message:
+      "Ese insumo es el único de la receta. Agregá otro insumo antes de sacarlo, o borrá el producto.",
+    logLevel: "silent",
+  },
   SUPPLY_NOT_FOUND: {
     // Missing, foreign or non-uuid supply id: all look the same.
     status: 404,
     message: "Supply not found",
     logLevel: "silent",
   },
+  // Help assistant. Disabled is the normal off switch, not a failure.
+  HELP_DISABLED: {
+    status: 404,
+    message: "El asistente de ayuda está apagado",
+    logLevel: "silent",
+  },
+  HELP_UNAVAILABLE: {
+    status: 503,
+    message: "El asistente de ayuda no está disponible",
+    logLevel: "error",
+  },
+  HELP_RATE_LIMITED: {
+    status: 429,
+    message: "Hiciste muchas consultas seguidas. Esperá un minuto e intentá de nuevo.",
+    logLevel: "silent",
+  },
+  HELP_BUSY: {
+    status: 409,
+    message: "Ya hay una respuesta en curso.",
+    logLevel: "silent",
+  },
+
   COST_CATALOG_LINE_NOT_FOUND: {
     // Same code when the id is missing, not a uuid or belongs to another
     // owner's business, so a caller cannot tell those cases apart.
@@ -168,11 +197,11 @@ export const ERROR_CATALOG = {
     logLevel: "silent",
   },
   SUPPLY_IN_USE: {
-    // A recipe references the supply, so deleting it or changing its type/unit
-    // would invalidate saved quantities.
+    // A recipe or a presentation references the supply, so deleting it or
+    // changing its type/unit would invalidate saved quantities.
     status: 409,
     message:
-      "Ese insumo se usa en una o más recetas. Sacalo de todas las recetas que lo usan antes de borrarlo o cambiar su tipo o unidad.",
+      "Ese insumo o packaging se usa en una o más recetas o presentaciones. Sacalo de todas las recetas y presentaciones que lo usan antes de borrarlo o cambiar su tipo o unidad.",
     logLevel: "silent",
   },
   SUPPLY_NOT_INGREDIENT: {
@@ -181,8 +210,20 @@ export const ERROR_CATALOG = {
     message: "El packaging no se puede usar como ingrediente.",
     logLevel: "silent",
   },
+  SUPPLY_NOT_PACKAGING: {
+    // Only packaging rows can be attached to a presentation (#298).
+    status: 422,
+    message: "Solo podés sumar packaging a una presentación: los insumos van en la receta.",
+    logLevel: "silent",
+  },
+  PRESENTATION_NOT_FOUND: {
+    // Missing, foreign or non-uuid presentation id: all look the same.
+    status: 404,
+    message: "No encontramos esa presentación.",
+    logLevel: "silent",
+  },
 
-  // Suppliers (supply tenders, docs/licitaciones RN-22 and RN-23)
+  // Suppliers (supply tenders, docs/flujos/09-licitaciones.md RN-22 and RN-23)
   SUPPLIER_INVITE_INVALID: {
     // Unknown, already used or expired link: all look the same.
     status: 410,
@@ -213,7 +254,7 @@ export const ERROR_CATALOG = {
     logLevel: "silent",
   },
 
-  // Supply tenders (docs/licitaciones)
+  // Supply tenders (docs/flujos/09-licitaciones.md)
   TENDER_NOT_FOUND: {
     // Missing, foreign or non-uuid tender id: all look the same.
     status: 404,

@@ -19,7 +19,7 @@ export const knowledgeChunks = pgTable(
   "knowledge_chunks",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    // Repo-relative path of the document, e.g. "docs/producto/03-definiciones.md".
+    // Repo-relative path of the document, e.g. "docs/producto/01-definiciones.md".
     sourcePath: text("source_path").notNull(),
     // Heading breadcrumb of the section, e.g. "Motor de cálculo > Punto de equilibrio".
     heading: text("heading").notNull(),

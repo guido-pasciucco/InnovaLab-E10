@@ -1,8 +1,6 @@
 import { z } from "zod";
 
 import {
-  conversionFactorField,
-  minimumUnitField,
   purchasePriceField,
   purchaseQuantityField,
   purchaseUnitField,
@@ -24,8 +22,6 @@ export const supplySchema = z.object({
   purchasePrice: purchasePriceField,
   purchaseQuantity: purchaseQuantityField,
   purchaseUnit: purchaseUnitField,
-  minimumUnit: minimumUnitField,
-  conversionFactor: conversionFactorField,
 });
 
 // Single source of truth: the type is inferred from the schema, no hand-written
@@ -41,6 +37,4 @@ export type SupplyItem = {
   purchasePrice: string;
   purchaseQuantity: string;
   purchaseUnit: string;
-  minimumUnit: string;
-  conversionFactor: string;
 };

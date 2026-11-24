@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { FlowSwitch } from "@/components/flow-switcher";
-
 import { navSections, sectionFromPathname } from "./nav-sections";
 
-// Flow 1 navbar: the section menu (catalog, tenders) and the temporary flow
-// switcher. The sidebar lists the pages of the section chosen here.
+// Section menu (catalog, tenders, and the chat tab when its flag is on).
+// The sidebar lists the pages of the section chosen here.
 export function AppNavbar({ chatDatosEnabled }: { chatDatosEnabled: boolean }) {
   const pathname = usePathname();
   const sections = navSections({ chatDatosEnabled });
@@ -38,7 +36,6 @@ export function AppNavbar({ chatDatosEnabled }: { chatDatosEnabled: boolean }) {
           })}
         </ul>
       </nav>
-      <FlowSwitch current={1} />
     </header>
   );
 }

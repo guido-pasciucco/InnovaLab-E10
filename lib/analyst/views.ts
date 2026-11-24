@@ -7,9 +7,8 @@ export const ANALYST_VIEWS = [
   "supplies",
   "recipe_lines",
   "business_expenses",
-  "calculations",
-  "calculation_cost_lines",
-  "scenarios",
+  "presentations",
+  "presentation_packaging",
 ] as const;
 
 export type AnalystView = (typeof ANALYST_VIEWS)[number];

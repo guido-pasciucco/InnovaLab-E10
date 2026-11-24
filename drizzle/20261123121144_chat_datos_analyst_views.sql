@@ -63,6 +63,8 @@ SELECT
   p.variable_cost_status,
   p.variable_cost_unit_amount,
   p.variable_cost_recipe_amount,
+  p.variable_cost_unavailable_code,
+  p.variable_cost_calculated_at,
   p.is_active,
   p.created_at,
   p.updated_at
@@ -88,6 +90,10 @@ COMMENT ON COLUMN analyst.products.variable_cost_unit_amount IS 'Costo variable 
 --> statement-breakpoint
 COMMENT ON COLUMN analyst.products.variable_cost_recipe_amount IS 'Costo variable de una receta completa, en pesos argentinos (ARS). NULL si variable_cost_status no es ready.';
 --> statement-breakpoint
+COMMENT ON COLUMN analyst.products.variable_cost_unavailable_code IS 'Motivo por el que el costo variable no se pudo calcular. NULL si el estado es pending o ready.';
+--> statement-breakpoint
+COMMENT ON COLUMN analyst.products.variable_cost_calculated_at IS 'Fecha y hora del último cálculo del costo variable (UTC). NULL si todavía no se calculó.';
+--> statement-breakpoint
 COMMENT ON COLUMN analyst.products.is_active IS 'true si el producto está activo.';
 --> statement-breakpoint
 COMMENT ON COLUMN analyst.products.created_at IS 'Fecha y hora de creación (UTC).';
@@ -106,8 +112,6 @@ SELECT
   s.purchase_price,
   s.purchase_quantity,
   s.purchase_unit,
-  s.minimum_unit,
-  s.conversion_factor,
   s.created_at,
   s.updated_at
 FROM public.supplies s
@@ -126,10 +130,6 @@ COMMENT ON COLUMN analyst.supplies.purchase_price IS 'Precio pagado por una comp
 COMMENT ON COLUMN analyst.supplies.purchase_quantity IS 'Cantidad que trae una compra, expresada en purchase_unit.';
 --> statement-breakpoint
 COMMENT ON COLUMN analyst.supplies.purchase_unit IS 'Unidad en que se compra (por ejemplo kg o caja).';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.supplies.minimum_unit IS 'Unidad mínima en que se usa en las recetas (por ejemplo g).';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.supplies.conversion_factor IS 'Cuántas minimum_unit hay en una purchase_unit (por ejemplo 1000 g por kg). Costo por unidad mínima = purchase_price / (purchase_quantity * conversion_factor).';
 --> statement-breakpoint
 COMMENT ON COLUMN analyst.supplies.created_at IS 'Fecha y hora de creación (UTC).';
 --> statement-breakpoint
@@ -212,142 +212,80 @@ COMMENT ON COLUMN analyst.business_expenses.updated_at IS 'Fecha y hora de la ú
 --> statement-breakpoint
 
 -- ---------------------------------------------------------------------------
--- Cálculos: uno por producto y vez que se usó la calculadora
+-- Presentaciones: una forma de vender cada producto
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW analyst.calculations WITH (security_barrier = true) AS
+CREATE OR REPLACE VIEW analyst.presentations WITH (security_barrier = true) AS
 SELECT
-  c.id,
-  c.product_id,
+  pr.id,
+  pr.product_id,
   p.name AS product_name,
-  c.status,
-  c.current_step,
-  c.created_at,
-  c.updated_at,
-  cs.period,
-  cs.currency,
-  cs.unit,
-  cs.volume,
-  pr.margin_convention,
-  pr.expected_margin_pct,
-  pr.manual_price
-FROM public.calculations c
-JOIN public.products p ON p.id = c.product_id
+  pr.name,
+  pr.units_per_presentation,
+  pr.created_at,
+  pr.updated_at
+FROM public.presentations pr
+JOIN public.products p ON p.id = pr.product_id
 JOIN public.businesses b ON b.id = p.business_id
-LEFT JOIN public.costing_setup cs ON cs.calculation_id = c.id
-LEFT JOIN public.pricing_inputs pr ON pr.calculation_id = c.id
-WHERE c.user_id = analyst.current_user_id()
-  AND b.owner_user_id = analyst.current_user_id();
+WHERE b.owner_user_id = analyst.current_user_id();
 --> statement-breakpoint
-COMMENT ON VIEW analyst.calculations IS 'Cálculos de la calculadora, uno por fila, con su configuración y su margen. Un producto puede tener varios.';
+COMMENT ON VIEW analyst.presentations IS 'Formas de vender un producto, una por fila. El precio y el punto de equilibrio no están en esta vista.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.id IS 'Identificador del cálculo.';
+COMMENT ON COLUMN analyst.presentations.id IS 'Identificador de la presentación.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.product_id IS 'Producto calculado (analyst.products.id).';
+COMMENT ON COLUMN analyst.presentations.product_id IS 'Producto al que pertenece (analyst.products.id).';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.product_name IS 'Nombre del producto.';
+COMMENT ON COLUMN analyst.presentations.product_name IS 'Nombre del producto.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.status IS 'Estado del cálculo. Hoy todos quedan en draft (borrador): no distingue cálculos cerrados.';
+COMMENT ON COLUMN analyst.presentations.name IS 'Nombre de la presentación (por ejemplo caja de 6).';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.current_step IS 'Paso más avanzado del asistente al que el usuario puede entrar (1 a 7).';
+COMMENT ON COLUMN analyst.presentations.units_per_presentation IS 'Cantidad de unidades del producto que entran en esta presentación.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.created_at IS 'Fecha y hora en que se creó el cálculo (UTC). Un cálculo continuado se edita en el lugar, así que esta fecha no cambia.';
+COMMENT ON COLUMN analyst.presentations.created_at IS 'Fecha y hora de creación (UTC).';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.updated_at IS 'Fecha y hora de la última modificación (UTC).';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.period IS 'Período del cálculo. Hoy siempre es Mensual. NULL si el cálculo aún no guardó su configuración.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.currency IS 'Moneda del cálculo. Hoy siempre es ARS (pesos argentinos).';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.unit IS 'Unidad en que se vende el producto (por ejemplo caja, paquete o kilo).';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.volume IS 'Cantidad estimada de unidades a vender en el período.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.margin_convention IS 'Convención del margen. Hoy siempre es sobre_precio: el margen se mide sobre el precio de venta. NULL si aún no cargó el margen.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.expected_margin_pct IS 'Margen esperado sobre el precio de venta, en porcentaje (30 significa 30 %). NULL si aún no lo cargó.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculations.manual_price IS 'Precio de venta fijado a mano, en pesos argentinos (ARS). NULL si se usa el precio que sale del margen.';
+COMMENT ON COLUMN analyst.presentations.updated_at IS 'Fecha y hora de la última modificación (UTC).';
 --> statement-breakpoint
 
 -- ---------------------------------------------------------------------------
--- Renglones de costo de cada cálculo
+-- Envase de cada presentación
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW analyst.calculation_cost_lines WITH (security_barrier = true) AS
+CREATE OR REPLACE VIEW analyst.presentation_packaging WITH (security_barrier = true) AS
 SELECT
-  l.id,
-  l.calculation_id,
-  l.scenario_id,
-  l.concept,
-  l.behavior,
-  l.traceability,
-  l.amount,
-  l.yield_quantity,
-  l.is_own_labor,
-  l.hours,
-  l.hourly_rate,
-  l.created_at
-FROM public.calc_cost_lines l
-JOIN public.calculations c ON c.id = l.calculation_id
-WHERE c.user_id = analyst.current_user_id();
+  pp.id,
+  pp.presentation_id,
+  pr.name AS presentation_name,
+  pr.product_id,
+  p.name AS product_name,
+  pp.supply_id,
+  s.name AS supply_name,
+  pp.unit,
+  pp.quantity
+FROM public.presentation_packaging pp
+JOIN public.presentations pr ON pr.id = pp.presentation_id
+JOIN public.products p ON p.id = pr.product_id
+JOIN public.businesses b ON b.id = p.business_id
+JOIN public.supplies s ON s.id = pp.supply_id
+WHERE b.owner_user_id = analyst.current_user_id()
+  AND s.user_id = analyst.current_user_id();
 --> statement-breakpoint
-COMMENT ON VIEW analyst.calculation_cost_lines IS 'Renglones de costo de cada cálculo, uno por fila.';
+COMMENT ON VIEW analyst.presentation_packaging IS 'Envases que usa cada presentación, uno por fila.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.id IS 'Identificador del renglón.';
+COMMENT ON COLUMN analyst.presentation_packaging.id IS 'Identificador del renglón de envase.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.calculation_id IS 'Cálculo al que pertenece (analyst.calculations.id).';
+COMMENT ON COLUMN analyst.presentation_packaging.presentation_id IS 'Presentación a la que pertenece (analyst.presentations.id).';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.scenario_id IS 'Escenario del renglón (analyst.scenarios.id). NULL si el renglón es del cálculo y no de un escenario.';
+COMMENT ON COLUMN analyst.presentation_packaging.presentation_name IS 'Nombre de la presentación.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.concept IS 'Concepto del costo.';
+COMMENT ON COLUMN analyst.presentation_packaging.product_id IS 'Producto de esa presentación (analyst.products.id).';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.behavior IS 'Comportamiento: fixed (fijo) o variable.';
+COMMENT ON COLUMN analyst.presentation_packaging.product_name IS 'Nombre del producto.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.traceability IS 'Relación con el producto: direct (directo) o indirect (indirecto).';
+COMMENT ON COLUMN analyst.presentation_packaging.supply_id IS 'Envase del catálogo (analyst.supplies.id).';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.amount IS 'Monto del renglón, en pesos argentinos (ARS). En un costo variable es lo que cuesta una compra que rinde yield_quantity unidades del producto.';
+COMMENT ON COLUMN analyst.presentation_packaging.supply_name IS 'Nombre del envase.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.yield_quantity IS 'Unidades del producto que rinde una compra de un costo variable. El costo variable por unidad es amount / yield_quantity. En costos fijos no se usa.';
+COMMENT ON COLUMN analyst.presentation_packaging.unit IS 'Unidad en que se expresa la cantidad.';
 --> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.is_own_labor IS 'true si es el renglón de trabajo propio del emprendedor. Hay como máximo uno por cálculo.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.hours IS 'Horas dedicadas. Solo el trabajo propio lo usa; NULL en el resto.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.hourly_rate IS 'Valor de la hora, en pesos argentinos (ARS). Solo el trabajo propio lo usa; NULL en el resto.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.calculation_cost_lines.created_at IS 'Fecha y hora de creación (UTC).';
---> statement-breakpoint
-
--- ---------------------------------------------------------------------------
--- Escenarios del paso 7
--- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW analyst.scenarios WITH (security_barrier = true) AS
-SELECT
-  s.id,
-  s.calculation_id,
-  s.name,
-  s.is_base,
-  s.price_override,
-  s.volume_override,
-  s.created_at
-FROM public.scenarios s
-JOIN public.calculations c ON c.id = s.calculation_id
-WHERE c.user_id = analyst.current_user_id();
---> statement-breakpoint
-COMMENT ON VIEW analyst.scenarios IS 'Escenarios de cada cálculo (paso 7), uno por fila.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.scenarios.id IS 'Identificador del escenario.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.scenarios.calculation_id IS 'Cálculo al que pertenece (analyst.calculations.id).';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.scenarios.name IS 'Nombre del escenario.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.scenarios.is_base IS 'true en el escenario base, que usa los valores del cálculo. Hay uno por cálculo.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.scenarios.price_override IS 'Precio de venta alternativo, en pesos argentinos (ARS). NULL mantiene el precio del cálculo.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.scenarios.volume_override IS 'Volumen alternativo, en unidades. NULL mantiene el volumen del cálculo.';
---> statement-breakpoint
-COMMENT ON COLUMN analyst.scenarios.created_at IS 'Fecha y hora de creación (UTC).';
+COMMENT ON COLUMN analyst.presentation_packaging.quantity IS 'Cantidad del envase que usa la presentación, en esa unidad.';
 --> statement-breakpoint
 
 -- ---------------------------------------------------------------------------

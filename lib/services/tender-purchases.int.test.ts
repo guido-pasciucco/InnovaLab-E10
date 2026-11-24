@@ -25,7 +25,7 @@ import {
 } from "./tenders";
 
 // Integration tests for choosing suppliers, negotiating, purchase orders, the
-// thank-you note and the history (docs/licitaciones RN-14 to RN-17, RN-21).
+// thank-you note and the history (docs/flujos/09-licitaciones.md RN-14 to RN-17, RN-21).
 
 const HOUR = 60 * 60 * 1000;
 const start = new Date("2026-11-21T12:00:00Z");

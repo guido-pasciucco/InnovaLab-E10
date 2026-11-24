@@ -7,10 +7,10 @@ import type { SessionUser } from "@/lib/services/auth";
 import { getSupplierService, type Supplier } from "@/lib/services/suppliers";
 
 // Guard for the supplier panel: a signed-in account with supplier data.
-// Anyone else goes to the emprendedor screens (flow 1).
+// Anyone else goes to the emprendedor home.
 export async function requireSupplier(): Promise<{ user: SessionUser; supplier: Supplier }> {
   const user = await requireUser();
   const supplier = await getSupplierService(user.id);
-  if (!supplier) redirect("/insumos");
+  if (!supplier) redirect("/inicio");
   return { user, supplier };
 }
