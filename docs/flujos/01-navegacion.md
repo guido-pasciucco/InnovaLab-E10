@@ -1,6 +1,6 @@
 # 01 — Navegación
 
-Cómo se mueve el usuario por el producto. La navegación del flujo de costos tiene dos piezas separadas.
+Cómo se mueve el usuario por el producto. El área privada tiene un menú lateral persistente y una pantalla de inicio.
 
 ## Menú de navegación
 
@@ -8,22 +8,25 @@ Cómo se mueve el usuario por el producto. La navegación del flujo de costos ti
 - Es el **único camino** para cambiar de sección y no desaparece al entrar a un destino.
 - No tiene estado: solo navega.
 
-## Página inicial / dashboard
+## Inicio
 
-- Es **una vista más del menú** (`/dashboard`, ruta tentativa).
-- No está decidido si será un dashboard con resumen del estado del catálogo y accesos a cada bloque, o una página inicial simple; el punto sigue abierto.
-- No fuerza un orden ni bloquea secciones.
+- Es el primer destino del menú (`/inicio`) y la pantalla a la que llega el usuario al iniciar sesión.
+- Resume el estado del catálogo y muestra las tareas pendientes con accesos a cada sección.
+- No fuerza un orden ni bloquea secciones. `/dashboard` solo redirige a Inicio para no romper enlaces viejos.
 
 ## Destinos
 
-| Destino | Ruta propuesta | Estado |
+| Destino | Ruta | Estado |
 | --- | --- | --- |
-| Página inicial | `/dashboard` | Existe como destino; contenido a decidir |
-| Insumos | `/supplies` | Editable siempre |
-| Productos | `/productos` | Editable siempre |
-| Costos indirectos | `/costos-indirectos` | Carga única para todo el catálogo |
-| Tablero | `/tablero` | Solo lectura |
-| Datos históricos | — | Consulta del histórico de cierres |
+| Inicio | `/inicio` | Resumen y tareas pendientes |
+| Insumos | `/supplies` | Editable siempre; incluye la pestaña Packaging |
+| Productos | `/products` | Editable siempre; cada producto tiene sus presentaciones |
+| Gastos del período | `/period-costs` | Carga única para todo el negocio, mes actual |
+| Costo total | `/total-costs` | Solo lectura |
+| Licitaciones | `/licitaciones` | Sección propia del menú |
+| Proveedores | `/proveedores` | Sección propia del menú |
+| Tablero | — | Pendiente de definir |
+| Datos históricos | — | Consulta del histórico de cierres, sin construir |
 
 ## Navegación por destinos, no por pasos
 
@@ -35,9 +38,9 @@ Lo que existe son **dependencias de datos**, no bloqueos de interfaz:
 - El **tablero** muestra resultados cuando existen indirectos, precios y capacidades; con datos parciales muestra estados vacíos.
 - Cualquier edición recalcula lo derivado en vivo. No hay cierre de lista para calcular.
 
-## Convivencia con el asistente legacy
+## Un solo recorrido
 
-El producto también tiene el asistente guiado de la Fase 1 (`/paso-1` a `/paso-8`). No está decidido si el menú es global a todo el producto o solo a las rutas del catálogo, ni cómo se alternan ambas navegaciones; el punto sigue abierto.
+El asistente por pasos y el cálculo de un solo producto de la Fase 1 se eliminaron. El menú lateral es la única navegación del área privada.
 
 ## Fuentes
 
