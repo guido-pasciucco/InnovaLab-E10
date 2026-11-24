@@ -167,6 +167,28 @@ export const ERROR_CATALOG = {
     message: "Supply not found",
     logLevel: "silent",
   },
+  // Help assistant. Disabled is the normal off switch, not a failure.
+  HELP_DISABLED: {
+    status: 404,
+    message: "El asistente de ayuda está apagado",
+    logLevel: "silent",
+  },
+  HELP_UNAVAILABLE: {
+    status: 503,
+    message: "El asistente de ayuda no está disponible",
+    logLevel: "error",
+  },
+  HELP_RATE_LIMITED: {
+    status: 429,
+    message: "Hiciste muchas consultas seguidas. Esperá un minuto e intentá de nuevo.",
+    logLevel: "silent",
+  },
+  HELP_BUSY: {
+    status: 409,
+    message: "Ya hay una respuesta en curso.",
+    logLevel: "silent",
+  },
+
   COST_CATALOG_LINE_NOT_FOUND: {
     // Same code when the id is missing, not a uuid or belongs to another
     // owner's business, so a caller cannot tell those cases apart.

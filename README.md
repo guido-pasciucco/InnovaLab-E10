@@ -50,6 +50,7 @@ Dependencias clave:
 - **`zod` + `react-hook-form`:** validación como fuente única; RHF para los formularios.
 - **`@supabase/ssr` + Supabase Auth:** sesión, login, signup y recuperación de contraseña. Ver `lib/supabase/`.
 - **`drizzle-orm`:** acceso a la base con tipos. El esquema vive en `lib/db/<dominio>/table.ts` (ver `lib/db/AGENTS.md`).
+- **`ai` + `@ai-sdk/amazon-bedrock`:** el asistente de ayuda llama a un perfil de inferencia de Bedrock. El panel no importa estas librerías. Ver [docs/dependencies/ai-sdk.md](docs/dependencies/ai-sdk.md).
 
 > [!NOTE]
 > La suite de tests corre con `environment: "node"` en `vitest.config.mts`. **No hay `jsdom` ni `@testing-library/*` instalados**, así que los componentes de React no se unit-testean: las reglas se testean en `lib/schemas` y `lib/services`, y la integración se verifica a mano en dev. Agregar esas librerías es un cambio de tooling del repo, no de un ticket de feature.
@@ -63,7 +64,7 @@ Estas decisiones corresponden al acuerdo de equipo. Resumen a continuación.
 ### Despliegue
 
 - **Monorepo fullstack con Next.js, un solo despliegue en Vercel.** No existe un repositorio de backend separado ni un despliegue de backend independiente.
-- **App Router no es un backend.** Hoy no hay Route Handlers (`app/api/*` no existe): el navegador habla con el servidor mediante Server Actions (`app/<feature>/actions.ts`, una por feature). Si se agregan, son bordes HTTP delgados (parsear/validar/delegar), no una capa de servicios.
+- **App Router no es un backend.** El navegador habla con el servidor mediante Server Actions (`app/<feature>/actions.ts`, una por feature). La excepción es el asistente de ayuda (`app/api/help`), un Route Handler delgado que transmite la respuesta. Si se agregan otras rutas, son bordes HTTP delgados (parsear/validar/delegar), no una capa de servicios.
 
 ### Estilo de software
 

@@ -100,3 +100,25 @@ El CLI sube el directorio completo y solo respeta `.vercelignore`. Un archivo lo
 ### Quién es dueño del proyecto de Vercel
 
 Un deploy del equipo con credenciales de una sola persona se cae cuando esa persona se va. Definilo antes del primer deploy.
+
+## Asistente de ayuda
+
+El botón aparece solo si `HELP_ENABLED=true` y el resto de las variables están completas. `HELP_MODEL` tiene que ser el ARN de un perfil de inferencia de aplicación, no el id del modelo. Ese perfil lleva la etiqueta `Project=InnovaLab-E10`. En Billing hay que activar esa etiqueta como cost allocation tag. Recién después Cost Explorer puede agrupar el gasto de Bedrock por `Project`. La activación no es retroactiva y puede tardar hasta 24 horas. El perfil en sí no se factura: se factura cada invocación que lo usa.
+
+La clave de la aplicación solo necesita `bedrock:InvokeModel` y `bedrock:InvokeModelWithResponseStream` sobre ese perfil y sobre el modelo al que apunta.
+
+Para probar una respuesta sin abrir el panel, con las variables en el entorno:
+
+```bash
+bun --conditions=react-server scripts/help-ask.ts "¿Qué es el margen?"
+```
+
+Una segunda ejecución sigue el hilo de esa terminal. `--reset` lo borra. El hilo queda en el directorio temporal del sistema.
+
+### Cómo se apaga
+
+1. Poner `HELP_ENABLED=false` y volver a desplegar. El botón desaparece y la ruta no llama al modelo.
+2. Borrar `AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY` del entorno de Vercel.
+3. En Cost Explorer, filtrar por la etiqueta `Project` = `InnovaLab-E10` y confirmar que no hay invocaciones nuevas.
+
+No queda una base de conocimiento, un agente ni capacidad reservada. Un aviso de presupuesto en AWS, por ejemplo a los 5 USD sobre el gasto de Amazon Bedrock, avisa aunque el crédito cubra la factura.

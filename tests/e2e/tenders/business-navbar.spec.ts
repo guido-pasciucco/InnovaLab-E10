@@ -21,4 +21,3 @@ test("el navbar cambia a licitaciones y el sidebar muestra sus páginas", async 
   await expect(authedPage).toHaveURL("/supplies");
   await expect(sidebar.getByRole("link", { name: "Productos" })).toBeVisible();
 });
-
