@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 
-import { removePeriodCostLine } from "@/app/period-costs/actions";
+import { removePeriodCostLine } from "@/app/(business)/period-costs/actions";
 import { CatalogModal } from "@/components/ui/catalog-modal";
 import { normalizeForSearch } from "@/components/ui/normalize-search";
 import { sumMoney } from "@/lib/money/sum";
