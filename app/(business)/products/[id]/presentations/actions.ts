@@ -9,6 +9,7 @@ import type { PresentationFormValues } from "@/lib/schemas/presentations/present
 import {
   createPresentationService,
   deletePresentationService,
+  removePackagingFromPresentationService,
   updatePresentationService,
 } from "@/lib/services/presentations";
 
@@ -40,6 +41,23 @@ export const savePresentation = handleActionErrors(
     if (!presentation) throw new AppError("PRODUCT_NOT_FOUND");
     revalidate(productId);
     return presentation;
+  },
+);
+
+// Called from the supply-in-use dialog to free a packaging without leaving
+// the catalog page.
+export const removePackagingFromPresentation = handleActionErrors(
+  async (_prev, data: { presentationId: string; productId: string; supplyId: string }) => {
+    const user = await requireUser();
+    const presentation = await removePackagingFromPresentationService(
+      user.id,
+      data.presentationId,
+      data.supplyId,
+    );
+    if (!presentation) throw new AppError("PRESENTATION_NOT_FOUND");
+    revalidate(data.productId);
+    revalidatePath("/supplies");
+    return { removed: true as const };
   },
 );
 

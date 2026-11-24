@@ -11,7 +11,7 @@ test("an empty account sees its first pending tasks and a pending dashboard", as
 });
 
 test("loading a supply removes its pending task and counts it", async ({ authedPage }) => {
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
   await authedPage.getByRole("textbox", { name: "Precio de compra" }).fill("18750");

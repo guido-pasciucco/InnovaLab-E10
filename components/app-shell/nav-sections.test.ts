@@ -31,7 +31,7 @@ describe("NAV_SECTIONS", () => {
 describe("sectionFromPathname", () => {
   it.each([
     { path: "/inicio", section: "catalogo" },
-    { path: "/insumos", section: "catalogo" },
+    { path: "/supplies", section: "catalogo" },
     { path: "/products", section: "catalogo" },
     { path: "/period-costs", section: "catalogo" },
     { path: "/total-costs", section: "catalogo" },

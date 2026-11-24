@@ -19,7 +19,7 @@ export default async function NewTenderPage() {
         <Card>
           <p className="text-sm text-fg">
             Solo se licitan insumos de tu catálogo.{" "}
-            <Link href="/insumos" className={linkClass}>
+            <Link href="/supplies" className={linkClass}>
               Cargá tus insumos
             </Link>{" "}
             primero.

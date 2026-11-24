@@ -695,6 +695,37 @@ export async function updateProductService(
   });
 }
 
+// Used by the supply-in-use dialog: drop one ingredient from a recipe without
+// making the user rewrite the whole product. It reuses the normal update path
+// so locking, unit resolution and CVU recalculation stay in one place.
+/** @throws AppError PRODUCT_NOT_FOUND | PRODUCT_RECIPE_NEEDS_INGREDIENT */
+export async function removeSupplyFromProductService(
+  userId: VerifiedUserId,
+  productId: string,
+  supplyId: string,
+  db: Db = getDrizzleClient(),
+): Promise<ProductItem | null> {
+  const product = await getProductService(userId, productId, db);
+  if (!product) return null;
+
+  const recipe = product.recipe.filter((item) => item.supplyId !== supplyId);
+  if (recipe.length === product.recipe.length) return null;
+  if (recipe.length === 0) throw new AppError("PRODUCT_RECIPE_NEEDS_INGREDIENT");
+
+  // Legacy rows may still have a null yield; the documented default is 1.
+  return updateProductService(
+    userId,
+    productId,
+    {
+      name: product.name,
+      monthlyCapacity: product.monthlyCapacity,
+      yieldQuantity: product.yieldQuantity ?? "1",
+      recipe,
+    },
+    db,
+  );
+}
+
 // Soft delete: the product disappears from the catalog but keeps its recipe
 // and its calculations. The exact behavior once DATA confirms it is still open
 // (#255); this is the recommended baseline.

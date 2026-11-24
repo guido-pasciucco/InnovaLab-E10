@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { startTransition, useActionState, useState, type FormEvent, type ReactNode } from "react";
 
-import { discardTenderDraft, publishTender, saveTenderDraft } from "@/app/(flujo-1)/licitaciones/actions";
+import { discardTenderDraft, publishTender, saveTenderDraft } from "@/app/(business)/licitaciones/actions";
 import { FormBanner } from "@/components/ui/page-shell";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { targetPrices } from "@/lib/calc/tenderRounds";

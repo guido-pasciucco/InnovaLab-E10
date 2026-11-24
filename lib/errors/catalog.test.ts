@@ -64,6 +64,10 @@ describe("ERROR_CATALOG", () => {
       status: 404,
       logLevel: "silent",
     });
+    expect(ERROR_CATALOG.PRODUCT_RECIPE_NEEDS_INGREDIENT).toMatchObject({
+      status: 422,
+      logLevel: "silent",
+    });
     expect(ERROR_CATALOG.SUPPLY_IN_USE).toMatchObject({
       status: 409,
       logLevel: "silent",

@@ -180,7 +180,7 @@ Tomadas el 21 de noviembre de 2026. Las que cambian lo que ve o puede hacer una 
 | <a id="N-06"></a>N-06 | La cuenta se crea al confirmar el mail: los datos quedan atados al enlace con que se cargaron y se consumen al final. Confirmar en otro dispositivo deja el mail confirmado y pide ingresar para terminar el alta. |
 | <a id="N-07"></a>N-07 | Una cuenta existente puede sumarse como proveedor cargando solo sus datos, o solo confirmar el vínculo si ya lo es (RN-22). |
 | <a id="N-08"></a>N-08 | Si el emprendedor abre su propio enlace, se le recuerda que debe mandárselo al proveedor. |
-| <a id="N-09"></a>N-09 | Cuenta sin negocio propio entra al panel de proveedor; si también compra, entra a `/insumos`. `/inicio` decide la ruta. |
+| <a id="N-09"></a>N-09 | Cuenta sin negocio propio entra al panel de proveedor; si también compra, entra a `/supplies`. `/inicio` decide la ruta. |
 | <a id="N-10"></a>N-10 | La primera versión no permite anular un enlace antes de vencer, desvincular proveedores ni aceptar términos por emprendedor: resuelve puntos abiertos de ES-08 y ES-09 por la opción más simple. |
 | <a id="N-11"></a>N-11 | % de baja mayor a 0 y hasta 50 %, con dos decimales. Alternativa: otro tope si hay casos reales. |
 | <a id="N-12"></a>N-12 | La licitación arranca al publicarse; no se puede programar inicio posterior (ES-03 lo dejó abierto). |
@@ -226,12 +226,12 @@ Tomadas el 21 de noviembre de 2026. Las que cambian lo que ve o puede hacer una 
 | ID | Decisión y rationale |
 | --- | --- |
 | C-01 | Formularios HTML nativos que llaman a una Server Action; la validación vive una sola vez en el servicio (`lib/schemas/suppliers/fields.ts`) y un hook muestra errores y conserva lo tipeado. Evita duplicar contratos con `react-hook-form`; alternativa: migrar pantallas que necesiten validación en vivo. |
-| C-02 | Rutas en español (`/insumos`, `/proveedores`, `/proveedor`, `/licitaciones`); tablas, servicios y componentes en inglés. |
-| C-03 | Piezas compartidas: el alta de cuentas acepta datos extra para el registro de proveedor; la confirmación trata al proveedor como un alta; el login acepta `?next=` saneado; `/inicio` reparte entre panel de proveedor y `/insumos`; un marco de página común da el mismo encabezado. |
+| C-02 | Rutas: `/supplies` en inglés; `/proveedores`, `/proveedor` y `/licitaciones` en español. Tablas, servicios y componentes en inglés. |
+| C-03 | Piezas compartidas: el alta de cuentas acepta datos extra para el registro de proveedor; la confirmación trata al proveedor como un alta; el login acepta `?next=` saneado; `/inicio` reparte entre panel de proveedor y `/supplies`; un marco de página común da el mismo encabezado. |
 | C-04 | La lógica de rondas es pura y no toca base de datos ni React (`lib/calc/tenderRounds.ts`); los servicios reciben el reloj como parámetro para testear sin esperar horas. |
 | C-05 | El formulario de publicación valida también en el navegador para mostrar cada error bajo su campo; el servidor vuelve a validar con las mismas reglas. |
 | C-06 | Verificación independiente sin bloqueantes; sus advertencias se corrigieron: datos en espera atados al enlace, oferta vigente por precio, sin porcentaje contra precio 0, negociar solo con quien ofertó, texto de la nota, avisos y desierto en el historial, confirmación desde otro dispositivo y redirección del dashboard. |
-| C-07 | Licitaciones vive en el flujo 1 (`app/(flujo-1)`), con navbar y selector temporal entre flujos. La página pública del enlace y el panel del proveedor quedan fuera de los flujos; el dashboard ya no tiene accesos ni avisos de licitaciones. |
+| C-07 | Licitaciones vive en la sección de emprendedor (`app/(business)`), con navbar y dos secciones: Catálogo y Licitaciones. La página pública del enlace y el panel del proveedor quedan fuera de ese grupo; el dashboard ya no tiene accesos ni avisos de licitaciones. |
 
 ### 5.4 Entrega
 
@@ -259,8 +259,8 @@ Los textos entre comillas son los que debe mostrar la aplicación. El detalle co
 | QA-09 | Proveedor abre enlace de otro emprendedor | "Vincularme con…", sin recargar datos; ve ambos emprendedores separados. |
 | QA-10 | Enlace vencido | Mismo aviso de QA-04. |
 | QA-11 | Confirmar mail en otro navegador | Va a `/login` y termina el alta al ingresar. |
-| QA-12 | Ingresos por rol | P1 entra a `/proveedor`; E1 a `/insumos`. |
-| QA-13 | Emprendedor abre `/proveedor` | Lo manda a `/insumos`. |
+| QA-12 | Ingresos por rol | P1 entra a `/proveedor`; E1 a `/supplies`. |
+| QA-13 | Emprendedor abre `/proveedor` | Lo manda a `/supplies`. |
 | QA-14 | Emprendedor sin insumos abre nueva licitación | "Solo se licitan insumos de tu catálogo." |
 | QA-14b | Con insumo, sin proveedores | Formulario visible; Publicar deshabilitado con aviso para guardar borrador. |
 | QA-14c | Guardar borrador incompleto | "Borrador guardado. Podés seguir cuando quieras desde Licitaciones." |
@@ -309,8 +309,8 @@ Los textos entre comillas son los que debe mostrar la aplicación. El detalle co
 | QA-53 | Enlace de confirmación ya usado | Vuelve a `/login` con aviso de enlace inválido. |
 | QA-54 | Recuperar contraseña | Igual que antes. |
 | QA-55 | Dashboard del emprendedor | Sigue mostrando cálculos, sin accesos ni avisos de licitaciones. |
-| QA-56 | "Licitaciones" en el navbar del flujo 1 | Va a `/licitaciones`; "Catálogo" vuelve a `/insumos`. |
-| QA-57 | Cambiar entre flujos | Pasa al dashboard y vuelve a `/insumos`; selector en navbar, no flotante. |
+| QA-56 | "Licitaciones" en el navbar de la sección de emprendedor | Va a `/licitaciones`; "Catálogo" vuelve a `/supplies`. |
+| QA-57 | Cambiar entre secciones | Pasa al dashboard y vuelve a `/supplies`; selector en navbar, no flotante. |
 | QA-58 | Imprimir orden de compra | La impresión no incluye navbar ni sidebar. |
 
 **Fuera de alcance (no probar como error):** actualizar el costo del insumo (CC-01 a CC-05, E-02); anular enlaces, desvincular proveedores, programar inicio y marcar avisos como leídos (N-10, N-12, N-24); mails o mensajes fuera de la aplicación (RN-24); repartir un mismo insumo entre dos proveedores (N-26).

@@ -10,7 +10,6 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 | --- | --- | --- | --- | --- |
 | P-01 | Contenido de la página inicial / dashboard | Abierta | Fase 2 · General | Criterio de aceptación de `/dashboard` |
 | P-02 | Alcance del menú persistente (global vs. catálogo) | Abierta | Fase 2 · General | Layout y navegación compartida |
-| P-03 | Alinear el formulario de packaging al catálogo de unidades | Abierta | Fase 2 · Bloque 1 | Presentaciones |
 | P-04 | Regla de "importancia de cada gasto" en el prorrateo | Abierta | Fase 2 · Bloque 3 | Reparto por gasto |
 | P-05 | Cuota, equilibrio en pesos y prueba de cierre | Abierta | Fase 2 · Bloque 3 | Fórmulas del equilibrio |
 | P-06 | Recargo global vs. por producto | Abierta | Fase 2 · Bloque 3 | Interfaz de precios |
@@ -46,10 +45,6 @@ Las decisiones abiertas de **licitaciones** tienen su propio recolector: `docs/f
 - **P-01** — No está definido si la vista inicial será un dashboard (resumen del estado del catálogo con accesos a cada bloque) o una página inicial simple. La propuesta de "hub con una tarjeta por bloque" quedó en pausa; no es decisión tomada.
 - **P-02** — ¿El menú persistente aplica a todo el producto o solo a las rutas del catálogo? Hoy el producto tiene además el asistente `/paso-1` a `/paso-8`; si el menú es global, hay que definir cómo conviven.
 - **P-08** — El catálogo reemplazaría al cálculo de un solo producto de la Fase 1, pero no está decidido qué pasa con los cálculos existentes. Decisión de producto aparte.
-
-### Bloque 1 — Insumos
-
-- **P-03** — El formulario de insumos ya usa el catálogo de unidades (#260), pero Packaging conserva unidad de compra, unidad mínima y equivalencia en texto libre. Su alineación depende de definir las presentaciones.
 
 ### Bloque 3 — Costos indirectos, precio y equilibrio
 

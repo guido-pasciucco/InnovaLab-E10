@@ -11,7 +11,7 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { saveProduct } from "@/app/(flujo-1)/products/actions";
+import { saveProduct } from "@/app/(business)/products/actions";
 import type {
   ProductFormValues,
   ProductItem,
@@ -221,7 +221,7 @@ export function ProductForm({
               El packaging no se usa como ingrediente de la receta.
             </p>
             <Link
-              href="/insumos"
+              href="/supplies"
               className="mt-1 inline-block font-semibold text-link underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
               Cargá tu catálogo de insumos

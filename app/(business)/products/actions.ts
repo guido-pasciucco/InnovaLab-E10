@@ -9,6 +9,7 @@ import type { ProductFormValues } from "@/lib/schemas/products/products";
 import {
   createProductService,
   deleteProductService,
+  removeSupplyFromProductService,
   updateProductService,
 } from "@/lib/services/products";
 
@@ -31,6 +32,22 @@ export const saveProduct = handleActionErrors(async (_prev, data: SaveProductPay
   revalidatePath("/products");
   return product;
 });
+
+// Removes one ingredient from a recipe, called from the supply-in-use dialog.
+export const removeSupplyFromProduct = handleActionErrors(
+  async (_prev, data: { productId: string; supplyId: string }) => {
+    const user = await requireUser();
+    const product = await removeSupplyFromProductService(
+      user.id,
+      data.productId,
+      data.supplyId,
+    );
+    if (!product) throw new AppError("PRODUCT_NOT_FOUND");
+    revalidatePath("/products");
+    revalidatePath("/supplies");
+    return { removed: true as const };
+  },
+);
 
 export const deleteProduct = handleActionErrors(async (_prev, data: { id: string }) => {
   const user = await requireUser();

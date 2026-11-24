@@ -57,7 +57,7 @@ export default async function InicioPage() {
               </p>
             </div>
             <Link
-              href="/insumos"
+              href="/supplies"
               className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover ${FOCUS_RING}`}
             >
               Cargar insumos
@@ -70,7 +70,7 @@ export default async function InicioPage() {
             ¿Por dónde empezar?
           </h2>
           <div className="grid gap-4 sm:grid-cols-3">
-            <QuickAction href="/insumos" icon="🧺" title="Cargar insumos">
+            <QuickAction href="/supplies" icon="🧺" title="Cargar insumos">
               Registrá lo que comprás y su costo por unidad.
             </QuickAction>
             <QuickAction href="/products" icon="📦" title="Crear producto">
@@ -138,7 +138,7 @@ function plural(count: number, singular: string, pluralForm: string): string {
 function taskLink(task: HomePendingTask): { href: string; label: string } {
   switch (task.kind) {
     case "loadSupplies":
-      return { href: "/insumos", label: "Cargar tus insumos y packaging" };
+      return { href: "/supplies", label: "Cargar tus insumos y packaging" };
     case "createFirstProduct":
       return { href: "/products", label: "Crear tu primer producto y su receta" };
     case "completeRecipes":

@@ -18,7 +18,7 @@ test("a user without products is invited to create one", async ({ authedPage }) 
 test("shows the total cost of a product from its capacity and the period expenses", async ({
   authedPage,
 }) => {
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
   await authedPage.getByRole("textbox", { name: "Precio de compra" }).fill("18750");

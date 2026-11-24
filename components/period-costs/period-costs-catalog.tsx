@@ -20,7 +20,7 @@ type PeriodCostsCatalogProps = {
 // Client wrapper of the Gastos del período screen (#285). It owns the list,
 // the search, the single create/edit modal and the delete confirmation, the
 // same way Insumos and Productos own theirs. The page shell (and its left
-// sidebar) lives in the (flujo-1) layout, so this component only renders the
+// sidebar) lives in the (business) layout, so this component only renders the
 // catalog block.
 export function PeriodCostsCatalog({
   period,

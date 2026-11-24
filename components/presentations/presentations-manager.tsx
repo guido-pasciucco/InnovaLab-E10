@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useTransition } from "react";
 
-import { deletePresentation } from "@/app/(flujo-1)/products/[id]/presentations/actions";
+import { deletePresentation } from "@/app/(business)/products/[id]/presentations/actions";
 import type {
   PackagingOption,
   PresentationItem,

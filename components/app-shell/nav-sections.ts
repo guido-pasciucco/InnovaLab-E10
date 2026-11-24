@@ -10,10 +10,10 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   {
     id: "catalogo",
     label: "Catálogo",
-    href: "/insumos",
+    href: "/supplies",
     items: [
       { href: "/inicio", label: "Inicio", icon: Home },
-      { href: "/insumos", label: "Insumos", icon: ShoppingBasket },
+      { href: "/supplies", label: "Insumos", icon: ShoppingBasket },
       { href: "/products", label: "Productos", icon: Package },
       { href: "/period-costs", label: "Gastos del período", icon: Wallet },
       { href: "/total-costs", label: "Costo total", icon: Calculator },

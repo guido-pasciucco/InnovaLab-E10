@@ -48,7 +48,7 @@ No existe el campo "unidad de compra" (bolsa, caja). El envase no aporta al cál
 
 ## Packaging
 
-Misma alta, corrección, borrado y buscador que Insumos; se diferencia solo por el tipo `kind = 'packaging'`. El precio se carga una sola vez acá: las presentaciones de los productos solo referencian el ítem. Queda pendiente alinear el formulario de packaging (hoy con unidad en texto libre) con el catálogo de unidades.
+Misma alta, corrección, borrado y buscador que Insumos; se diferencia solo por el tipo `kind = 'packaging'`. El precio se carga una sola vez acá: las presentaciones de los productos solo referencian el ítem. Desde el 2026-11-24 el formulario de packaging usa el mismo catálogo de unidades que Insumos: la unidad se elige de la lista y la equivalencia se deriva de la familia. No hay campos de unidad mínima ni equivalencia escritos a mano.
 
 ## Decisiones aplicables
 

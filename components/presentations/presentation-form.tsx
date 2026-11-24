@@ -5,7 +5,7 @@ import { useActionState, useEffect, useMemo, useRef, type FormEvent } from "reac
 import { useFieldArray, useForm, useWatch, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { savePresentation } from "@/app/(flujo-1)/products/[id]/presentations/actions";
+import { savePresentation } from "@/app/(business)/products/[id]/presentations/actions";
 import {
   createPresentationFormSchema,
   type PackagingOption,
@@ -149,7 +149,7 @@ export function PresentationForm({
           <div className="rounded-[16px] bg-warning-subtle p-4 text-sm text-fg">
             <p>Todavía no cargaste packaging.</p>
             <Link
-              href="/insumos"
+              href="/supplies"
               className="mt-1 inline-block font-semibold text-link underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
               Cargá tu packaging

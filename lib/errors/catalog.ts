@@ -154,6 +154,13 @@ export const ERROR_CATALOG = {
     message: "No encontramos ese producto.",
     logLevel: "silent",
   },
+  PRODUCT_RECIPE_NEEDS_INGREDIENT: {
+    // A recipe must keep at least one ingredient; the last one cannot be removed.
+    status: 422,
+    message:
+      "Ese insumo es el único de la receta. Agregá otro insumo antes de sacarlo, o borrá el producto.",
+    logLevel: "silent",
+  },
   SUPPLY_NOT_FOUND: {
     // Missing, foreign or non-uuid supply id: all look the same.
     status: 404,

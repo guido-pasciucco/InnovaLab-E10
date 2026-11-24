@@ -1,7 +1,7 @@
 import { expect, test } from "../fixtures";
 
-test("el sidebar del flujo 1 navega entre insumos y productos", async ({ authedPage }) => {
-  await authedPage.goto("/insumos");
+test("el sidebar del catálogo navega entre insumos y productos", async ({ authedPage }) => {
+  await authedPage.goto("/supplies");
   const sidebar = authedPage.getByRole("navigation", { name: "Principal" });
 
   await sidebar.getByRole("link", { name: "Productos" }).click();
@@ -9,11 +9,11 @@ test("el sidebar del flujo 1 navega entre insumos y productos", async ({ authedP
   await expect(authedPage.getByRole("heading", { name: "Productos", level: 1 })).toBeVisible();
 
   await sidebar.getByRole("link", { name: "Insumos" }).click();
-  await expect(authedPage).toHaveURL("/insumos");
+  await expect(authedPage).toHaveURL("/supplies");
 });
 
 test("el formulario de insumo usa la unidad de medida del catálogo", async ({ authedPage }) => {
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
 
   await expect(authedPage.getByRole("combobox", { name: "Unidad de medida" })).toBeVisible();

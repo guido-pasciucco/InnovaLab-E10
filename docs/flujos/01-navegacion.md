@@ -19,7 +19,7 @@ Cómo se mueve el usuario por el producto. La navegación del flujo de costos ti
 | Destino | Ruta propuesta | Estado |
 | --- | --- | --- |
 | Página inicial | `/dashboard` | Existe como destino; contenido a decidir |
-| Insumos | `/insumos` | Editable siempre |
+| Insumos | `/supplies` | Editable siempre |
 | Productos | `/productos` | Editable siempre |
 | Costos indirectos | `/costos-indirectos` | Carga única para todo el catálogo |
 | Tablero | `/tablero` | Solo lectura |
