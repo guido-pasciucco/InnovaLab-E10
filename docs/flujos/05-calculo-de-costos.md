@@ -15,14 +15,17 @@ Bloque 3 y 4 del flujo de costos: carga de indirectos, reparto entre productos, 
 
 - Pantalla con tabla de solo lectura, `+ Nuevo`, buscador por concepto, contador y un único modal de alta/edición (concepto e importe del mes). El borrado pide confirmación.
 - El período de la vista es el **mes actual** de `America/Argentina/Buenos_Aires`. No hay selector de mes: consultar otro mes requiere antes definir la regla de edición histórica.
+- El mes es la unidad de trabajo del cálculo: los gastos, el reparto y el cierre se expresan para un mes. No hay vista anual. Proyectar el gasto de un mes a doce daría un valor engañoso porque los gastos no son uniformes, y antes haría falta acordar qué se muestra como dato real y qué como proyección. Una vista anual, si se quiere, necesita su propia decisión.
 - Se **permiten líneas repetidas** con el mismo concepto en un mes; el total suma todas.
 - La columna `notes` existe pero no se expone en servicios ni en la UI.
 - Los gastos son fijos e indirectos por definición: el servidor fija esas dimensiones y el cliente no puede cambiarlas.
+- Los gastos generales compartidos se cargan **una vez** en la lista del período, sin elegir producto: un alquiler de $120.000 se cuenta como $120.000, no una vez por producto. Ese total único se reparte entre los productos con capacidad > 0 según su capacidad mensual, y la foto del mes congela el resultado.
+- Los gastos directos por producto quedan fuera de alcance: no hay carga por producto y todo lo que se guarda se trata como indirecto. Si se quieren, hace falta una forma de medir el uso o el tiempo dedicado a cada producto y una decisión propia.
 - Esta pantalla **no prorratea**, no calcula precio ni equilibrio; esas piezas son etapas separadas.
 
 ## Reparto de indirectos
 
-- Solo entran al reparto los productos con **capacidad > 0** (D9). Sin capacidades o sin gastos no se muestra costo total.
+- Solo entran al reparto los productos con **capacidad > 0**. Sin capacidades o sin gastos no se muestra costo total.
 - Regla vigente del motor de reparto:
 
 ```text
@@ -32,20 +35,21 @@ costo total unitarioᵢ = CVUᵢ + gasto indirecto por unidad
 ```
 
 - Un producto sin CVU absorbe su parte de los gastos, pero su costo total se muestra como **"No disponible"** con el motivo, nunca como `$ 0`.
+- La "cantidad producida" que absorbe los indirectos es la **capacidad normal planeada** que el usuario carga en cada producto ("¿Cuántas unidades pensás fabricar este mes?"). No se usa producción real —ese dato no existe en el catálogo— ni un campo separado de "producción esperada", que sería equivalente y no cambiaría ningún número. Si la producción efectiva se desvía de lo planeado, la foto de "Cerrar cálculo" congela el valor del mes.
 - Queda abierta la regla de "importancia de cada gasto": hoy los indirectos se tratan como un solo total.
 
 ## Precio y margen
 
-El usuario ingresa un **margen sobre el precio de venta**, no un recargo sobre el costo:
+El usuario ingresa un **recargo sobre el costo total unitario**:
 
 ```text
-precio sugerido = costo unitario ÷ (1 − margen)
-recargo equivalente = margen ÷ (1 − margen)      (solo informativo)
+precio sugerido = costo total unitario × (1 + recargo)
+margen real     = (precio sugerido − costo total unitario) ÷ precio sugerido
 ```
 
-Con costo `$ 1.000` y margen `30 %`: precio `$ 1.428,57`, recargo equivalente `42,9 %`. El recargo **no se ingresa ni se elige**, solo se muestra para explicar la diferencia. Un margen de `100 %` o más no tiene precio posible y se pide corregirlo.
+Con costo total unitario de `$ 7.000` y recargo de `30 %`: precio `$ 9.100`, ganancia `$ 2.100` y margen real `23,08 %`. El recargo y el margen real son números distintos y se muestran por separado: el recargo es lo que el usuario carga, el margen real es lo que efectivamente gana sobre el precio. Un recargo de cero o negativo deja el precio igual o por debajo del costo y se pide corregirlo.
 
-Esta convención la fija la decisión 0003. Sigue abierto qué componentes integran el costo unitario que se usa como base.
+La base es el costo total unitario: el costo variable de la receta y las presentaciones más la parte de los gastos del mes que le toca al producto según su capacidad. No entran comisiones por venta ni impuestos, y la mano de obra ya está dentro de los gastos del período.
 
 ## Trabajo propio
 
@@ -77,15 +81,15 @@ equilibrioEnPesos = Σ (cuotaᵢ × precio sugeridoᵢ)
 prueba de cierre  = Σ (cuotaᵢ × contribuciónᵢ) = costos indirectos del período
 ```
 
-También están abiertos el eje del gráfico, los estados vacíos y el formato de cuotas fraccionarias. Ver `docs/decisiones-pendientes.md`.
+También están abiertos el eje del gráfico, los estados vacíos y el formato de cuotas fraccionarias; esos tres puntos siguen sin regla.
 
 ## Histórico: "Cerrar cálculo"
 
-- Es un **botón manual** que congela todo el estado del cálculo: insumos, recetas/rendimiento, capacidades, indirectos, margen y resultados. Es una foto completa y reproducible (D5).
+- Es un **botón manual** que congela todo el estado del cálculo: insumos, recetas/rendimiento, capacidades, indirectos, margen y resultados. Es una foto completa y reproducible.
 - El catálogo en vivo **sigue editable**; la foto no bloquea ni habilita el cálculo.
-- La foto se puede corregir, pero **cada cambio queda auditado**: campo, valor anterior, valor nuevo y cuándo (D6).
-- Cada cierre se etiqueta con un **período (mes)**. El prorrateo y los cálculos siguen en vivo sobre el catálogo actual (D7).
-- Se consulta en el destino **"Datos históricos"** del menú, solo lectura (D8).
+- La foto se puede corregir, pero **cada cambio queda auditado**: campo, valor anterior, valor nuevo y cuándo.
+- Cada cierre se etiqueta con un **período (mes)**. El prorrateo y los cálculos siguen en vivo sobre el catálogo actual.
+- Se consulta en el destino **"Datos históricos"** del menú, solo lectura.
 
 ## Reglas conceptuales del cálculo
 
@@ -130,21 +134,14 @@ costo unitario total = costos directos + costos indirectos asignados
 
 El reparto se rige por **relación causa-efecto**: quien consume el recurso paga el costo. El **generador de costo** (*cost driver*) es la variable medible que operacionaliza esa relación (horas de máquina, horas de mano de obra, unidades, lotes). No existe un método de asignación universal: forzar el mismo criterio en procesos distintos produce **subsidio cruzado**, es decir, unos productos absorben costos de otros.
 
-> Los documentos de origen proponían criterios adicionales —tiempo de producción, ventas planificadas, costo directo planificado y porcentaje manual— para distintos tipos de gasto. Están registrados como alternativas, **no como regla vigente**: hoy el reparto se hace por capacidad (ver P-04 en `docs/decisiones-pendientes.md`).
+> Los documentos de origen proponían criterios adicionales —tiempo de producción, ventas planificadas, costo directo planificado y porcentaje manual— para distintos tipos de gasto. Están registrados como alternativas, **no como regla vigente**: hoy el reparto se hace por capacidad (la regla de importancia de cada gasto sigue abierta).
 
-### Contribución, margen y comisiones
+### Contribución y margen de contribución
 
 - **Contribución por unidad = precio de venta − costo variable unitario.** Es el dinero que deja cada venta para cubrir los fijos.
-- **Margen de contribución (%) = contribución ÷ ventas.** Debe llamarse por su nombre completo: decirle solo "margen" lo confunde con el porcentaje usado para fijar el precio.
+- **Margen de contribución (%) = contribución ÷ ventas.** Debe llamarse con su nombre completo para no confundirlo con el recargo que se carga ni con el margen real que se informa.
 
-Cuando hay comisiones u otros porcentajes sobre la venta, entran en la misma fórmula para no reducir la ganancia esperada:
-
-```text
-precio sugerido = (costo unitario + cargo fijo por venta)
-                  ÷ (1 − margen − comisión porcentual − otros % sobre la venta)
-```
-
-Si margen y descuentos porcentuales suman 100 % o más, no hay precio válido. Los impuestos solo se incorporan cuando funcionan como porcentaje o cargo que debe cubrir el precio; la app no asume una condición impositiva.
+Las comisiones porcentuales por venta y los impuestos quedan fuera del MVP: no se cargan ni se descuentan del precio sugerido. El resumen lo dice explícitamente con "sin costos de venta" para que nadie crea que el precio ya las incluye. Para incorporarlas haría falta decidir dónde se cargan, si se compensan subiendo el precio o se informan como costo aparte, y si el porcentaje es uno solo para todos los productos o individual.
 
 ### Equilibrio sin solución
 
@@ -155,17 +152,10 @@ Si el precio es igual o menor al costo variable unitario, la contribución es ce
 - El dinero se calcula en decimal, sin redondeos intermedios; se redondea a dos decimales recién al mostrar o persistir.
 - Las cantidades físicas conservan la precisión ingresada: `1,275 kg` no se convierte en `1,28 kg` para calcular.
 - Un cálculo guardado conserva precios, cantidades, porcentajes, tiempos y reglas. Cambiar el precio de un insumo afecta cálculos futuros, **nunca resultados históricos**.
-- Cada cálculo registra: producto y versión de receta, insumos con cantidades y precios, unidades producidas y vendibles, mermas y reutilizaciones, horas y valor de la mano de obra, otros costos directos, indirectos del período, criterio y porcentajes de reparto, margen, comisiones, precio sugerido y precio elegido, y fecha.
+- Cada cálculo registra: producto y versión de receta, insumos con cantidades y precios, unidades producidas y vendibles, mermas y reutilizaciones, horas y valor de la mano de obra, otros costos directos, indirectos del período, criterio y porcentajes de reparto, margen, precio sugerido y precio elegido, y fecha.
 
-El glosario de términos está en `docs/producto/01-definiciones.md`. La precisión del motor de costos variables está en `docs/dependencias/variable-costs-presentations.md`.
+El motor conserva la precisión como fracción exacta con numerador y denominador, y redondea recién al mostrar el importe.
 
 ## Decisiones aplicables
 
-D4 (recálculo en vivo), D5–D8 (snapshot), D9 (capacidad), D15 (gastos del período), decisiones 0001 a 0003 y ADR 02.
-
-Los puntos abiertos están en `docs/decisiones-pendientes.md`.
-
-## Fuentes
-
-- `docs/decisiones.md` (reglas 0001 a 0003).
-- `docs/producto/01-definiciones.md` (glosario de nombres y conceptos).
+En este flujo rigen el recálculo en vivo, la foto del cierre con correcciones auditadas, el prorrateo por capacidad, el mes actual para los gastos, y las reglas de trabajo propio, recargo sobre el costo total y margen real informado por separado.

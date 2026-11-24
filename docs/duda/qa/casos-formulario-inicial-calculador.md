@@ -38,7 +38,7 @@
 
 ## Mensajes y textos de referencia
 
-Reglas y mensajes definidos **una sola vez** en `lib/schemas/calculator-setup/fields.ts` y compartidos entre formulario y base (ver ADR `01-reglas-de-campo-compartidas.md`).
+Reglas y mensajes definidos **una sola vez** en `lib/schemas/calculator-setup/fields.ts` y compartidos entre formulario y base.
 
 | Campo | Regla | Mensaje exacto |
 | --- | --- | --- |

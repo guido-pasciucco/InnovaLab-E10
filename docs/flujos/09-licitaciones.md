@@ -1,6 +1,6 @@
 # 09 — Licitación de insumos: flujo y reglas vigentes
 
-Documento único de la funcionalidad de licitaciones: qué es, quiénes participan, cómo se recorre el proceso de punta a punta y qué decisiones rigen hoy la primera versión. Los puntos abiertos, las dudas y los resguardos pendientes están en [pendientes](09-licitaciones-pendientes.md).
+Documento único de la funcionalidad de licitaciones: qué es, quiénes participan, cómo se recorre el proceso de punta a punta y qué decisiones rigen hoy la primera versión. Los puntos abiertos, las dudas y los resguardos pendientes quedan registrados como trabajo pendiente de la funcionalidad.
 
 ## 1. Qué es y quiénes participan
 
@@ -317,4 +317,4 @@ Los textos entre comillas son los que debe mostrar la aplicación. El detalle co
 
 ## 7. Historial / documentos de origen
 
-Este documento concentra el contenido vigente de los ocho documentos originales de licitaciones (`README.md`, `01` a `07`), retirados del árbol de documentación; sus versiones se conservan en el historial de git. Los diagramas BPMN están en `docs/duda/assets/licitaciones/`. Las dudas y los puntos abiertos se consolidan en [pendientes](09-licitaciones-pendientes.md).
+Este documento concentra el contenido vigente de los ocho documentos originales de licitaciones (`README.md`, `01` a `07`), retirados del árbol de documentación; sus versiones se conservan en el historial de git. Los diagramas BPMN quedaron como material de apoyo; las dudas y los puntos abiertos se registran por separado.

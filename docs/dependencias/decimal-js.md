@@ -35,4 +35,4 @@ const conIva = subtotal.mul("1.21").toDecimalPlaces(2); // redondeo explícito
 
 ## Paso siguiente
 
-Ver `drizzle-zod.md`: las columnas `numeric` llegan como `string` desde la base y se convierten a `Decimal` en la frontera con `lib/money`.
+Las columnas `numeric` llegan como `string` desde la base y se convierten a `Decimal` en la frontera con `lib/money`.

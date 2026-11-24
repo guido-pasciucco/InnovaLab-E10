@@ -1,6 +1,6 @@
 # 09 — Licitación de insumos: pendientes y dudas
 
-Todo lo que sigue abierto en licitaciones, consolidado de los ocho documentos originales. Lo vigente y decidido está en [flujo](09-licitaciones.md). Los textos citados son los de los documentos de origen, retirados del árbol de documentación y conservados en el historial de git.
+Todo lo que sigue abierto en licitaciones, consolidado de los ocho documentos originales. Lo vigente y decidido corresponde a la primera versión de la funcionalidad. Los textos citados son los de los documentos de origen, retirados del árbol de documentación y conservados en el historial de git.
 
 Los IDs `ES-NN`, `DD-NN`, `N-NN`, `D-NN`, `C-NN` y `E-NN` son los originales. Los subpuntos que no tenían ID en el original se identifican como `ES-NN/n` y se indica siempre su fuente. Estados: **abierta** (sin decidir), **en duda** (decidido para esta versión pero sujeto a revisión), **resuelta-parcialmente** (resuelto en otro documento o implementado, sin reflejo en las reglas de negocio o con un resguardo pendiente).
 
@@ -40,7 +40,7 @@ Los IDs `ES-NN`, `DD-NN`, `N-NN`, `D-NN`, `C-NN` y `E-NN` son los originales. Lo
 ### ES-Abiertas — sin puntos abiertos
 
 - **Estado:** resuelta-parcialmente. **Origen:** 04-especificaciones.md, sección *Abiertas*.
-- El documento dice: "No quedan puntos abiertos. Los puntos nuevos se agregan acá con la plantilla del final." Las 13 especificaciones pasaron a *Decididas* y están resumidas en `flujo.md`.
+- El documento dice: "No quedan puntos abiertos. Los puntos nuevos se agregan acá con la plantilla del final." Las 13 especificaciones pasaron a *Decididas* y rigen hoy la primera versión.
 
 Los puntos siguientes son los items de la sección *Qué no decide* de cada especificación decidida. No son reglas nuevas: son las preguntas que cada decisión dejó explícitamente sin responder.
 
@@ -102,12 +102,12 @@ Los puntos siguientes son los items de la sección *Qué no decide* de cada espe
 - **N-27 y N-29 — Preguntas que ES-06 y ES-11 dejaban abiertas.** **Estado:** resuelta-parcialmente. **Origen:** 06. Se decidieron en la implementación (negociar con varios a la vez, sin aviso al confirmar sin negociar; nota a todos los invitados sin insumo elegido), sin reflejo en las reglas de negocio.
 - **D-09 — Carrera oferta/cancelación y trigger.** **Estado:** abierta (límite conocido). **Origen:** 06. Una oferta que llega en el mismo instante en que se cancela puede quedar guardada un instante después; no cambia nada porque una licitación cancelada no tiene cuadro ni compra. Quedó pendiente un trigger en la base que prohíba modificar o borrar ofertas: se dejó para más adelante porque impediría también el borrado en cascada al eliminar una cuenta.
 - **C-01 — Validación en vivo con react-hook-form.** **Estado:** abierta (diferida). **Origen:** 06. Los formularios usan validación en el servidor; la alternativa es migrar las pantallas que necesiten validación en vivo.
-- **E-02 — Actualizar el Maestro de Insumos.** **Estado:** abierta, prevista para la próxima versión. **Origen:** 06 y 07. Las reglas CC-01 a CC-05 no se implementaron: falta el historial de precios del insumo. Es la principal pieza pendiente de la funcionalidad y está documentada en `flujo.md` para que no se pierda.
+- **E-02 — Actualizar el Maestro de Insumos.** **Estado:** abierta, prevista para la próxima versión. **Origen:** 06 y 07. Las reglas CC-01 a CC-05 no se implementaron: falta el historial de precios del insumo. Es la principal pieza pendiente de la funcionalidad y se conserva como pieza pendiente para no perderla.
 - **Alternativas descartadas, no reaperturas.** **Estado:** resuelta. **Origen:** 06. Quedan registradas como rationale, no como trabajo pendiente: N-01 (guardar el enlace para volver a mostrarlo), N-12 (programar inicio posterior), N-31 (varios borradores), D-12 (reutilizar `tenders` con estado "borrador").
 
 ## 4. Reglas y diagramas de origen
 
-- **01-HIST — Texto anterior de las reglas.** **Estado:** resuelta-parcialmente. **Origen:** 01-reglas-de-negocio.md. El documento conserva el texto previo de cada cambio decidido entre el 20 y el 21 de noviembre de 2026. Al leerlo, prevalece el texto vigente resumido en `flujo.md`; las referencias internas a DD-02 y a las especificaciones siguen siendo válidas pero apuntan ahora a este consolidado.
+- **01-HIST — Texto anterior de las reglas.** **Estado:** resuelta-parcialmente. **Origen:** 01-reglas-de-negocio.md. El documento conserva el texto previo de cada cambio decidido entre el 20 y el 21 de noviembre de 2026. Al leerlo, prevalece el texto vigente de las reglas; las referencias internas a DD-02 y a las especificaciones siguen siendo válidas pero apuntan ahora a este consolidado.
 - **DIAG-02 — Diagrama de compra desactualizado.** **Estado:** resuelta-parcialmente. **Origen:** 02-proceso-compra-insumos.md, sección *Diferencias con decisiones posteriores*. El diagrama es del 13 de noviembre de 2026; las decisiones posteriores cambian lo que muestra y no se redibujó:
 
   | Decisión | Qué cambia en el diagrama |
@@ -130,7 +130,7 @@ Los puntos siguientes son los items de la sección *Qué no decide* de cada espe
   | ES-09 | *Difunde el enlace* es uno personal por proveedor, de un solo uso y con vencimiento a 7 días; se confirma mail y se controla CUIT. |
   | ES-10 | No se piden avisos por separado ni hay mails opcionales: todo ocurre en el panel. |
 
-Los dos diagramas siguen en `docs/duda/assets/licitaciones/`; `09-licitaciones.md` los referencia y describe el proceso vigente por escrito.
+Los dos diagramas quedaron desactualizados frente a las decisiones posteriores; el proceso vigente se describe por escrito.
 
 ## 5. Fuera de alcance de la primera versión
 

@@ -1,6 +1,6 @@
 # Decisiones pendientes — recolector único
 
-Todo lo que sigue abierto en el producto, el cálculo y la ingeniería, reunido en un solo lugar. Las decisiones **ya tomadas** viven en sus flujos (`docs/flujos/`) y en `docs/decisiones.md`; las resueltas durante la Fase 2 se dieron por cerradas y no se repiten acá.
+Todo lo que sigue abierto en el producto, el cálculo y la ingeniería, reunido en un solo lugar. Las decisiones **ya tomadas** no se repiten acá; las resueltas durante la Fase 2 se dieron por cerradas.
 
 Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este archivo, se escribe en el flujo correspondiente y se registra con fecha.
 
@@ -21,12 +21,7 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 | P-12 | Estados vacíos del tablero | Abierta | Fase 2 · Bloque 4 | Tablero |
 | P-13 | Cuotas fraccionarias: precisión y formato | Abierta | Fase 2 · Bloque 4 | Tablero |
 | P-14 | Resultados que muestra el tablero y sus fórmulas | Abierta | Fase 2 · Bloque 4 | Tablero |
-| P-15 | Producción real, esperada o capacidad normal | Abierta | Producto · §11 | Asignación de costos |
-| P-16 | Período mensual principal y vista anual como proyección | Abierta | Producto · §11 | Vista de períodos |
-| P-17 | Componentes del costo base del precio sugerido | Abierta | Producto · §6 y §11 | Precio sugerido |
-| P-18 | Carga y asignación de gastos generales compartidos | Abierta | Producto · §7 y §11 | Multi-producto |
-| P-19 | Comisiones porcentuales por venta en el MVP | Abierta | Producto · §11 | Alcance del MVP |
-| P-20 | Tratamiento de mermas y desperdicios | Abierta | Producto · §11 | Cálculo de recetas |
+| P-20 | Tratamiento de mermas y desperdicios | Diferida a largo plazo | Producto · §11 | Cálculo de recetas |
 | P-21 | Redondeo monetario y unidades del equilibrio | Abierta | Producto · §11 | Contrato de precisión |
 | P-22 | Qué resultados son proyecciones y cuáles son reales | Abierta | Producto · §11 | Comunicación al usuario |
 | P-23 | Validar el modelo con el mentor y dos rubros distintos | Abierta | Producto · §11 | Validación del producto |
@@ -34,7 +29,7 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 | D-05 | Regla de lint que prohíba casts a `VerifiedUserId` | Pendiente | ADR 03 | Frontera de identidad |
 | D-06 | Cache por request de `getUser` en renders | Pendiente | ADR 03 | Rendimiento de auth |
 
-Las decisiones abiertas de **licitaciones** tienen su propio recolector: `docs/flujos/09-licitaciones-pendientes.md`.
+Las decisiones abiertas de **licitaciones** no se incluyen en este recolector.
 
 ---
 
@@ -50,7 +45,7 @@ Las decisiones abiertas de **licitaciones** tienen su propio recolector: `docs/f
 
 - **P-04** — Las issues hablan de "promedio ajustado según la importancia de cada gasto" sin definir cómo se pondera. Hoy los indirectos son un solo total repartido por capacidad.
 - **P-05** — Interpretación final de la cuota por producto, del equilibrio en pesos y de la prueba de cierre. Las fórmulas propuestas necesitan validación contra la planilla.
-- **P-06** — La especificación dice "cada producto" pero no aclara si el porcentaje es uno solo para todos o individual. La convención margen-vs-recargo ya está resuelta; este punto no.
+- **P-06** — La especificación dice "cada producto" pero no aclara si el porcentaje es uno solo para todos o individual; ese punto sigue abierto. La convención margen-vs-recargo tampoco puede darse por cerrada: quedó pendiente de decisión para el responsable del precio sugerido, con ambas opciones y sus diferencias explicadas.
 - **P-07** — Los indirectos son "del mes" pero no hay modelo de período: ¿un solo cálculo vigente o histórico? La edición histórica también bloquea el selector de mes.
 - **P-09** — Sin la planilla #250 no hay oráculo para verificar ninguna fórmula. Es la dependencia de QA más importante del flujo.
 
@@ -64,12 +59,7 @@ Las decisiones abiertas de **licitaciones** tienen su propio recolector: `docs/f
 
 ### Definición conceptual del producto
 
-- **P-15** — Usar producción real, producción esperada o capacidad normal para asignar costos.
-- **P-16** — Confirmar que el período principal es mensual y que la vista anual es una proyección.
-- **P-17** — Definir qué componentes integran el costo base del precio sugerido.
-- **P-18** — Cómo se cargan y asignan los gastos generales compartidos entre productos, sin duplicar el fijo.
-- **P-19** — Incluir o no comisiones porcentuales por venta en el MVP.
-- **P-20** — Tratamiento de mermas y desperdicios.
+- **P-20** — Tratamiento de mermas y desperdicios. Diferida: es una idea a largo plazo, no algo para implementar ahora; requiere conversación y acuerdo con el equipo antes de entrar en alcance. Las reglas de mermas quedan como propuesta documentada, no como norma vigente.
 - **P-21** — Reglas de redondeo monetario y de unidades del punto de equilibrio.
 - **P-22** — Acordar qué resultados son proyecciones y cuáles pueden basarse en datos reales.
 - **P-23** — Validar el modelo con el mentor y con al menos dos rubros distintos.
@@ -84,13 +74,7 @@ Las decisiones abiertas de **licitaciones** tienen su propio recolector: `docs/f
 
 ## Cómo cerrar una decisión
 
-1. Escribir la regla en el flujo que corresponda, con la fecha en que se tomó.
-2. Si es una regla de negocio con identidad propia, agregarla a `docs/decisiones.md`.
-3. Sacar el ítem de este archivo y actualizar el flujo que lo referenciaba.
-4. Si la decisión cambia una regla anterior, registrar la fecha nueva y qué cambió: no se reescribe la historia.
-
-## Fuentes
-
-- Las decisiones ya cerradas de la Fase 2 están aplicadas en `docs/flujos/`; su material de trabajo se conserva en el historial de git.
-- `docs/flujos/05-calculo-de-costos.md` (reglas conceptuales y alcance).
-- `docs/decisiones.md`.
+1. Escribir la regla en el flujo que corresponda, sin fecha: git guarda el historial.
+2. Si es una regla de negocio con identidad propia, registrar la decisión con su ID, su tipo, la regla y el porqué.
+3. Sacar el ítem de este archivo y explicar la regla donde corresponda.
+4. Si la decisión cambia una regla anterior, registrar qué cambió: no se reescribe la historia.
