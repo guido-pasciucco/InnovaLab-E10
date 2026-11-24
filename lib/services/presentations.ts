@@ -44,6 +44,14 @@ import {
 
 type PackagingInput = { supplyId: string; quantity: string; unit: string };
 
+// Ids arrive from the URL or the client: a malformed one answers like a missing
+// row instead of reaching Postgres as an invalid uuid.
+const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string): boolean {
+  return UUID_SHAPE.test(value);
+}
+
 const ownedProduct = (userId: VerifiedUserId, productId: string) =>
   and(
     eq(products.id, productId),
@@ -247,6 +255,8 @@ export async function getProductPresentationsService(
   productId: string,
   db: Db = getDrizzleClient(),
 ): Promise<ProductPresentationsView | null> {
+  if (!isUuid(productId)) return null;
+
   const product = await getProductService(userId, productId, db);
   if (!product) return null;
 
@@ -278,6 +288,8 @@ export async function createPresentationService(
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<PresentationItem | null> {
+  if (!isUuid(productId)) return null;
+
   return runVariableCostTransaction(db, async (tx) => {
     const owned = await findOwnedProductId(tx, userId, productId);
     if (!owned) return null;
@@ -292,6 +304,8 @@ export async function updatePresentationService(
   input: unknown,
   db: Db = getDrizzleClient(),
 ): Promise<PresentationItem | null> {
+  if (!isUuid(presentationId)) return null;
+
   return runVariableCostTransaction(db, async (tx) => {
     const existing = await findOwnedPresentation(tx, userId, presentationId);
     if (!existing) return null;
@@ -305,6 +319,8 @@ export async function deletePresentationService(
   presentationId: string,
   db: Db = getDrizzleClient(),
 ): Promise<boolean> {
+  if (!isUuid(presentationId)) return false;
+
   return db.transaction(async (tx) => {
     const existing = await findOwnedPresentation(tx, userId, presentationId);
     if (!existing) return false;

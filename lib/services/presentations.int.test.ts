@@ -392,6 +392,16 @@ describe("presentations service", () => {
     await expect(updatePresentationService(user.id, MISSING_ID, input, db)).resolves.toBeNull();
     await expect(deletePresentationService(user.id, MISSING_ID, db)).resolves.toBe(false);
   });
+
+  it("treats a malformed id like a missing one", async () => {
+    const user = await makeUser();
+    const input = { name: "Unidad", unitsPerPresentation: "1", packaging: [] };
+
+    await expect(getProductPresentationsService(user.id, "abc", db)).resolves.toBeNull();
+    await expect(createPresentationService(user.id, "abc", input, db)).resolves.toBeNull();
+    await expect(updatePresentationService(user.id, "abc", input, db)).resolves.toBeNull();
+    await expect(deletePresentationService(user.id, "abc", db)).resolves.toBe(false);
+  });
 });
 
 describe("packaging used by a presentation", () => {
