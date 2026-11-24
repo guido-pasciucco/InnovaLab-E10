@@ -9,6 +9,12 @@ type PromptInput = {
   today: string;
 };
 
+// Today in Buenos Aires as AAAA-MM-DD ("en-CA" prints dates that way). The
+// server may run in another zone, and "this month" must mean the user's.
+export function todayInBuenosAires(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(now);
+}
+
 // Instructions for the agent. Written in Spanish because the model answers in
 // Spanish and the users are not technical. The rules come from the plan of #279.
 export function buildSystemPrompt({ schema, today }: PromptInput): string {

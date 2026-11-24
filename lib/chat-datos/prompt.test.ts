@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { CHAT_DATOS_MAX_STEPS } from "./config";
-import { buildSystemPrompt } from "./prompt";
+import { buildSystemPrompt, todayInBuenosAires } from "./prompt";
+
+describe("todayInBuenosAires", () => {
+  it("uses the Buenos Aires date, not the UTC one", () => {
+    // 01:30 UTC of the 24th is 22:30 of the 23rd in Buenos Aires (UTC-3).
+    expect(todayInBuenosAires(new Date("2026-11-24T01:30:00Z"))).toBe("2026-11-23");
+    expect(todayInBuenosAires(new Date("2026-11-24T03:00:00Z"))).toBe("2026-11-24");
+  });
+});
 
 const SCHEMA = "Vista products: Productos del emprendedor.\n  - name (text): Nombre del producto.";
 const prompt = buildSystemPrompt({ schema: SCHEMA, today: "2026-11-23" });
