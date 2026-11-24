@@ -2,11 +2,19 @@
 
 import { useState, useTransition } from "react";
 
-import { deleteSupply } from "@/app/(flujo-1)/insumos/actions";
+import { deleteSupply } from "@/app/(business)/supplies/actions";
 import { calculateMinimumUnitPrice } from "@/lib/calc/supplyCost";
+import { getSupplyUnitBasis } from "@/lib/schemas/supplies/units";
 import type { SupplyKind } from "@/lib/schemas/supplies/fields";
 import type { SupplyItem } from "@/lib/schemas/supplies/supplies";
 import { moneyFormat, quantityFormat, unitPriceFormat } from "./format";
+import { SupplyInUseDialog } from "./supply-in-use-dialog";
+
+type InUseDialogState = {
+  supplyId: string;
+  supplyName: string;
+  details: unknown;
+};
 
 type SuppliesTableProps = {
   supplies: SupplyItem[];
@@ -23,18 +31,24 @@ export function SuppliesTable({
 }: SuppliesTableProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [inUse, setInUse] = useState<InUseDialogState | null>(null);
   const noun = kind === "packaging" ? "packaging" : "insumo";
 
-  const handleDelete = (id: string) => {
-    if (!confirm("¿Borrar este ítem?")) return;
-
+  const handleDelete = (supply: SupplyItem) => {
     setError(null);
     startTransition(async () => {
-      const result = await deleteSupply(undefined, { id });
+      const result = await deleteSupply(undefined, { id: supply.id });
 
-      if (!result.ok) {
-        setError(result.message);
+      if (result.ok) return;
+      if (result.code === "SUPPLY_IN_USE") {
+        setInUse({
+          supplyId: supply.id,
+          supplyName: supply.name,
+          details: result.details,
+        });
+        return;
       }
+      setError(result.message);
     });
   };
 
@@ -101,7 +115,7 @@ export function SuppliesTable({
             const unitPrice = calculateMinimumUnitPrice(
               supply.purchasePrice,
               supply.purchaseQuantity,
-              supply.conversionFactor,
+              supply.purchaseUnit,
             );
 
             return (
@@ -114,7 +128,9 @@ export function SuppliesTable({
                 <td className="px-3 py-3 whitespace-nowrap text-fg">
                   {moneyFormat.format(Number(supply.purchasePrice))}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-fg">{supply.minimumUnit}</td>
+                <td className="px-3 py-3 whitespace-nowrap text-fg">
+                  {getSupplyUnitBasis(supply.purchaseUnit)?.minimumUnit ?? "—"}
+                </td>
                 <td className="px-3 py-3 whitespace-nowrap text-fg">
                   {unitPrice ? unitPriceFormat.format(Number(unitPrice)) : "—"}
                 </td>
@@ -131,7 +147,7 @@ export function SuppliesTable({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(supply.id)}
+                      onClick={() => handleDelete(supply)}
                       disabled={isPending}
                       aria-label={`Borrar ${supply.name}`}
                       className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-danger hover:bg-danger/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
@@ -146,6 +162,16 @@ export function SuppliesTable({
         </tbody>
         </table>
       </div>
+
+      {inUse && (
+        <SupplyInUseDialog
+          supplyId={inUse.supplyId}
+          supplyName={inUse.supplyName}
+          kind={kind}
+          details={inUse.details}
+          onClose={() => setInUse(null)}
+        />
+      )}
     </div>
   );
 }

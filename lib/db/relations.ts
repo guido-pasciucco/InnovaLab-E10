@@ -2,17 +2,12 @@ import { relations } from "drizzle-orm";
 
 import {
   businesses,
+  presentationPackaging,
+  presentations,
   productIngredients,
   products,
 } from "./business/table";
-import {
-  calculations,
-  computedResults,
-  costingSetup,
-  pricingInputs,
-  scenarios,
-} from "./calculation/table";
-import { businessCostLines, calcCostLines } from "./costs/table";
+import { businessCostLines } from "./costs/table";
 import { profiles } from "./profile/table";
 import { supplies } from "./supplies/table";
 
@@ -24,7 +19,6 @@ import { supplies } from "./supplies/table";
 
 export const profilesRelations = relations(profiles, ({ many }) => ({
   businesses: many(businesses),
-  calculations: many(calculations),
   supplies: many(supplies),
 }));
 
@@ -35,7 +29,6 @@ export const businessesRelations = relations(businesses, ({ many, one }) => ({
   }),
   products: many(products),
   businessCostLines: many(businessCostLines),
-  calculations: many(calculations),
 }));
 
 export const productsRelations = relations(products, ({ many, one }) => ({
@@ -44,7 +37,7 @@ export const productsRelations = relations(products, ({ many, one }) => ({
     references: [businesses.id],
   }),
   ingredients: many(productIngredients),
-  calculations: many(calculations),
+  presentations: many(presentations),
 }));
 
 export const productIngredientsRelations = relations(
@@ -63,91 +56,32 @@ export const productIngredientsRelations = relations(
 
 export const businessCostLinesRelations = relations(
   businessCostLines,
-  ({ many, one }) => ({
+  ({ one }) => ({
     business: one(businesses, {
       fields: [businessCostLines.businessId],
       references: [businesses.id],
     }),
-    // Snapshot lines derived from this template.
-    calcCostLines: many(calcCostLines),
   }),
 );
 
-export const calculationsRelations = relations(
-  calculations,
-  ({ many, one }) => ({
-    user: one(profiles, {
-      fields: [calculations.userId],
-      references: [profiles.id],
-    }),
-    business: one(businesses, {
-      fields: [calculations.businessId],
-      references: [businesses.id],
-    }),
-    product: one(products, {
-      fields: [calculations.productId],
-      references: [products.id],
-    }),
-    // 1:1 children sharing the calculation PK.
-    costingSetup: one(costingSetup),
-    pricingInputs: one(pricingInputs),
-    scenarios: many(scenarios),
-    calcCostLines: many(calcCostLines),
-    computedResults: many(computedResults),
+export const presentationsRelations = relations(presentations, ({ many, one }) => ({
+  product: one(products, {
+    fields: [presentations.productId],
+    references: [products.id],
   }),
-);
-
-export const costingSetupRelations = relations(costingSetup, ({ one }) => ({
-  calculation: one(calculations, {
-    fields: [costingSetup.calculationId],
-    references: [calculations.id],
-  }),
+  packaging: many(presentationPackaging),
 }));
 
-export const pricingInputsRelations = relations(pricingInputs, ({ one }) => ({
-  calculation: one(calculations, {
-    fields: [pricingInputs.calculationId],
-    references: [calculations.id],
-  }),
-}));
-
-export const scenariosRelations = relations(scenarios, ({ many, one }) => ({
-  calculation: one(calculations, {
-    fields: [scenarios.calculationId],
-    references: [calculations.id],
-  }),
-  calcCostLines: many(calcCostLines),
-  computedResults: many(computedResults),
-}));
-
-export const calcCostLinesRelations = relations(calcCostLines, ({ one }) => ({
-  calculation: one(calculations, {
-    fields: [calcCostLines.calculationId],
-    references: [calculations.id],
-  }),
-  // Optional: lines can live at calculation level, outside any scenario.
-  scenario: one(scenarios, {
-    fields: [calcCostLines.scenarioId],
-    references: [scenarios.id],
-  }),
-  // Optional: paso 2 inserts the line without a catalog row (#176).
-  sourceBusinessCostLine: one(businessCostLines, {
-    fields: [calcCostLines.sourceBusinessCostId],
-    references: [businessCostLines.id],
-  }),
-}));
-
-export const computedResultsRelations = relations(
-  computedResults,
+export const presentationPackagingRelations = relations(
+  presentationPackaging,
   ({ one }) => ({
-    calculation: one(calculations, {
-      fields: [computedResults.calculationId],
-      references: [calculations.id],
+    presentation: one(presentations, {
+      fields: [presentationPackaging.presentationId],
+      references: [presentations.id],
     }),
-    // Optional: a result row can cover the whole calculation.
-    scenario: one(scenarios, {
-      fields: [computedResults.scenarioId],
-      references: [scenarios.id],
+    supply: one(supplies, {
+      fields: [presentationPackaging.supplyId],
+      references: [supplies.id],
     }),
   }),
 );
@@ -158,4 +92,5 @@ export const suppliesRelations = relations(supplies, ({ many, one }) => ({
     references: [profiles.id],
   }),
   ingredients: many(productIngredients),
+  packagingLines: many(presentationPackaging),
 }));

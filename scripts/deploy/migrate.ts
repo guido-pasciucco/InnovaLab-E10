@@ -3,9 +3,8 @@
 // drizzle-kit loads `.env` on its own and can end up migrating a different
 // database (e.g. the local one) while still reporting success.
 import { readFileSync } from "node:fs";
-import { drizzle } from "drizzle-orm/postgres-js";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
+import { migrateDatabase } from "./migrate-database";
 
 const url = process.env.DIRECT_URL;
 if (!url) {
@@ -33,7 +32,7 @@ function journalEntries(): { tag: string; when: number }[] {
 
 const client = postgres(url, { max: 1, onnotice: () => {} });
 try {
-  await migrate(drizzle(client), { migrationsFolder: MIGRATIONS_FOLDER });
+  await migrateDatabase(url, MIGRATIONS_FOLDER);
 
   const applied = new Set(
     (await client`select created_at from drizzle.__drizzle_migrations`).map(

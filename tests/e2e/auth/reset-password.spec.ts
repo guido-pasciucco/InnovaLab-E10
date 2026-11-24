@@ -58,9 +58,9 @@ test("a user sets a new password from the reset email", async ({
   // transient success message is not asserted (it races the redirect).
   await expect(page).toHaveURL("/login", { timeout: 10_000 });
   await loginPage.logIn({ email: user.email, password: newPassword });
-  // The login form pushes to /insumos; reaching it proves the new password
+  // The login form pushes to /inicio; reaching it proves the new password
   // works and the session cookie was set.
-  await expect(page).toHaveURL("/insumos");
+  await expect(page).toHaveURL("/inicio");
 });
 
 test("an unknown email gets the same neutral confirmation and no form", async ({
@@ -195,19 +195,36 @@ test("password rules, show/hide toggles and the confirm match are enforced", asy
   await expect(page).toHaveURL("/update-password");
 });
 
-test("submitting without a recovery session asks for a new link", async ({
+test("an anonymous visitor never sees the password form", async ({
   page,
+  resetPasswordPage,
   updatePasswordPage,
 }) => {
-  // Arrange: /update-password renders without a session; the Server Action
-  // must refuse to update a password for an anonymous caller.
-  await updatePasswordPage.goto();
+  // Arrange: no recovery session at all.
+  await page.goto("/update-password");
+
+  // Assert: the guard sends the visitor back to request a link, with the
+  // same message the Server Action used to show after a failed submit.
+  await expect(page).toHaveURL("/reset-password?error=AUTH_SESSION_MISSING");
+  await expect(resetPasswordPage.errorAlert).toHaveText(SESSION_MISSING_MESSAGE);
+  await expect(updatePasswordPage.heading).toHaveCount(0);
+});
+
+test("a session that expires after loading the form still rejects the submit", async ({
+  page,
+  user,
+  resetPasswordPage,
+  updatePasswordPage,
+}) => {
+  // Arrange: open a real recovery link, then lose the session before sending.
+  await openResetLink(page, resetPasswordPage, user);
   await expect(updatePasswordPage.heading).toBeVisible();
+  await page.context().clearCookies();
 
   // Act
   await updatePasswordPage.setPassword(faker.internet.password({ length: 16 }));
 
-  // Assert
+  // Assert: the action refuses the update and offers a new link in place.
   await expect(updatePasswordPage.errorAlert).toContainText(SESSION_MISSING_MESSAGE);
   await expect(updatePasswordPage.newLink).toBeVisible();
   await expect(updatePasswordPage.newLink).toHaveAttribute("href", "/reset-password");
@@ -235,18 +252,19 @@ test("the confirm route never redirects off-site", async ({ page }) => {
 });
 
 test("the dev-only error preview control never ships in production", async ({
-  page,
+  authedPage,
   resetPasswordPage,
   updatePasswordPage,
 }) => {
   // E2E runs against a production build (NODE_ENV=production), so the QA
   // control must not exist in the DOM of either recovery screen.
   await resetPasswordPage.goto();
-  await expect(page.getByRole("button", { name: /errores \(demo\)/i })).toHaveCount(0);
-  await expect(page.getByRole("group", { name: "Escenarios de error (demo)" })).toHaveCount(0);
+  await expect(authedPage.getByRole("button", { name: /errores \(demo\)/i })).toHaveCount(0);
+  await expect(authedPage.getByRole("group", { name: "Escenarios de error (demo)" })).toHaveCount(0);
 
-  await updatePasswordPage.goto();
+  // The password screen is guarded now, so enter with a session.
+  await authedPage.goto("/update-password");
   await expect(updatePasswordPage.heading).toBeVisible();
-  await expect(page.getByRole("button", { name: /errores \(demo\)/i })).toHaveCount(0);
-  await expect(page.getByRole("group", { name: "Escenarios de error (demo)" })).toHaveCount(0);
+  await expect(authedPage.getByRole("button", { name: /errores \(demo\)/i })).toHaveCount(0);
+  await expect(authedPage.getByRole("group", { name: "Escenarios de error (demo)" })).toHaveCount(0);
 });

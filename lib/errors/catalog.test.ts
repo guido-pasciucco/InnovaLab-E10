@@ -56,6 +56,7 @@ describe("ERROR_CATALOG", () => {
     expect(ERROR_CATALOG.AUTH_EMAIL_TAKEN).toMatchObject({ status: 409 });
     expect(ERROR_CATALOG.AUTH_SIGNOUT_FAILED).toMatchObject({ status: 500 });
     expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 422 });
+    expect(ERROR_CATALOG.KNOWLEDGE_UNAVAILABLE).toMatchObject({ status: 503, logLevel: "error" });
   });
 
   it("exposes the product and supply-in-use codes", () => {
@@ -63,13 +64,28 @@ describe("ERROR_CATALOG", () => {
       status: 404,
       logLevel: "silent",
     });
+    expect(ERROR_CATALOG.PRODUCT_RECIPE_NEEDS_INGREDIENT).toMatchObject({
+      status: 422,
+      logLevel: "silent",
+    });
     expect(ERROR_CATALOG.SUPPLY_IN_USE).toMatchObject({
       status: 409,
       logLevel: "silent",
-      message: expect.stringContaining("todas las recetas"),
+      message: expect.stringContaining("todas las recetas y presentaciones"),
     });
     expect(ERROR_CATALOG.SUPPLY_NOT_INGREDIENT).toMatchObject({
       status: 422,
+      logLevel: "silent",
+    });
+  });
+
+  it("exposes the presentation codes", () => {
+    expect(ERROR_CATALOG.SUPPLY_NOT_PACKAGING).toMatchObject({
+      status: 422,
+      logLevel: "silent",
+    });
+    expect(ERROR_CATALOG.PRESENTATION_NOT_FOUND).toMatchObject({
+      status: 404,
       logLevel: "silent",
     });
   });

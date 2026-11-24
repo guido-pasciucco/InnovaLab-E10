@@ -3,6 +3,7 @@ import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
 import {
   adaptCatalogVariableCosts,
+  type CatalogPresentation,
   type CatalogSupply,
 } from "@/lib/calc/adaptCatalogVariableCosts";
 import { calculateVariableCosts } from "@/lib/calc/calculateVariableCosts";
@@ -27,7 +28,7 @@ import type {
 import {
   getSupplyUnit,
   isRecipeUnitAllowed,
-  resolveSupplyFamily,
+  getSupplyUnitFamily,
 } from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
 import { getOrCreateDefaultBusiness, type Tx } from "./calculations";
@@ -47,7 +48,6 @@ type RecipeInput = { supplyId: string; quantity: string; unit: string };
 type RecipeSupply = {
   name: string;
   purchaseUnit: string;
-  minimumUnit: string;
 };
 
 type ResolvedRecipeLine = RecipeInput;
@@ -73,10 +73,23 @@ type PersistedVariableCosts = {
   variableCostCalculatedAt: Date | null;
 };
 
-/** Computes a current cost from source records without using rounded output. */
+/** A presentation as the cost engine reads it: units plus packaging lines. */
+export type PresentationForCost = {
+  id: string;
+  name: string;
+  unitsPerPresentation: string;
+  packaging: { supplyId: string; quantity: string; unit: string }[];
+};
+
+/**
+ * Computes a current cost from source records without using rounded output.
+ * Presentations are optional: the persisted product cost never includes them,
+ * while the P12 view (#298) passes them to get each presentation's cost.
+ */
 export function deriveProductVariableCosts(
   product: Pick<ProductItem, "yieldQuantity" | "recipe">,
   catalog: readonly CatalogSupply[],
+  presentations: readonly PresentationForCost[] = [],
 ): ProductVariableCostsState {
   if (product.yieldQuantity === null) {
     return { variableCosts: null, variableCostsUnavailableCode: "MISSING_YIELD" };
@@ -96,7 +109,8 @@ export function deriveProductVariableCosts(
     );
     if (quantity === null) return null;
 
-    return { ...ingredient, quantity, unit: supply.minimumUnit };
+    // The converted quantity is in the minimum unit of the line's catalog unit.
+    return { ...ingredient, quantity, unit: getSupplyUnit(ingredient.unit)!.minimumUnit };
   });
 
   if (normalizedRecipe.some((ingredient) => ingredient === null)) {
@@ -105,9 +119,39 @@ export function deriveProductVariableCosts(
 
   const recipeForCost = normalizedRecipe as ProductItem["recipe"];
 
+  // Packaging lines are converted to the packaging's minimum unit, exactly like
+  // recipe lines (2 docenas → 24 unidades).
+  const presentationsForCost = presentations.map((presentation) => ({
+    ...presentation,
+    packaging: presentation.packaging.map((line) => {
+      const supply = catalogById.get(line.supplyId);
+      if (!supply) return line;
+
+      const quantity = convertRecipeQuantityToMinimumUnits(line.quantity, line.unit);
+      if (quantity === null) return null;
+
+      return { ...line, quantity, unit: getSupplyUnit(line.unit)!.minimumUnit };
+    }),
+  }));
+
+  if (
+    presentationsForCost.some((presentation) =>
+      presentation.packaging.some((line) => line === null),
+    )
+  ) {
+    return { variableCosts: null, variableCostsUnavailableCode: "UNSUPPORTED_RECIPE_UNIT" };
+  }
+
+  const usedSupplyIds = new Set([
+    ...product.recipe.map((ingredient) => ingredient.supplyId),
+    ...presentations.flatMap((presentation) =>
+      presentation.packaging.map((line) => line.supplyId),
+    ),
+  ]);
+
   const adapted = adaptCatalogVariableCosts({
-    catalog: product.recipe.flatMap((ingredient) => {
-      const supply = catalogById.get(ingredient.supplyId);
+    catalog: [...usedSupplyIds].flatMap((supplyId) => {
+      const supply = catalogById.get(supplyId);
       return supply ? [supply] : [];
     }),
     recipe: {
@@ -118,7 +162,7 @@ export function deriveProductVariableCosts(
         unit: ingredient.unit,
       })),
     },
-    presentations: [],
+    presentations: presentationsForCost as CatalogPresentation[],
   });
 
   if (!adapted.ok) {
@@ -166,7 +210,7 @@ function persistenceFromVariableCosts(
 // numeric(14,4) always returns four decimals ("250.0000"). The recipe form
 // accepts up to four and must be able to round-trip the saved value, so the API
 // trims trailing zeros without changing the stored precision.
-function toFormQuantity(value: string): string {
+export function toFormQuantity(value: string): string {
   if (!value.includes(".")) return value;
 
   const trimmed = value.replace(/0+$/, "").replace(/\.$/, "");
@@ -300,7 +344,6 @@ export async function recalculatePersistedProductVariableCostsTx(
       {
         name: supply.name,
         purchaseUnit: supply.purchaseUnit,
-        minimumUnit: supply.minimumUnit,
       },
     ]),
   );
@@ -345,7 +388,6 @@ async function resolveRecipeSupplies(
       name: supplies.name,
       kind: supplies.kind,
       purchaseUnit: supplies.purchaseUnit,
-      minimumUnit: supplies.minimumUnit,
     })
     .from(supplies)
     .where(and(eq(supplies.userId, userId), inArray(supplies.id, ids)));
@@ -364,7 +406,6 @@ async function resolveRecipeSupplies(
       {
         name: row.name,
         purchaseUnit: row.purchaseUnit,
-        minimumUnit: row.minimumUnit,
       },
     ]),
   );
@@ -377,9 +418,8 @@ function invalidRecipeUnit(): never {
   });
 }
 
-// Keeps catalog units canonical and preserves a legacy unit only when the
-// supply itself predates the catalog and the line repeats its stored minimum
-// unit. Mixing families (kg → L) and arbitrary free text are rejected.
+// Keeps catalog units canonical and rejects mixing families (kg → L), units
+// outside the catalog and supplies whose own unit is outside the catalog.
 function resolveRecipeUnits(
   recipe: readonly RecipeInput[],
   suppliesById: Map<string, RecipeSupply>,
@@ -391,22 +431,11 @@ function resolveRecipeUnits(
       throw new AppError("SUPPLY_NOT_FOUND");
     }
 
-    const unit = getSupplyUnit(item.unit);
-    const family = resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit);
-
-    if (unit) {
-      if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
-        invalidRecipeUnit();
-      }
-
-      return { ...item, unit: unit.value };
-    }
-
-    if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
+    if (!isRecipeUnitAllowed(getSupplyUnitFamily(supply.purchaseUnit), item.unit)) {
       invalidRecipeUnit();
     }
 
-    return { ...item, unit: supply.minimumUnit };
+    return { ...item, unit: getSupplyUnit(item.unit)!.value };
   });
 }
 
@@ -664,6 +693,37 @@ export async function updateProductService(
     );
     return { ...item, ...variableCosts };
   });
+}
+
+// Used by the supply-in-use dialog: drop one ingredient from a recipe without
+// making the user rewrite the whole product. It reuses the normal update path
+// so locking, unit resolution and CVU recalculation stay in one place.
+/** @throws AppError PRODUCT_NOT_FOUND | PRODUCT_RECIPE_NEEDS_INGREDIENT */
+export async function removeSupplyFromProductService(
+  userId: VerifiedUserId,
+  productId: string,
+  supplyId: string,
+  db: Db = getDrizzleClient(),
+): Promise<ProductItem | null> {
+  const product = await getProductService(userId, productId, db);
+  if (!product) return null;
+
+  const recipe = product.recipe.filter((item) => item.supplyId !== supplyId);
+  if (recipe.length === product.recipe.length) return null;
+  if (recipe.length === 0) throw new AppError("PRODUCT_RECIPE_NEEDS_INGREDIENT");
+
+  // Legacy rows may still have a null yield; the documented default is 1.
+  return updateProductService(
+    userId,
+    productId,
+    {
+      name: product.name,
+      monthlyCapacity: product.monthlyCapacity,
+      yieldQuantity: product.yieldQuantity ?? "1",
+      recipe,
+    },
+    db,
+  );
 }
 
 // Soft delete: the product disappears from the catalog but keeps its recipe

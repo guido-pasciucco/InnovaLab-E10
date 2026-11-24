@@ -147,7 +147,7 @@ export function StepsSection() {
 
                 {step.featured ? (
                   <Link
-                    href="/paso-1"
+                    href="/products"
                     className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-on-brand-accent hover:text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
                   >
                     Calcular mi equilibrio
@@ -157,7 +157,7 @@ export function StepsSection() {
 
                 {step.wide ? (
                   <Link
-                    href="/paso-1"
+                    href="/products"
                     className={`${primaryButton} shrink-0 self-start sm:self-center`}
                   >
                     Empezá el recorrido

@@ -2,8 +2,15 @@ import "server-only";
 
 import { and, eq, inArray } from "drizzle-orm";
 
-import { businesses, productIngredients, products } from "@/lib/db/business/table";
+import {
+  businesses,
+  presentationPackaging,
+  presentations,
+  productIngredients,
+  products,
+} from "@/lib/db/business/table";
 import { supplies } from "@/lib/db/supplies/table";
+import type { SupplyUsage } from "@/lib/schemas/supplies/supply-usage";
 import {
   createSupplyInputSchema,
   type SupplyRow,
@@ -11,13 +18,9 @@ import {
 } from "@/lib/db/supplies/validation";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
-import { SUPPLY_UNIT_CATALOG_MESSAGE } from "@/lib/schemas/supplies/fields";
-import {
-  getSupplyUnit,
-  resolveSupplyUnits,
-  resolveSupplyUnitsForUpdate,
-} from "@/lib/schemas/supplies/units";
+import { getSupplyUnit, getSupplyUnitFamily } from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
+import { isSupplyUsedByPresentation } from "./presentations";
 import { recalculatePersistedProductVariableCostsTx } from "./products";
 import {
   lockVariableCostSupplies,
@@ -29,6 +32,12 @@ import {
 // form contract. Owner scoping: every query and write filters by the caller's
 // userId (VerifiedUserId, ADR 03). The service throws (ZodError, AppError);
 // doors translate. No try/catch.
+
+// The gate already rejected units outside the catalog; this stores the
+// canonical spelling ("kilo" → "kg").
+function canonicalPurchaseUnit(purchaseUnit: string): string {
+  return getSupplyUnit(purchaseUnit)?.value ?? purchaseUnit;
+}
 
 export async function listSuppliesService(
   userId: VerifiedUserId,
@@ -48,20 +57,6 @@ export async function createSupplyService(
   db: Db = getDrizzleClient(),
 ): Promise<SupplyRow> {
   const supply = createSupplyInputSchema.parse(input);
-  const unit = getSupplyUnit(supply.purchaseUnit);
-  const purchaseUnit =
-    supply.kind === "supply" ? (unit?.value ?? supply.purchaseUnit) : supply.purchaseUnit;
-  const units = resolveSupplyUnits(supply.kind, purchaseUnit, {
-    minimumUnit: supply.minimumUnit,
-    conversionFactor: supply.conversionFactor,
-  });
-
-  if (!units) {
-    throw new AppError("VALIDATION", {
-      formErrors: [],
-      fieldErrors: { purchaseUnit: [SUPPLY_UNIT_CATALOG_MESSAGE] },
-    });
-  }
 
   const [row] = await db
     .insert(supplies)
@@ -71,9 +66,7 @@ export async function createSupplyService(
       name: supply.name,
       purchasePrice: supply.purchasePrice,
       purchaseQuantity: supply.purchaseQuantity,
-      purchaseUnit,
-      minimumUnit: units.minimumUnit,
-      conversionFactor: units.conversionFactor,
+      purchaseUnit: canonicalPurchaseUnit(supply.purchaseUnit),
     })
     .returning();
 
@@ -138,23 +131,20 @@ export async function updateSupplyService(
       .limit(1);
     if (!existing) return null;
 
-    const units = resolveSupplyUnitsForUpdate(existing, supply);
-    if (!units) {
-      throw new AppError("VALIDATION", {
-        formErrors: [],
-        fieldErrors: { purchaseUnit: [SUPPLY_UNIT_CATALOG_MESSAGE] },
-      });
-    }
-
+    // Another family (kg → L) would invalidate saved recipe and packaging
+    // quantities; another unit of the same family (kg → g) would not.
     const changesRecipeMeaning =
-      supply.kind !== existing.kind || units.minimumUnit !== existing.minimumUnit;
+      supply.kind !== existing.kind ||
+      getSupplyUnitFamily(supply.purchaseUnit) !== getSupplyUnitFamily(existing.purchaseUnit);
     if (changesRecipeMeaning) {
       const [used] = await tx
         .select({ id: productIngredients.id })
         .from(productIngredients)
         .where(eq(productIngredients.supplyId, supplyId))
         .limit(1);
-      if (used) throw new AppError("SUPPLY_IN_USE");
+      if (used || (await isSupplyUsedByPresentation(tx, supplyId))) {
+        throw new AppError("SUPPLY_IN_USE");
+      }
     }
 
     if (affectedProductIds.length > 0) {
@@ -173,9 +163,7 @@ export async function updateSupplyService(
         name: supply.name,
         purchasePrice: supply.purchasePrice,
         purchaseQuantity: supply.purchaseQuantity,
-        purchaseUnit: units.purchaseUnit,
-        minimumUnit: units.minimumUnit,
-        conversionFactor: units.conversionFactor,
+        purchaseUnit: canonicalPurchaseUnit(supply.purchaseUnit),
         updatedAt: new Date(),
       })
       .where(and(eq(supplies.id, supplyId), eq(supplies.userId, userId)))
@@ -191,6 +179,80 @@ export async function updateSupplyService(
   });
 }
 
+// Products and presentations that still need the supply, so the catalog can
+// say exactly what breaks. Owner-scoped: a foreign product never shows up here.
+async function getSupplyUsages(
+  userId: VerifiedUserId,
+  supplyId: string,
+  db: Db,
+): Promise<SupplyUsage[]> {
+  const recipeRows = await db
+    .select({
+      productId: products.id,
+      productName: products.name,
+      isActive: products.isActive,
+    })
+    .from(productIngredients)
+    .innerJoin(products, eq(productIngredients.productId, products.id))
+    .innerJoin(businesses, eq(products.businessId, businesses.id))
+    .where(
+      and(
+        eq(productIngredients.supplyId, supplyId),
+        eq(businesses.ownerUserId, userId),
+      ),
+    )
+    .orderBy(products.name, products.id);
+
+  const productIds = [...new Set(recipeRows.map((row) => row.productId))];
+  const ingredientRows =
+    productIds.length === 0
+      ? []
+      : await db
+          .select({ productId: productIngredients.productId })
+          .from(productIngredients)
+          .where(inArray(productIngredients.productId, productIds));
+  const ingredientCounts = new Map<string, number>();
+  for (const row of ingredientRows) {
+    ingredientCounts.set(row.productId, (ingredientCounts.get(row.productId) ?? 0) + 1);
+  }
+
+  const presentationRows = await db
+    .select({
+      productId: products.id,
+      productName: products.name,
+      presentationId: presentations.id,
+      presentationName: presentations.name,
+      isActive: products.isActive,
+    })
+    .from(presentationPackaging)
+    .innerJoin(presentations, eq(presentationPackaging.presentationId, presentations.id))
+    .innerJoin(products, eq(presentations.productId, products.id))
+    .innerJoin(businesses, eq(products.businessId, businesses.id))
+    .where(
+      and(eq(presentationPackaging.supplyId, supplyId), eq(businesses.ownerUserId, userId)),
+    )
+    .orderBy(products.name, presentations.name);
+
+  return [
+    ...recipeRows.map((row) => ({
+      kind: "recipe" as const,
+      productId: row.productId,
+      productName: row.productName,
+      ingredientCount: ingredientCounts.get(row.productId) ?? 1,
+      isActive: row.isActive,
+    })),
+    ...presentationRows.map((row) => ({
+      kind: "presentation" as const,
+      productId: row.productId,
+      productName: row.productName,
+      presentationId: row.presentationId,
+      presentationName: row.presentationName,
+      isActive: row.isActive,
+    })),
+  ];
+}
+
+/** @throws AppError SUPPLY_IN_USE with the usage list in `details`. */
 export async function deleteSupplyService(
   userId: VerifiedUserId,
   supplyId: string,
@@ -209,17 +271,13 @@ export async function deleteSupplyService(
     return false;
   }
 
-  // A recipe owns the quantity, not the supply: deleting the supply would
-  // leave the recipe pointing at nothing. The service returns the friendly
-  // SUPPLY_IN_USE code; the deferrable FK is the last line of defense.
-  const [used] = await db
-    .select({ id: productIngredients.id })
-    .from(productIngredients)
-    .where(eq(productIngredients.supplyId, supplyId))
-    .limit(1);
-
-  if (used) {
-    throw new AppError("SUPPLY_IN_USE");
+  // A recipe or a presentation owns the quantity, not the supply: deleting it
+  // would leave them pointing at nothing. SUPPLY_IN_USE carries the exact list
+  // so the door can explain the impact; the deferrable FKs are the last line of
+  // defense.
+  const usages = await getSupplyUsages(userId, supplyId, db);
+  if (usages.length > 0) {
+    throw new AppError("SUPPLY_IN_USE", { usages });
   }
 
   const [row] = await db

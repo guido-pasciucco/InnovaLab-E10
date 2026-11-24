@@ -1,5 +1,3 @@
-import type { CostLine } from "@/components/calculator/cost-line-row-item";
-
 // Pure helpers for the period expenses screen (#243). Kept apart from the
 // component so the mapping and the month label are testable without rendering.
 
@@ -42,14 +40,4 @@ export function formatPeriodLabel(period: string): string {
   if (!match) return period;
 
   return `${MONTHS[Number(match[2]) - 1]} de ${match[1]}`;
-}
-
-// The line table is shared with the calculator steps, whose column is
-// `amount`. The period expenses service names the column `amountPeriod`.
-export function toCostLine(line: PeriodCostLineView): CostLine {
-  return {
-    id: line.id,
-    concept: line.concept,
-    amount: line.amountPeriod,
-  };
 }

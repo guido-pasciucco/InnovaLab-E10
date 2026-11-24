@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { FlowSwitch } from "@/components/flow-switcher";
-
 import { NAV_SECTIONS, sectionFromPathname } from "./nav-sections";
 
-// Flow 1 navbar: the section menu (catalog, tenders) and the temporary flow
-// switcher. The sidebar lists the pages of the section chosen here.
+// Section menu (catalog, tenders). The sidebar lists the pages of the
+// section chosen here.
 export function AppNavbar() {
   const pathname = usePathname();
   const current = sectionFromPathname(pathname);
@@ -37,7 +35,6 @@ export function AppNavbar() {
           })}
         </ul>
       </nav>
-      <FlowSwitch current={1} />
     </header>
   );
 }

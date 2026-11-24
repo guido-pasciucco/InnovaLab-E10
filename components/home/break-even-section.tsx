@@ -35,7 +35,7 @@ export function BreakEvenSection() {
           </ul>
 
           <Link
-            href="/paso-1"
+            href="/products"
             className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-link hover:text-action-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             Calculá tu punto de equilibrio

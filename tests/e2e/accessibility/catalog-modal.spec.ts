@@ -3,7 +3,7 @@ import { expect, test } from "../fixtures";
 test("CatalogModal atrapa el foco y lo restituye al cerrar", async ({
   authedPage,
 }) => {
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   const trigger = authedPage.getByRole("button", { name: "+ Nuevo" });
   await trigger.click();
 
@@ -30,4 +30,27 @@ test("CatalogModal atrapa el foco y lo restituye al cerrar", async ({
   await authedPage.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
+});
+
+test("el modal de Gastos del período cierra con Escape y con el backdrop", async ({
+  authedPage,
+}) => {
+  await authedPage.goto("/period-costs");
+  const trigger = authedPage.getByRole("button", { name: "+ Nuevo" });
+  await trigger.click();
+
+  const dialog = authedPage.getByRole("dialog", {
+    name: "Nuevo gasto del período",
+  });
+  await expect(dialog).toBeVisible();
+  await expect(authedPage.getByLabel("Concepto", { exact: true })).toBeFocused();
+
+  await authedPage.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+
+  await trigger.click();
+  await expect(dialog).toBeVisible();
+  await authedPage.mouse.click(5, 5);
+  await expect(dialog).toHaveCount(0);
 });

@@ -1,6 +1,6 @@
-import { Gavel, Package, ShoppingBasket, Truck, type LucideIcon } from "lucide-react";
+import { Calculator, Gavel, Home, Package, ShoppingBasket, Truck, Wallet, type LucideIcon } from "lucide-react";
 
-// Flow 1 navigation: the navbar switches between sections and the sidebar
+// App navigation: the navbar switches between sections and the sidebar
 // lists the pages of the current section.
 
 export type NavItem = { href: string; label: string; icon: LucideIcon };
@@ -10,10 +10,13 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   {
     id: "catalogo",
     label: "Catálogo",
-    href: "/insumos",
+    href: "/supplies",
     items: [
-      { href: "/insumos", label: "Insumos", icon: ShoppingBasket },
+      { href: "/inicio", label: "Inicio", icon: Home },
+      { href: "/supplies", label: "Insumos", icon: ShoppingBasket },
       { href: "/products", label: "Productos", icon: Package },
+      { href: "/period-costs", label: "Gastos del período", icon: Wallet },
+      { href: "/total-costs", label: "Costo total", icon: Calculator },
     ],
   },
   {
@@ -31,7 +34,7 @@ export function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-// The section a flow 1 path belongs to; the first one by default.
+// The section a path belongs to; the first one by default.
 export function sectionFromPathname(pathname: string): NavSection {
   return (
     NAV_SECTIONS.find((section) => section.items.some((item) => isActivePath(pathname, item.href))) ??

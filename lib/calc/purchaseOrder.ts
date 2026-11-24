@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 
-// Choices and purchase orders of supply tenders (docs/licitaciones RN-14,
+// Choices and purchase orders of supply tenders (docs/flujos/09-licitaciones.md RN-14,
 // RN-15). Pure.
 
 export type AwardRecord = {

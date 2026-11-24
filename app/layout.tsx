@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { HelpWidget } from "@/components/help/help-widget";
 import { isHelpEnabled } from "@/lib/help/config";
-import { FlowSwitcher } from "@/components/flow-switcher";
 import { getOptionalUser } from "@/lib/auth/optional-user";
 import "./globals.css";
 
@@ -79,8 +78,6 @@ export default async function RootLayout({
 
         {/* Wrapper presentacional para evitar duplicar <main> */}
         <div className="relative z-10 flex flex-col min-h-full flex-1">
-          {/* TEMPORARY: flow 1 / flow 2 switcher, remove with flow 2. */}
-          <FlowSwitcher />
           {children}
           <HelpWidget enabled={helpEnabled} userId={user?.id ?? null} />
         </div>
