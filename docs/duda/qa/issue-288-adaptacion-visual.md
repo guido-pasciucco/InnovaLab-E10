@@ -21,8 +21,9 @@ verificación visual. No cambia cálculos, unidades, rendimiento ni persistencia
 | En móvil, nombre y capacidad seguían en dos columnas: `FormGrid` ya trae `grid-cols-2` y la clase `grid-cols-1` no podía ganar. | `FormGrid` acepta `stackOnMobile` (por defecto `false`, así Insumos no cambia). El formulario lo usa para una columna en móvil y dos desde `sm`. |
 | En escritorio, el rótulo largo de capacidad desalineaba los inputs. | Se reserva el alto de dos líneas para los rótulos desde `sm`, sin cambiar los textos. |
 | Al editar, el importe del producto guardado parecía ya reflejar cambios sin guardar. | Si el formulario está sucio, el bloque pasa a `Último resultado guardado / Cambios sin guardar` y explica que se recalcula al guardar. El motor no se ejecuta en el cliente. |
+| **QA-297-01:** al modificar solo el rendimiento, el importe guardado seguía rotulado como vigente. | `setValue("yieldQuantity", …)` no marcaba `isDirty` (por defecto `shouldDirty: false`). Se agregó `shouldDirty: true` junto a `shouldValidate`, sin tocar el motor. El caso quedó cubierto por un test e2e específico. |
 
-Estos tres puntos quedan cubiertos por `tests/e2e/products/visual-adaptation.spec.ts`.
+Estos puntos quedan cubiertos por `tests/e2e/products/visual-adaptation.spec.ts`.
 
 ## Criterios de revisión
 
@@ -53,6 +54,6 @@ Para regenerarlas: `bun run dev` y recorrer `/products` → `+ Nuevo` / `Ver rec
 | `bun run lint` | OK, 3 warnings preexistentes en `app/layout.tsx` |
 | `bun run lint:e2e` | OK |
 | `bun run test` | 784 tests OK |
-| `bunx playwright test` | 55/55 e2e OK (incluye Productos, Receta, Insumos, Packaging, Gastos del período, Presentaciones y accesibilidad del modal) |
+| `bunx playwright test` | 56/56 e2e OK (incluye Productos, Receta, Insumos, Packaging, Gastos del período, Presentaciones y accesibilidad del modal) |
 
 El merge fue normal (sin rebase ni force-push). Se preservaron los defaults de rendimiento y el catálogo de unidades de `main`, y su enlace a presentaciones (P12). El e2e usa la ruta canónica `/supplies`.

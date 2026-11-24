@@ -122,3 +122,36 @@ test("el formulario es responsive, alinea los campos y no anticipa el costo reca
     .click();
   expect(await savedUnitCost(authedPage)).not.toBe(savedAmount);
 });
+
+// QA-297-01: yieldQuantity goes through setValue(), which does not mark the
+// form dirty unless shouldDirty is requested. Changing only the yield must
+// still label the previous calculation as saved.
+test("marca el costo guardado como desactualizado al cambiar solo el rendimiento", async ({
+  authedPage,
+}) => {
+  await authedPage.setViewportSize({ width: 1440, height: 1100 });
+  await createSupply(authedPage, "Harina de prueba", "10000");
+
+  await authedPage.goto("/products");
+  await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
+  const create = authedPage.getByRole("dialog", { name: "Nuevo producto" });
+  await create.getByLabel("Nombre del producto").fill("Pan de prueba");
+  await fillRow(create, 0, "Harina de prueba", "250");
+  await create.getByLabel(/obtenés con esta receta/i).fill("10");
+  await create.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(
+    authedPage
+      .getByRole("status")
+      .filter({ hasText: "Producto guardado en tu catálogo." }),
+  ).toBeVisible();
+
+  await authedPage.getByRole("button", { name: "Editar Pan de prueba" }).click();
+  const edit = authedPage.getByRole("dialog", { name: "Editar producto" });
+  await edit.getByLabel(/obtenés con esta receta/i).fill("20");
+
+  const result = authedPage.getByRole("region", {
+    name: "Costo variable calculado",
+  });
+  await expect(result).toContainText("Último resultado guardado");
+  await expect(result).toContainText("Cambios sin guardar");
+});

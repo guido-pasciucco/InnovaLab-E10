@@ -366,7 +366,14 @@ export function ProductForm({
       <RecipeYieldField
         productName={productName}
         value={yieldQuantity}
-        onChange={(value) => setValue("yieldQuantity", value, { shouldValidate: true })}
+        onChange={(value) =>
+          setValue("yieldQuantity", value, {
+            shouldValidate: true,
+            // QA-297-01: setValue does not mark the form dirty by default, so
+            // changing only the yield left the saved cost labelled as current.
+            shouldDirty: true,
+          })
+        }
         error={errors.yieldQuantity?.message}
         disabled={isPending}
       />
