@@ -19,8 +19,6 @@ const packagingInput = {
   purchasePrice: "5000.00",
   purchaseQuantity: "50",
   purchaseUnit: "unidad",
-  minimumUnit: "unidad",
-  conversionFactor: "1",
 } as const;
 
 const supplyInput = {
@@ -29,8 +27,6 @@ const supplyInput = {
   purchasePrice: "18750.00",
   purchaseQuantity: "25",
   purchaseUnit: "kg",
-  minimumUnit: "g",
-  conversionFactor: "1000",
 } as const;
 
 let db: Db;

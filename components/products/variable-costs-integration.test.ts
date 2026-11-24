@@ -18,8 +18,6 @@ const source: CatalogVariableCostsSource = {
       purchasePrice: "12.00",
       purchaseQuantity: "2",
       purchaseUnit: "kg",
-      minimumUnit: "g",
-      conversionFactor: "1000",
     },
     {
       id: "sugar",
@@ -27,8 +25,6 @@ const source: CatalogVariableCostsSource = {
       purchasePrice: "6.00",
       purchaseQuantity: "1000",
       purchaseUnit: "g",
-      minimumUnit: "g",
-      conversionFactor: "1",
     },
     {
       id: "box",
@@ -36,8 +32,6 @@ const source: CatalogVariableCostsSource = {
       purchasePrice: "1.00",
       purchaseQuantity: "200",
       purchaseUnit: "unidad",
-      minimumUnit: "unidad",
-      conversionFactor: "1",
     },
   ],
   recipe: {
@@ -94,7 +88,7 @@ describe("variable-costs catalog integration", () => {
   it("preserves a recurring unit cost as an exact JSON-safe fraction instead of rebuilding from $0.33", () => {
     const result = calculate({
       ...source,
-      catalog: [{ ...source.catalog[0]!, purchasePrice: "1", purchaseQuantity: "1", purchaseUnit: "unidad", minimumUnit: "unidad", conversionFactor: "1" }],
+      catalog: [{ ...source.catalog[0]!, purchasePrice: "1", purchaseQuantity: "1", purchaseUnit: "unidad" }],
       recipe: { yieldQuantity: "3", ingredients: [{ supplyId: "flour", quantity: "1", unit: "unidad" }] },
       presentations: [{ id: "box-3", name: "Caja x3", unitsPerPresentation: "3" }],
     });
@@ -131,7 +125,7 @@ describe("variable-costs catalog integration", () => {
     const result = calculate({
       ...source,
       catalog: [
-        { ...source.catalog[0]!, purchasePrice: "10", purchaseQuantity: "1", purchaseUnit: "unidad", minimumUnit: "unidad", conversionFactor: "1" },
+        { ...source.catalog[0]!, purchasePrice: "10", purchaseQuantity: "1", purchaseUnit: "unidad" },
         { ...source.catalog[2]!, id: "box-a", purchasePrice: price, purchaseQuantity: "1" },
         { ...source.catalog[2]!, id: "box-b", purchasePrice: price, purchaseQuantity: "1" },
       ],

@@ -28,7 +28,7 @@ import type {
 import {
   getSupplyUnit,
   isRecipeUnitAllowed,
-  resolveSupplyFamily,
+  getSupplyUnitFamily,
 } from "@/lib/schemas/supplies/units";
 import type { VerifiedUserId } from "@/lib/services/auth";
 import { getOrCreateDefaultBusiness, type Tx } from "./calculations";
@@ -48,7 +48,6 @@ type RecipeInput = { supplyId: string; quantity: string; unit: string };
 type RecipeSupply = {
   name: string;
   purchaseUnit: string;
-  minimumUnit: string;
 };
 
 type ResolvedRecipeLine = RecipeInput;
@@ -110,7 +109,8 @@ export function deriveProductVariableCosts(
     );
     if (quantity === null) return null;
 
-    return { ...ingredient, quantity, unit: supply.minimumUnit };
+    // The converted quantity is in the minimum unit of the line's catalog unit.
+    return { ...ingredient, quantity, unit: getSupplyUnit(ingredient.unit)!.minimumUnit };
   });
 
   if (normalizedRecipe.some((ingredient) => ingredient === null)) {
@@ -130,7 +130,7 @@ export function deriveProductVariableCosts(
       const quantity = convertRecipeQuantityToMinimumUnits(line.quantity, line.unit);
       if (quantity === null) return null;
 
-      return { ...line, quantity, unit: supply.minimumUnit };
+      return { ...line, quantity, unit: getSupplyUnit(line.unit)!.minimumUnit };
     }),
   }));
 
@@ -344,7 +344,6 @@ export async function recalculatePersistedProductVariableCostsTx(
       {
         name: supply.name,
         purchaseUnit: supply.purchaseUnit,
-        minimumUnit: supply.minimumUnit,
       },
     ]),
   );
@@ -389,7 +388,6 @@ async function resolveRecipeSupplies(
       name: supplies.name,
       kind: supplies.kind,
       purchaseUnit: supplies.purchaseUnit,
-      minimumUnit: supplies.minimumUnit,
     })
     .from(supplies)
     .where(and(eq(supplies.userId, userId), inArray(supplies.id, ids)));
@@ -408,7 +406,6 @@ async function resolveRecipeSupplies(
       {
         name: row.name,
         purchaseUnit: row.purchaseUnit,
-        minimumUnit: row.minimumUnit,
       },
     ]),
   );
@@ -421,9 +418,8 @@ function invalidRecipeUnit(): never {
   });
 }
 
-// Keeps catalog units canonical and preserves a legacy unit only when the
-// supply itself predates the catalog and the line repeats its stored minimum
-// unit. Mixing families (kg → L) and arbitrary free text are rejected.
+// Keeps catalog units canonical and rejects mixing families (kg → L), units
+// outside the catalog and supplies whose own unit is outside the catalog.
 function resolveRecipeUnits(
   recipe: readonly RecipeInput[],
   suppliesById: Map<string, RecipeSupply>,
@@ -435,22 +431,11 @@ function resolveRecipeUnits(
       throw new AppError("SUPPLY_NOT_FOUND");
     }
 
-    const unit = getSupplyUnit(item.unit);
-    const family = resolveSupplyFamily(supply.purchaseUnit, supply.minimumUnit);
-
-    if (unit) {
-      if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
-        invalidRecipeUnit();
-      }
-
-      return { ...item, unit: unit.value };
-    }
-
-    if (!isRecipeUnitAllowed({ family, minimumUnit: supply.minimumUnit }, item.unit)) {
+    if (!isRecipeUnitAllowed(getSupplyUnitFamily(supply.purchaseUnit), item.unit)) {
       invalidRecipeUnit();
     }
 
-    return { ...item, unit: supply.minimumUnit };
+    return { ...item, unit: getSupplyUnit(item.unit)!.value };
   });
 }
 

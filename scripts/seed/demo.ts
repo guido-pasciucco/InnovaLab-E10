@@ -32,7 +32,7 @@ type SeedSupply = {
   purchaseUnit: string;
 };
 
-// Catalog units only: the service derives the minimum unit and the factor.
+// Catalog units only: the minimum unit and the factor come from the catalog.
 const SUPPLIES: SeedSupply[] = [
   { kind: "supply", name: "Harina 000", purchasePrice: "18750", purchaseQuantity: "25", purchaseUnit: "kg" },
   { kind: "supply", name: "Azúcar", purchasePrice: "1800", purchaseQuantity: "1", purchaseUnit: "kg" },
@@ -199,13 +199,7 @@ async function seed(): Promise<void> {
 
     const supplyIds = new Map<string, string>();
     for (const supply of SUPPLIES) {
-      const row = await createSupplyService(userId, {
-        ...supply,
-        // Derived by the service from the catalog unit; sent because the
-        // input contract keeps them.
-        minimumUnit: "unidad",
-        conversionFactor: "1",
-      });
+      const row = await createSupplyService(userId, supply);
       supplyIds.set(supply.name, row.id);
     }
 

@@ -68,8 +68,8 @@ describe("toPackagingOptions", () => {
   it("offers only packaging with its family and default unit", () => {
     expect(
       toPackagingOptions([
-        { id: "flour", name: "Harina", kind: "supply", purchaseUnit: "kg", minimumUnit: "g" },
-        { id: "box", name: "Caja", kind: "packaging", purchaseUnit: "docena", minimumUnit: "unidad" },
+        { id: "flour", name: "Harina", kind: "supply", purchaseUnit: "kg" },
+        { id: "box", name: "Caja", kind: "packaging", purchaseUnit: "docena" },
       ]),
     ).toEqual([{ id: "box", name: "Caja", family: "count", defaultUnit: "unidad" }]);
   });

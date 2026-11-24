@@ -373,7 +373,7 @@ describe("getHomePathService", () => {
     const emprendedor = await makeUser();
     await createSupplyService(
       emprendedor.id,
-      { kind: "supply", name: "Harina", purchasePrice: "100", purchaseQuantity: "1", purchaseUnit: "kg", minimumUnit: "g", conversionFactor: "1000" },
+      { kind: "supply", name: "Harina", purchasePrice: "100", purchaseQuantity: "1", purchaseUnit: "kg" },
       db,
     );
     const { token } = await createSupplierInviteService(owner.id, { label: "Vecino" }, db);

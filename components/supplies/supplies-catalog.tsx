@@ -8,6 +8,11 @@ import { CatalogModal } from "@/components/ui/catalog-modal";
 import { normalizeForSearch } from "@/components/ui/normalize-search";
 import { SuppliesForm } from "./supplies-form";
 import { SuppliesTable } from "./supplies-table";
+import { getSupplyUnitBasis } from "@/lib/schemas/supplies/units";
+
+function minimumUnitOf(purchaseUnit: string): string {
+  return getSupplyUnitBasis(purchaseUnit)?.minimumUnit ?? "";
+}
 
 type SuppliesCatalogProps = {
   supplies: SupplyItem[];
@@ -38,7 +43,7 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
     if (!query) return byKind;
 
     return byKind.filter((supply) =>
-      [supply.name, supply.purchaseUnit, supply.minimumUnit].some((value) =>
+      [supply.name, supply.purchaseUnit, minimumUnitOf(supply.purchaseUnit)].some((value) =>
         normalizeForSearch(value).includes(query),
       ),
     );

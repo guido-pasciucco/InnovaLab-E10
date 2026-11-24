@@ -23,8 +23,6 @@ const flour = {
   purchasePrice: "18750.00",
   purchaseQuantity: "25",
   purchaseUnit: "kg",
-  minimumUnit: "g",
-  conversionFactor: "1000",
 } as const;
 
 // 5000 / 50 = 100 per box.
@@ -34,8 +32,6 @@ const box = {
   purchasePrice: "5000.00",
   purchaseQuantity: "50",
   purchaseUnit: "unidad",
-  minimumUnit: "unidad",
-  conversionFactor: "1",
 } as const;
 
 // 600 per dozen = 50 per label.
@@ -45,8 +41,6 @@ const label = {
   purchasePrice: "600.00",
   purchaseQuantity: "1",
   purchaseUnit: "docena",
-  minimumUnit: "unidad",
-  conversionFactor: "12",
 } as const;
 
 const MISSING_ID = "00000000-0000-0000-0000-000000000000";

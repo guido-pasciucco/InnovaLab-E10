@@ -1,4 +1,5 @@
 import { type CommercialPresentation, type SupplyPurchase, type SupplyUsage, type VariableCostsInput } from "./calculateVariableCosts";
+import { getSupplyUnitBasis } from "@/lib/schemas/supplies/units";
 import { Fraction } from "./fraction";
 
 // Pure boundary between the persisted catalog and the variable-cost engine.
@@ -14,8 +15,6 @@ export type CatalogSupply = {
   purchasePrice: string;
   purchaseQuantity: string;
   purchaseUnit: string;
-  minimumUnit: string;
-  conversionFactor: string;
 };
 
 export type CatalogRecipe = {
@@ -37,9 +36,7 @@ export type CatalogVariableCostsAdapterErrorCode =
   | "INVALID_CATALOG_KIND"
   | "INVALID_PURCHASE_PRICE"
   | "INVALID_PURCHASE_QUANTITY"
-  | "INVALID_CONVERSION_FACTOR"
-  | "UNSUPPORTED_MINIMUM_UNIT"
-  | "INCOMPATIBLE_PURCHASE_UNIT"
+  | "UNSUPPORTED_PURCHASE_UNIT"
   | "MISSING_INGREDIENT_SUPPLY"
   | "INGREDIENT_MUST_BE_SUPPLY"
   | "MISSING_PACKAGING_SUPPLY"
@@ -60,25 +57,6 @@ export type CatalogVariableCostsAdapterResult =
   | CatalogVariableCostsAdapterFailure
   | CatalogVariableCostsAdapterSuccess;
 
-type UnitFamily = "count" | "mass" | "volume" | "length";
-
-const CATALOG_UNITS: Record<string, { family: UnitFamily; canonical: string }> = {
-  unidad: { family: "count", canonical: "unidad" },
-  unidades: { family: "count", canonical: "unidad" },
-  ud: { family: "count", canonical: "unidad" },
-  uds: { family: "count", canonical: "unidad" },
-  docena: { family: "count", canonical: "unidad" },
-  docenas: { family: "count", canonical: "unidad" },
-  g: { family: "mass", canonical: "g" },
-  gr: { family: "mass", canonical: "g" },
-  kg: { family: "mass", canonical: "g" },
-  ml: { family: "volume", canonical: "ml" },
-  l: { family: "volume", canonical: "ml" },
-  mm: { family: "length", canonical: "mm" },
-  cm: { family: "length", canonical: "mm" },
-  m: { family: "length", canonical: "mm" },
-};
-
 function failure(
   code: CatalogVariableCostsAdapterErrorCode,
   details?: CatalogVariableCostsAdapterFailure["details"],
@@ -90,16 +68,12 @@ function normalizedId(raw: string): string {
   return raw.trim();
 }
 
-function normalizedUnit(raw: string): { family: UnitFamily; canonical: string } | undefined {
-  return CATALOG_UNITS[raw.trim().toLowerCase()];
-}
-
 function positiveDecimal(raw: string): Fraction | undefined {
   const value = Fraction.fromDecimal(raw);
   return value?.isPositive() ? value : undefined;
 }
 
-// `purchaseQuantity` and `conversionFactor` start as finite decimal strings.
+// `purchaseQuantity` and the catalog factor are finite decimal strings.
 // Their product is therefore a finite decimal too. Convert its exact Fraction
 // without Number or a decimal approximation before passing it to the engine.
 function finiteDecimal(value: Fraction): string {
@@ -146,27 +120,19 @@ function adaptPurchase(supply: CatalogSupply): SupplyPurchase | CatalogVariableC
   }
   const quantity = positiveDecimal(supply.purchaseQuantity);
   if (quantity === undefined) return failure("INVALID_PURCHASE_QUANTITY", { supplyId: id });
-  const factor = positiveDecimal(supply.conversionFactor);
-  if (factor === undefined) return failure("INVALID_CONVERSION_FACTOR", { supplyId: id });
-
-  const minimumUnit = normalizedUnit(supply.minimumUnit);
-  if (minimumUnit === undefined) {
-    return failure("UNSUPPORTED_MINIMUM_UNIT", { supplyId: id, unit: supply.minimumUnit });
+  // The minimum unit and factor always come from the unit catalog, never from
+  // stored data: 25 kg becomes 25 × 1000 g.
+  const basis = getSupplyUnitBasis(supply.purchaseUnit);
+  if (basis === null) {
+    return failure("UNSUPPORTED_PURCHASE_UNIT", { supplyId: id, unit: supply.purchaseUnit });
   }
-
-  // A recognized purchase unit cannot cross a physical family. An unknown
-  // purchase label (for example "caja") is allowed only because its explicit
-  // conversion factor maps it to a recognized minimum unit.
-  const purchaseUnit = normalizedUnit(supply.purchaseUnit);
-  if (purchaseUnit !== undefined && purchaseUnit.family !== minimumUnit.family) {
-    return failure("INCOMPATIBLE_PURCHASE_UNIT", { supplyId: id, unit: supply.purchaseUnit });
-  }
+  const factor = positiveDecimal(basis.conversionFactor)!;
 
   return {
     id,
     purchasePrice: supply.purchasePrice,
     purchaseQuantity: finiteDecimal(quantity.multiply(factor)),
-    purchaseUnit: minimumUnit.canonical,
+    purchaseUnit: basis.minimumUnit,
   };
 }
 
