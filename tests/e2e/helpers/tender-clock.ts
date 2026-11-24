@@ -2,7 +2,7 @@ import postgres from "postgres";
 import { assertLocalUrl, loadTestEnv } from "../../support/test-env";
 
 // Tender rounds and the close are derived from the server clock
-// (docs/licitaciones RN-03, RN-12), so a test cannot wait 12 hours for a
+// (docs/flujos/09-licitaciones.md RN-03, RN-12), so a test cannot wait 12 hours for a
 // tender to close. This back door moves a tender's window into the past,
 // keeping its length, which is what the clock would show once it ended.
 // Refuses to run unless DATABASE_URL is local.

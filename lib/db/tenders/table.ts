@@ -16,7 +16,7 @@ import { profiles } from "../profile/table";
 import { suppliers } from "../suppliers/table";
 import { supplies } from "../supplies/table";
 
-// Supply tenders (docs/licitaciones). A tender is published once and never
+// Supply tenders (docs/flujos/09-licitaciones.md). A tender is published once and never
 // edited (RN-03): there is no update path, only cancellation. Rounds are not
 // stored: they follow from starts_at, round_hours and round_count
 // (lib/calc/tenderRounds.ts), so they advance with the server clock and no

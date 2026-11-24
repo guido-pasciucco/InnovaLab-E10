@@ -2,7 +2,7 @@ import { expect, test } from "../fixtures";
 
 test("signing out from the flow 1 sidebar ends the session", async ({ authedPage }) => {
   // Arrange
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   const profile = authedPage.getByRole("region", { name: "Perfil" });
 
   // Act
@@ -10,6 +10,6 @@ test("signing out from the flow 1 sidebar ends the session", async ({ authedPage
 
   // Assert: back on /login, and the protected page now bounces there too.
   await expect(authedPage).toHaveURL("/login");
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await expect(authedPage).toHaveURL("/login");
 });

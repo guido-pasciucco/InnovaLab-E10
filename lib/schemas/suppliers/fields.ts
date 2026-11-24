@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { isValidCuit, normalizeCuit } from "./cuit";
 
-// Field rules for suppliers (docs/licitaciones, annex 03 step 5: "Completa
+// Field rules for suppliers (docs/flujos/09-licitaciones.md, annex 03 step 5: "Completa
 // negocio, CUIT, contacto y rubros"). Shared by the forms and by
 // lib/db/suppliers/validation.ts. Pure and client-safe: no db imports.
 // Every rule declares its message in Spanish.

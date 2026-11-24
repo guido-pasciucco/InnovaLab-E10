@@ -1,0 +1,135 @@
+# Definiciones
+
+Glosario corto de las palabras que aparecen en el código, el esquema y las issues, y **por qué se llaman así**. Las reglas de negocio vigentes están en [docs/flujos/](../flujos/); los documentos conceptuales de los que salió este glosario se conservan en el historial de git.
+
+Cada entrada: **qué es** · *por qué el nombre*.
+
+---
+
+## Nombres de tablas y entidades
+
+**`line` (en `calc_cost_lines`, `business_cost_lines`)**
+Un **renglón**: una fila de costo con concepto e importe.
+*Viene de* line item, *la convención contable para cada renglón de una factura o pedido (como `order_lines` o `invoice_line_items`).*
+
+**`calc`**
+Abreviatura de *calculation* (cálculo).
+*Se usa para acortar nombres largos; `calc_cost_lines` = renglones de costo de un cálculo.*
+
+**`calc_cost_lines`**
+Los costos de **un cálculo concreto** (alquiler, harina, horas de amasado…).
+*"Renglones de costo del cálculo".*
+
+**`business_cost_lines`**
+El **catálogo de costos del negocio**, cargados una vez para toda la lista de productos y reutilizarlos en varios cálculos. Desde #243 guarda los gastos del período por mes (`period`, `AAAA-MM`); el prorrateo entre productos es #244.
+*"Renglones de costo del negocio".*
+
+**`calculation` (cálculo)**
+Una vez que el usuario costea un producto: una "hoja de presupuesto" con fecha. Un producto puede tener muchos.
+*Se separa del producto para poder tener historial y alternativas sin pisar datos.*
+
+**`costing_setup`**
+Las condiciones de un cálculo: unidad, volumen, moneda y período (paso 1, H1).
+*Setup = configuración inicial; costing = costeo.*
+
+**`pricing_inputs`**
+Los datos para fijar el precio: margen esperado, convención de margen, precio manual.
+*Inputs = datos de entrada; pricing = fijación de precio.*
+
+**`scenario` (escenario)**
+Una variante "¿y si…?" del mismo cálculo (por ejemplo, "si la harina sube 20 %").
+*`is_base` marca el escenario original contra el que se comparan los demás.*
+
+**`computed_results`**
+Lo que **calcula el sistema**, no lo que carga el usuario: costo unitario, punto de equilibrio, etc.
+*Computed = calculado por el motor, para distinguirlo de los datos ingresados.*
+
+**`profile` (perfil)**
+Los datos propios de la app para un usuario de Supabase Auth.
+*Auth guarda la cuenta (email, contraseña); el perfil guarda lo que la app necesita sobre esa persona.*
+
+---
+
+## Columnas y valores
+
+**`status: "draft"`**
+**Borrador**: un cálculo todavía en edición. En la Fase 1 hay uno por usuario.
+
+**`behavior` (comportamiento)**
+Si el costo **cambia con la cantidad producida**: `fixed` o `variable`.
+*Término clásico de costos: cómo se "comporta" el costo frente al volumen.*
+
+**`traceability` (trazabilidad)**
+Si el costo **se puede atribuir directamente a este producto**: `direct` o `indirect`.
+*Que se pueda "rastrear" hasta el producto. Lo indirecto hay que repartirlo con un criterio.*
+
+**`is_own_labor` (trabajo propio)**
+El valor del tiempo que el emprendedor pone él mismo, marcado con `true` en su propio renglón: es un **booleano**. Es una **tercera dimensión independiente** — no es un valor de `behavior` ni de `traceability`, porque ese renglón también es fijo o variable y directo o indirecto, y por su `behavior` entra en el total del período.
+*Labor = mano de obra; own = propia. Se separa porque es el costo que más se olvida. Fue confirmada como dimensión aparte en #76 (2026-10-17), y entra en el total por decisión 0001 — El trabajo propio SÍ entra en totalPeriodo. Columna `is_own_labor` agregada por #91, con un índice único parcial (`calc_cost_lines_own_labor_uq`) que permite a lo sumo un renglón de trabajo propio por cálculo. El porqué de registrarlo aparte del concepto está en 0002 — El trabajo propio se registra aparte del concepto.*
+
+> **No existe `category`.** El modelo confirmado el 2026-10-17 (ver #76) tiene tres datos independientes (`behavior`, `traceability`, `is_own_labor`) y ningún enum de cuatro categorías ni `categoryToAxes`. Cómo agrupa la UI las filas es una decisión abierta del dueño de la historia (ver #75).
+
+**`amount` vs `amount_period`**
+`amount`: importe del renglón en el cálculo. `amount_period`: importe del catálogo, expresado por período (ej. por mes). El mes al que pertenece vive en `business_cost_lines.period` (`AAAA-MM`).
+
+**`allocation_pct`**
+Porcentaje de un costo indirecto que se le asigna a este producto.
+*Allocation = asignación/prorrateo.*
+
+**`hours`, `hourly_rate`**
+Horas y valor por hora, para cargar trabajo propio como horas × tarifa. No los usa H2.
+
+**`margin_convention`**
+Sobre qué se calcula el margen: sobre el costo (*markup*) o sobre el precio de venta. El mismo 30 % da precios distintos según la convención.
+
+**`contribution_margin_unit` (margen de contribución unitario)**
+Lo que deja cada unidad después de pagar sus costos variables; con eso se cubren los fijos.
+
+**`break_even_units` / `break_even_sales` (punto de equilibrio)**
+Cuántas unidades (o cuánta plata) hay que vender para no ganar ni perder.
+
+**`schema_version`**
+Versión del formato con que se guardó el cálculo, para poder migrar datos viejos si el formato cambia.
+
+**`source_business_cost_id`**
+Si un renglón salió del catálogo del negocio, apunta al ítem de origen. Opcional desde #91.
+
+---
+
+## Términos técnicos
+
+**Uno a uno (1 a 1)**
+Cada fila de A tiene como mucho una fila en B. Ej.: un cálculo tiene un solo `costing_setup`.
+
+**Uno a muchos (1 a N)**
+Una fila de A tiene muchas en B; cada fila de B pertenece a una sola de A. Ej.: un producto tiene muchos cálculos.
+
+**Muchos a muchos (N a N)**
+Muchas filas de A se relacionan con muchas de B; requiere una **tabla intermedia**. *`calculations` no es una de ellas: cada cálculo es de un solo producto.*
+
+**FK (foreign key, clave foránea)**
+Columna que apunta al `id` de otra tabla (ej. `calculation_id`).
+
+**`onDelete: cascade` / `set null`**
+Qué pasa con las filas hijas al borrar la madre: `cascade` las borra; `set null` las conserva y vacía la referencia.
+
+**`uuid`**
+Identificador único aleatorio. Se usa en vez de números correlativos para que los ids no se puedan adivinar.
+
+**`numeric(12,2)`**
+Número decimal exacto: hasta 12 dígitos, 2 de ellos decimales. En TypeScript llega como **string**, nunca como `number`, para no perder centavos por redondeo.
+
+**Upsert**
+*Update + insert*: actualiza la fila si existe, la crea si no.
+
+**RLS (Row Level Security)**
+Reglas de Postgres que limitan qué filas puede ver cada usuario. Igual, los servicios filtran siempre por el usuario de la sesión.
+
+**`snake_case` / `camelCase`**
+En Postgres las columnas van en `snake_case` (`calculation_id`); en TypeScript, en `camelCase` (`calculationId`). Drizzle traduce entre ambos.
+
+**Service (servicio)**
+Función de servidor en `lib/services/` que valida y aplica una regla de negocio. No sabe si la llamó una página, una Server Action o un test.
+
+**Server Action**
+Función de servidor que un formulario llama directamente. Es una "puerta delgada": obtiene el usuario y delega en el servicio.

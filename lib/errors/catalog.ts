@@ -154,6 +154,13 @@ export const ERROR_CATALOG = {
     message: "No encontramos ese producto.",
     logLevel: "silent",
   },
+  PRODUCT_RECIPE_NEEDS_INGREDIENT: {
+    // A recipe must keep at least one ingredient; the last one cannot be removed.
+    status: 422,
+    message:
+      "Ese insumo es el único de la receta. Agregá otro insumo antes de sacarlo, o borrá el producto.",
+    logLevel: "silent",
+  },
   SUPPLY_NOT_FOUND: {
     // Missing, foreign or non-uuid supply id: all look the same.
     status: 404,
@@ -194,7 +201,7 @@ export const ERROR_CATALOG = {
     logLevel: "silent",
   },
 
-  // Suppliers (supply tenders, docs/licitaciones RN-22 and RN-23)
+  // Suppliers (supply tenders, docs/flujos/09-licitaciones.md RN-22 and RN-23)
   SUPPLIER_INVITE_INVALID: {
     // Unknown, already used or expired link: all look the same.
     status: 410,
@@ -225,7 +232,7 @@ export const ERROR_CATALOG = {
     logLevel: "silent",
   },
 
-  // Supply tenders (docs/licitaciones)
+  // Supply tenders (docs/flujos/09-licitaciones.md)
   TENDER_NOT_FOUND: {
     // Missing, foreign or non-uuid tender id: all look the same.
     status: 404,

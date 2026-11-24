@@ -314,6 +314,47 @@ export async function updatePresentationService(
   });
 }
 
+// Used by the supply-in-use dialog: drop one packaging line from a
+// presentation, reusing the normal presentation update path so validation and
+// cost recomputation stay in one place.
+export async function removePackagingFromPresentationService(
+  userId: VerifiedUserId,
+  presentationId: string,
+  supplyId: string,
+  db: Db = getDrizzleClient(),
+): Promise<PresentationItem | null> {
+  if (!isUuid(presentationId)) return null;
+
+  const [owned] = await db
+    .select({ productId: presentations.productId })
+    .from(presentations)
+    .innerJoin(products, eq(presentations.productId, products.id))
+    .innerJoin(businesses, eq(products.businessId, businesses.id))
+    .where(
+      and(eq(presentations.id, presentationId), eq(businesses.ownerUserId, userId)),
+    )
+    .limit(1);
+  if (!owned) return null;
+
+  const view = await getProductPresentationsService(userId, owned.productId, db);
+  const presentation = view?.presentations.find((item) => item.id === presentationId);
+  if (!presentation) return null;
+
+  const packaging = presentation.packaging.filter((line) => line.supplyId !== supplyId);
+  if (packaging.length === presentation.packaging.length) return null;
+
+  return updatePresentationService(
+    userId,
+    presentationId,
+    {
+      name: presentation.name,
+      unitsPerPresentation: presentation.unitsPerPresentation,
+      packaging,
+    },
+    db,
+  );
+}
+
 export async function deletePresentationService(
   userId: VerifiedUserId,
   presentationId: string,

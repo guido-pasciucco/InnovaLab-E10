@@ -30,7 +30,7 @@ import { getOrCreateDefaultBusiness } from "./calculations";
 // The story does not include prorating these expenses between products (#244)
 // nor the selling price, so this service only stores and reads the period set.
 //
-// Scope decisions closed with #285 (see docs/fase-2/04-decisiones.md):
+// Scope decisions closed with #285 (see docs/decisiones.md):
 // - Period: the screen shows the current month in Argentina. `period` stays an
 //   option of the read/add services for future queries, but no selector ships.
 // - `notes`: the column exists but is not part of the catalog; it stays unused.

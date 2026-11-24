@@ -8,7 +8,13 @@ import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
-import { createProductService, getProductService, updateProductService } from "./products";
+import {
+  createProductService,
+  deleteProductService,
+  getProductService,
+  removeSupplyFromProductService,
+  updateProductService,
+} from "./products";
 import { backfillProductVariableCosts } from "./product-variable-cost-backfill";
 import {
   createSupplyService,
@@ -348,6 +354,127 @@ describe("supplies service", () => {
     });
 
     await expect(listSuppliesService(user.id, db)).resolves.toHaveLength(1);
+  });
+
+  it("lists the products that still use the supply with their ingredient count", async () => {
+    const user = await makeUser();
+    const harina = await createSupplyService(user.id, validInput, db);
+    const azucar = await createSupplyService(
+      user.id,
+      { ...validInput, name: "Azúcar" },
+      db,
+    );
+    await createProductService(
+      user.id,
+      {
+        name: "Torta",
+        yieldQuantity: "8",
+        recipe: [
+          { supplyId: harina.id, quantity: "250", unit: "g" },
+          { supplyId: azucar.id, quantity: "100", unit: "g" },
+        ],
+      },
+      db,
+    );
+    await createProductService(
+      user.id,
+      {
+        name: "Pan",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: harina.id, quantity: "500", unit: "g" }],
+      },
+      db,
+    );
+
+    let thrown: unknown;
+    try {
+      await deleteSupplyService(user.id, harina.id, db);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toMatchObject({ code: "SUPPLY_IN_USE" });
+    expect((thrown as { details?: unknown }).details).toMatchObject({
+      usages: [
+        { kind: "recipe", productName: "Pan", ingredientCount: 1 },
+        { kind: "recipe", productName: "Torta", ingredientCount: 2 },
+      ],
+    });
+  });
+
+  it("removes the supply from one recipe and then allows the deletion", async () => {
+    const user = await makeUser();
+    const harina = await createSupplyService(user.id, validInput, db);
+    const azucar = await createSupplyService(
+      user.id,
+      { ...validInput, name: "Azúcar" },
+      db,
+    );
+    const torta = await createProductService(
+      user.id,
+      {
+        name: "Torta",
+        yieldQuantity: "8",
+        recipe: [
+          { supplyId: harina.id, quantity: "250", unit: "g" },
+          { supplyId: azucar.id, quantity: "100", unit: "g" },
+        ],
+      },
+      db,
+    );
+
+    const updated = await removeSupplyFromProductService(user.id, torta.id, harina.id, db);
+    expect(updated?.recipe).toMatchObject([
+      { supplyId: azucar.id, quantity: "100", unit: "g" },
+    ]);
+    await expect(deleteSupplyService(user.id, harina.id, db)).resolves.toBe(true);
+  });
+
+  it("still reports a supply used by a soft-deleted product", async () => {
+    const user = await makeUser();
+    const harina = await createSupplyService(user.id, validInput, db);
+    const pan = await createProductService(
+      user.id,
+      {
+        name: "Pan",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: harina.id, quantity: "500", unit: "g" }],
+      },
+      db,
+    );
+    await expect(deleteProductService(user.id, pan.id, db)).resolves.toBe(true);
+
+    let thrown: unknown;
+    try {
+      await deleteSupplyService(user.id, harina.id, db);
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toMatchObject({ code: "SUPPLY_IN_USE" });
+    expect((thrown as { details?: unknown }).details).toMatchObject({
+      usages: [{ productName: "Pan", isActive: false }],
+    });
+  });
+
+  it("refuses to remove the only ingredient of a recipe", async () => {
+    const user = await makeUser();
+    const harina = await createSupplyService(user.id, validInput, db);
+    const pan = await createProductService(
+      user.id,
+      {
+        name: "Pan",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: harina.id, quantity: "500", unit: "g" }],
+      },
+      db,
+    );
+
+    await expect(
+      removeSupplyFromProductService(user.id, pan.id, harina.id, db),
+    ).rejects.toMatchObject({ code: "PRODUCT_RECIPE_NEEDS_INGREDIENT" });
+    await expect(deleteSupplyService(user.id, harina.id, db)).rejects.toMatchObject({
+      code: "SUPPLY_IN_USE",
+    });
   });
 
   it("blocks changing the minimum unit of a supply used by a recipe", async () => {

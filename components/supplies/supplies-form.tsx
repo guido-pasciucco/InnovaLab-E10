@@ -5,7 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Path } from "react-hook-form";
 
-import { saveSupply } from "@/app/(flujo-1)/insumos/actions";
+import { saveSupply } from "@/app/(business)/supplies/actions";
 import {
   calculateMinimumUnitPrice,
   calculateMinimumUnits,

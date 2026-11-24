@@ -8,6 +8,7 @@ import {
   deletePresentationService,
   getProductPresentationsService,
   listPresentationNamesByProductService,
+  removePackagingFromPresentationService,
   updatePresentationService,
 } from "./presentations";
 import { createProductService } from "./products";
@@ -417,6 +418,47 @@ describe("packaging used by a presentation", () => {
     await expect(deleteSupplyService(user.id, boxRow.id, db)).rejects.toMatchObject({
       code: "SUPPLY_IN_USE",
     });
+  });
+
+  it("lists the presentation that still uses the packaging", async () => {
+    const user = await makeUser();
+    const { box: boxRow, product } = await arrangeInUse(user);
+
+    let thrown: unknown;
+    try {
+      await deleteSupplyService(user.id, boxRow.id, db);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toMatchObject({ code: "SUPPLY_IN_USE" });
+    expect((thrown as { details?: unknown }).details).toMatchObject({
+      usages: [
+        {
+          kind: "presentation",
+          productId: product.id,
+          productName: product.name,
+          presentationName: "Caja x6",
+        },
+      ],
+    });
+  });
+
+  it("removes the packaging from the presentation and then allows the deletion", async () => {
+    const user = await makeUser();
+    const { box: boxRow, product } = await arrangeInUse(user);
+    const view = await getProductPresentationsService(user.id, product.id, db);
+    const presentation = view?.presentations[0];
+    expect(presentation).toBeDefined();
+
+    const updated = await removePackagingFromPresentationService(
+      user.id,
+      presentation!.id,
+      boxRow.id,
+      db,
+    );
+    expect(updated?.packaging.map((line) => line.supplyId)).not.toContain(boxRow.id);
+    await expect(deleteSupplyService(user.id, boxRow.id, db)).resolves.toBe(true);
   });
 
   it("blocks changing its unit family", async () => {

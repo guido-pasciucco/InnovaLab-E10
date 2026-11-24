@@ -63,7 +63,7 @@ function ProductRow({ row }: { row: DistributionRowView }) {
 // the month's expenses each product absorbs and the total cost of one unit. It
 // takes the view the page built from the server data, so it renders the same
 // with real data and with a preview. The page shell, with the left sidebar of
-// flow 1, comes from the (flujo-1) layout.
+// flow 1, comes from the (business) layout.
 export function CostDistributionScreen({ view, hasProducts }: CostDistributionScreenProps) {
   const { banner, rows, explanation } = view;
 

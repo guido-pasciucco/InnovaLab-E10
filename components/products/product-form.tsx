@@ -11,7 +11,7 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { saveProduct } from "@/app/(flujo-1)/products/actions";
+import { saveProduct } from "@/app/(business)/products/actions";
 import type {
   ProductFormValues,
   ProductItem,
@@ -29,6 +29,7 @@ import {
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
+import { emptyRecipeRow, toProductFormDefaults } from "./product-form-defaults";
 import { RecipeYieldField } from "./recipe-yield-field";
 
 type ProductFormProps = {
@@ -45,38 +46,6 @@ const SERVER_FIELDS: readonly Path<ProductFormValues>[] = [
   "yieldQuantity",
   "recipe",
 ];
-
-// Empty row used when the form opens or the user adds another ingredient.
-function emptyRecipeRow(): ProductFormValues["recipe"][number] {
-  return { supplyId: "", quantity: "", unit: "" };
-}
-
-function toDefaultValues(product: ProductItem | null): ProductFormValues {
-  const monthlyCapacity =
-    product?.monthlyCapacity === null || product?.monthlyCapacity === undefined
-      ? ""
-      : String(product.monthlyCapacity);
-
-  if (!product) {
-    return {
-      name: "",
-      monthlyCapacity,
-      yieldQuantity: "",
-      recipe: [emptyRecipeRow()],
-    };
-  }
-
-  return {
-    name: product.name,
-    monthlyCapacity,
-    yieldQuantity: product.yieldQuantity ?? "",
-    recipe: product.recipe.map((item) => ({
-      supplyId: item.supplyId,
-      quantity: item.quantity,
-      unit: item.unit,
-    })),
-  };
-}
 
 function recipeArrayMessage(errors: FieldErrors<ProductFormValues>): string | undefined {
   const recipe = errors.recipe as
@@ -125,7 +94,7 @@ export function ProductForm({
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: toDefaultValues(product),
+    defaultValues: toProductFormDefaults(product),
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -221,7 +190,7 @@ export function ProductForm({
               El packaging no se usa como ingrediente de la receta.
             </p>
             <Link
-              href="/insumos"
+              href="/supplies"
               className="mt-1 inline-block font-semibold text-link underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
               Cargá tu catálogo de insumos
