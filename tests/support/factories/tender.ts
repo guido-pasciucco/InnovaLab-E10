@@ -20,7 +20,7 @@ export async function createSupply(
 ) {
   return createSupplyService(
     ownerId,
-    { kind: "supply", name, minimumUnit: "g", conversionFactor: "1000", ...price },
+    { kind: "supply", name, ...price },
     db,
   );
 }

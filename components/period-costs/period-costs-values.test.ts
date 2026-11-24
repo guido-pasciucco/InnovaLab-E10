@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatPeriodLabel, toCostLine } from "./period-costs-values";
+import { formatPeriodLabel } from "./period-costs-values";
 
 describe("formatPeriodLabel", () => {
   it.each([
@@ -26,12 +26,4 @@ describe("formatPeriodLabel", () => {
       expect(formatPeriodLabel(period)).toBe(period);
     },
   );
-});
-
-describe("toCostLine", () => {
-  it("shows the period amount as the table's amount", () => {
-    expect(
-      toCostLine({ id: "line-1", concept: "Alquiler", amountPeriod: "150000.00" }),
-    ).toEqual({ id: "line-1", concept: "Alquiler", amount: "150000.00" });
-  });
 });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Field rules for supply tenders (docs/licitaciones RN-02, RN-09, RN-10).
+// Field rules for supply tenders (docs/flujos/09-licitaciones.md RN-02, RN-09, RN-10).
 // Shared by the publish form (client-side check, per item row) and by
 // lib/db/tenders/validation.ts (the server gate). Pure and client-safe.
 // Every rule declares its message in Spanish.

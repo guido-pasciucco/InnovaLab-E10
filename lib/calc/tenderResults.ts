@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 
 import { latestOffers, offerKey, type OfferRecord } from "./tenderOffers";
 
-// Results of supply tenders (docs/licitaciones RN-13, RN-18, RN-19). Pure.
+// Results of supply tenders (docs/flujos/09-licitaciones.md RN-13, RN-18, RN-19). Pure.
 
 type ResultItem = { id: string; startingPrice: string; referencePrice: string | null };
 

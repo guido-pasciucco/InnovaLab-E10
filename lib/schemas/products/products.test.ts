@@ -6,8 +6,8 @@ import { createProductFormSchema, toRecipeSupplyOptions } from "./products";
 // Messages are defined once in the schema and shown by RHF in the client.
 // The server reuses the same field rules when persistence lands.
 const supplyOptions: RecipeSupplyOption[] = [
-  { id: "supply-harina", name: "Harina 000", family: "mass", defaultUnit: "g", minimumUnit: "g" },
-  { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g", minimumUnit: "g" },
+  { id: "supply-harina", name: "Harina 000", family: "mass", defaultUnit: "g" },
+  { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g" },
 ];
 const schema = createProductFormSchema(supplyOptions);
 
@@ -155,31 +155,18 @@ describe("createProductFormSchema", () => {
     ]);
   });
 
-  it("keeps a legacy unit while the line repeats the supply's stored unit", () => {
-    const legacyOptions: RecipeSupplyOption[] = [
-      { id: "supply-legacy", name: "Harina", family: null, defaultUnit: "bolsa", minimumUnit: "bolsa" },
-    ];
-
-    expect(
-      createProductFormSchema(legacyOptions).safeParse({
-        ...validProduct,
-        recipe: [{ supplyId: "supply-legacy", quantity: "1", unit: "bolsa" }],
-      }).success,
-    ).toBe(true);
-  });
-
-  it("rejects changing a legacy unit to another free-text value", () => {
-    const legacyOptions: RecipeSupplyOption[] = [
-      { id: "supply-legacy", name: "Harina", family: null, defaultUnit: "bolsa", minimumUnit: "bolsa" },
+  it("rejects any unit for a supply without a catalog family", () => {
+    const options: RecipeSupplyOption[] = [
+      { id: "supply-legacy", name: "Harina", family: null, defaultUnit: "" },
     ];
 
     expect(
       issues(
         {
           ...validProduct,
-          recipe: [{ supplyId: "supply-legacy", quantity: "1", unit: "caja" }],
+          recipe: [{ supplyId: "supply-legacy", quantity: "1", unit: "g" }],
         },
-        createProductFormSchema(legacyOptions),
+        createProductFormSchema(options),
       ),
     ).toEqual([
       {
@@ -325,21 +312,18 @@ describe("toRecipeSupplyOptions", () => {
           name: "Harina 000",
           kind: "supply",
           purchaseUnit: "kg",
-          minimumUnit: "g",
         },
         {
           id: "packaging-caja",
           name: "Caja de 6",
           kind: "packaging",
           purchaseUnit: "caja",
-          minimumUnit: "unidad",
         },
         {
           id: "supply-sal",
           name: "Sal",
           kind: "supply",
           purchaseUnit: "kg",
-          minimumUnit: "g",
         },
       ]),
     ).toEqual([
@@ -348,9 +332,8 @@ describe("toRecipeSupplyOptions", () => {
         name: "Harina 000",
         family: "mass",
         defaultUnit: "g",
-        minimumUnit: "g",
       },
-      { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g", minimumUnit: "g" },
+      { id: "supply-sal", name: "Sal", family: "mass", defaultUnit: "g" },
     ]);
   });
 
@@ -362,13 +345,12 @@ describe("toRecipeSupplyOptions", () => {
           name: "Caja de 6",
           kind: "packaging",
           purchaseUnit: "caja",
-          minimumUnit: "unidad",
         },
       ]),
     ).toEqual([]);
   });
 
-  it("keeps a legacy minimum unit and leaves its family unknown", () => {
+  it("leaves family and default unit empty for a unit outside the catalog", () => {
     expect(
       toRecipeSupplyOptions([
         {
@@ -376,7 +358,6 @@ describe("toRecipeSupplyOptions", () => {
           name: "Harina",
           kind: "supply",
           purchaseUnit: "bolsa",
-          minimumUnit: "bolsa",
         },
       ]),
     ).toEqual([
@@ -384,30 +365,7 @@ describe("toRecipeSupplyOptions", () => {
         id: "supply-legacy",
         name: "Harina",
         family: null,
-        defaultUnit: "bolsa",
-        minimumUnit: "bolsa",
-      },
-    ]);
-  });
-
-  it("infers the family from the minimum unit when the purchase unit is legacy", () => {
-    expect(
-      toRecipeSupplyOptions([
-        {
-          id: "supply-legacy",
-          name: "Harina",
-          kind: "supply",
-          purchaseUnit: "bolsa",
-          minimumUnit: "g",
-        },
-      ]),
-    ).toEqual([
-      {
-        id: "supply-legacy",
-        name: "Harina",
-        family: "mass",
-        defaultUnit: "g",
-        minimumUnit: "g",
+        defaultUnit: "",
       },
     ]);
   });

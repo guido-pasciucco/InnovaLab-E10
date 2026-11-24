@@ -5,7 +5,7 @@ import { expect, test } from "../fixtures";
 test("guarda la unidad de una línea de receta y la muestra", async ({
   authedPage,
 }) => {
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
   await authedPage

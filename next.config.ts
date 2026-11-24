@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   // The step 8 PDF route renders with @react-pdf/renderer, which loads its
   // fonts and layout engine at runtime: keep it a Node require, not bundled.
   serverExternalPackages: ["@react-pdf/renderer"],
+  async redirects() {
+    return [{ source: "/insumos", destination: "/supplies", permanent: false }];
+  },
 };
 
 export default nextConfig;

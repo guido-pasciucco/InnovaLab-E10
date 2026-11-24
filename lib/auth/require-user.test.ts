@@ -11,9 +11,9 @@ vi.mock("@/lib/services/auth", () => ({
 
 const { requireUser } = await import("./require-user");
 
-async function redirectTarget(): Promise<string> {
+async function redirectTarget(options?: { redirectTo?: string }): Promise<string> {
   try {
-    await requireUser();
+    await requireUser(options);
   } catch (err) {
     const [kind, , target] = ((err as { digest?: string }).digest ?? "").split(";");
     if (kind === "NEXT_REDIRECT") return target;
@@ -43,6 +43,13 @@ describe("requireUser", () => {
     await expect(redirectTarget()).resolves.toBe("/login");
   });
 
+  it("redirects to a custom destination when there is no session", async () => {
+    getSessionUserService.mockRejectedValue(new AppError("UNAUTHORIZED"));
+    await expect(
+      redirectTarget({ redirectTo: "/reset-password?error=AUTH_SESSION_MISSING" }),
+    ).resolves.toBe("/reset-password?error=AUTH_SESSION_MISSING");
+  });
+
   it("lets Next.js control-flow errors through (dynamic rendering bailout)", async () => {
     const bailout = Object.assign(new Error("Dynamic server usage"), { digest: "DYNAMIC_SERVER_USAGE" });
     createRscSupabaseClient.mockRejectedValue(bailout);
@@ -53,6 +60,15 @@ describe("requireUser", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     createRscSupabaseClient.mockRejectedValue(new Error("Missing Supabase environment variables"));
     await expect(redirectTarget()).resolves.toBe("/login");
+    expect(error).toHaveBeenCalled();
+  });
+
+  it("redirects to the custom destination and logs when the client cannot be created", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    createRscSupabaseClient.mockRejectedValue(new Error("Missing Supabase environment variables"));
+    await expect(
+      redirectTarget({ redirectTo: "/reset-password?error=AUTH_SESSION_MISSING" }),
+    ).resolves.toBe("/reset-password?error=AUTH_SESSION_MISSING");
     expect(error).toHaveBeenCalled();
   });
 });

@@ -15,8 +15,6 @@ function calculateWithYield(yieldQuantity: string) {
       purchasePrice: "6000",
       purchaseQuantity: "1",
       purchaseUnit: "unidad",
-      minimumUnit: "unidad",
-      conversionFactor: "1",
     }],
     recipe: {
       yieldQuantity,
@@ -74,8 +72,6 @@ describe("recipeYieldSchema", () => {
         purchasePrice: "1",
         purchaseQuantity: "1",
         purchaseUnit: "unidad",
-        minimumUnit: "unidad",
-        conversionFactor: "1",
       }],
       recipe: {
         yieldQuantity: recipeYieldSchema.parse({ yieldQuantity: "3" }).yieldQuantity,

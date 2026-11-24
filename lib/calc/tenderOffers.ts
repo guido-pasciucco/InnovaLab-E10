@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 
-// Offer rules of supply tenders (docs/licitaciones RN-10, RN-20). Pure.
+// Offer rules of supply tenders (docs/flujos/09-licitaciones.md RN-10, RN-20). Pure.
 // Prices are decimal strings; comparisons use decimal.js, never floats.
 
 export type OfferCheck = { ok: true } | { ok: false; reason: "above_starting" | "above_last" };

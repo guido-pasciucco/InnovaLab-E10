@@ -40,7 +40,7 @@ import type { VerifiedUserId } from "@/lib/services/auth";
 import { listLinkedSuppliersService, type LinkedSupplier } from "@/lib/services/suppliers";
 import { discardTenderDraftService, loadTenderDraft, type TenderDraft } from "@/lib/services/tender-drafts";
 
-// Supply tenders, emprendedor and supplier sides (docs/licitaciones).
+// Supply tenders, emprendedor and supplier sides (docs/flujos/09-licitaciones.md).
 // Owner scoping: emprendedor reads and writes filter by owner_user_id; the
 // supplier side only reaches tenders it was invited to. Services throw;
 // doors translate. `now` is a parameter so the clock-driven rules (rounds,

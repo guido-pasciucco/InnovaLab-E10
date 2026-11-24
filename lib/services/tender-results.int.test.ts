@@ -17,7 +17,7 @@ import {
 } from "./tenders";
 
 // Integration tests for the round-1 warning, the close and the panel notices
-// (docs/licitaciones RN-13, RN-18, RN-19, RN-24).
+// (docs/flujos/09-licitaciones.md RN-13, RN-18, RN-19, RN-24).
 
 const HOUR = 60 * 60 * 1000;
 const start = new Date("2026-11-21T12:00:00Z");

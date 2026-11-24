@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { awardItem, issuePurchaseOrder, requestNegotiation, sendThankYouNote } from "@/app/(flujo-1)/licitaciones/actions";
+import { awardItem, issuePurchaseOrder, requestNegotiation, sendThankYouNote } from "@/app/(business)/licitaciones/actions";
 import { useFormDataAction } from "@/components/forms/use-form-data-action";
 import { FormBanner } from "@/components/ui/page-shell";
 import { formatMoney } from "./format";

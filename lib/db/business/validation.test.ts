@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   createBusinessInputSchema,
+  createPresentationInputSchema,
   createProductInputSchema,
+  savePresentationInputSchema,
   saveProductInputSchema,
 } from "./validation";
 
@@ -269,5 +271,72 @@ describe("saveProductInputSchema", () => {
 
     expect(result).not.toHaveProperty("id");
     expect(result).not.toHaveProperty("businessId");
+  });
+});
+
+const validPresentation = {
+  name: "Caja x6",
+  unitsPerPresentation: "6",
+};
+
+describe("createPresentationInputSchema", () => {
+  it("accepts a whole positive number of units", () => {
+    expect(createPresentationInputSchema.safeParse(validPresentation).success).toBe(true);
+  });
+
+  it("rejects fractional and non-positive units with the field message", () => {
+    for (const units of ["6.5", "0", "-1", "abc"]) {
+      expect(fieldErrors(createPresentationInputSchema, { ...validPresentation, unitsPerPresentation: units }))
+        .toEqual({ unitsPerPresentation: ["Ingresá un número entero de unidades, mayor que 0."] });
+    }
+  });
+
+  it("requires a name and drops server-controlled fields", () => {
+    expect(fieldErrors(createPresentationInputSchema, { ...validPresentation, name: "" }))
+      .toEqual({ name: ["Escribí el nombre de la presentación."] });
+
+    const result = createPresentationInputSchema.parse({
+      ...validPresentation,
+      id: SERVER_ID,
+      productId: SERVER_ID,
+      createdAt: SERVER_TIMESTAMP,
+    });
+    expect(result).not.toHaveProperty("id");
+    expect(result).not.toHaveProperty("productId");
+    expect(result).not.toHaveProperty("createdAt");
+  });
+});
+
+describe("savePresentationInputSchema", () => {
+  it("keeps the packaging list with quantity, unit and supply id", () => {
+    const result = savePresentationInputSchema.parse({
+      ...validPresentation,
+      packaging: [{ supplyId: SERVER_ID, quantity: "1", unit: "unidad" }],
+    });
+
+    expect(result.packaging).toEqual([
+      { supplyId: SERVER_ID, quantity: "1", unit: "unidad" },
+    ]);
+    expect(result.unitsPerPresentation).toBe(6);
+  });
+
+  it("rejects the same packaging twice", () => {
+    const line = { supplyId: SERVER_ID, quantity: "1", unit: "unidad" };
+
+    expect(
+      fieldErrors(savePresentationInputSchema, {
+        ...validPresentation,
+        packaging: [line, line],
+      }),
+    ).toEqual({ packaging: ["Ese packaging ya está en la presentación."] });
+  });
+
+  it("asks for a packaging of the catalog when the id is not a uuid", () => {
+    expect(
+      fieldErrors(savePresentationInputSchema, {
+        ...validPresentation,
+        packaging: [{ supplyId: "caja", quantity: "1", unit: "unidad" }],
+      }),
+    ).toEqual({ packaging: ["Elegí un packaging de tu catálogo."] });
   });
 });
