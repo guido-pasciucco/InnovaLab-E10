@@ -70,35 +70,6 @@ export const amountField = z
     }),
   );
 
-// Hours of own labor for the month (paso 4). Same pipeline as `amountField`
-// with the messages worded for hours, so the user never reads "importe" under
-// an hours input. It keeps the amount's bounds (>= 0, 10 integer digits,
-// 2 decimals): the product with the hourly rate must still fit numeric(12,2).
-export const hoursField = z
-  .string({ error: "Las horas deben ser un número." })
-  .trim()
-  .pipe(z.string().min(1, { error: "Las horas son obligatorias." }))
-  .pipe(
-    z.string().regex(amountShape, {
-      error: "Las horas deben ser un número.",
-    }),
-  )
-  .pipe(
-    z.string().refine((v) => !v.startsWith("-"), {
-      error: "Las horas no pueden ser negativas.",
-    }),
-  )
-  .pipe(
-    z.string().refine((v) => v.split(".")[0].length <= 10, {
-      error: "Las horas son demasiado grandes.",
-    }),
-  )
-  .pipe(
-    z.string().regex(/^\d+(\.\d{1,2})?$/, {
-      error: "Las horas deben tener hasta 2 decimales.",
-    }),
-  );
-
 // Product units one purchase of a variable cost yields (paso 3): a roll that
 // yields 20 boxes is "20". Same staged pipeline as `amountField`, bounded by
 // the yield_quantity column, numeric(14,4): 10 integer digits, 4 decimals.
@@ -149,10 +120,6 @@ export const behaviorField = z.enum(["fixed", "variable"], {
 
 export const traceabilityField = z.enum(["direct", "indirect"], {
   error: "Elegí cómo se relaciona el costo con el producto: directo o indirecto.",
-});
-
-export const isOwnLaborField = z.boolean({
-  error: "Indicá si el costo es trabajo propio.",
 });
 
 // Month the period expenses belong to (#243), as "YYYY-MM". The calculator is
