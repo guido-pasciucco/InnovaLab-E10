@@ -4,10 +4,15 @@ import { useMemo, useState } from "react";
 
 import type { SupplyKind } from "@/lib/schemas/supplies/fields";
 import type { SupplyItem } from "@/lib/schemas/supplies/supplies";
+import { getSupplyUnitBasis } from "@/lib/schemas/supplies/units";
 import { CatalogModal } from "@/components/ui/catalog-modal";
 import { normalizeForSearch } from "@/components/ui/normalize-search";
 import { SuppliesForm } from "./supplies-form";
 import { SuppliesTable } from "./supplies-table";
+
+function minimumUnitOf(purchaseUnit: string): string {
+  return getSupplyUnitBasis(purchaseUnit)?.minimumUnit ?? "";
+}
 
 type SuppliesCatalogProps = {
   supplies: SupplyItem[];
@@ -38,7 +43,7 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
     if (!query) return byKind;
 
     return byKind.filter((supply) =>
-      [supply.name, supply.purchaseUnit, supply.minimumUnit].some((value) =>
+      [supply.name, supply.purchaseUnit, minimumUnitOf(supply.purchaseUnit)].some((value) =>
         normalizeForSearch(value).includes(query),
       ),
     );
@@ -147,6 +152,12 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
           onEdit={handleEdit}
           searchActive={query !== ""}
         />
+
+        {counts[activeKind] > 0 && (
+          <p className="text-xs text-fg-muted">
+            El costo por unidad mínima se calcula automáticamente a partir de la cantidad y el precio de compra. No se cargan cuentas a mano.
+          </p>
+        )}
       </section>
 
       {showForm && (

@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   // libpg-query (SQL validator of the chat agent) reads its .wasm file from
   // disk at load time; bundled, it loses that path and fails (ENOENT).
   serverExternalPackages: ["@react-pdf/renderer", "libpg-query"],
+  async redirects() {
+    return [{ source: "/insumos", destination: "/supplies", permanent: false }];
+  },
 };
 
 export default nextConfig;

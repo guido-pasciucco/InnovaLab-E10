@@ -161,6 +161,75 @@ export const productIngredients = pgTable("product_ingredients", {
   check("product_ingredients_unit_not_empty", sql`length(btrim(${table.unit})) > 0`),
 ]);
 
+// A commercial presentation is one way of selling a product: a configurable
+// number of units plus the packaging used to assemble it. The packaging price
+// is never copied here; presentation_packaging references the catalog row, so
+// changing a price in `supplies` updates every presentation that uses it.
+export const presentations = pgTable("presentations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  // The cost engine requires a positive whole number of units per pack.
+  unitsPerPresentation: numeric("units_per_presentation", {
+    precision: 14,
+    scale: 4,
+  }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+}, (table) => [
+  check("presentations_units_positive", sql`${table.unitsPerPresentation} > 0`),
+  check(
+    "presentations_units_integer",
+    sql`${table.unitsPerPresentation} = floor(${table.unitsPerPresentation})`,
+  ),
+  uniqueIndex("presentations_product_name_uq").on(table.productId, table.name),
+]);
+
+// One row per packaging item used by a presentation (box + label + tape).
+// The FK to `supplies` deliberately uses NO ACTION, mirroring
+// `product_ingredients`: a packaging row still referenced by a presentation
+// cannot be deleted. Drizzle cannot model DEFERRABLE, so the custom migration
+// 20261123222357_presentation_packaging_fk_deferrable.sql adds it: the check
+// waits for commit, letting a profile/business cascade remove the presentation
+// packaging and the supply in one transaction (account deletion) while a
+// direct supply DELETE still fails. The supplies service checks this reference
+// first and returns a friendly SUPPLY_IN_USE; this constraint is the last line
+// of defense. The unit must belong to the packaging's catalog family; the
+// presentations service validates it before writing.
+export const presentationPackaging = pgTable("presentation_packaging", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  presentationId: uuid("presentation_id")
+    .notNull()
+    .references(() => presentations.id, { onDelete: "cascade" }),
+  supplyId: uuid("supply_id")
+    .notNull()
+    .references(() => supplies.id, { onDelete: "no action" }),
+  unit: text("unit").notNull(),
+  quantity: numeric("quantity", { precision: 14, scale: 4 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+}, (table) => [
+  uniqueIndex("presentation_packaging_presentation_supply_uq").on(
+    table.presentationId,
+    table.supplyId,
+  ),
+  index("presentation_packaging_supply_id_idx").on(table.supplyId),
+  check("presentation_packaging_quantity_positive", sql`${table.quantity} > 0`),
+  check("presentation_packaging_unit_not_empty", sql`length(btrim(${table.unit})) > 0`),
+]);
+
 // Single source of truth: row types are inferred from the table definitions,
 // so there is no hand-written entity interface to keep in sync.
 export type Business = typeof businesses.$inferSelect;
@@ -169,3 +238,7 @@ export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type ProductIngredient = typeof productIngredients.$inferSelect;
 export type NewProductIngredient = typeof productIngredients.$inferInsert;
+export type Presentation = typeof presentations.$inferSelect;
+export type NewPresentation = typeof presentations.$inferInsert;
+export type PresentationPackaging = typeof presentationPackaging.$inferSelect;
+export type NewPresentationPackaging = typeof presentationPackaging.$inferInsert;

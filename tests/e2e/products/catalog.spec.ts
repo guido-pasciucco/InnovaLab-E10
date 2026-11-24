@@ -31,7 +31,7 @@ test("busca productos por nombre y por insumo de la receta", async ({
   authedPage,
 }) => {
   // Arrange: un insumo y dos productos con recetas distintas.
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
   await authedPage
@@ -45,7 +45,7 @@ test("busca productos por nombre y por insumo de la receta", async ({
     authedPage.getByRole("cell", { name: "Harina 000", exact: true }),
   ).toBeVisible();
 
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Sal fina");
   await authedPage
@@ -125,7 +125,7 @@ test("edita y borra un producto desde las acciones de la fila", async ({
   authedPage,
 }) => {
   // Arrange: un insumo y un producto con receta.
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
   await authedPage

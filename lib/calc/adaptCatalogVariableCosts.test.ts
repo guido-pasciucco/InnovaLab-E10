@@ -11,8 +11,6 @@ const validSource: CatalogVariableCostsSource = {
       purchasePrice: "18750.00",
       purchaseQuantity: "25",
       purchaseUnit: "kg",
-      minimumUnit: "g",
-      conversionFactor: "1000",
     },
     {
       id: "box",
@@ -20,8 +18,6 @@ const validSource: CatalogVariableCostsSource = {
       purchasePrice: "100",
       purchaseQuantity: "1",
       purchaseUnit: "unidad",
-      minimumUnit: "unidad",
-      conversionFactor: "1",
     },
   ],
   recipe: {
@@ -66,8 +62,6 @@ describe("adaptCatalogVariableCosts", () => {
         purchasePrice: "3000",
         purchaseQuantity: "2",
         purchaseUnit: "L",
-        minimumUnit: "ml",
-        conversionFactor: "1000",
       }],
       recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "milk", quantity: "250", unit: "ml" }] },
       presentations: [{ id: "single", name: "Individual", unitsPerPresentation: "1" }],
@@ -85,8 +79,6 @@ describe("adaptCatalogVariableCosts", () => {
         purchasePrice: "2400",
         purchaseQuantity: "1",
         purchaseUnit: "docena",
-        minimumUnit: "unidad",
-        conversionFactor: "12",
       }],
       recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "eggs", quantity: "1", unit: "unidad" }] },
       presentations: [{ id: "single", name: "Individual", unitsPerPresentation: "1" }],
@@ -96,10 +88,10 @@ describe("adaptCatalogVariableCosts", () => {
   });
 
   it.each([
-    ["mm", "1", "1"],
-    ["cm", "10", "10"],
-    ["m", "1000", "1000"],
-  ] as const)("converts %s to the exact millimetre base", (purchaseUnit, factor, purchaseQuantity) => {
+    ["mm", "1"],
+    ["cm", "10"],
+    ["m", "1000"],
+  ] as const)("converts %s to the exact millimetre base", (purchaseUnit, purchaseQuantity) => {
     const input = adapted({
       catalog: [{
         id: "wire",
@@ -107,8 +99,6 @@ describe("adaptCatalogVariableCosts", () => {
         purchasePrice: "10",
         purchaseQuantity: "1",
         purchaseUnit,
-        minimumUnit: "mm",
-        conversionFactor: factor,
       }],
       recipe: { yieldQuantity: "1", ingredients: [{ supplyId: "wire", quantity: "1", unit: "mm" }] },
       presentations: [],
@@ -116,28 +106,17 @@ describe("adaptCatalogVariableCosts", () => {
 
     expect(input.supplies[0]).toMatchObject({ purchaseQuantity, purchaseUnit: "mm" });
   });
-  it("accepts a custom package label only with an explicit canonical equivalence", () => {
-    const input = adapted({
+  it("rejects a purchase unit outside the catalog", () => {
+    const result = adaptCatalogVariableCosts({
       ...validSource,
-      catalog: [{
-        id: "labels",
-        kind: "packaging",
-        purchasePrice: "10",
-        purchaseQuantity: "2.5",
-        purchaseUnit: "rollo",
-        minimumUnit: "unidad",
-        conversionFactor: "100",
-      }],
-      recipe: { yieldQuantity: "1", ingredients: [] },
-      presentations: [{
-        id: "single",
-        name: "Individual",
-        unitsPerPresentation: "1",
-        packaging: [{ supplyId: "labels", quantity: "0.5", unit: "unidad" }],
-      }],
+      catalog: [{ ...validSource.catalog[0]!, purchaseUnit: "rollo" }],
     });
 
-    expect(input.supplies[0]).toMatchObject({ purchaseQuantity: "250", purchaseUnit: "unidad" });
+    expect(result).toEqual({
+      ok: false,
+      code: "UNSUPPORTED_PURCHASE_UNIT",
+      details: { supplyId: validSource.catalog[0]!.id, unit: "rollo" },
+    });
   });
 
   it("keeps periodic divisions exact: one currency unit yields three units and x3 costs one", () => {
@@ -148,8 +127,6 @@ describe("adaptCatalogVariableCosts", () => {
         purchasePrice: "1",
         purchaseQuantity: "1",
         purchaseUnit: "unidad",
-        minimumUnit: "unidad",
-        conversionFactor: "1",
       }],
       recipe: { yieldQuantity: "3", ingredients: [{ supplyId: "ingredient", quantity: "1", unit: "unidad" }] },
       presentations: [{ id: "three", name: "Tres unidades", unitsPerPresentation: "3" }],
@@ -200,22 +177,8 @@ describe("adaptCatalogVariableCosts", () => {
   });
 
   it.each([
-    ["kg", "ml", "INCOMPATIBLE_PURCHASE_UNIT"],
-    ["caja", "paquete", "UNSUPPORTED_MINIMUM_UNIT"],
-  ] as const)("rejects incompatible or ambiguous units: %s to %s", (purchaseUnit, minimumUnit, code) => {
-    const result = adaptCatalogVariableCosts({
-      ...validSource,
-      catalog: [{ ...validSource.catalog[0]!, purchaseUnit, minimumUnit }],
-    });
-
-    expect(result).toMatchObject({ ok: false, code });
-  });
-
-  it.each([
     ["purchaseQuantity", "0", "INVALID_PURCHASE_QUANTITY"],
     ["purchaseQuantity", "-1", "INVALID_PURCHASE_QUANTITY"],
-    ["conversionFactor", "0", "INVALID_CONVERSION_FACTOR"],
-    ["conversionFactor", "-1", "INVALID_CONVERSION_FACTOR"],
   ] as const)("rejects invalid catalog %s %s", (field, value, code) => {
     const result = adaptCatalogVariableCosts({
       ...validSource,

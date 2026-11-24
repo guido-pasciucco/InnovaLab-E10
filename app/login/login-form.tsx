@@ -17,8 +17,8 @@ import type { LoginState } from "@/lib/types/auth";
 
 import { login } from "./actions";
 
-// Signing in lands on /inicio, which sends each account to its home: flow 1
-// (sidebar + catalogs) for an emprendedor, the panel for a supplier.
+// Signing in lands on /inicio, the emprendedor home; /inicio itself sends a
+// supplier-only account on to its panel (/proveedor).
 const POST_LOGIN_HREF = "/inicio";
 
 const initialState: LoginState = undefined;

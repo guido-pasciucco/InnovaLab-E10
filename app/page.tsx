@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
-import { unstable_rethrow } from "next/navigation";
 
 import { getOptionalUser } from "@/lib/auth/optional-user";
-import type { SessionUser } from "@/lib/services/auth";
-import { getCalculatorProgressService } from "@/lib/services/calculator";
-import { resumeHref } from "@/components/calculator/wizard/wizard-steps";
 import { BreakEvenSection } from "@/components/home/break-even-section";
 import { FaqSection } from "@/components/home/faq-section";
 import { FinalCta } from "@/components/home/final-cta";
@@ -22,35 +18,19 @@ export const metadata: Metadata = {
     "Calculá el costo real de tus productos, conocé tu margen y encontrá tu punto de equilibrio en pocos pasos.",
 };
 
-const CALCULATOR_START_HREF = "/paso-1";
+// The single-product wizard is gone. The catalog flow starts at Products.
+const START_HREF = "/products";
 
-// A signed-in user resumes at the furthest step saved in the database; anyone
-// else, or anyone whose progress cannot be read, starts at the first step.
-// The home must never break because of the calculator.
-async function getCalculatorStartHref(user: SessionUser | null): Promise<string> {
-  if (!user) return CALCULATOR_START_HREF;
-
-  try {
-    const { currentStep } = await getCalculatorProgressService(user.id);
-    return resumeHref(currentStep);
-  } catch (err) {
-    unstable_rethrow(err);
-    console.error("[home] calculator progress failed", err);
-    return CALCULATOR_START_HREF;
-  }
-}
-
-// Server Component: reads the session only to pick where the main calls to
-// action go, so it renders on demand.
+// Server Component: reads the session only to pick the header state, so it
+// renders on demand.
 export default async function HomePage() {
   const user = await getOptionalUser();
-  const startHref = await getCalculatorStartHref(user);
 
   return (
     <>
-      <SiteHeader startHref={startHref} isSignedIn={user !== null} />
+      <SiteHeader startHref={START_HREF} isSignedIn={user !== null} />
       <main className="relative min-h-screen overflow-x-clip bg-surface-tint font-sans text-fg">
-        <Hero startHref={startHref} />
+        <Hero startHref={START_HREF} />
         <StepsSection />
         <BreakEvenSection />
         <ScenariosSection />

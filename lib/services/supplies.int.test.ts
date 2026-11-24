@@ -8,7 +8,13 @@ import { supplies } from "@/lib/db/supplies/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
-import { createProductService, getProductService, updateProductService } from "./products";
+import {
+  createProductService,
+  deleteProductService,
+  getProductService,
+  removeSupplyFromProductService,
+  updateProductService,
+} from "./products";
 import { backfillProductVariableCosts } from "./product-variable-cost-backfill";
 import {
   createSupplyService,
@@ -28,8 +34,6 @@ const validInput = {
   purchasePrice: "18750.00",
   purchaseQuantity: "25",
   purchaseUnit: "kg",
-  minimumUnit: "g",
-  conversionFactor: "1000",
 } as const;
 
 let db: Db;
@@ -82,8 +86,6 @@ async function insertLegacySupply(userId: string) {
       purchasePrice: "1000.00",
       purchaseQuantity: "1",
       purchaseUnit: "bolsa",
-      minimumUnit: "unidad",
-      conversionFactor: "1",
     })
     .returning();
 
@@ -109,8 +111,6 @@ describe("supplies service", () => {
     expect(supply.kind).toBe(validInput.kind);
     expect(supply.purchaseQuantity).toBe("25.0000");
     expect(supply.purchaseUnit).toBe(validInput.purchaseUnit);
-    expect(supply.minimumUnit).toBe(validInput.minimumUnit);
-    expect(supply.conversionFactor).toBe("1000.0000");
     expect(supply.userId).toBe(user.id);
     expect(supply.id).toBeDefined();
   });
@@ -128,23 +128,16 @@ describe("supplies service", () => {
     expect(supply.name).toBe("Bolsa kraft");
   });
 
-  it("derives the minimum unit and factor from the selected supply unit", async () => {
+  it("stores the canonical spelling of a catalog unit", async () => {
     const user = await makeUser();
 
     const supply = await createSupplyService(
       user.id,
-      {
-        ...validInput,
-        purchaseUnit: "L",
-        minimumUnit: "L",
-        conversionFactor: "1",
-      },
+      { ...validInput, purchaseUnit: " litros " },
       db,
     );
 
     expect(supply.purchaseUnit).toBe("L");
-    expect(supply.minimumUnit).toBe("ml");
-    expect(supply.conversionFactor).toBe("1000.0000");
   });
 
   it("rejects a purchase unit outside the catalog when creating a supply", async () => {
@@ -155,24 +148,7 @@ describe("supplies service", () => {
     ).rejects.toBeInstanceOf(ZodError);
   });
 
-  it("derives the technical units even if the payload manipulates them", async () => {
-    const user = await makeUser();
-
-    const supply = await createSupplyService(
-      user.id,
-      {
-        ...validInput,
-        minimumUnit: "caja",
-        conversionFactor: "999",
-      },
-      db,
-    );
-
-    expect(supply.minimumUnit).toBe("g");
-    expect(supply.conversionFactor).toBe("1000.0000");
-  });
-
-  it("keeps the technical units of packaging", async () => {
+  it("creates packaging with a catalog unit", async () => {
     const user = await makeUser();
 
     const supply = await createSupplyService(
@@ -181,15 +157,24 @@ describe("supplies service", () => {
         ...validInput,
         kind: "packaging",
         name: "Bolsa kraft",
-        purchaseUnit: "caja",
-        minimumUnit: "bolsa",
-        conversionFactor: "100",
+        purchaseUnit: "docena",
       },
       db,
     );
 
-    expect(supply.minimumUnit).toBe("bolsa");
-    expect(supply.conversionFactor).toBe("100.0000");
+    expect(supply.purchaseUnit).toBe("docena");
+  });
+
+  it("rejects packaging with a unit outside the catalog", async () => {
+    const user = await makeUser();
+
+    await expect(
+      createSupplyService(
+        user.id,
+        { ...validInput, kind: "packaging", name: "Bolsa kraft", purchaseUnit: "caja" },
+        db,
+      ),
+    ).rejects.toMatchObject({ name: "ZodError" });
   });
 
   it("capitalizes the first letter of the name", async () => {
@@ -229,32 +214,7 @@ describe("supplies service", () => {
     expect(updated!.purchaseQuantity).toBe("25.0000");
   });
 
-  it("preserves a legacy unit and ignores manipulated technical values on edit", async () => {
-    const user = await makeUser();
-    const legacy = await insertLegacySupply(user.id);
-
-    const updated = await updateSupplyService(
-      user.id,
-      legacy.id,
-      {
-        kind: "supply",
-        name: "Harina vieja",
-        purchasePrice: "2000.00",
-        purchaseQuantity: "1",
-        purchaseUnit: "bolsa",
-        minimumUnit: "caja",
-        conversionFactor: "999",
-      },
-      db,
-    );
-
-    expect(updated).not.toBeNull();
-    expect(updated!.purchaseUnit).toBe("bolsa");
-    expect(updated!.minimumUnit).toBe("unidad");
-    expect(updated!.conversionFactor).toBe("1.0000");
-  });
-
-  it("rejects changing a legacy unit to another unknown unit", async () => {
+  it("rejects keeping a unit outside the catalog on edit", async () => {
     const user = await makeUser();
     const legacy = await insertLegacySupply(user.id);
 
@@ -262,17 +222,10 @@ describe("supplies service", () => {
       updateSupplyService(
         user.id,
         legacy.id,
-        { ...validInput, name: "Harina vieja", purchaseUnit: "caja" },
+        { ...validInput, name: "Harina vieja", purchaseUnit: "bolsa" },
         db,
       ),
-    ).rejects.toMatchObject({
-      code: "VALIDATION",
-      details: {
-        fieldErrors: {
-          purchaseUnit: ["Elegí una unidad de compra del catálogo."],
-        },
-      },
-    });
+    ).rejects.toBeInstanceOf(ZodError);
   });
 
   it("migrates a legacy unit when the edit picks a catalog unit", async () => {
@@ -286,16 +239,12 @@ describe("supplies service", () => {
         ...validInput,
         name: "Harina vieja",
         purchaseUnit: "kg",
-        minimumUnit: "caja",
-        conversionFactor: "999",
       },
       db,
     );
 
     expect(updated).not.toBeNull();
     expect(updated!.purchaseUnit).toBe("kg");
-    expect(updated!.minimumUnit).toBe("g");
-    expect(updated!.conversionFactor).toBe("1000.0000");
   });
 
   it("rejects an unknown unit when editing a supply that uses the catalog", async () => {
@@ -304,14 +253,7 @@ describe("supplies service", () => {
 
     await expect(
       updateSupplyService(user.id, supply.id, { ...validInput, purchaseUnit: "caja" }, db),
-    ).rejects.toMatchObject({
-      code: "VALIDATION",
-      details: {
-        fieldErrors: {
-          purchaseUnit: ["Elegí una unidad de compra del catálogo."],
-        },
-      },
-    });
+    ).rejects.toBeInstanceOf(ZodError);
   });
 
   it("deletes a supply", async () => {
@@ -414,6 +356,118 @@ describe("supplies service", () => {
     await expect(listSuppliesService(user.id, db)).resolves.toHaveLength(1);
   });
 
+  it("lists the products that still use the supply with their ingredient count", async () => {
+    const user = await makeUser();
+    const harina = await createSupplyService(user.id, validInput, db);
+    const azucar = await createSupplyService(
+      user.id,
+      { ...validInput, name: "Azúcar" },
+      db,
+    );
+    await createProductService(
+      user.id,
+      {
+        name: "Torta",
+        yieldQuantity: "8",
+        recipe: [
+          { supplyId: harina.id, quantity: "250", unit: "g" },
+          { supplyId: azucar.id, quantity: "100", unit: "g" },
+        ],
+      },
+      db,
+    );
+    await createProductService(
+      user.id,
+      {
+        name: "Pan",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: harina.id, quantity: "500", unit: "g" }],
+      },
+      db,
+    );
+
+    let thrown: unknown;
+    try {
+      await deleteSupplyService(user.id, harina.id, db);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toMatchObject({ code: "SUPPLY_IN_USE" });
+    expect((thrown as { details?: unknown }).details).toMatchObject({
+      usages: [
+        { kind: "recipe", productName: "Pan", ingredientCount: 1 },
+        { kind: "recipe", productName: "Torta", ingredientCount: 2 },
+      ],
+    });
+  });
+
+  it("removes the supply from one recipe and then allows the deletion", async () => {
+    const user = await makeUser();
+    const harina = await createSupplyService(user.id, validInput, db);
+    const azucar = await createSupplyService(
+      user.id,
+      { ...validInput, name: "Azúcar" },
+      db,
+    );
+    const torta = await createProductService(
+      user.id,
+      {
+        name: "Torta",
+        yieldQuantity: "8",
+        recipe: [
+          { supplyId: harina.id, quantity: "250", unit: "g" },
+          { supplyId: azucar.id, quantity: "100", unit: "g" },
+        ],
+      },
+      db,
+    );
+
+    const updated = await removeSupplyFromProductService(user.id, torta.id, harina.id, db);
+    expect(updated?.recipe).toMatchObject([
+      { supplyId: azucar.id, quantity: "100", unit: "g" },
+    ]);
+    await expect(deleteSupplyService(user.id, harina.id, db)).resolves.toBe(true);
+  });
+
+  it("frees a supply once the only product using it is deleted", async () => {
+    const user = await makeUser();
+    const harina = await createSupplyService(user.id, validInput, db);
+    const pan = await createProductService(
+      user.id,
+      {
+        name: "Pan",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: harina.id, quantity: "500", unit: "g" }],
+      },
+      db,
+    );
+    await expect(deleteProductService(user.id, pan.id, db)).resolves.toBe(true);
+
+    await expect(deleteSupplyService(user.id, harina.id, db)).resolves.toBe(true);
+  });
+
+  it("refuses to remove the only ingredient of a recipe", async () => {
+    const user = await makeUser();
+    const harina = await createSupplyService(user.id, validInput, db);
+    const pan = await createProductService(
+      user.id,
+      {
+        name: "Pan",
+        yieldQuantity: "12",
+        recipe: [{ supplyId: harina.id, quantity: "500", unit: "g" }],
+      },
+      db,
+    );
+
+    await expect(
+      removeSupplyFromProductService(user.id, pan.id, harina.id, db),
+    ).rejects.toMatchObject({ code: "PRODUCT_RECIPE_NEEDS_INGREDIENT" });
+    await expect(deleteSupplyService(user.id, harina.id, db)).rejects.toMatchObject({
+      code: "SUPPLY_IN_USE",
+    });
+  });
+
   it("blocks changing the minimum unit of a supply used by a recipe", async () => {
     const user = await makeUser();
     const supply = await createSupplyService(user.id, validInput, db);
@@ -473,7 +527,6 @@ describe("supplies service", () => {
         name: "Harina premium",
         purchasePrice: "22000.00",
         purchaseUnit: "g",
-        conversionFactor: "900",
       },
       db,
     );
@@ -481,7 +534,7 @@ describe("supplies service", () => {
     expect(updated).not.toBeNull();
     expect(updated!.name).toBe("Harina premium");
     expect(updated!.purchasePrice).toBe("22000.00");
-    expect(updated!.conversionFactor).toBe("1.0000");
+    expect(updated!.purchaseUnit).toBe("g");
   });
 
   it("recalculates every active product that uses an updated supply", async () => {

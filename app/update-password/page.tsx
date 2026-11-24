@@ -2,12 +2,18 @@ import Link from "next/link";
 
 import { AuthHeroPanel } from "@/components/auth/auth-hero-panel";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
+import { requireUser } from "@/lib/auth/require-user";
 
 import UpdatePasswordForm from "./update-password-form";
 
 const TIPS = ["Mínimo 8 caracteres", "Confirmación para evitar errores", "Volvés al inicio de sesión al guardar"];
 
-export default function UpdatePasswordPage() {
+export default async function UpdatePasswordPage() {
+  // A visitor without a recovery session never sees the form. Sending them
+  // back with the same code the Server Action uses keeps one message for
+  // both an expired link and a session lost after the page was loaded.
+  await requireUser({ redirectTo: "/reset-password?error=AUTH_SESSION_MISSING" });
+
   return (
     <AuthPageShell
       hero={

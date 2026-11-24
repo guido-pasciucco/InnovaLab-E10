@@ -16,7 +16,7 @@ import {
   acceptSupplierInviteService,
   completeSupplierSignupService,
   createSupplierInviteService,
-  getHomePathService,
+  isSupplierOnlyService,
   getSupplierInviteService,
   hashInviteToken,
   listLinkedSuppliersService,
@@ -27,7 +27,7 @@ import {
 } from "./suppliers";
 import { createSupplyService } from "./supplies";
 
-// Integration tests for the supplier registry (docs/licitaciones RN-22,
+// Integration tests for the supplier registry (docs/flujos/09-licitaciones.md RN-22,
 // RN-23) against the local Supabase stack. Users are removed after each test;
 // their supplier rows, links and invites cascade.
 
@@ -357,28 +357,28 @@ describe("completeSupplierSignupService", () => {
   });
 });
 
-describe("getHomePathService", () => {
-  it("sends a supplier without a business to the supplier panel", async () => {
+describe("isSupplierOnlyService", () => {
+  it("is true for a supplier without a business or catalog of its own", async () => {
     const { owner, supplier } = await registeredSupplier();
 
-    await expect(getHomePathService(supplier.id, db)).resolves.toBe("/proveedor");
-    await expect(getHomePathService(owner.id, db)).resolves.toBe("/insumos");
+    await expect(isSupplierOnlyService(supplier.id, db)).resolves.toBe(true);
+    await expect(isSupplierOnlyService(owner.id, db)).resolves.toBe(false);
 
     await db.insert(businesses).values({ ownerUserId: supplier.id, name: "También vendo" });
-    await expect(getHomePathService(supplier.id, db)).resolves.toBe("/insumos");
+    await expect(isSupplierOnlyService(supplier.id, db)).resolves.toBe(false);
   });
 
-  it("keeps an emprendedor with a catalog but no business yet on the dashboard", async () => {
+  it("is false for an emprendedor with a catalog but no business yet", async () => {
     const owner = await makeUser();
     const emprendedor = await makeUser();
     await createSupplyService(
       emprendedor.id,
-      { kind: "supply", name: "Harina", purchasePrice: "100", purchaseQuantity: "1", purchaseUnit: "kg", minimumUnit: "g", conversionFactor: "1000" },
+      { kind: "supply", name: "Harina", purchasePrice: "100", purchaseQuantity: "1", purchaseUnit: "kg" },
       db,
     );
     const { token } = await createSupplierInviteService(owner.id, { label: "Vecino" }, db);
     await registerSupplierService(emprendedor.id, emprendedor.email, token, buildSupplierProfile(), db);
 
-    await expect(getHomePathService(emprendedor.id, db)).resolves.toBe("/insumos");
+    await expect(isSupplierOnlyService(emprendedor.id, db)).resolves.toBe(false);
   });
 });

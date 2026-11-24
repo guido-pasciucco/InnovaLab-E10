@@ -4,7 +4,7 @@ import { expect, signInContext, test } from "../fixtures";
 import { generateInviteLink } from "../helpers/supplier-invite";
 import { moveTenderToThePast } from "../helpers/tender-clock";
 
-// docs/licitaciones end to end (ES-03 to ES-10): the emprendedor publishes,
+// docs/flujos/09-licitaciones.md end to end (ES-03 to ES-10): the emprendedor publishes,
 // the supplier offers in its own session, the tender closes, and the
 // emprendedor compares, chooses and issues the purchase order.
 test("publicar, ofertar, cerrar, elegir y generar la orden de compra", async ({
@@ -17,7 +17,7 @@ test("publicar, ofertar, cerrar, elegir y generar la orden de compra", async ({
 
   // Arrange: a catalog supply and a supplier linked through the invite link
   // (an existing account completing its supplier data, no email round trip).
-  await authedPage.goto("/insumos");
+  await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
   await authedPage.getByRole("textbox", { name: "Precio de compra" }).fill("18750");

@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     failure = toAppError(err, "AUTH_UNAVAILABLE").code;
   }
 
-  // The supplier signup (docs/licitaciones RN-23) confirms the email and then
+  // The supplier signup (docs/flujos/09-licitaciones.md RN-23) confirms the email and then
   // continues to its invite's completion route: on failure it is a signup too.
   // Opened on another device, the code exchange fails although the email is
   // confirmed, so /login keeps `next` to finish the supplier signup.

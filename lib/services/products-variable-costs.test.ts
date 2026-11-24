@@ -8,9 +8,7 @@ const supply: CatalogSupply = {
   kind: "supply",
   purchasePrice: "1",
   purchaseQuantity: "1",
-  purchaseUnit: "unidad",
-  minimumUnit: "unidad",
-  conversionFactor: "1",
+  purchaseUnit: "g",
 };
 
 const recipe = {
@@ -18,19 +16,8 @@ const recipe = {
   recipe: [{ supplyId: "flour", supplyName: "Harina", quantity: "1", unit: "g" }],
 };
 
-function catalogSupply(
-  id: string,
-  purchaseUnit: string,
-  minimumUnit: string,
-  conversionFactor: string,
-): CatalogSupply {
-  return {
-    ...supply,
-    id,
-    purchaseUnit,
-    minimumUnit,
-    conversionFactor,
-  };
+function catalogSupply(id: string, purchaseUnit: string): CatalogSupply {
+  return { ...supply, id, purchaseUnit };
 }
 
 describe("deriveProductVariableCosts", () => {
@@ -71,10 +58,10 @@ describe("deriveProductVariableCosts", () => {
 
   it("returns a typed unavailable state for known incompatible catalog data", () => {
     expect(
-      deriveProductVariableCosts(recipe, [{ ...supply, minimumUnit: "legacy-unit" }]),
+      deriveProductVariableCosts(recipe, [{ ...supply, purchaseUnit: "legacy-unit" }]),
     ).toEqual({
       variableCosts: null,
-      variableCostsUnavailableCode: "UNSUPPORTED_MINIMUM_UNIT",
+      variableCostsUnavailableCode: "UNSUPPORTED_PURCHASE_UNIT",
     });
   });
 
@@ -98,18 +85,18 @@ describe("deriveProductVariableCosts", () => {
   it("calculates unaffected products when another product has incompatible data", () => {
     const valid = deriveProductVariableCosts(recipe, [supply]);
     const incompatible = deriveProductVariableCosts(recipe, [
-      { ...supply, minimumUnit: "legacy-unit" },
+      { ...supply, purchaseUnit: "legacy-unit" },
     ]);
 
     expect(valid.variableCosts?.unitCost).toBe("1.00");
-    expect(incompatible.variableCostsUnavailableCode).toBe("UNSUPPORTED_MINIMUM_UNIT");
+    expect(incompatible.variableCostsUnavailableCode).toBe("UNSUPPORTED_PURCHASE_UNIT");
   });
 
   it("ignores an unrelated incompatible catalog row", () => {
     expect(
       deriveProductVariableCosts(recipe, [
         supply,
-        { ...supply, id: "legacy", minimumUnit: "legacy-unit" },
+        { ...supply, id: "legacy", purchaseUnit: "legacy-unit" },
       ]),
     ).toMatchObject({
       variableCosts: { unitCost: "1.00" },
@@ -118,10 +105,10 @@ describe("deriveProductVariableCosts", () => {
   });
 
   it.each([
-    ["mass", catalogSupply("mass", "kg", "g", "1000"), "kg", "0.5", "0.50"],
-    ["volume", catalogSupply("volume", "L", "ml", "1000"), "L", "0.5", "0.50"],
-    ["length", catalogSupply("length", "m", "mm", "1000"), "cm", "50", "0.50"],
-    ["count", catalogSupply("count", "docena", "unidad", "12"), "docena", "0.5", "0.50"],
+    ["mass", catalogSupply("mass", "kg"), "kg", "0.5", "0.50"],
+    ["volume", catalogSupply("volume", "L"), "L", "0.5", "0.50"],
+    ["length", catalogSupply("length", "m"), "cm", "50", "0.50"],
+    ["count", catalogSupply("count", "docena"), "docena", "0.5", "0.50"],
   ])(
     "uses the persisted %s recipe unit and converts it exactly to the catalog minimum unit",
     (_family, catalogEntry, unit, quantity, expected) => {

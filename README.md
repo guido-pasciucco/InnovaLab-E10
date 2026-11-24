@@ -2,7 +2,7 @@
 
 MVP de la Fase 1 de una calculadora inteligente para **costos, precios y análisis de punto de equilibrio** (`Costos / Precios / Punto de Equilibrio`).
 
-El **borrador del cálculo** de la Fase 1 se persiste **solo en el servidor**, con sesión obligatoria: vive en las tablas de `lib/db` y se guarda al confirmar cada paso. Ver [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md).
+El **borrador del cálculo** de la Fase 1 se persiste **solo en el servidor**, con sesión obligatoria: vive en las tablas de `lib/db` y se guarda al confirmar cada paso. Ver ADR 02.
 
 ## 📂 Guías por directorio
 
@@ -50,6 +50,7 @@ Dependencias clave:
 - **`zod` + `react-hook-form`:** validación como fuente única; RHF para los formularios.
 - **`@supabase/ssr` + Supabase Auth:** sesión, login, signup y recuperación de contraseña. Ver `lib/supabase/`.
 - **`drizzle-orm`:** acceso a la base con tipos. El esquema vive en `lib/db/<dominio>/table.ts` (ver `lib/db/AGENTS.md`).
+- **`ai` + `@ai-sdk/amazon-bedrock`:** el asistente de ayuda llama a un perfil de inferencia de Bedrock. El panel no importa estas librerías. Ver [docs/dependencies/ai-sdk.md](docs/dependencies/ai-sdk.md).
 
 > [!NOTE]
 > La suite de tests corre con `environment: "node"` en `vitest.config.mts`. **No hay `jsdom` ni `@testing-library/*` instalados**, así que los componentes de React no se unit-testean: las reglas se testean en `lib/schemas` y `lib/services`, y la integración se verifica a mano en dev. Agregar esas librerías es un cambio de tooling del repo, no de un ticket de feature.
@@ -63,7 +64,7 @@ Estas decisiones corresponden al acuerdo de equipo. Resumen a continuación.
 ### Despliegue
 
 - **Monorepo fullstack con Next.js, un solo despliegue en Vercel.** No existe un repositorio de backend separado ni un despliegue de backend independiente.
-- **App Router no es un backend.** Hoy no hay Route Handlers (`app/api/*` no existe): el navegador habla con el servidor mediante Server Actions (`app/<feature>/actions.ts`, una por feature). Si se agregan, son bordes HTTP delgados (parsear/validar/delegar), no una capa de servicios.
+- **App Router no es un backend.** El navegador habla con el servidor mediante Server Actions (`app/<feature>/actions.ts`, una por feature). La excepción es el asistente de ayuda (`app/api/help`), un Route Handler delgado que transmite la respuesta. Si se agregan otras rutas, son bordes HTTP delgados (parsear/validar/delegar), no una capa de servicios.
 
 ### Estilo de software
 
@@ -116,7 +117,7 @@ tests/
    - Componente de cliente → API (`app/api/*`, si existiera) → **solo mediante `fetch`**. Nunca importar `route.ts`.
    - Mutaciones de formularios propios → Server Actions (se importan, no se hace `fetch`). Las actions **no** hacen `fetch` a las propias rutas: llaman al servicio de `lib/` directo.
    - Los Server Components leen la persistencia mediante los servicios de `lib/services` (que usan `lib/db` por dentro), nunca importando `lib/db` ni con `fetch` interno a su propia API.
-   - Consumidores externos (app nativa, webhooks, terceros) → Route Handlers (contrato HTTP estable). Hoy no hay ninguno; ver [API HTTP de auth](docs/examples/http-auth-api.md) para cómo agregarlos. Una PWA no los necesita.
+   - Consumidores externos (app nativa, webhooks, terceros) → Route Handlers (contrato HTTP estable). Hoy no hay ninguno; ver [Login y acceso](docs/flujos/02-login-y-acceso.md) para cómo agregarlos. Una PWA no los necesita.
 3. **El dominio se mantiene universal.** Nada en `lib/calc`, `lib/money`, `lib/schemas` puede usar APIs de servidor de Node/Next ni `window`/`localStorage`.
 4. **La infraestructura permanece en el servidor.** `lib/db/` (su cliente, `lib/db/client.ts`, importa `server-only`) y todo lo que toque secretos o Supabase nunca se importan desde el cliente.
 5. **Los gráficos son solo de cliente.** Cada componente de gráficos usa `'use client'` más `dynamic(..., { ssr: false })`.
@@ -129,14 +130,14 @@ tests/
 | Responsabilidad | Ubicación |
 | --- | --- |
 | Páginas del assistant (calculator) | `app/(calculator)/paso-1`, `paso-2`, `resultados` |
-| Borde HTTP (adaptar + delegar, sin lógica) | `app/api/*` — hoy no existe; solo para consumidores externos (ver [API HTTP de auth](docs/examples/http-auth-api.md)) |
+| Borde HTTP (adaptar + delegar, sin lógica) | `app/api/*` — hoy no existe; solo para consumidores externos (ver [Login y acceso](docs/flujos/02-login-y-acceso.md)) |
 | Server Actions de formularios propios | `app/<feature>/actions.ts` (colocadas por feature) |
 | Lógica de negocio del servidor | `lib/services` (server-only; recibe valores, devuelve datos planos) |
 | Clientes Supabase por runtime | `lib/supabase` (server-only) |
 | Tipos compartidos | `lib/types` (p. ej. `FormState`) |
 | UI del asistente, gráficos, primitivas | `components/calculator`, `components/charts`, `components/ui` |
 | Matemática pura / dinero / esquemas | `lib/calc`, `lib/money`, `lib/schemas` |
-| Persistencia del cálculo (borrador) | `lib/db/` (server-only, Drizzle), accedida solo desde `lib/services` — ver [ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md) |
+| Persistencia del cálculo (borrador) | `lib/db/` (server-only, Drizzle), accedida solo desde `lib/services` — ver ADR 02 |
 | Estado de interfaz en el cliente (no persiste el cálculo) | `lib/store` |
 | Pruebas unitarias | co-locadas con el módulo (`<modulo>.test.ts`), se corren con `bun run test`; convenciones en [`TEST.md`](TEST.md) |
 | Pruebas de integración | co-locadas con el módulo (`<modulo>.int.test.ts`), contra Supabase local; se corren con `bun run test:int` |
@@ -219,6 +220,8 @@ bun run e2e:down    # stops the local stack (keeps the db data)
 
 Si la base queda con datos basura: `bun run db:reset:local` (la vacía y vuelve a migrar).
 
+`bun dev` usa el mismo stack local: `.env` apunta a `127.0.0.1:54321`, así que los mails de confirmación y recuperación caen en la UI de Mailpit (`http://127.0.0.1:54324`) igual que en los E2E. Levantalo con `bun run supabase:start` y aplicá las migraciones con `bun run db:migrate:local`. No hace falta apuntar a la nube para probar mails.
+
 > [!TIP]
 > Si Chromium no arranca por librerías del sistema faltantes (típico en WSL o Linux mínimo, error del estilo `error while loading shared libraries`), instalalas con `bunx playwright install --with-deps chromium` (pide `sudo`). En macOS y Windows nunca hace falta. Cuando se actualiza `@playwright/test`, volver a correr `bun run e2e:setup`.
 
@@ -277,4 +280,4 @@ tests/e2e/
 
 Notas:
 
-- El borrador del cálculo se persiste solo en servidor ([ADR 02](docs/decisiones/establecidas/desarrollo/02-persistencia-del-calculo-en-servidor.md)): no guardar el cálculo en `lib/store`, `localStorage` ni IndexedDB.
+- El borrador del cálculo se persiste solo en servidor (ADR 02): no guardar el cálculo en `lib/store`, `localStorage` ni IndexedDB.

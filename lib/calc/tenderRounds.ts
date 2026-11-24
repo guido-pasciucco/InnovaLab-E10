@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 
-// Round arithmetic for supply tenders (docs/licitaciones RN-02, RN-09,
+// Round arithmetic for supply tenders (docs/flujos/09-licitaciones.md RN-02, RN-09,
 // RN-12). Pure: no React, Next or db. Times are absolute instants; the
 // server clock decides them and the screens show them in Buenos Aires time.
 //

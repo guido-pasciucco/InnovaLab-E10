@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 
-import { deleteProduct } from "@/app/(flujo-1)/products/actions";
+import { deleteProduct } from "@/app/(business)/products/actions";
 import type {
   ProductItem,
   RecipeSupplyOption,
@@ -16,6 +16,7 @@ import { ProductsTable } from "./products-table";
 type ProductsCatalogProps = {
   initialProducts: ProductItem[];
   supplies: RecipeSupplyOption[];
+  presentationNames?: Readonly<Record<string, string[]>>;
 };
 
 // Client wrapper that mirrors the supplies catalog: the section owns the list,
@@ -23,6 +24,7 @@ type ProductsCatalogProps = {
 export function ProductsCatalog({
   initialProducts,
   supplies,
+  presentationNames = {},
 }: ProductsCatalogProps) {
   const [products, setProducts] = useState<ProductItem[]>(initialProducts);
   const [editing, setEditing] = useState<ProductItem | null>(null);
@@ -172,6 +174,7 @@ export function ProductsCatalog({
 
         <ProductsTable
           products={filtered}
+          presentationNames={presentationNames}
           busy={isDeleting}
           searchActive={query !== ""}
           onView={handleView}
@@ -181,7 +184,12 @@ export function ProductsCatalog({
       </section>
 
       {showForm && (
-        <CatalogModal title={formTitle} onClose={handleCancel} size="lg">
+        <CatalogModal
+          title={formTitle}
+          description="Datos, receta y rendimiento en un solo lugar."
+          onClose={handleCancel}
+          size="lg"
+        >
           <ProductForm
             product={editing}
             supplies={supplies}
@@ -194,6 +202,7 @@ export function ProductsCatalog({
       {viewing && (
         <CatalogModal
           title={viewing.name}
+          description="Receta guardada y costo variable calculado."
           onClose={() => setViewingId(null)}
           size="lg"
         >
