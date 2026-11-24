@@ -46,50 +46,110 @@ async function get(value: Pricing) {
 }
 
 describe("getBreakEvenService", () => {
-  it("computes the official A/B example through the portfolio engine", async () => {
-    const result = await get(
-      pricing({
-        totalExpenses: "150000.00",
-        rows: [
-          row({
-            productId: "A",
-            name: "A",
-            capacity: 100,
-            variableUnit: "1000.00",
-            price: "1500.00",
-          }),
-          row({
-            productId: "B",
-            name: "B",
-            capacity: 200,
-            variableUnit: "925.00",
-            price: "1675.00",
-          }),
-        ],
-      }),
-    );
+  // Validation example of issue #246: expenses $ 150.000, A 200 / $ 800 /
+  // $ 1.400 and B 100 / $ 500 / $ 1.100.
+  const issueRows = (overrides: { b?: Partial<PricingRow>; a?: Partial<PricingRow> } = {}) => [
+    row({ productId: "A", name: "A", capacity: 200, variableUnit: "800.00", price: "1400.00", ...overrides.a }),
+    row({ productId: "B", name: "B", capacity: 100, variableUnit: "500.00", price: "1100.00", ...overrides.b }),
+  ];
+
+  it("computes the validation example of the issue", async () => {
+    const result = await get(pricing({ totalExpenses: "150000.00", rows: issueRows() }));
 
     expect(result.status).toBe("ready");
     expect(result.rows).toEqual([
       expect.objectContaining({
         id: "A",
-        breakEvenUnits: "75.0000",
-        breakEvenUnitsWhole: "75",
-        breakEvenSales: "112500.00",
+        mixPct: "66.6667",
+        indirectUnit: "500.00",
+        unitCost: "1300.00",
+        contributionUnit: "600.00",
+        marginPct: "7.1429",
+        breakEvenUnits: "166.6667",
+        breakEvenUnitsWhole: "167",
+        hasNegativeContribution: false,
       }),
       expect.objectContaining({
         id: "B",
-        breakEvenUnits: "150.0000",
-        breakEvenUnitsWhole: "150",
-        breakEvenSales: "251250.00",
+        mixPct: "33.3333",
+        indirectUnit: "500.00",
+        unitCost: "1000.00",
+        contributionUnit: "600.00",
+        marginPct: "9.0909",
+        breakEvenUnits: "83.3333",
+        breakEvenUnitsWhole: "84",
+        hasNegativeContribution: false,
       }),
     ]);
     expect(result.totals).toMatchObject({
-      breakEvenUnits: "225.0000",
-      breakEvenUnitsWhole: "225",
-      breakEvenSales: "363750.00",
+      weightedContribution: "600.0000",
+      breakEvenUnits: "250.0000",
+      breakEvenSales: "325000.00",
       closingContribution: "150000.00",
     });
+  });
+
+  it("variant: a negative contribution is flagged and the break-even still computes", async () => {
+    const result = await get(
+      pricing({ totalExpenses: "150000.00", rows: issueRows({ b: { price: "400.00" } }) }),
+    );
+
+    expect(result.status).toBe("ready");
+    expect(result.hasNegativeContribution).toBe(true);
+    expect(result.rows.map((r) => [r.id, r.contributionUnit, r.hasNegativeContribution])).toEqual([
+      ["A", "600.00", false],
+      ["B", "-100.00", true],
+    ]);
+    expect(result.totals).toMatchObject({ weightedContribution: "366.6667" });
+  });
+
+  it("variant: a price equal to the variable cost is flagged too", async () => {
+    const result = await get(
+      pricing({ totalExpenses: "150000.00", rows: issueRows({ b: { price: "500.00" } }) }),
+    );
+
+    expect(result.hasNegativeContribution).toBe(true);
+    expect(result.rows.map((r) => [r.id, r.contributionUnit, r.hasNegativeContribution])).toEqual([
+      ["A", "600.00", false],
+      ["B", "0.00", true],
+    ]);
+  });
+
+  it("variant: without a reachable break-even no figure is shown", async () => {
+    const result = await get(
+      pricing({
+        totalExpenses: "150000.00",
+        rows: issueRows({ a: { price: "700.00" }, b: { price: "400.00" } }),
+      }),
+    );
+
+    expect(result).toMatchObject({ status: "no_break_even", rows: [], totals: null });
+  });
+
+  it("variant: a product without capacity is excluded and A and B do not change", async () => {
+    const result = await get(
+      pricing({
+        totalExpenses: "150000.00",
+        rows: [...issueRows(), row({ productId: "C", name: "C", capacity: 0 })],
+      }),
+    );
+
+    expect(result.status).toBe("ready");
+    expect(result.excluded).toEqual([{ productId: "C", name: "C", reason: "NO_CAPACITY" }]);
+    expect(result.rows.map((r) => r.breakEvenUnitsWhole)).toEqual(["167", "84"]);
+    expect(result.totals).toMatchObject({ breakEvenSales: "325000.00" });
+  });
+
+  it("variant: a product with capacity and no price leaves the mix incomplete", async () => {
+    const result = await get(
+      pricing({
+        totalExpenses: "150000.00",
+        rows: [...issueRows(), row({ productId: "C", name: "C", capacity: 50, price: null })],
+      }),
+    );
+
+    expect(result).toMatchObject({ status: "incomplete", rows: [], totals: null });
+    expect(result.excluded).toEqual([{ productId: "C", name: "C", reason: "NO_PRICE" }]);
   });
 
   it("rounds a quota just above an integer from unrounded inputs", async () => {
@@ -179,9 +239,10 @@ describe("getBreakEvenService", () => {
   });
 
   it("does not silently omit a negative capacity", async () => {
-    await expect(get(pricing({ rows: [row({ capacity: -1 })] }))).rejects.toThrow(
-      "Pricing returned invalid break-even input: INVALID_CAPACITY",
-    );
+    await expect(get(pricing({ rows: [row({ capacity: -1 })] }))).rejects.toMatchObject({
+      code: "CALC_BREAK_EVEN_FAILED",
+      details: { reason: "INVALID_CAPACITY" },
+    });
   });
 
   it.each([
@@ -196,9 +257,10 @@ describe("getBreakEvenService", () => {
     ["a malformed price", row({ price: "not-money" })],
     ["a malformed variable cost", row({ variableUnit: "not-money" })],
   ] as const)("rejects %s as invalid engine input", async (_label, input) => {
-    await expect(get(pricing({ rows: [input] }))).rejects.toThrow(
-      "Pricing returned invalid break-even input: INVALID_AMOUNT",
-    );
+    await expect(get(pricing({ rows: [input] }))).rejects.toMatchObject({
+      code: "CALC_BREAK_EVEN_FAILED",
+      details: { reason: "INVALID_AMOUNT" },
+    });
   });
 
   it.each([

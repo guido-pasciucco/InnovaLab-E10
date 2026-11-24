@@ -4,6 +4,7 @@ import {
   calculatePortfolioBreakEven,
   type PortfolioErrorCode,
 } from "@/lib/calc/calculatePortfolioBreakEven";
+import { AppError } from "@/lib/errors/app-error";
 import type {
   BreakEven,
   BreakEvenExcludedProduct,
@@ -40,39 +41,10 @@ function failureStatus(code: PortfolioErrorCode): BreakEven["status"] {
       return "no_break_even";
     case "INVALID_CAPACITY":
     case "INVALID_AMOUNT":
-      throw new Error(`Pricing returned invalid break-even input: ${code}`);
+      throw new AppError("CALC_BREAK_EVEN_FAILED", { reason: code });
   }
 }
 
-function wholeQuotas(
-  periodFixedCosts: string,
-  products: readonly {
-    id: string;
-    capacity: number;
-    variableUnit: string;
-    price: string;
-  }[],
-): Map<string, string> {
-  const contributionByCapacity = products.reduce(
-    (total, product) =>
-      total.plus(
-        new Decimal(product.price)
-          .minus(product.variableUnit)
-          .times(product.capacity),
-      ),
-    new Decimal(0),
-  );
-
-  return new Map(
-    products.map((product) => [
-      product.id,
-      new Decimal(periodFixedCosts)
-        .times(product.capacity)
-        .div(contributionByCapacity)
-        .toFixed(0, Decimal.ROUND_CEIL),
-    ]),
-  );
-}
 
 export const getBreakEvenService: GetBreakEven = async (userId, deps) => {
   const pricing = await deps.getPricing(userId);
@@ -134,20 +106,12 @@ export const getBreakEvenService: GetBreakEven = async (userId, deps) => {
     );
   }
 
-  const quotas = wholeQuotas(pricing.totalExpenses, products);
-  const inputsById = new Map(products.map((product) => [product.id, product]));
-  const rows: BreakEvenRow[] = result.products.map((row) => {
-    const input = inputsById.get(row.id);
-    if (!input) {
-      throw new Error(`Break-even engine returned an unknown product: ${row.id}`);
-    }
-
-    return {
-      ...row,
-      breakEvenUnitsWhole: quotas.get(row.id) as string,
-      hasNegativeContribution: new Decimal(input.price).lt(input.variableUnit),
-    };
-  });
+  // The engine returns every figure, whole quotas included: the service only
+  // flags the rows that sell at or below their variable cost (contribution ≤ 0).
+  const rows: BreakEvenRow[] = result.products.map((row) => ({
+    ...row,
+    hasNegativeContribution: new Decimal(row.contributionUnit).lte(0),
+  }));
 
   return {
     period: pricing.period,
