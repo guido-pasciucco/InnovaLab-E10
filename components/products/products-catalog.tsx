@@ -193,6 +193,9 @@ export function ProductsCatalog({
           <ProductForm
             product={editing}
             supplies={supplies}
+            hasPresentations={
+              editing ? (presentationNames[editing.id]?.length ?? 0) > 0 : false
+            }
             onCancel={handleCancel}
             onSaved={handleSaved}
           />

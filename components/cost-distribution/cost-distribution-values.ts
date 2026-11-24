@@ -53,6 +53,7 @@ export type DistributionRowView = {
   unitCost: string;
   // Why the total cost is not available for this product, when it is not.
   note: string | null;
+  noteHref: string | null;
 };
 
 export type DistributionExplanation = {
@@ -150,6 +151,7 @@ function toRowView(row: CostDistributionRow): DistributionRowView {
     fixedShare: money(row.fixedShare),
     unitCost: money(row.unitCost),
     note: unavailableNote(row),
+    noteHref: row.absorbsExpenses ? null : row.editHref,
   };
 }
 

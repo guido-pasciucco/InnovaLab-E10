@@ -11,7 +11,10 @@ import {
 
 function row(overrides: Partial<PricingRow> = {}): PricingRow {
   return {
+    rowId: "product-1",
     productId: "product-1",
+    presentationId: null,
+    editHref: "/products",
     name: "Pan flauta",
     capacity: 120,
     variableUnit: "15.63",

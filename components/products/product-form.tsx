@@ -43,6 +43,7 @@ import { RecipeYieldField } from "./recipe-yield-field";
 import { VariableCostResult } from "./variable-cost-result";
 
 type ProductFormProps = {
+  hasPresentations?: boolean;
   product: ProductItem | null;
   supplies: RecipeSupplyOption[];
   onCancel: () => void;
@@ -113,6 +114,7 @@ function FormSection({
 export function ProductForm({
   product,
   supplies,
+  hasPresentations = false,
   onCancel,
   onSaved,
 }: ProductFormProps) {
@@ -173,8 +175,16 @@ export function ProductForm({
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
 
+    const savedCapacity =
+      product?.monthlyCapacity === null || product?.monthlyCapacity === undefined
+        ? ""
+        : String(product.monthlyCapacity);
+
     dispatchInTransition(submitAction)({
       ...values,
+      // The product capacity is unused while presentations exist, and the
+      // field is not on the form. Keep the stored value instead of clearing it.
+      ...(hasPresentations ? { monthlyCapacity: savedCapacity } : {}),
       ...(product ? { id: product.id } : {}),
     });
   };
@@ -205,7 +215,11 @@ export function ProductForm({
         id={`${sectionId}-data`}
         eyebrow="Datos del producto"
         title="¿Qué estás calculando?"
-        description="Ponéle nombre y cargá cuántas unidades pensás fabricar este mes."
+        description={
+          hasPresentations
+            ? "La capacidad de este producto se carga en cada presentación."
+            : "Ponéle nombre y cargá cuántas unidades pensás fabricar este mes."
+        }
       >
         {/* #288 QA: FormGrid already ships grid-cols-2, so overriding it with
             grid-cols-1 lost on mobile. stackOnMobile owns the breakpoint.
@@ -220,22 +234,34 @@ export function ProductForm({
             {...register("name")}
           />
 
-          <div className="flex flex-col gap-1">
-            <TextField
-              label={MONTHLY_CAPACITY_LABEL}
-              placeholder="200"
-              inputMode="numeric"
-              autoComplete="off"
-              disabled={isPending}
-              error={errors.monthlyCapacity?.message}
-              {...register("monthlyCapacity")}
-            />
-            {showMonthlyCapacityWarning && !errors.monthlyCapacity && (
-              <p role="status" className="text-sm text-fg-muted">
-                {MONTHLY_CAPACITY_WARNING}
-              </p>
-            )}
-          </div>
+          {hasPresentations && product ? (
+            <p className="text-sm text-fg">
+              La capacidad se carga en cada presentación.{" "}
+              <Link
+                href={`/products/${product.id}/presentations`}
+                className="font-semibold text-link underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              >
+                Ver presentaciones
+              </Link>
+            </p>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <TextField
+                label={MONTHLY_CAPACITY_LABEL}
+                placeholder="200"
+                inputMode="numeric"
+                autoComplete="off"
+                disabled={isPending}
+                error={errors.monthlyCapacity?.message}
+                {...register("monthlyCapacity")}
+              />
+              {showMonthlyCapacityWarning && !errors.monthlyCapacity && (
+                <p role="status" className="text-sm text-fg-muted">
+                  {MONTHLY_CAPACITY_WARNING}
+                </p>
+              )}
+            </div>
+          )}
         </FormGrid>
       </FormSection>
 

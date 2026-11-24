@@ -2,7 +2,7 @@ import { getTableColumns } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
-import { businesses, products } from "./business/table";
+import { businesses, presentations, products } from "./business/table";
 import { businessCostLines } from "./costs/table";
 import { profiles } from "./profile/table";
 import { moneyString, quantityString } from "./formats";
@@ -74,6 +74,7 @@ describe("column precision", () => {
     const tables: PgTable[] = [
       businesses,
       products,
+      presentations,
       profiles,
       businessCostLines,
     ];
@@ -89,13 +90,14 @@ describe("column precision", () => {
   });
 
   it("keeps the markup percentages at numeric(7,2)", () => {
-    const tables: PgTable[] = [businesses, products];
+    const tables: PgTable[] = [businesses, products, presentations];
     const markups = tables
       .flatMap((table) => Object.values(getTableColumns(table)).filter(isNumericColumn))
       .filter((column) => MARKUP_COLUMNS.has(column.name));
 
     expect(markups.map((column) => [column.name, column.precision, column.scale])).toEqual([
       ["default_markup_percent", 7, 2],
+      ["markup_percent", 7, 2],
       ["markup_percent", 7, 2],
     ]);
   });

@@ -23,7 +23,7 @@ Cómo se mueve el usuario por el producto. El área privada tiene un menú later
 | Productos | `/products` | Editable siempre; cada producto tiene sus presentaciones |
 | Gastos del período | `/period-costs` | Carga única para todo el negocio, mes actual |
 | Costo total | `/total-costs` | Solo lectura |
-| Precios | `/precios` | Recargo por defecto del negocio y recargo propio por producto; precios derivados en cada lectura |
+| Precios | `/precios` | Recargo por defecto del negocio y recargo propio por fila (presentación, o producto si no tiene); precios derivados en cada lectura |
 | Equilibrio | `/equilibrio` | Solo lectura: contribución, cuotas, punto de equilibrio y gráfico del catálogo |
 | Licitaciones | `/licitaciones` | Sección propia del menú |
 | Proveedores | `/proveedores` | Sección propia del menú |

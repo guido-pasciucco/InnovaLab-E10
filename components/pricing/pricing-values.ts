@@ -31,6 +31,9 @@ export type PricingRowView = {
   profit: string;
   realMargin: string;
   note: string | null;
+  noteHref: string | null;
+  productId: string;
+  presentationId: string | null;
 };
 
 export type PricingView = {
@@ -126,8 +129,11 @@ const SOURCE_LABEL = {
 } as const;
 
 function toRowView(row: PricingRow): PricingRowView {
+  const missingCapacity = row.capacity === null || row.capacity <= 0;
   return {
-    id: row.productId,
+    id: row.rowId,
+    productId: row.productId,
+    presentationId: row.presentationId,
     name: row.name,
     unitCost: money(row.unitCost),
     markupSource: row.markupSource,
@@ -138,6 +144,8 @@ function toRowView(row: PricingRow): PricingRowView {
     profit: money(row.profitUnit),
     realMargin: realMargin(row.realMarginPct),
     note: unavailableNote(row),
+    noteHref:
+      row.unavailableCode === "NO_TOTAL_COST" && missingCapacity ? row.editHref : null,
   };
 }
 

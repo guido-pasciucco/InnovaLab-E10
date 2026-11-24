@@ -10,7 +10,7 @@ import { AppError } from "@/lib/errors/app-error";
 import type { ProductItem } from "@/lib/schemas/products/products";
 
 import { listPeriodCostsService } from "./business-cost";
-import { listProductsService } from "./products";
+import { listSaleRowsService, type SaleRow } from "./sale-rows";
 
 // Cost distribution of the catalog (#244): how much of the period indirect
 // costs (#243) each product absorbs according to its monthly capacity (#242),
@@ -41,10 +41,15 @@ export type CostDistributionStatus =
 export type VariableCostUnavailableCode = ProductItem["variableCostsUnavailableCode"];
 
 export type CostDistributionRow = {
+  rowId: string;
   productId: string;
+  presentationId: string | null;
   name: string;
-  // The saved monthly capacity, or null when it was never loaded.
+  // The saved monthly capacity of the row, or null when it was never loaded.
   capacity: number | null;
+  ownMarkupPercent: string | null;
+  // Where the row's capacity is loaded: the product, or its presentations.
+  editHref: string;
   // False when the product has no capacity > 0 and so is left out of the
   // prorrateo; every figure below that depends on the spread is then null.
   absorbsExpenses: boolean;
@@ -73,22 +78,25 @@ export type CostDistribution = {
 
 // The persisted exact fraction avoids carrying the rounded display value into
 // the sum; the engine rounds once at the end.
-function exactVariableUnit(product: ProductItem): string | null {
-  const unit = product.variableCosts?.exact.unitCost;
-  if (!unit) return null;
-
-  return new Decimal(unit.numerator).div(unit.denominator).toString();
+function displayMoney(value: string): string {
+  return new Decimal(value).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2);
 }
 
-function baseRow(product: ProductItem): CostDistributionRow {
+function baseRow(sale: SaleRow): CostDistributionRow {
   return {
-    productId: product.id,
-    name: product.name,
-    capacity: product.monthlyCapacity,
+    rowId: sale.rowId,
+    productId: sale.productId,
+    presentationId: sale.presentationId,
+    name: sale.name,
+    capacity: sale.capacity,
+    ownMarkupPercent: sale.ownMarkupPercent,
+    editHref: sale.editHref,
     absorbsExpenses: false,
     share: null,
-    variableUnit: product.variableCosts?.unitCost ?? null,
-    variableUnavailableCode: product.variableCostsUnavailableCode,
+    // Shown only when the row is left out of the spread. Rows that absorb
+    // expenses replace this with the value the proration rounded once.
+    variableUnit: sale.variableUnit === null ? null : displayMoney(sale.variableUnit),
+    variableUnavailableCode: sale.variableUnavailableCode,
     indirectUnit: null,
     fixedShare: null,
     unitCost: null,
@@ -122,7 +130,7 @@ export async function getCostDistributionService(
 ): Promise<CostDistribution> {
   const [periodCosts, catalog] = await Promise.all([
     listPeriodCostsService(userId, opts, db),
-    listProductsService(userId, db),
+    listSaleRowsService(userId, db),
   ]);
 
   const rows = catalog.map(baseRow);
@@ -133,7 +141,7 @@ export async function getCostDistributionService(
     rows,
   });
 
-  const absorbing = catalog.filter((product) => (product.monthlyCapacity ?? 0) > 0);
+  const absorbing = catalog.filter((row) => (row.capacity ?? 0) > 0);
   if (absorbing.length === 0) {
     return result("no_capacity");
   }
@@ -144,10 +152,11 @@ export async function getCostDistributionService(
 
   const proration = calculateProration({
     lines: periodCosts.lines.map((line) => ({ id: line.id, amount: line.amountPeriod })),
-    products: absorbing.map((product) => ({
-      id: product.id,
-      capacity: product.monthlyCapacity ?? 0,
-      variableUnit: exactVariableUnit(product),
+    products: absorbing.map((row) => ({
+      id: row.rowId,
+      capacity: row.capacity ?? 0,
+      // The exact fraction, not the rounded display value.
+      variableUnit: row.variableUnit,
     })),
   });
 
@@ -155,9 +164,9 @@ export async function getCostDistributionService(
     throw new AppError("CALC_COST_SUMMARY_FAILED", undefined, { cause: proration });
   }
 
-  const costsByProduct = new Map(proration.costs.map((cost) => [cost.productId, cost]));
+  const costsByRow = new Map(proration.costs.map((cost) => [cost.productId, cost]));
   const distributed = rows.map((row) => {
-    const cost = costsByProduct.get(row.productId);
+    const cost = costsByRow.get(row.rowId);
     return cost ? withProration(row, cost) : row;
   });
 
