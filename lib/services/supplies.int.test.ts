@@ -430,7 +430,7 @@ describe("supplies service", () => {
     await expect(deleteSupplyService(user.id, harina.id, db)).resolves.toBe(true);
   });
 
-  it("still reports a supply used by a soft-deleted product", async () => {
+  it("frees a supply once the only product using it is deleted", async () => {
     const user = await makeUser();
     const harina = await createSupplyService(user.id, validInput, db);
     const pan = await createProductService(
@@ -444,16 +444,7 @@ describe("supplies service", () => {
     );
     await expect(deleteProductService(user.id, pan.id, db)).resolves.toBe(true);
 
-    let thrown: unknown;
-    try {
-      await deleteSupplyService(user.id, harina.id, db);
-    } catch (error) {
-      thrown = error;
-    }
-    expect(thrown).toMatchObject({ code: "SUPPLY_IN_USE" });
-    expect((thrown as { details?: unknown }).details).toMatchObject({
-      usages: [{ productName: "Pan", isActive: false }],
-    });
+    await expect(deleteSupplyService(user.id, harina.id, db)).resolves.toBe(true);
   });
 
   it("refuses to remove the only ingredient of a recipe", async () => {
