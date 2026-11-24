@@ -136,19 +136,12 @@ El reparto se rige por **relación causa-efecto**: quien consume el recurso paga
 
 > Los documentos de origen proponían criterios adicionales —tiempo de producción, ventas planificadas, costo directo planificado y porcentaje manual— para distintos tipos de gasto. Están registrados como alternativas, **no como regla vigente**: hoy el reparto se hace por capacidad (la regla de importancia de cada gasto sigue abierta).
 
-### Contribución, margen y comisiones
+### Contribución y margen de contribución
 
 - **Contribución por unidad = precio de venta − costo variable unitario.** Es el dinero que deja cada venta para cubrir los fijos.
-- **Margen de contribución (%) = contribución ÷ ventas.** Debe llamarse por su nombre completo: decirle solo "margen" lo confunde con el porcentaje usado para fijar el precio.
+- **Margen de contribución (%) = contribución ÷ ventas.** Debe llamarse con su nombre completo para no confundirlo con el recargo que se carga ni con el margen real que se informa.
 
-Cuando hay comisiones u otros porcentajes sobre la venta, entran en la misma fórmula para no reducir la ganancia esperada:
-
-```text
-precio sugerido = (costo unitario + cargo fijo por venta)
-                  ÷ (1 − margen − comisión porcentual − otros % sobre la venta)
-```
-
-Si margen y descuentos porcentuales suman 100 % o más, no hay precio válido. Los impuestos solo se incorporan cuando funcionan como porcentaje o cargo que debe cubrir el precio; la app no asume una condición impositiva.
+Las comisiones porcentuales por venta y los impuestos quedan fuera del MVP: no se cargan ni se descuentan del precio sugerido. El resumen lo dice explícitamente con "sin costos de venta" para que nadie crea que el precio ya las incluye. Para incorporarlas haría falta decidir dónde se cargan, si se compensan subiendo el precio o se informan como costo aparte, y si el porcentaje es uno solo para todos los productos o individual.
 
 ### Equilibrio sin solución
 
@@ -159,7 +152,7 @@ Si el precio es igual o menor al costo variable unitario, la contribución es ce
 - El dinero se calcula en decimal, sin redondeos intermedios; se redondea a dos decimales recién al mostrar o persistir.
 - Las cantidades físicas conservan la precisión ingresada: `1,275 kg` no se convierte en `1,28 kg` para calcular.
 - Un cálculo guardado conserva precios, cantidades, porcentajes, tiempos y reglas. Cambiar el precio de un insumo afecta cálculos futuros, **nunca resultados históricos**.
-- Cada cálculo registra: producto y versión de receta, insumos con cantidades y precios, unidades producidas y vendibles, mermas y reutilizaciones, horas y valor de la mano de obra, otros costos directos, indirectos del período, criterio y porcentajes de reparto, margen, comisiones, precio sugerido y precio elegido, y fecha.
+- Cada cálculo registra: producto y versión de receta, insumos con cantidades y precios, unidades producidas y vendibles, mermas y reutilizaciones, horas y valor de la mano de obra, otros costos directos, indirectos del período, criterio y porcentajes de reparto, margen, precio sugerido y precio elegido, y fecha.
 
 El motor conserva la precisión como fracción exacta con numerador y denominador, y redondea recién al mostrar el importe.
 
