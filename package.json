@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "5.0.142",
+    "@ai-sdk/react": "4.0.177",
     "@hookform/resolvers": "^5.9.1",
     "@react-pdf/renderer": "^4.9.0",
     "@supabase/ssr": "^0.12.7",
