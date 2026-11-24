@@ -21,6 +21,7 @@ Prueba rápida: **¿la frase seguiría siendo verdad si el código se reescribie
 | [`decisiones.md`](decisiones.md) | Decisiones de negocio y técnica, resumidas y con fecha | Reglas que ya viven en un flujo |
 | [`dependencias/`](dependencias/) | Guías de dependencias, precisión del motor y material de apoyo | Reglas de negocio |
 | [`duda/`](duda/) | Material a evaluar: capturas de QA y diagramas | Decisión de borrado ya tomada |
+| [`bugs/`](bugs/) | Hallazgos técnicos de UI pendientes de valoración, un archivo por hallazgo | Reglas de negocio |
 
 ## Flujos
 
