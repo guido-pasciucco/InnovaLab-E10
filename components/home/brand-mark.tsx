@@ -13,7 +13,7 @@ export function BrandMark({ tone = "dark" }: BrandMarkProps) {
     <Link
       href="/"
       aria-label="Numora, ir al inicio"
-      className="inline-flex h-12 w-56 shrink-0 items-center overflow-hidden rounded-lg sm:h-14 sm:w-64 lg:h-16 lg:w-72 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+      className="inline-flex h-12 w-56 shrink-0 items-center overflow-hidden rounded-lg sm:h-14 sm:w-60 lg:h-16 lg:w-64 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
     >
       <NumoraLogo variant={logoVariant} />
     </Link>
