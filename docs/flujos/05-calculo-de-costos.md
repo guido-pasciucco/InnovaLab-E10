@@ -15,6 +15,7 @@ Bloque 3 y 4 del flujo de costos: carga de indirectos, reparto entre productos, 
 
 - Pantalla con tabla de solo lectura, `+ Nuevo`, buscador por concepto, contador y un único modal de alta/edición (concepto e importe del mes). El borrado pide confirmación.
 - El período de la vista es el **mes actual** de `America/Argentina/Buenos_Aires`. No hay selector de mes: consultar otro mes requiere antes definir la regla de edición histórica.
+- El mes es la unidad de trabajo del cálculo: los gastos, el reparto y el cierre se expresan para un mes. No hay vista anual. Proyectar el gasto de un mes a doce daría un valor engañoso porque los gastos no son uniformes, y antes haría falta acordar qué se muestra como dato real y qué como proyección. Una vista anual, si se quiere, necesita su propia decisión.
 - Se **permiten líneas repetidas** con el mismo concepto en un mes; el total suma todas.
 - La columna `notes` existe pero no se expone en servicios ni en la UI.
 - Los gastos son fijos e indirectos por definición: el servidor fija esas dimensiones y el cliente no puede cambiarlas.

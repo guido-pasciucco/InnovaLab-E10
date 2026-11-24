@@ -21,7 +21,6 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 | P-12 | Estados vacíos del tablero | Abierta | Fase 2 · Bloque 4 | Tablero |
 | P-13 | Cuotas fraccionarias: precisión y formato | Abierta | Fase 2 · Bloque 4 | Tablero |
 | P-14 | Resultados que muestra el tablero y sus fórmulas | Abierta | Fase 2 · Bloque 4 | Tablero |
-| P-16 | Período mensual principal y vista anual como proyección | Abierta | Producto · §11 | Vista de períodos |
 | P-17 | Componentes del costo base del precio sugerido | Abierta | Producto · §6 y §11 | Precio sugerido |
 | P-18 | Carga y asignación de gastos generales compartidos | Abierta | Producto · §7 y §11 | Multi-producto |
 | P-19 | Comisiones porcentuales por venta en el MVP | Abierta | Producto · §11 | Alcance del MVP |
@@ -63,7 +62,6 @@ Las decisiones abiertas de **licitaciones** no se incluyen en este recolector.
 
 ### Definición conceptual del producto
 
-- **P-16** — Confirmar que el período principal es mensual y que la vista anual es una proyección.
 - **P-17** — Definir qué componentes integran el costo base del precio sugerido.
 - **P-18** — Cómo se cargan y asignan los gastos generales compartidos entre productos, sin duplicar el fijo.
 - **P-19** — Incluir o no comisiones porcentuales por venta en el MVP.
