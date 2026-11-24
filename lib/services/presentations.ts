@@ -175,7 +175,8 @@ async function readPresentations(
         presentationRows.map((row) => row.id),
       ),
     )
-    .orderBy(presentationPackaging.createdAt, presentationPackaging.id);
+    // Lines of one save share createdAt; the name keeps their order stable.
+    .orderBy(presentationPackaging.createdAt, supplies.name, presentationPackaging.id);
 
   const linesByPresentation = new Map<string, PresentationPackagingItem[]>();
   for (const { line, supplyName } of lines) {
