@@ -105,11 +105,12 @@ El gráfico solo se muestra cuando el tablero está en estado `ready`; en el res
 
 ## Histórico: "Cerrar cálculo"
 
-- Es un **botón manual** que congela todo el estado del cálculo: insumos, recetas/rendimiento, capacidades, indirectos, margen y resultados. Es una foto completa y reproducible.
+- Es un **botón manual** en el encabezado de `/equilibrio` que congela todo el estado del cálculo: insumos y packaging, recetas/rendimiento, capacidades, indirectos, recargos y los resultados de Costo total, Precios y Equilibrio. Es una foto completa y reproducible.
 - El catálogo en vivo **sigue editable**; la foto no bloquea ni habilita el cálculo.
-- La foto se puede corregir, pero **cada cambio queda auditado**: campo, valor anterior, valor nuevo y cuándo.
-- Cada cierre se etiqueta con un **período (mes)**. El prorrateo y los cálculos siguen en vivo sobre el catálogo actual.
-- Se consulta en el destino **"Datos históricos"** del menú, solo lectura.
+- **Corregir un mes es volver a cerrarlo** (D46). Se guarda una versión nueva con el número siguiente; las versiones anteriores no se modifican ni se borran. La auditoría de D6 es la diferencia entre dos versiones seguidas: campo, antes, después y cuándo.
+- Solo se cierra el **mes actual** de Argentina. Cuando cambia el mes, las versiones del anterior quedan como están. Se puede cerrar con datos incompletos: la confirmación avisa si el equilibrio no está listo, pero no lo impide.
+- Cada cierre se etiqueta con un **período (mes)**. El prorrateo y los cálculos siguen en vivo sobre el catálogo actual; leer el histórico **nunca recalcula** y mostrarlo no depende de que los insumos o productos sigan en el catálogo.
+- Se consulta en el destino **"Datos históricos"** del menú (`/historico`), solo lectura: el índice de meses y, por mes, las tablas de la foto, el selector de versión y los cambios.
 
 ## Reglas conceptuales del cálculo
 

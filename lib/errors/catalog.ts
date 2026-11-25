@@ -155,6 +155,24 @@ export const ERROR_CATALOG = {
     message: "The scenario price must be greater than 0",
     logLevel: "silent",
   },
+  CALC_CLOSURE_NOT_FOUND: {
+    // Missing, foreign or non-uuid period/version: all look the same.
+    status: 404,
+    message: "No encontramos ese cierre",
+    logLevel: "silent",
+  },
+  CALC_CLOSURE_PERIOD_CLOSED: {
+    // Only the current month in Argentina accepts new versions (D27/D46).
+    status: 409,
+    message: "Ese mes ya está cerrado; solo se puede cerrar el mes actual",
+    logLevel: "silent",
+  },
+  CALC_CLOSURE_VERSION_CONFLICT: {
+    // Two closings raced for the same version of the same month.
+    status: 409,
+    message: "Otro cierre acabá de guardar; volvé a intentarlo",
+    logLevel: "warn",
+  },
   PRODUCT_NOT_FOUND: {
     // Missing, foreign or soft-deleted product id: all look the same.
     status: 404,

@@ -26,22 +26,22 @@ Cómo se mueve el usuario por el producto. El área privada tiene un menú later
 | Gastos del período | `/period-costs` | Carga única para todo el negocio, mes actual |
 | Costo total | `/total-costs` | Solo lectura |
 | Precios | `/precios` | Recargo por defecto del negocio y recargo propio por fila (presentación, o producto si no tiene); precios derivados en cada lectura |
-| Equilibrio | `/equilibrio` | Solo lectura: contribución, cuotas, punto de equilibrio y gráfico del catálogo |
+| Equilibrio | `/equilibrio` | Solo lectura: contribución, cuotas, punto de equilibrio y gráfico del catálogo; desde ahí se cierra el mes |
+| Datos históricos | `/historico` y `/historico/[period]` | Fotos cerradas por mes y versión, solo lectura |
 | Chateá con tus datos | `/chat-datos` | Sección propia del menú superior, con dos estrellas violetas. Solo aparece si `CHAT_DATOS_ENABLED` está prendido; si no, la ruta responde 404. La conversación queda en el navegador, en esa pestaña |
 | Licitaciones | `/licitaciones` | Sección propia del menú |
 | Proveedores | `/proveedores` | Sección propia del menú |
 | Tablero | — | Reemplazado en Inicio por la tarjeta Equilibrio, que enlaza a `/equilibrio` |
-| Datos históricos | — | Consulta del histórico de cierres, sin construir |
 
 ## Navegación por destinos, no por pasos
 
-No hay pasos obligatorios ni ventanas bloqueadas. El usuario puede cargar indirectos antes de tener productos, mirar el tablero con datos a medias o saltear secciones.
+No hay pasos obligatorios ni ventanas bloqueadas. El usuario puede cargar indirectos antes de tener productos, mirar el equilibrio con datos a medias o saltear secciones.
 
 Lo que existe son **dependencias de datos**, no bloqueos de interfaz:
 
 - El **prorrateo** requiere capacidades cargadas en los productos.
-- El **tablero** muestra resultados cuando existen indirectos, precios y capacidades; con datos parciales muestra estados vacíos.
-- Cualquier edición recalcula lo derivado en vivo. No hay cierre de lista para calcular.
+- El **equilibrio** muestra resultados cuando existen indirectos, precios y capacidades; con datos parciales muestra estados vacíos. Se puede cerrar el mes igualmente (D46).
+- Cualquier edición recalcula lo derivado en vivo. No hay cierre de lista para calcular: el cierre es una foto manual y separada.
 
 ## Un solo recorrido
 

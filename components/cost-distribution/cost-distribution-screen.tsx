@@ -14,6 +14,8 @@ type CostDistributionScreenProps = {
   view: CostDistributionView;
   // Whether there is at least one product in the catalog.
   hasProducts: boolean;
+  // The historical view reuses this table but must not offer live editing.
+  showEditLinks?: boolean;
 };
 
 function Figure({ value, emphasis = false }: { value: string; emphasis?: boolean }) {
@@ -71,7 +73,11 @@ function ProductRow({ row }: { row: DistributionRowView }) {
 // takes the view the page built from the server data, so it renders the same
 // with real data and with a preview. The page shell, with the left sidebar of
 // flow 1, comes from the (business) layout.
-export function CostDistributionScreen({ view, hasProducts }: CostDistributionScreenProps) {
+export function CostDistributionScreen({
+  view,
+  hasProducts,
+  showEditLinks = true,
+}: CostDistributionScreenProps) {
   const { banner, rows, explanation } = view;
 
   return (
@@ -97,9 +103,11 @@ export function CostDistributionScreen({ view, hasProducts }: CostDistributionSc
               <p className="font-semibold">{banner.title}</p>
               <p className="mt-1 text-fg-muted">{banner.text}</p>
             </div>
-            <Link href={banner.action.href} className={primaryLinkClass}>
-              {banner.action.label}
-            </Link>
+            {showEditLinks && (
+              <Link href={banner.action.href} className={primaryLinkClass}>
+                {banner.action.label}
+              </Link>
+            )}
           </div>
         )}
 
@@ -126,9 +134,11 @@ export function CostDistributionScreen({ view, hasProducts }: CostDistributionSc
           {!hasProducts ? (
             <div className="p-4 text-center">
               <p className="text-fg-muted">Todavía no cargaste ningún producto.</p>
-              <Link href="/products" className={`${linkClass} mt-2`}>
-                Ir a productos
-              </Link>
+              {showEditLinks && (
+                <Link href="/products" className={`${linkClass} mt-2`}>
+                  Ir a productos
+                </Link>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -216,14 +226,16 @@ export function CostDistributionScreen({ view, hasProducts }: CostDistributionSc
           </details>
         )}
 
-        <nav aria-label="Editar datos del cálculo" className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/products" className={linkClass}>
-            Editar capacidad de los productos
-          </Link>
-          <Link href="/period-costs" className={linkClass}>
-            Editar gastos del período
-          </Link>
-        </nav>
+        {showEditLinks && (
+          <nav aria-label="Editar datos del cálculo" className="flex flex-col gap-2 sm:flex-row">
+            <Link href="/products" className={linkClass}>
+              Editar capacidad de los productos
+            </Link>
+            <Link href="/period-costs" className={linkClass}>
+              Editar gastos del período
+            </Link>
+          </nav>
+        )}
       </div>
     </main>
   );

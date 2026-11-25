@@ -42,6 +42,16 @@ describe("NAV_SECTIONS", () => {
     expect(catalog?.items).toContainEqual(expect.objectContaining({ href: "/equilibrio", label: "Equilibrio" }));
     expect(hrefs?.indexOf("/equilibrio")).toBe((hrefs?.indexOf("/precios") ?? -2) + 1);
   });
+
+  it("lists historical data right after the break-even", () => {
+    const catalog = NAV_SECTIONS.find((section) => section.id === "catalogo");
+    const hrefs = catalog?.items.map((item) => item.href) ?? [];
+
+    expect(catalog?.items).toContainEqual(
+      expect.objectContaining({ href: "/historico", label: "Datos históricos" }),
+    );
+    expect(hrefs.indexOf("/historico")).toBe(hrefs.indexOf("/equilibrio") + 1);
+  });
 });
 
 describe("navSections", () => {
@@ -76,6 +86,8 @@ describe("sectionFromPathname", () => {
     { path: "/total-costs", section: "catalogo" },
     { path: "/precios", section: "catalogo" },
     { path: "/equilibrio", section: "catalogo" },
+    { path: "/historico", section: "catalogo" },
+    { path: "/historico/2026-11", section: "catalogo" },
     { path: "/licitaciones", section: "licitaciones" },
     { path: "/proveedores", section: "licitaciones" },
   ])("selects the $section section for $path", ({ path, section }) => {
