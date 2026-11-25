@@ -155,3 +155,8 @@ body {
   color: #171717;
   color-scheme: light;
 }
+
+/* Safety net for native buttons not yet migrated to `Button` (#328). */
+button:not(:disabled) {
+  cursor: pointer;
+}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { Button, buttonClassName } from "@/components/ui/button";
 import type { ProductItem } from "@/lib/schemas/products/products";
 import { formatMonthlyCapacity } from "./monthly-capacity";
 
@@ -92,40 +93,40 @@ export function ProductsTable({
               </td>
               <td className="px-3 py-2.5 whitespace-nowrap text-right">
                 <div className="inline-flex gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onView(product)}
                     disabled={busy}
                     aria-label={`Ver receta de ${product.name}`}
-                    className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
                   >
                     Ver receta
-                  </button>
+                  </Button>
                   <Link
                     href={`/products/${product.id}/presentations`}
                     aria-label={`Presentaciones de ${product.name}`}
-                    className="inline-flex min-h-9 items-center rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                    className={buttonClassName({ variant: "outline", size: "sm" })}
                   >
                     Presentaciones
                   </Link>
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onEdit(product)}
                     disabled={busy}
                     aria-label={`Editar ${product.name}`}
-                    className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
                   >
                     Editar
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
                     onClick={() => onDelete(product)}
                     disabled={busy}
                     aria-label={`Borrar ${product.name}`}
-                    className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-danger hover:bg-danger/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
                   >
                     Borrar
-                  </button>
+                  </Button>
                 </div>
               </td>
             </tr>
