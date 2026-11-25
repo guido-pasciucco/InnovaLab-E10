@@ -122,7 +122,7 @@ export function ProductsCatalog({
   const formTitle = `${editing ? "Editar" : "Nuevo"} producto`;
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-3.5">
       {error && (
         <p
           role="alert"
@@ -141,23 +141,23 @@ export function ProductsCatalog({
         </p>
       )}
 
-      <section aria-label="Lista de productos" className="min-w-0 space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold text-fg">
+      <section aria-label="Lista de productos" className="min-w-0 space-y-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-fg">
             Productos ({filtered.length})
           </h2>
           <button
             type="button"
             onClick={handleNew}
             disabled={isDeleting}
-            className="min-h-11 shrink-0 rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-10 shrink-0 rounded-xl bg-action-primary px-4 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
           >
             + Nuevo
           </button>
         </div>
 
         {products.length > 0 && (
-          <div className="flex flex-col gap-1">
+          <div className="flex max-w-2xl flex-col gap-1">
             <label htmlFor="products-search" className="text-sm font-semibold text-fg-muted">
               Buscar
             </label>
@@ -167,7 +167,7 @@ export function ProductsCatalog({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Nombre del producto o insumo…"
-              className="min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-4 py-2 text-base text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="min-h-10 w-full rounded-xl border border-border-control bg-surface px-3.5 py-2 text-sm text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             />
           </div>
         )}

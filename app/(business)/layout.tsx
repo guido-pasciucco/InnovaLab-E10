@@ -12,9 +12,9 @@ export default async function FlowOneLayout({ children }: { children: ReactNode 
   const { displayName, businessName } = await getShellIdentity(user.id);
 
   return (
-    <div className="flex min-h-screen flex-1 flex-col bg-surface-tint md:flex-row">
+    <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-clip bg-surface-tint md:flex-row">
       <AppSidebar userName={displayName} userEmail={user.email ?? ""} businessName={businessName} />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 max-w-full flex-1 pb-20">
         <AppNavbar />
         {children}
       </div>

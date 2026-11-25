@@ -38,7 +38,7 @@ export function Hero({ startHref }: { startHref: string }) {
 
           <h1
             id="hero-title"
-            className="mt-6 max-w-2xl text-[2.35rem] font-semibold leading-[1.06] tracking-[-0.035em] text-fg sm:text-5xl lg:text-[3.4rem]"
+            className="mt-5 max-w-2xl text-[2rem] font-semibold leading-[1.08] tracking-[-0.035em] text-fg sm:text-[2.55rem] lg:text-[2.9rem]"
           >
             Fijá precios con información real.{" "}
             <span className="mt-2 block text-link">
@@ -46,7 +46,7 @@ export function Hero({ startHref }: { startHref: string }) {
             </span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-base leading-7 text-fg-muted sm:text-lg sm:leading-8">
+          <p className="mt-5 max-w-xl text-base leading-6 text-fg-muted sm:text-[1.0625rem] sm:leading-7">
             Calculá el costo real de tus productos con un recorrido guiado, conocé tu margen de un vistazo
             y definí el precio correcto para tu negocio. Sin planillas de Excel ni fórmulas.
           </p>
@@ -83,8 +83,8 @@ export function Hero({ startHref }: { startHref: string }) {
 
 function HeroPanel({ startHref }: { startHref: string }) {
   return (
-    <div className="relative">
-      <div className="rounded-[28px] border border-border-default bg-surface p-4 shadow-[0_28px_80px_-36px_rgba(11,107,79,0.5)] sm:p-6">
+    <div className="relative w-full justify-self-center sm:w-[94%] lg:w-[90%]">
+      <div className="rounded-[26px] border border-border-default bg-surface p-4 shadow-[0_28px_80px_-36px_rgba(11,107,79,0.5)] sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-action-tonal text-link">
@@ -100,13 +100,13 @@ function HeroPanel({ startHref }: { startHref: string }) {
           </span>
         </div>
 
-        <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
           <HeroMetric label="Precio sugerido" value="$24.900" highlight />
           <HeroMetric label="Margen real" value="15,4%" />
           <HeroMetric label="Contribución por unidad" value="$3.835" />
         </div>
 
-        <div className="mt-5 rounded-2xl border border-border-default bg-surface-tint p-4">
+        <div className="mt-4 rounded-2xl border border-border-default bg-surface-tint p-3.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-semibold text-fg">Contribución según unidades vendidas</p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-fg-muted">
@@ -125,7 +125,7 @@ function HeroPanel({ startHref }: { startHref: string }) {
           </div>
         </div>
 
-        <div className="mt-5 flex flex-col gap-3 rounded-2xl bg-action-tonal p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-action-tonal p-3.5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs leading-5 text-fg-muted">
             Con el precio sugerido, cada unidad aporta{" "}
             <strong className="font-bold text-link">$3.835</strong> para cubrir tus costos y

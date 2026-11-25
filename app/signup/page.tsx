@@ -11,7 +11,6 @@ export default function SignupPage() {
       showHomeLink
       hero={
         <AuthHeroPanel
-          badge="Paso previo: acceso"
           title="Guardá tus cálculos y retomalos cuando quieras"
           description="Creá tu cuenta gratis para tener tus productos, precios y escenarios siempre a mano."
           benefits={BENEFITS}

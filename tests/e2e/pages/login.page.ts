@@ -6,7 +6,6 @@ export class LoginPage {
   readonly passwordToggle: Locator;
   readonly submitButton: Locator;
   readonly forgotPasswordLink: Locator;
-  readonly continueWithoutAccountLink: Locator;
   readonly signupLink: Locator;
   readonly errorAlert: Locator;
 
@@ -18,7 +17,6 @@ export class LoginPage {
     this.passwordToggle = page.getByRole("button", { name: /(mostrar|ocultar) contraseña/i });
     this.submitButton = page.getByRole("button", { name: "Ingresar", exact: true });
     this.forgotPasswordLink = page.getByRole("link", { name: "¿Olvidaste tu contraseña?" });
-    this.continueWithoutAccountLink = page.getByRole("link", { name: "Continuar sin cuenta" });
     this.signupLink = page.getByRole("link", { name: "Crear cuenta", exact: true });
     // The form-level banner only: per-field errors are alerts too, but their
     // ids end in "-error"; Next's empty route announcer lives outside <main>.

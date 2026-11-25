@@ -19,15 +19,15 @@ const linkClass =
 // spacing as the dashboard and the supply catalog.
 export function PageShell({ eyebrow, title, description, links = [], actions, children }: PageShellProps) {
   return (
-    <main className="min-h-screen bg-surface-tint px-4 py-10 sm:px-6">
-      <div className="mx-auto w-full max-w-5xl space-y-8">
+    <main className="min-h-screen min-w-0 bg-surface-tint px-4 py-6 sm:px-6 sm:py-7">
+      <div className="mx-auto w-full max-w-6xl space-y-5">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             {eyebrow && (
               <p className="text-sm font-semibold tracking-wide text-brand-green-700 uppercase">{eyebrow}</p>
             )}
-            <h1 className="mt-1 text-3xl font-bold text-fg sm:text-4xl">{title}</h1>
-            {description && <div className="mt-2 max-w-xl text-base text-fg-muted">{description}</div>}
+            <h1 className="mt-1 text-[1.625rem] font-bold tracking-[-0.025em] text-fg sm:text-[1.75rem]">{title}</h1>
+            {description && <div className="mt-1.5 max-w-2xl text-sm leading-6 text-fg-muted sm:text-base">{description}</div>}
           </div>
           {(links.length > 0 || actions) && (
             <nav aria-label="Navegación de la sección" className="flex flex-col gap-3 self-start sm:flex-row sm:items-center">
@@ -49,7 +49,7 @@ export function PageShell({ eyebrow, title, description, links = [], actions, ch
 // White card used for each block of content.
 export function Card({ title, children, id }: { title?: string; children: ReactNode; id?: string }) {
   return (
-    <section aria-labelledby={title && id ? id : undefined} className="space-y-4 rounded-3xl bg-surface p-5 shadow-sm sm:p-6">
+    <section aria-labelledby={title && id ? id : undefined} className="space-y-4 rounded-2xl bg-surface p-4 shadow-sm sm:p-5">
       {title && (
         <h2 id={id} className="text-lg font-bold text-fg">
           {title}

@@ -25,19 +25,21 @@ export default async function InicioPage() {
     listPeriodCostsService(user.id),
   ]);
   const summary = buildHomeSummary({ supplies, products, periodCostLineCount: periodCosts.lines.length });
-  const userName = identity.displayName || user.email || "";
+  const userName = identity.displayName.trim();
   const dashboardReady = summary.dashboardStatus === "inProgress";
 
   return (
-    <main className="px-4 py-10 sm:px-6">
-      <div className="mx-auto w-full max-w-5xl space-y-6">
+    <main className="min-w-0 px-4 py-6 sm:px-6 sm:py-7">
+      <div className="mx-auto w-full max-w-6xl space-y-4">
         <header>
           <p className="text-sm font-semibold tracking-wide text-brand-green-700 uppercase">
-            {identity.businessName && `${identity.businessName} · `}
-            {userName}
+            {identity.businessName || "Tu negocio"}
           </p>
-          <h1 className="mt-1 text-3xl font-bold text-fg sm:text-4xl">Bienvenida</h1>
-          <p className="mt-2 max-w-2xl text-base text-fg-muted">
+          <h1 className="mt-1 text-[1.625rem] font-bold tracking-[-0.025em] text-fg sm:text-[1.75rem]">
+            {userName ? `Hola, ${userName}` : "Hola"}
+            <span aria-hidden="true"> 👋</span>
+          </h1>
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-fg-muted sm:text-base">
             Acá tenés un resumen de tu negocio y los accesos para seguir cargando insumos, armar productos y ver
             los resultados.
           </p>
@@ -45,7 +47,7 @@ export default async function InicioPage() {
 
         <section
           aria-labelledby="first-steps-title"
-          className="rounded-2xl border border-brand-green-200 bg-brand-green-50 p-5"
+          className="rounded-2xl border border-brand-green-200 bg-brand-green-50 p-3.5"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -58,7 +60,7 @@ export default async function InicioPage() {
             </div>
             <Link
               href="/supplies"
-              className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover ${FOCUS_RING}`}
+              className={`inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl bg-action-primary px-4 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover ${FOCUS_RING}`}
             >
               Cargar insumos
             </Link>
@@ -66,10 +68,10 @@ export default async function InicioPage() {
         </section>
 
         <section aria-labelledby="quick-actions-title">
-          <h2 id="quick-actions-title" className="mb-3 text-lg font-semibold text-fg">
+          <h2 id="quick-actions-title" className="mb-2.5 text-base font-semibold text-fg">
             ¿Por dónde empezar?
           </h2>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <QuickAction href="/supplies" icon="🧺" title="Cargar insumos">
               Registrá lo que comprás y su costo por unidad.
             </QuickAction>
@@ -83,10 +85,10 @@ export default async function InicioPage() {
         </section>
 
         <section aria-labelledby="summary-title">
-          <h2 id="summary-title" className="mb-3 text-lg font-semibold text-fg">
+          <h2 id="summary-title" className="mb-2.5 text-base font-semibold text-fg">
             Tu negocio hoy
           </h2>
-          <div className="grid gap-4 sm:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="Insumos" value={summary.supplyCount} detail={`y ${summary.packagingCount} de packaging`} />
             <StatCard
               label="Productos"
@@ -106,8 +108,8 @@ export default async function InicioPage() {
           </div>
         </section>
 
-        <section aria-labelledby="pending-tasks-title" className="rounded-2xl bg-surface p-5 shadow-sm">
-          <h2 id="pending-tasks-title" className="text-lg font-semibold text-fg">
+        <section aria-labelledby="pending-tasks-title" className="rounded-2xl bg-surface p-3.5 shadow-sm">
+          <h2 id="pending-tasks-title" className="text-base font-semibold text-fg">
             Tareas pendientes
           </h2>
           <ul className="mt-3 space-y-2 text-sm text-fg-muted">
@@ -172,11 +174,11 @@ function TaskItem({ task }: { task: HomePendingTask }) {
 
 function QuickAction({ href, icon, title, children }: { href: string; icon: string; title: string; children: ReactNode }) {
   return (
-    <Link href={href} className={`rounded-2xl bg-surface p-5 shadow-sm hover:shadow-md ${FOCUS_RING}`}>
-      <p className="text-2xl" aria-hidden="true">
+    <Link href={href} className={`rounded-2xl bg-surface p-3.5 shadow-sm hover:shadow-md ${FOCUS_RING}`}>
+      <p className="text-lg" aria-hidden="true">
         {icon}
       </p>
-      <p className="mt-2 font-semibold text-fg">{title}</p>
+      <p className="mt-1.5 text-sm font-semibold text-fg">{title}</p>
       <p className="mt-1 text-sm text-fg-muted">{children}</p>
     </Link>
   );
@@ -184,9 +186,9 @@ function QuickAction({ href, icon, title, children }: { href: string; icon: stri
 
 function StatCard({ label, value, detail }: { label: string; value: ReactNode; detail: string }) {
   return (
-    <div className="rounded-2xl bg-surface p-5 shadow-sm">
+    <div className="rounded-2xl bg-surface p-3.5 shadow-sm">
       <p className="text-xs font-semibold text-fg-muted uppercase">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-fg">{value}</p>
+      <p className="mt-1 text-xl font-bold tracking-[-0.02em] text-fg">{value}</p>
       <p className="mt-1 text-xs text-fg-muted">{detail}</p>
     </div>
   );

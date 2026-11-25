@@ -54,7 +54,7 @@ export function SuppliesTable({
 
   if (supplies.length === 0) {
     return (
-      <div className="rounded-[24px] bg-surface p-8 text-center shadow-sm">
+      <div className="rounded-2xl bg-surface p-6 text-center shadow-sm">
         {searchActive ? (
           <>
             <p className="text-fg-muted">No encontramos ítems con esa búsqueda.</p>
@@ -83,28 +83,28 @@ export function SuppliesTable({
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-[24px] bg-surface shadow-sm">
-        <table className="w-full text-left text-sm">
+      <div className="max-w-full overflow-x-auto rounded-2xl border border-border-default bg-surface shadow-sm">
+        <table className="w-full min-w-[760px] text-left text-sm">
         <thead>
           <tr className="border-b border-border-control">
-            <th scope="col" className="min-w-48 px-3 py-3 font-semibold text-fg-muted">
+            <th scope="col" className="min-w-40 px-3 py-2.5 text-xs font-semibold tracking-wide text-fg-muted uppercase">
               Nombre
             </th>
-            <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
+            <th scope="col" className="px-3 py-2.5 whitespace-nowrap text-xs font-semibold tracking-wide text-fg-muted uppercase">
               Compra
             </th>
-            <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
+            <th scope="col" className="px-3 py-2.5 whitespace-nowrap text-xs font-semibold tracking-wide text-fg-muted uppercase">
               Precio
             </th>
-            <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
+            <th scope="col" className="px-3 py-2.5 whitespace-nowrap text-xs font-semibold tracking-wide text-fg-muted uppercase">
               Unidad mínima
             </th>
-            <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
+            <th scope="col" className="px-3 py-2.5 whitespace-nowrap text-xs font-semibold tracking-wide text-fg-muted uppercase">
               Costo por unidad mínima
             </th>
             <th
               scope="col"
-              className="px-3 py-3 whitespace-nowrap text-right font-semibold text-fg-muted"
+              className="px-3 py-2.5 whitespace-nowrap text-right text-xs font-semibold tracking-wide text-fg-muted uppercase"
             >
               Acciones
             </th>
@@ -119,22 +119,22 @@ export function SuppliesTable({
             );
 
             return (
-              <tr key={supply.id} className="border-b border-border-control last:border-0">
-                <td className="min-w-48 px-3 py-3 text-fg">{supply.name}</td>
-                <td className="px-3 py-3 whitespace-nowrap text-fg">
+              <tr key={supply.id} className="border-b border-border-default transition-colors last:border-0 hover:bg-surface-tint/70">
+                <td className="min-w-40 px-3 py-2.5 font-medium text-fg">{supply.name}</td>
+                <td className="px-3 py-2.5 whitespace-nowrap text-fg">
                   {quantityFormat.format(Number(supply.purchaseQuantity))}{" "}
                   {supply.purchaseUnit}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-fg">
+                <td className="px-3 py-2.5 whitespace-nowrap text-fg">
                   {moneyFormat.format(Number(supply.purchasePrice))}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-fg">
+                <td className="px-3 py-2.5 whitespace-nowrap text-fg">
                   {getSupplyUnitBasis(supply.purchaseUnit)?.minimumUnit ?? "—"}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-fg">
+                <td className="px-3 py-2.5 whitespace-nowrap font-medium text-fg">
                   {unitPrice ? unitPriceFormat.format(Number(unitPrice)) : "—"}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-right">
+                <td className="px-3 py-2.5 whitespace-nowrap text-right">
                   <div className="inline-flex gap-2">
                     <button
                       type="button"
