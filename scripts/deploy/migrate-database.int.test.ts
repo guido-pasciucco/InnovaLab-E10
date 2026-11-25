@@ -19,8 +19,9 @@ const journal = JSON.parse(readFileSync(join(root, "meta/_journal.json"), "utf8"
   entries: { idx: number; tag: string; when: number }[];
 };
 // Later migrations append after this repair. Drizzle will not run it once a newer one is applied.
-const repair = journal.entries.find((e) => e.tag === "20261124153914_reconcile_help_usage");
-if (repair === undefined) throw new Error("Journal is missing 20261124153914_reconcile_help_usage");
+const repairEntry = journal.entries.find((e) => e.tag === "20261124153914_reconcile_help_usage");
+if (repairEntry === undefined) throw new Error("Journal is missing 20261124153914_reconcile_help_usage");
+const repair = repairEntry;
 const mora = journal.entries.filter((e) => e.when === 1795287505824 || e.when === 1795287593887);
 const main = journal.entries.filter((e) => !mora.includes(e) && e.when < repair.when);
 const created: { name: string; client: postgres.Sql; folder: string }[] = [];
