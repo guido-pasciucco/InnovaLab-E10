@@ -8,11 +8,12 @@ export default async function SuppliesPage() {
   const supplies = await listSuppliesService(user.id);
 
   return (
-    <main className="px-4 py-10 sm:px-6">
-      <div className="mx-auto w-full max-w-5xl space-y-8">
+    <main className="min-w-0 px-4 py-6 sm:px-6 sm:py-7">
+      <div className="mx-auto w-full max-w-6xl space-y-5">
         <header>
-          <h1 className="text-3xl font-bold text-fg sm:text-4xl">Insumos y packaging</h1>
-          <p className="mt-2 max-w-xl text-base text-fg-muted">
+          <p className="text-xs font-semibold tracking-[0.12em] text-brand-green-700 uppercase">Catálogo</p>
+          <h1 className="mt-1 text-[1.625rem] font-bold tracking-[-0.025em] text-fg sm:text-[1.75rem]">Insumos y packaging</h1>
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-fg-muted sm:text-base">
             Anotá cada insumo y packaging con el precio, la cantidad y la unidad de medida.
           </p>
         </header>

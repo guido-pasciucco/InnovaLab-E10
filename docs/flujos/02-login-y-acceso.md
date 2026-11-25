@@ -7,7 +7,7 @@ Cómo entra un usuario, cómo se mantiene su sesión y cómo se garantiza que ca
 La autenticación la resuelve **Supabase Auth (GoTrue)**: alta de cuenta, confirmación por email, login, recuperación y cambio de contraseña. No existe una capa propia de envío de correos: todos los mails salen de Supabase.
 
 - Formularios propios en `app/login`, `app/signup`, `app/reset-password` y `app/update-password`.
-- El navegador habla con **Server Actions** (`app/<feature>/actions.ts`). No hay Route Handlers (`app/api/*` no existe).
+- El navegador habla con **Server Actions** (`app/<feature>/actions.ts`). No hay Route Handlers, salvo el chat con datos: `POST /api/chat-datos` responde en streaming ([ADR 04](../decisiones/establecidas/desarrollo/04-route-handler-con-streaming.md)).
 - Las Server Actions son endpoints HTTP públicos: validan la entrada con el mismo esquema Zod del cliente y toman la identidad de la cookie de sesión, nunca de los argumentos.
 - La validación del cliente es UX, nunca seguridad.
 

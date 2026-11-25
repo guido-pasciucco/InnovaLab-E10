@@ -322,6 +322,39 @@ export const ERROR_CATALOG = {
     message: "La búsqueda de documentos no está disponible.",
     logLevel: "error",
   },
+
+  // Read-only SQL for the chat agent (chat-datos, #279). The model, not the
+  // user, writes the query: `details.reason` tells the model what to fix and
+  // is not meant for the screen. Nothing reads these codes until stage 3.
+  ANALYST_QUERY_REJECTED: {
+    status: 422,
+    message: "La consulta no está permitida.",
+    logLevel: "silent",
+  },
+  ANALYST_QUERY_FAILED: {
+    status: 422,
+    message: "La consulta no se pudo ejecutar.",
+    logLevel: "silent",
+  },
+  ANALYST_QUERY_TIMEOUT: {
+    status: 504,
+    message: "La consulta tardó demasiado.",
+    logLevel: "warn",
+  },
+
+  // Chat endpoint (chat-datos, #279). Invalid bodies use the generic VALIDATION.
+  CHAT_DATOS_DISABLED: {
+    // CHAT_DATOS_ENABLED is off: the route answers as if it did not exist.
+    status: 404,
+    message: "Esta función no está disponible.",
+    logLevel: "silent",
+  },
+  CHAT_DATOS_UNAVAILABLE: {
+    // Missing AWS credentials, or Bedrock could not be reached.
+    status: 503,
+    message: "El chat con tus datos no está disponible por el momento. Probá de nuevo en unos minutos.",
+    logLevel: "error",
+  },
 } as const satisfies Record<string, CatalogEntry>;
 
 export type ErrorCode = keyof typeof ERROR_CATALOG;

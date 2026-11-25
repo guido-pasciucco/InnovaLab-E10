@@ -183,7 +183,7 @@ export const presentations = pgTable("presentations", {
     scale: 4,
   }).notNull(),
   // How many of this presentation the business plans to sell in the month
-  // (#321, D44). NULL means "not loaded". It is not copied from the product:
+  // (#321, D45). NULL means "not loaded". It is not copied from the product:
   // the product capacity counts base units and this one counts packs.
   monthlyCapacity: integer("monthly_capacity"),
   // Own markup (%) for this presentation (#321). NULL means "use the business

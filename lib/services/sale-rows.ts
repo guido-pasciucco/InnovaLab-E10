@@ -15,7 +15,7 @@ import type { ProductItem } from "@/lib/schemas/products/products";
 
 import { deriveProductVariableCosts, listProductsService, toFormQuantity } from "./products";
 
-// One row per thing the business sells (#321, D44). A product with
+// One row per thing the business sells (#321, D45). A product with
 // presentations becomes one row per presentation ("Alfajor · Caja x6"); a
 // product without them stays a single row in its base unit. Cost distribution,
 // pricing and break-even all read this list instead of the product catalog.

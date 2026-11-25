@@ -257,6 +257,13 @@
     {
       "idx": 36,
       "version": "7",
+      "when": 1795550695992,
+      "tag": "20261123121144_chat_datos_analyst_views",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
       "when": 1795561338230,
       "tag": "20261124230218_presentation_sale_unit",
       "breakpoints": true

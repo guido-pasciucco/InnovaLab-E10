@@ -14,7 +14,7 @@ const navigation = [
 export function SiteHeader({ startHref, isSignedIn }: { startHref: string; isSignedIn: boolean }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border-default bg-surface-tint/95 font-sans backdrop-blur">
-      <div className={`${container} flex items-center justify-between gap-4 py-4`}>
+      <div className={`${container} flex min-h-20 items-center justify-between gap-4 py-2`}>
         <BrandMark />
 
         <nav aria-label="Navegación principal" className="hidden items-center gap-7 lg:flex">
