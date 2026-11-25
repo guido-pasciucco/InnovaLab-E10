@@ -13,22 +13,24 @@ type FooterColumnProps = {
   links: readonly FooterLink[];
 };
 
+// Absolute links: the footer is shared by every marketing page, so a bare
+// anchor would point at a section that may not exist on the current page.
 const productLinks: readonly FooterLink[] = [
-  { href: "#como-funciona", label: "Cómo funciona" },
-  { href: "#modelo", label: "Punto de equilibrio" },
-  { href: "#escenarios", label: "Escenarios" },
-  { href: "#testimonios", label: "Testimonios" },
+  { href: "/calculadora-de-costos", label: "Calculadora de costos" },
+  { href: "/licitaciones-de-insumos", label: "Licitaciones de insumos" },
+  { href: "/asistente-ia", label: "Asistente IA" },
 ];
 
 const accountLinks: readonly FooterLink[] = [
   { href: "/login", label: "Iniciar sesión" },
   { href: "/signup", label: "Crear cuenta" },
-  { href: "/products", label: "Calculadora" },
+  { href: "/inicio", label: "Ir a mi negocio" },
 ];
 
 const helpLinks: readonly FooterLink[] = [
-  { href: "#faq", label: "Preguntas frecuentes" },
-  { href: "#privacidad", label: "Privacidad" },
+  { href: "/#testimonios", label: "Testimonios" },
+  { href: "/#privacidad", label: "Privacidad" },
+  { href: "/#preguntas", label: "Preguntas frecuentes" },
 ];
 
 function FooterColumn({ title, links }: FooterColumnProps) {
@@ -38,21 +40,12 @@ function FooterColumn({ title, links }: FooterColumnProps) {
       <ul className="mt-4 space-y-3 text-sm">
         {links.map((link) => (
           <li key={link.href}>
-            {link.href.startsWith("#") ? (
-              <a
-                href={link.href}
-                className="rounded-md text-on-brand transition-colors hover:text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
-              >
-                {link.label}
-              </a>
-            ) : (
-              <Link
-                href={link.href}
-                className="rounded-md text-on-brand transition-colors hover:text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
-              >
-                {link.label}
-              </Link>
-            )}
+            <Link
+              href={link.href}
+              className="rounded-md text-on-brand transition-colors hover:text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
+            >
+              {link.label}
+            </Link>
           </li>
         ))}
       </ul>
@@ -68,12 +61,12 @@ export function SiteFooter() {
           <div className="max-w-sm">
             <BrandMark tone="light" />
             <p className="mt-5 text-sm leading-6 text-on-brand-muted">
-              La herramienta que te ayuda a poner precios con información real, entender tu margen y
-              saber cuándo tu negocio empieza a ganar.
+              Costos, compras e IA para emprendedores. Poné precios con información real y decidí con
+              datos.
             </p>
           </div>
 
-          <FooterColumn title="Producto" links={productLinks} />
+          <FooterColumn title="Funcionalidades" links={productLinks} />
           <FooterColumn title="Cuenta" links={accountLinks} />
           <FooterColumn title="Ayuda" links={helpLinks} />
         </div>
