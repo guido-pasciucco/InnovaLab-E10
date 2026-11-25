@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import LogoutButton from "@/components/auth/logout-button";
+import { NumoraLogo } from "@/components/brand/numora-logo";
 
 import { isActivePath, sectionFromPathname } from "./nav-sections";
 
@@ -21,14 +22,16 @@ export function AppSidebar({ userName, userEmail, businessName }: AppSidebarProp
   const section = sectionFromPathname(pathname);
 
   return (
-    <aside className="flex w-full print:hidden shrink-0 flex-col gap-6 border-b border-border-default bg-surface p-4 md:min-h-screen md:w-64 md:border-r md:border-b-0">
-      <div>
-        <p className="text-lg font-bold text-brand-green-700">Calculadora de Costos</p>
+    <aside className="flex w-full min-w-0 shrink-0 flex-col gap-5 border-b border-border-default bg-surface p-3.5 print:hidden md:min-h-screen md:w-56 md:border-r md:border-b-0">
+      <div className="min-w-0">
+        <Link href="/inicio" aria-label="Numora, ir al inicio" className="block h-8 w-36 overflow-hidden">
+          <NumoraLogo variant="light" />
+        </Link>
         {businessName && <p className="mt-1 truncate text-sm text-fg-muted">{businessName}</p>}
       </div>
 
       <nav aria-label="Principal">
-        <ul className="flex gap-2 md:flex-col">
+        <ul className="flex max-w-full gap-1.5 overflow-x-auto md:flex-col md:overflow-visible">
           {section.items.map(({ href, label, icon: Icon }) => {
             const active = isActivePath(pathname, href);
             return (
@@ -36,13 +39,13 @@ export function AppSidebar({ userName, userEmail, businessName }: AppSidebarProp
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-11 items-center gap-3 rounded-[14px] px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                  className={`flex min-h-10 items-center gap-2.5 whitespace-nowrap rounded-xl px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
                     active
                       ? "bg-brand-green-50 text-brand-green-700"
                       : "text-fg-muted hover:bg-brand-green-50 hover:text-brand-green-700"
                   }`}
                 >
-                  <Icon aria-hidden="true" className="size-5" />
+                  <Icon aria-hidden="true" className="size-[18px]" />
                   {label}
                 </Link>
               </li>
