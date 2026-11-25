@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { formatARSCompact } from "@/lib/money/format";
 import type { PeriodCostLineView } from "./period-costs-values";
 
@@ -95,24 +96,24 @@ export function PeriodCostsTable({
               </td>
               <td className="px-3 py-3 whitespace-nowrap text-right">
                 <div className="inline-flex gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onEdit(line)}
                     disabled={busy}
                     aria-label={`Editar ${line.concept}`}
-                    className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
                   >
                     Editar
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
                     onClick={() => onDelete(line)}
                     disabled={busy}
                     aria-label={`Borrar ${line.concept}`}
-                    className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-danger hover:bg-danger/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
                   >
                     Borrar
-                  </button>
+                  </Button>
                 </div>
               </td>
             </tr>
