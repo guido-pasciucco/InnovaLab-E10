@@ -5,22 +5,30 @@ import { buildHomeSummary, type HomeSummaryInput } from "./homeSummary";
 const ready = {
   variableCosts: { unit: "10" },
   variableCostsUnavailableCode: null,
-  monthlyCapacity: 100,
 };
-const readyWithoutCapacity = { ...ready, monthlyCapacity: null };
 const recipePending = {
   variableCosts: null,
   variableCostsUnavailableCode: null,
-  monthlyCapacity: null,
 };
 const unpriceable = {
   variableCosts: null,
   variableCostsUnavailableCode: "UNSUPPORTED_RECIPE_UNIT",
-  monthlyCapacity: 100,
 };
-const pricedRow = { unavailableCode: null };
-const noMarkupRow = { unavailableCode: "NO_MARKUP" };
-const noTotalCostRow = { unavailableCode: "NO_TOTAL_COST" };
+// One pricing row per thing that is sold (#321): a product without
+// presentations, or each presentation of a product.
+function saleRow(overrides: Partial<HomeSummaryInput["pricingRows"][number]> = {}) {
+  return {
+    unavailableCode: null,
+    capacity: 100,
+    variableUnit: "10",
+    editHref: "/products",
+    ...overrides,
+  };
+}
+const pricedRow = saleRow();
+const noMarkupRow = saleRow({ unavailableCode: "NO_MARKUP" });
+const noTotalCostRow = saleRow({ unavailableCode: "NO_TOTAL_COST" });
+const noCapacityRow = saleRow({ capacity: null, unavailableCode: "NO_TOTAL_COST" });
 const pendingBreakEven = { status: "no_prices" as const, totals: null };
 const readyBreakEven = {
   status: "ready" as const,
@@ -80,18 +88,67 @@ describe("buildHomeSummary", () => {
     expect(summary.hasPeriodCosts).toBe(false);
   });
 
-  it("asks for the monthly capacity only of priced products that can enter the mix", () => {
+  it("asks for the monthly capacity only of costed rows that can enter the mix", () => {
     const summary = buildHomeSummary({
       ...emptyAccount,
       supplies: [{ kind: "supply" }],
-      products: [readyWithoutCapacity, { ...ready, monthlyCapacity: 0 }, recipePending],
+      products: [ready, ready, recipePending],
       periodCostLineCount: 1,
+      pricingRows: [
+        noCapacityRow,
+        saleRow({ capacity: 0, unavailableCode: "NO_TOTAL_COST" }),
+        saleRow({ capacity: null, variableUnit: null, unavailableCode: "NO_TOTAL_COST" }),
+      ],
     });
 
     expect(summary.pendingTasks).toEqual([
       { kind: "completeRecipes", count: 1 },
-      { kind: "loadCapacity", count: 2 },
+      { kind: "loadCapacity", count: 2, href: "/products" },
     ]);
+  });
+
+  it("reads the capacity of each presentation, not the product's own", () => {
+    const presentations = "/products/alfajor/presentations";
+    const summary = buildHomeSummary({
+      ...emptyAccount,
+      supplies: [{ kind: "supply" }],
+      products: [ready],
+      periodCostLineCount: 1,
+      pricingRows: [saleRow({ editHref: presentations }), saleRow({ editHref: presentations })],
+    });
+
+    expect(summary.pendingTasks).toEqual([]);
+  });
+
+  it("links the capacity task to the presentations when only they are missing it", () => {
+    const presentations = "/products/alfajor/presentations";
+    const summary = buildHomeSummary({
+      ...emptyAccount,
+      supplies: [{ kind: "supply" }],
+      products: [ready],
+      periodCostLineCount: 1,
+      pricingRows: [
+        saleRow({ editHref: presentations }),
+        saleRow({ editHref: presentations, capacity: null, unavailableCode: "NO_TOTAL_COST" }),
+      ],
+    });
+
+    expect(summary.pendingTasks).toEqual([{ kind: "loadCapacity", count: 1, href: presentations }]);
+  });
+
+  it("links the capacity task to the catalog when the rows load it in different places", () => {
+    const summary = buildHomeSummary({
+      ...emptyAccount,
+      supplies: [{ kind: "supply" }],
+      products: [ready, ready],
+      periodCostLineCount: 1,
+      pricingRows: [
+        noCapacityRow,
+        saleRow({ editHref: "/products/alfajor/presentations", capacity: null, unavailableCode: "NO_TOTAL_COST" }),
+      ],
+    });
+
+    expect(summary.pendingTasks).toEqual([{ kind: "loadCapacity", count: 2, href: "/products" }]);
   });
 
   it("asks for the markup only of pricing rows missing it", () => {
@@ -123,13 +180,13 @@ describe("buildHomeSummary", () => {
     const summary = buildHomeSummary({
       ...emptyAccount,
       supplies: [{ kind: "supply" }],
-      products: [readyWithoutCapacity],
-      pricingRows: [noMarkupRow],
+      products: [ready, ready],
+      pricingRows: [noCapacityRow, noMarkupRow],
     });
 
     expect(summary.pendingTasks).toEqual([
       { kind: "loadPeriodCosts" },
-      { kind: "loadCapacity", count: 1 },
+      { kind: "loadCapacity", count: 1, href: "/products" },
       { kind: "loadMarkup", count: 1 },
     ]);
     expect(summary.allReady).toBe(false);

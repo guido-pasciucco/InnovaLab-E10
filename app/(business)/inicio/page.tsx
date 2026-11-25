@@ -181,7 +181,7 @@ function taskLink(task: HomePendingTask): { href: string; label: string } {
       return { href: "/period-costs", label: "Cargar los gastos del período" };
     case "loadCapacity":
       return {
-        href: "/products",
+        href: task.href,
         label: `Cargar la capacidad mensual de ${plural(task.count, "producto", "productos")}`,
       };
     case "loadMarkup":
