@@ -19,6 +19,21 @@ describe("HelpWidget", () => {
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain("mora-avatar.png");
     expect(html).toContain('alt=""');
+    expect(html).not.toContain("Vista previa");
+  });
+
+  it("renders the launcher in visual preview mode without enabling help", () => {
+    const html = render(createElement(HelpWidget, { enabled: false, preview: true, userId: null }));
+    expect(html).toContain('aria-label="Abrir ayuda de Mora"');
+  });
+
+  it("supports the compact edge launcher while retaining floating as the default", () => {
+    const edge = render(createElement(HelpWidget, { enabled: true, placement: "edge", userId: "user-a" }));
+    const floating = render(createElement(HelpWidget, { enabled: true, userId: "user-a" }));
+
+    expect(edge).toContain("lg:bottom-6");
+    expect(edge).toContain("lg:rounded-l-2xl");
+    expect(floating).not.toContain("lg:bottom-6");
   });
 });
 
