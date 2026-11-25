@@ -1,33 +1,28 @@
 import { PlusIcon } from "./icons";
 import { container, eyebrow, sectionLead, sectionTitle } from "./styles";
 
-const faqs = [
-  {
-    question: "¿Necesito saber de finanzas para usar la calculadora?",
-    answer:
-      "No. El recorrido te guía paso a paso: cargás tus costos y la calculadora hace las cuentas por vos. No hay fórmulas para memorizar.",
-  },
-  {
-    question: "¿Puedo usarla si vendo más de un producto?",
-    answer:
-      "Sí. Desde tu panel podés crear un cálculo por cada producto y retomarlo cuando quieras. Cada cálculo tiene sus propios costos, precio y punto de equilibrio.",
-  },
-  {
-    question: "¿Mis datos están seguros?",
-    answer:
-      "Sí. Tu información se guarda asociada a tu cuenta y solo vos podés acceder a ella. No la compartimos con terceros ni la usamos para publicidad.",
-  },
-  {
-    question: "¿Cuánto cuesta empezar?",
-    answer:
-      "La calculadora es gratuita para emprendedores. No necesitás tarjeta ni instalar nada para hacer tu primer cálculo.",
-  },
-] as const;
+export type FaqItem = {
+  question: string;
+  answer: string;
+};
 
-export function FaqSection() {
+type FaqSectionProps = {
+  faqs: readonly FaqItem[];
+  title: string;
+  lead?: string;
+  /** All marketing pages expose the same anchor for the dropdown links. */
+  id?: string;
+};
+
+export function FaqSection({
+  faqs,
+  title,
+  lead = "Las dudas que aparecen antes de empezar.",
+  id = "preguntas",
+}: FaqSectionProps) {
   return (
     <section
-      id="faq"
+      id={id}
       aria-labelledby="faq-title"
       className="scroll-mt-36 border-t border-border-default bg-surface py-16 sm:py-20"
     >
@@ -36,9 +31,9 @@ export function FaqSection() {
           <div className="text-center">
             <p className={eyebrow}>Preguntas frecuentes</p>
             <h2 id="faq-title" className={sectionTitle}>
-              Preguntas frecuentes de emprendedores
+              {title}
             </h2>
-            <p className={sectionLead}>Las dudas que aparecen antes de empezar.</p>
+            <p className={sectionLead}>{lead}</p>
           </div>
 
           <div className="mt-10 space-y-3">

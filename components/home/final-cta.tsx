@@ -3,7 +3,19 @@ import Link from "next/link";
 import { ArrowRightIcon } from "./icons";
 import { container, secondaryButtonOnDark } from "./styles";
 
-export function FinalCta() {
+type FinalCtaProps = {
+  title?: string;
+  description?: string;
+  ctaHref: string;
+  ctaLabel?: string;
+};
+
+export function FinalCta({
+  title = "¿Listo para conocer el precio real de tus productos?",
+  description = "Calculá tus costos, definí tu precio y empezá a vender con confianza.",
+  ctaHref,
+  ctaLabel = "Empezar gratis",
+}: FinalCtaProps) {
   return (
     <section aria-labelledby="cta-title" className="py-16 sm:py-20">
       <div className={container}>
@@ -25,18 +37,18 @@ export function FinalCta() {
               id="cta-title"
               className="mx-auto mt-3 max-w-2xl text-3xl font-semibold tracking-[-0.025em] sm:text-4xl"
             >
-              ¿Listo para conocer el precio real de tus productos?
+              {title}
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-on-brand sm:text-base">
-              Calculá tus costos, definí tu precio y empezá a vender con confianza.
+              {description}
             </p>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
-                href="/signup"
+                href={ctaHref}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-surface px-5 py-3 text-sm font-semibold text-brand-tile transition-colors hover:bg-action-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
               >
-                Empezar gratis
+                {ctaLabel}
                 <ArrowRightIcon className="h-4 w-4" />
               </Link>
               <Link href="/login" className={secondaryButtonOnDark}>

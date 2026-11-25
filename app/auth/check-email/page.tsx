@@ -16,7 +16,7 @@ export default function CheckEmailPage() {
       hero={
         <AuthHeroPanel
           title="Guardá tus cálculos y retomalos cuando quieras"
-          description="Creá tu cuenta gratis para tener tus productos, precios y escenarios siempre a mano."
+          description="Creá tu cuenta gratis para calcular tus costos, comprar insumos con licitaciones y consultar tus datos con IA."
           benefits={BENEFITS}
           benefitsLabel="Beneficios de crear una cuenta"
           footnote="Herramienta de apoyo. No reemplaza asesoramiento contable o impositivo."
