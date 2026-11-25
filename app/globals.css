@@ -80,6 +80,9 @@
   --brand-green-500: #22c55e;
   --brand-green-600: #16a34a;
   --brand-green-700: #15803d;
+  /* Mora, the help assistant: lilac accent of its speech bubble. */
+  --mora-border: #C9A9DF;
+  --mora-shadow: rgba(111, 62, 139, 0.2);
 
   /* Compatibilidad temporal con los colores globales vigentes de main. */
   --background: #eafcf1;
@@ -89,6 +92,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-mora-border: var(--mora-border);
 
   --color-canvas: var(--surface-canvas);
   --color-surface: var(--surface-raised);

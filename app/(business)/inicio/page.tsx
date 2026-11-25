@@ -36,7 +36,8 @@ export default async function InicioPage() {
             {identity.businessName || "Tu negocio"}
           </p>
           <h1 className="mt-1 text-[1.625rem] font-bold tracking-[-0.025em] text-fg sm:text-[1.75rem]">
-            {userName ? `Hola, ${userName} 👋` : "Hola 👋"}
+            {userName ? `Hola, ${userName}` : "Hola"}
+            <span aria-hidden="true"> 👋</span>
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm leading-6 text-fg-muted sm:text-base">
             Acá tenés un resumen de tu negocio y los accesos para seguir cargando insumos, armar productos y ver

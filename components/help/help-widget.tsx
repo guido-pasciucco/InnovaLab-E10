@@ -26,7 +26,6 @@ import { HelpMarkdown } from "./help-markdown";
 
 type HelpWidgetProps = {
   enabled: boolean;
-  placement?: "edge" | "floating";
   preview?: boolean;
   userId: string | null;
 };
@@ -37,13 +36,12 @@ export const SUGGESTED_QUESTIONS = [
   "¿Qué es el punto de equilibrio?",
 ] as const;
 
-export function HelpWidget({ enabled, placement = "floating", preview = false, userId }: HelpWidgetProps) {
+export function HelpWidget({ enabled, preview = false, userId }: HelpWidgetProps) {
   if (!enabled && !preview) return null;
 
   return (
     <HelpWidgetSession
       key={userId ?? "signed-out"}
-      placement={placement}
       preview={preview}
       userId={userId}
     />
@@ -138,10 +136,9 @@ export function MoraWelcome({
 }
 
 function HelpWidgetSession({
-  placement = "floating",
   preview = false,
   userId,
-}: Pick<HelpWidgetProps, "placement" | "preview" | "userId">) {
+}: Pick<HelpWidgetProps, "preview" | "userId">) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<HelpMessage[]>([]);
@@ -328,7 +325,7 @@ function HelpWidgetSession({
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] z-[70] flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-2 sm:bottom-[max(1rem,env(safe-area-inset-bottom))] sm:right-[max(1rem,env(safe-area-inset-right))] sm:max-w-[calc(100vw-2rem)]">
+    <div className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] z-[70] flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-3 sm:bottom-[max(1rem,env(safe-area-inset-bottom))] sm:right-[max(1rem,env(safe-area-inset-right))] sm:max-w-[calc(100vw-2rem)]">
       {open && (
         <section
           id="mora-chat"
@@ -338,15 +335,14 @@ function HelpWidgetSession({
             pointer-events-auto
             flex min-h-0 flex-col overflow-visible
             rounded-[30px]
-            border-[1.5px] border-[#C9A9DF]
+            border-[1.5px] border-mora-border
             bg-surface
-            shadow-[0_14px_38px_rgba(111,62,139,0.20)]
-            relative after:content-[''] after:pointer-events-none after:absolute after:right-6 after:-bottom-8 after:h-8 after:w-8 after:bg-surface after:[clip-path:polygon(0_0,100%_0,100%_100%)]
+            shadow-[0_14px_38px_var(--mora-shadow)]
+            relative after:content-[''] after:pointer-events-none after:absolute after:right-6 after:-bottom-3 after:h-3 after:w-5 after:bg-surface after:[clip-path:polygon(0_0,100%_0,100%_100%)]
             w-[min(24rem,calc(100vw-2rem))]
             h-[min(26rem,calc(100dvh-7rem))]
             max-h-[min(70dvh,38rem)]
             max-sm:w-[calc(100vw-2rem)]
-            ${placement === "edge" ? "lg:fixed lg:right-20 lg:bottom-16 lg:top-auto lg:translate-y-0 lg:w-[21rem] lg:h-[min(26rem,calc(100dvh-7rem))] lg:max-h-[calc(100dvh-7rem)]" : ""}
           `}
         >
           {/* Encabezado */}
@@ -425,7 +421,6 @@ function HelpWidgetSession({
 
           {/* Campo de escritura */}
           <form
-            aria-disabled={preview}
             className="flex shrink-0 items-center gap-2 rounded-b-[29px] border-t border-border-default bg-surface px-3 py-2.5"
             onSubmit={(event) => {
               event.preventDefault();
@@ -514,7 +509,6 @@ function HelpWidgetSession({
           focus-visible:outline-offset-2
           focus-visible:outline-focus
           motion-reduce:transform-none
-          ${placement === "edge" ? "lg:fixed lg:right-4 lg:bottom-6 lg:top-auto lg:rounded-l-2xl lg:h-16 lg:w-16 lg:translate-y-0" : ""}
         `}
       >
         <Image
@@ -523,7 +517,7 @@ function HelpWidgetSession({
           width={56}
           height={56}
           priority
-          className="h-16 w-16 object-contain drop-shadow-[0_10px_18px_rgba(76,37,98,0.22)] lg:h-16 lg:w-16 -scale-x-100"
+          className="h-16 w-16 object-contain drop-shadow-[0_10px_18px_rgba(76,37,98,0.22)] -scale-x-100"
         />
       </button>
     </div>

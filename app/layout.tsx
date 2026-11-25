@@ -16,12 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Calculadora Inteligente de Costos",
+  title: "Numora | Calculadora de costos",
   description: "Calculá tus costos, definí tus precios y encontrá tu punto de equilibrio.",
 };
-
-// Mora is a floating bubble: it must never reserve space in the layout.
-const MORA_PLACEMENT: "edge" | "floating" = "floating";
 
 export default async function RootLayout({
   children,
@@ -82,7 +79,6 @@ export default async function RootLayout({
           {children}
           <HelpWidget
             enabled={helpEnabled}
-            placement={MORA_PLACEMENT}
             preview={helpPreview}
             userId={user?.id ?? null}
           />

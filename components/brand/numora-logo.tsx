@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 
 type NumoraLogoProps = {
@@ -17,7 +16,7 @@ export function NumoraLogo({
 
   const dimensions =
     variant === "dark"
-      ? { width: 2048, height: 682 }
+      ? { width: 1564, height: 298 }
       : { width: 1696, height: 356 };
 
   return (
