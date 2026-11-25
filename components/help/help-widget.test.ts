@@ -19,7 +19,14 @@ describe("HelpWidget", () => {
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain("mora-avatar.png");
     expect(html).toContain('alt=""');
+    expect(html).not.toContain("Vista previa");
   });
+
+  it("renders the launcher in visual preview mode without enabling help", () => {
+    const html = render(createElement(HelpWidget, { enabled: false, preview: true, userId: null }));
+    expect(html).toContain('aria-label="Abrir ayuda de Mora"');
+  });
+
 });
 
 describe("MoraWelcome", () => {

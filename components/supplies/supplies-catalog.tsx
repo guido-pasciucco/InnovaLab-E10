@@ -81,11 +81,11 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
   }`;
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <div
         role="tablist"
         aria-label="Tipo de ítem"
-        className="inline-flex gap-1 rounded-[14px] bg-surface-tint p-1"
+        className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-border-default bg-surface p-1 shadow-sm"
       >
         <button
           type="button"
@@ -119,19 +119,22 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
         aria-label={`Lista de ${activeLabel.toLowerCase()}`}
         className="min-w-0 space-y-4"
       >
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold text-fg">{activeLabel}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-fg">{activeLabel}</h2>
+            <p className="mt-0.5 text-xs text-fg-muted">{filtered.length} {filtered.length === 1 ? "ítem" : "ítems"}</p>
+          </div>
           <button
             type="button"
             onClick={handleNew}
-            className="min-h-11 shrink-0 rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            className="min-h-10 shrink-0 rounded-xl bg-action-primary px-4 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             + Nuevo
           </button>
         </div>
 
         {counts[activeKind] > 0 && (
-          <div className="flex flex-col gap-1">
+          <div className="flex max-w-2xl flex-col gap-1">
             <label htmlFor="supplies-search" className="text-sm font-semibold text-fg-muted">
               Buscar
             </label>
@@ -141,7 +144,7 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Nombre, unidad de compra o unidad mínima…"
-              className="min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-4 py-2 text-base text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="min-h-10 w-full rounded-xl border border-border-control bg-surface px-3.5 py-2 text-sm text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             />
           </div>
         )}

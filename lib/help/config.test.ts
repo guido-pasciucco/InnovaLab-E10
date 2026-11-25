@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isHelpEnabled, readHelpConfig } from "./config";
+import { isHelpEnabled, isHelpPreviewEnabled, readHelpConfig } from "./config";
 
 const enabled = {
   HELP_ENABLED: "true",
@@ -27,5 +27,16 @@ describe("readHelpConfig", () => {
     expect(
       readHelpConfig({ ...enabled, HELP_MODEL: "anthropic.claude-haiku-4-5-20251001-v1:0" }),
     ).toBeNull();
+  });
+});
+
+describe("isHelpPreviewEnabled", () => {
+  it("turns on only with HELP_PREVIEW=true", () => {
+    expect(isHelpPreviewEnabled({ HELP_PREVIEW: "true" })).toBe(true);
+  });
+
+  it("stays off when the flag is missing or not exactly true", () => {
+    expect(isHelpPreviewEnabled({})).toBe(false);
+    expect(isHelpPreviewEnabled({ HELP_PREVIEW: "1" })).toBe(false);
   });
 });

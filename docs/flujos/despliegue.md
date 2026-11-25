@@ -105,6 +105,8 @@ Un deploy del equipo con credenciales de una sola persona se cae cuando esa pers
 
 El botón aparece solo si `HELP_ENABLED=true` y el resto de las variables están completas. `HELP_MODEL` tiene que ser el ARN de un perfil de inferencia de aplicación, no el id del modelo. Ese perfil lleva la etiqueta `Project=InnovaLab-E10`. En Billing hay que activar esa etiqueta como cost allocation tag. Recién después Cost Explorer puede agrupar el gasto de Bedrock por `Project`. La activación no es retroactiva y puede tardar hasta 24 horas. El perfil en sí no se factura: se factura cada invocación que lo usa.
 
+Con el asistente apagado, `HELP_PREVIEW=true` muestra el botón y el panel en modo vista previa: las consultas quedan deshabilitadas y no se llama a AWS. Sirve para revisar el diseño sin credenciales; no se usa en producción.
+
 La clave de la aplicación solo necesita `bedrock:InvokeModel` y `bedrock:InvokeModelWithResponseStream` sobre ese perfil y sobre el modelo al que apunta.
 
 Para probar una respuesta sin abrir el panel, con las variables en el entorno:

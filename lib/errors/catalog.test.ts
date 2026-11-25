@@ -57,6 +57,11 @@ describe("ERROR_CATALOG", () => {
     expect(ERROR_CATALOG.AUTH_SIGNOUT_FAILED).toMatchObject({ status: 500 });
     expect(ERROR_CATALOG.AUTH_PASSWORD_UPDATE_FAILED).toMatchObject({ status: 422 });
     expect(ERROR_CATALOG.KNOWLEDGE_UNAVAILABLE).toMatchObject({ status: 503, logLevel: "error" });
+    expect(ERROR_CATALOG.ANALYST_QUERY_REJECTED).toMatchObject({ status: 422, logLevel: "silent" });
+    expect(ERROR_CATALOG.ANALYST_QUERY_FAILED).toMatchObject({ status: 422, logLevel: "silent" });
+    expect(ERROR_CATALOG.ANALYST_QUERY_TIMEOUT).toMatchObject({ status: 504, logLevel: "warn" });
+    expect(ERROR_CATALOG.CHAT_DATOS_DISABLED).toMatchObject({ status: 404, logLevel: "silent" });
+    expect(ERROR_CATALOG.CHAT_DATOS_UNAVAILABLE).toMatchObject({ status: 503, logLevel: "error" });
   });
 
   it("exposes the product and supply-in-use codes", () => {

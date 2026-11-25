@@ -33,6 +33,6 @@ test("signup, confirm the email through Mailpit, log in and reach the home page"
   await expect(page).toHaveURL("/inicio");
 
   // Assert
-  await expect(page.getByRole("heading", { name: "Bienvenida" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^Hola\b/, level: 1 })).toBeVisible();
   await expect(page.getByRole("complementary").getByText(user.email)).toBeVisible();
 });

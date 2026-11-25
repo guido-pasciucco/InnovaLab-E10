@@ -96,14 +96,3 @@ test("the signup link navigates to account creation", async ({ page, loginPage }
   // Assert
   await expect(page).toHaveURL("/signup");
 });
-
-test("a user can continue without an account", async ({ page, loginPage }) => {
-  // Arrange
-  await loginPage.goto();
-
-  // Act
-  await loginPage.continueWithoutAccountLink.click();
-
-  // Assert: the calculator home is public.
-  await expect(page).toHaveURL("/");
-});

@@ -13,7 +13,7 @@ import { StepsSection } from "@/components/home/steps-section";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
 
 export const metadata: Metadata = {
-  title: "Calculadora de Costos | Fijá precios con información real",
+  title: "Numora | Fijá precios con información real",
   description:
     "Calculá el costo real de tus productos, conocé tu margen y encontrá tu punto de equilibrio en pocos pasos.",
 };

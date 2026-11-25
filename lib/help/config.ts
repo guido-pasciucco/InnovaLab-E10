@@ -39,3 +39,9 @@ export function readHelpConfig(env: HelpEnv = process.env): HelpConfig | null {
 export function isHelpEnabled(env: HelpEnv = process.env): boolean {
   return readHelpConfig(env) !== null;
 }
+
+// Visual preview of the assistant: shows the launcher and panel with queries
+// disabled, so the design can be reviewed without AWS credentials.
+export function isHelpPreviewEnabled(env: HelpEnv = process.env): boolean {
+  return env.HELP_PREVIEW === "true";
+}

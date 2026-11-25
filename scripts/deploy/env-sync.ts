@@ -33,6 +33,7 @@ const REQUIRED = [
 const OPTIONAL = [
   "DIRECT_URL",
   "HELP_ENABLED",
+  "HELP_PREVIEW",
   "HELP_PROVIDER",
   "HELP_MODEL",
   "AWS_REGION",

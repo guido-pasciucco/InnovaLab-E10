@@ -1,5 +1,7 @@
 # 06 — Chateá con tus datos
 
+Este texto quedó atrás. El flujo vigente está en [chat-con-datos.md](./chat-con-datos.md).
+
 Búsqueda sobre la documentación del producto para el agente de la issue #279. La pantalla y el SQL llegan en etapas posteriores. El flujo completo está en `docs/duda/assets/agent/agente-chat-datos-aws.drawio`.
 
 ## Qué hay en esta etapa
