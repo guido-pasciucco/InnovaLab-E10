@@ -55,7 +55,9 @@ test("closing, changing flour and closing again keeps two versions and their aud
   await arrangeCatalog(authedPage);
 
   await authedPage.goto("/equilibrio");
-  await expect(authedPage.getByText("$ 38.571,43")).toBeVisible();
+  await expect(
+    authedPage.getByRole("definition").filter({ hasText: "$ 38.571,43" }),
+  ).toBeVisible();
   await closeMonth(authedPage);
 
   await authedPage.goto("/supplies");
@@ -65,7 +67,9 @@ test("closing, changing flour and closing again keeps two versions and their aud
   await supplyDialog.getByRole("button", { name: "Guardar", exact: true }).click();
 
   await authedPage.goto("/equilibrio");
-  await expect(authedPage.getByText("$ 45.000,00")).toBeVisible();
+  await expect(
+    authedPage.getByRole("definition").filter({ hasText: "$ 45.000,00" }),
+  ).toBeVisible();
   await closeMonth(authedPage);
 
   await authedPage.goto("/historico");
