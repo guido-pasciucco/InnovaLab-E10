@@ -33,13 +33,14 @@ const REQUIRED = [
 const OPTIONAL = [
   "DIRECT_URL",
   "HELP_ENABLED",
-  "HELP_PREVIEW",
   "HELP_PROVIDER",
   "HELP_MODEL",
   "AWS_REGION",
   "AWS_ACCESS_KEY_ID",
   "AWS_SECRET_ACCESS_KEY",
 ];
+
+const FORBIDDEN = ["HELP_PREVIEW"];
 
 const KNOWN = [...REQUIRED, ...OPTIONAL];
 
@@ -160,6 +161,12 @@ async function main(): Promise<void> {
   const env = readEnvFile(ENV_FILE);
   const problems: string[] = [];
   const entries: Array<{ key: string; value: string }> = [];
+
+  for (const key of FORBIDDEN) {
+    if (env.has(key)) {
+      problems.push(`${key}: es solo para desarrollo local y no se puede sincronizar a Vercel`);
+    }
+  }
 
   for (const key of KNOWN) {
     const value = env.get(key);
