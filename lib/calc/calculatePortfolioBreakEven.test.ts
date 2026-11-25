@@ -40,6 +40,7 @@ describe("calculatePortfolioBreakEven", () => {
           contributionUnit: "600.00",
           marginPct: "25.0000",
           breakEvenUnits: "75.0000",
+          breakEvenUnitsWhole: "75",
           breakEvenSales: "105000.00",
         },
         {
@@ -55,6 +56,7 @@ describe("calculatePortfolioBreakEven", () => {
           contributionUnit: "400.00",
           marginPct: "16.6667",
           breakEvenUnits: "37.5000",
+          breakEvenUnitsWhole: "38",
           breakEvenSales: "33750.00",
         },
         {
@@ -70,6 +72,7 @@ describe("calculatePortfolioBreakEven", () => {
           contributionUnit: "800.00",
           marginPct: "27.5000",
           breakEvenUnits: "112.5000",
+          breakEvenUnitsWhole: "113",
           breakEvenSales: "225000.00",
         },
       ],
@@ -182,6 +185,40 @@ describe("calculatePortfolioBreakEven", () => {
       ok: true,
       hasNegativeContribution: true,
       products: [{ contributionUnit: "-2.00" }, { contributionUnit: "50.00" }],
+    });
+  });
+
+  it("marks a product sold exactly at its variable cost", () => {
+    const result = calculatePortfolioBreakEven({
+      periodFixedCosts: "1000",
+      products: [
+        { id: "even", name: "Even", capacity: 50, variableUnit: "10", price: "10" },
+        { id: "gain", name: "Gain", capacity: 50, variableUnit: "50", price: "100" },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      hasNegativeContribution: true,
+      products: [{ contributionUnit: "0.00" }, { contributionUnit: "50.00" }],
+    });
+  });
+
+  it("rounds each whole quota up from the unrounded quota", () => {
+    const result = calculatePortfolioBreakEven({
+      periodFixedCosts: "10000",
+      products: [
+        { id: "big", name: "Big", capacity: 10000, variableUnit: "0.01", price: "100" },
+        { id: "tiny", name: "Tiny", capacity: 1, variableUnit: "0.01", price: "100" },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      products: [
+        { breakEvenUnits: "100.0000", breakEvenUnitsWhole: "101" },
+        { breakEvenUnits: "0.0100", breakEvenUnitsWhole: "1" },
+      ],
     });
   });
 

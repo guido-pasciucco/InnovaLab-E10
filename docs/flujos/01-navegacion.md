@@ -23,6 +23,9 @@ Cómo se mueve el usuario por el producto. El área privada tiene un menú later
 | Productos | `/products` | Editable siempre; cada producto tiene sus presentaciones |
 | Gastos del período | `/period-costs` | Carga única para todo el negocio, mes actual |
 | Costo total | `/total-costs` | Solo lectura |
+| Precios | `/precios` | Recargo por defecto del negocio y recargo propio por producto; precios derivados en cada lectura |
+| Equilibrio | `/equilibrio` | Solo lectura: contribución, cuotas, punto de equilibrio y gráfico del catálogo |
+| Chateá con tus datos | `/chat-datos` | Sección propia del menú superior, con dos estrellas violetas. Solo aparece si `CHAT_DATOS_ENABLED` está prendido; si no, la ruta responde 404. La conversación queda en el navegador, en esa pestaña |
 | Licitaciones | `/licitaciones` | Sección propia del menú |
 | Proveedores | `/proveedores` | Sección propia del menú |
 | Tablero | — | Pendiente de definir |
