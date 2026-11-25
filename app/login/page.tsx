@@ -25,8 +25,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       showHomeLink
       hero={
         <AuthHeroPanel
-          brand="Calculadora de Costos"
-          badge="Paso previo: acceso"
           title="Conocé el costo real de lo que vendés"
           description="Calculá costos, precio sugerido y punto de equilibrio con un recorrido guiado."
           benefits={BENEFITS}

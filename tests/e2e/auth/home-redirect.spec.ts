@@ -14,7 +14,7 @@ test("the old /dashboard URL takes a signed-in emprendedor to the home page", as
   await authedPage.goto("/dashboard");
 
   await expect(authedPage).toHaveURL("/inicio");
-  await expect(authedPage.getByRole("heading", { name: "Bienvenida", level: 1 })).toBeVisible();
+  await expect(authedPage.getByRole("heading", { name: /^Hola\b/, level: 1 })).toBeVisible();
 });
 
 test("the home header links a signed-in user into the app instead of Iniciar sesión", async ({ authedPage }) => {

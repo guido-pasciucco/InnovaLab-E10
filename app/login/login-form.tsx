@@ -187,19 +187,6 @@ export default function LoginForm({ next = POST_LOGIN_HREF }: { next?: string })
         {!pending && <ArrowIcon />}
       </button>
 
-      <div aria-hidden="true" className="flex items-center gap-3 text-[11px] font-medium text-fg-muted lg:text-sm">
-        <span className="h-px flex-1 bg-border-default" />
-        <span>o</span>
-        <span className="h-px flex-1 bg-border-default" />
-      </div>
-
-      <Link
-        href="/"
-        className="flex h-10 w-full items-center justify-center rounded-md border border-border-default bg-action-tonal px-4 text-sm font-semibold text-on-action-tonal transition hover:border-accent-glow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus lg:h-[42px] lg:text-base"
-      >
-        Continuar sin cuenta
-      </Link>
-
       <p className="text-center text-xs text-fg-muted lg:text-sm">
         ¿No tenés cuenta?{" "}
         <Link href="/signup" className="font-semibold text-link underline-offset-2 hover:underline">

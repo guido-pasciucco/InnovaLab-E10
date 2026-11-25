@@ -29,7 +29,7 @@ export function ProductsTable({
 }: ProductsTableProps) {
   if (products.length === 0) {
     return (
-      <div className="rounded-[24px] bg-surface p-8 text-center shadow-sm">
+      <div className="rounded-2xl bg-surface p-6 text-center shadow-sm">
         {searchActive ? (
           <>
             <p className="text-fg-muted">No encontramos productos con esa búsqueda.</p>
@@ -48,28 +48,28 @@ export function ProductsTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-[24px] bg-surface shadow-sm">
-      <table className="w-full text-left text-sm">
+    <div className="max-w-full overflow-x-auto rounded-2xl border border-border-default bg-surface shadow-sm">
+      <table className="w-full min-w-[760px] text-left text-sm">
         <thead>
           <tr className="border-b border-border-control">
-            <th scope="col" className="min-w-48 px-3 py-3 font-semibold text-fg-muted">
+            <th scope="col" className="min-w-48 px-3 py-2.5 text-xs font-semibold tracking-wide text-fg-muted uppercase">
               Nombre
             </th>
             <th
               scope="col"
-              className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted"
+              className="px-3 py-2.5 whitespace-nowrap text-xs font-semibold tracking-wide text-fg-muted uppercase"
             >
               Capacidad mensual
             </th>
-            <th scope="col" className="px-3 py-3 whitespace-nowrap font-semibold text-fg-muted">
+            <th scope="col" className="px-3 py-2.5 whitespace-nowrap text-xs font-semibold tracking-wide text-fg-muted uppercase">
               Receta
             </th>
-            <th scope="col" className="min-w-40 px-3 py-3 font-semibold text-fg-muted">
+            <th scope="col" className="min-w-40 px-3 py-2.5 text-xs font-semibold tracking-wide text-fg-muted uppercase">
               Presentaciones
             </th>
             <th
               scope="col"
-              className="px-3 py-3 whitespace-nowrap text-right font-semibold text-fg-muted"
+              className="px-3 py-2.5 whitespace-nowrap text-right text-xs font-semibold tracking-wide text-fg-muted uppercase"
             >
               Acciones
             </th>
@@ -77,20 +77,20 @@ export function ProductsTable({
         </thead>
         <tbody>
           {products.map((product) => (
-            <tr key={product.id} className="border-b border-border-control last:border-0">
-              <td className="min-w-48 px-3 py-3 text-fg">{product.name}</td>
-              <td className="px-3 py-3 whitespace-nowrap text-fg-muted">
+            <tr key={product.id} className="border-b border-border-default transition-colors last:border-0 hover:bg-surface-tint/70">
+              <td className="min-w-48 px-3 py-2.5 font-medium text-fg">{product.name}</td>
+              <td className="px-3 py-2.5 whitespace-nowrap text-fg-muted">
                 {formatMonthlyCapacity(product.monthlyCapacity)}
               </td>
-              <td className="px-3 py-3 whitespace-nowrap text-fg-muted">
+              <td className="px-3 py-2.5 whitespace-nowrap text-fg-muted">
                 {product.recipe.length === 1
                   ? "1 insumo"
                   : `${product.recipe.length} insumos`}
               </td>
-              <td className="min-w-40 px-3 py-3 text-fg-muted">
+              <td className="min-w-40 px-3 py-2.5 text-fg-muted">
                 {presentationNames[product.id]?.join(", ") || "Sin presentaciones"}
               </td>
-              <td className="px-3 py-3 whitespace-nowrap text-right">
+              <td className="px-3 py-2.5 whitespace-nowrap text-right">
                 <div className="inline-flex gap-2">
                   <button
                     type="button"

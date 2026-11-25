@@ -108,7 +108,6 @@ export default function SignupForm() {
       <PasswordInput {...register("password")} id="password" label="Contraseña" autoComplete="new-password" hint="Mínimo 8 caracteres." error={errors.password?.message} disabled={pending} />
       <PasswordInput {...register("confirmPassword")} id="confirmPassword" label="Confirmar contraseña" autoComplete="new-password" error={errors.confirmPassword?.message} disabled={pending} />
 
-      <p className="rounded-md border border-border-default bg-surface-tint px-3 py-2 text-[11px] leading-relaxed text-fg-muted lg:text-sm"><span className="font-semibold text-fg-muted">Términos y condiciones:</span> Documentación pendiente. No se exigen todavía.</p>
       {state && !state.ok && !hasServerFieldErrors && <p role="alert" className="text-xs text-danger">{state.message}</p>}
       {transportError && <p role="alert" className="text-xs text-danger">{transportError}</p>}
 

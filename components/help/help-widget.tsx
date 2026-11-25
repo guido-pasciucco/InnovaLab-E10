@@ -26,6 +26,7 @@ import { HelpMarkdown } from "./help-markdown";
 
 type HelpWidgetProps = {
   enabled: boolean;
+  preview?: boolean;
   userId: string | null;
 };
 
@@ -35,12 +36,13 @@ export const SUGGESTED_QUESTIONS = [
   "¿Qué es el punto de equilibrio?",
 ] as const;
 
-export function HelpWidget({ enabled, userId }: HelpWidgetProps) {
-  if (!enabled) return null;
+export function HelpWidget({ enabled, preview = false, userId }: HelpWidgetProps) {
+  if (!enabled && !preview) return null;
 
   return (
     <HelpWidgetSession
       key={userId ?? "signed-out"}
+      preview={preview}
       userId={userId}
     />
   );
@@ -134,8 +136,9 @@ export function MoraWelcome({
 }
 
 function HelpWidgetSession({
+  preview = false,
   userId,
-}: Pick<HelpWidgetProps, "userId">) {
+}: Pick<HelpWidgetProps, "preview" | "userId">) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<HelpMessage[]>([]);
@@ -144,6 +147,7 @@ function HelpWidgetSession({
 
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const loadedRef = useRef(false);
   const requestGuardRef = useRef(createHelpRequestGuard());
@@ -175,7 +179,8 @@ function HelpWidgetSession({
   useEffect(() => {
     if (!open) return;
 
-    inputRef.current?.focus();
+    if (preview) closeButtonRef.current?.focus();
+    else inputRef.current?.focus();
 
     function onEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -193,9 +198,11 @@ function HelpWidgetSession({
     return () => {
       window.removeEventListener("keydown", onEscape);
     };
-  }, [open]);
+  }, [open, preview]);
 
   async function send(suggestedQuestion?: string) {
+    if (preview) return;
+
     const content = (suggestedQuestion ?? draft).trim();
 
     if (!content || pending) return;
@@ -318,27 +325,28 @@ function HelpWidgetSession({
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-50 flex flex-col items-end gap-2">
+    <div className="pointer-events-none fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] z-[70] flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-3 sm:bottom-[max(1rem,env(safe-area-inset-bottom))] sm:right-[max(1rem,env(safe-area-inset-right))] sm:max-w-[calc(100vw-2rem)]">
       {open && (
         <section
           id="mora-chat"
-          aria-label="Mora, asistente de Numora"
+          aria-label={`Mora, asistente de Numora${preview ? " (vista previa)" : ""}`}
           onKeyDown={handlePanelKeyDown}
-          className="
+          className={`
             pointer-events-auto
-            flex min-h-0 flex-col overflow-hidden
-            rounded-[20px]
-            border border-border-default
+            flex min-h-0 flex-col overflow-visible
+            rounded-[30px]
+            border-[1.5px] border-mora-border
             bg-surface
-            shadow-[0_16px_40px_rgba(25,65,38,0.16)]
+            shadow-[0_14px_38px_var(--mora-shadow)]
+            relative after:content-[''] after:pointer-events-none after:absolute after:right-6 after:-bottom-3 after:h-3 after:w-5 after:bg-surface after:[clip-path:polygon(0_0,100%_0,100%_100%)]
             w-[min(24rem,calc(100vw-2rem))]
-            h-[min(29rem,calc(100dvh-6rem))]
-            max-h-[70dvh]
+            h-[min(26rem,calc(100dvh-7rem))]
+            max-h-[min(70dvh,38rem)]
             max-sm:w-[calc(100vw-2rem)]
-          "
+          `}
         >
           {/* Encabezado */}
-          <header className="flex shrink-0 items-center gap-3 border-b border-border-default bg-[linear-gradient(110deg,#C4EAD2_0%,#D8E4D8_37%,#DCD0EB_68%,#D6B7EB_100%)] px-3 py-2.5">
+          <header className="flex shrink-0 items-center gap-3 rounded-t-[29px] border-b border-border-default bg-[linear-gradient(110deg,#C4EAD2_0%,#D8E4D8_37%,#DCD0EB_68%,#D6B7EB_100%)] px-3 py-2.5">
             <Image
               src="/help/mora-avatar.png"
               alt=""
@@ -355,9 +363,15 @@ function HelpWidgetSession({
               <p className="text-xs text-fg-muted">
                 Tu asistente de Numora
               </p>
+              {preview && (
+                <span className="mt-1 inline-flex rounded-full bg-surface/80 px-2 py-0.5 text-[11px] font-semibold text-brand-green-700">
+                  Vista previa
+                </span>
+              )}
             </div>
 
             <button
+              ref={closeButtonRef}
               type="button"
               onClick={closeAssistant}
               aria-label="Cerrar Mora"
@@ -376,9 +390,14 @@ function HelpWidgetSession({
             aria-relevant="additions text"
             className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain bg-surface px-3 py-3"
           >
+            {preview && (
+              <p role="status" className="rounded-xl border border-border-default bg-surface-tint px-3 py-2 text-xs leading-5 text-fg-muted">
+                Vista previa visual. Las consultas están deshabilitadas y no se enviarán datos a servicios externos.
+              </p>
+            )}
             {messages.length === 0 && (
               <MoraWelcome
-                disabled={pending}
+                disabled={pending || preview}
                 onSelect={(question) => {
                   void send(question);
                 }}
@@ -402,7 +421,7 @@ function HelpWidgetSession({
 
           {/* Campo de escritura */}
           <form
-            className="flex shrink-0 items-center gap-2 border-t border-border-default bg-surface px-3 py-2.5"
+            className="flex shrink-0 items-center gap-2 rounded-b-[29px] border-t border-border-default bg-surface px-3 py-2.5"
             onSubmit={(event) => {
               event.preventDefault();
               void send();
@@ -422,8 +441,8 @@ function HelpWidgetSession({
               onChange={(event) =>
                 setDraft(event.target.value)
               }
-              disabled={pending}
-              placeholder="Escribí tu pregunta"
+              disabled={pending || preview}
+              placeholder={preview ? "Consultas deshabilitadas en vista previa" : "Escribí tu pregunta"}
               className="
                 min-h-11 min-w-0 flex-1
                 rounded-[14px]
@@ -443,7 +462,7 @@ function HelpWidgetSession({
             <button
               type="submit"
               disabled={
-                pending || draft.trim().length === 0
+                preview || pending || draft.trim().length === 0
               }
               aria-label="Enviar pregunta"
               className="
@@ -480,7 +499,7 @@ function HelpWidgetSession({
         onClick={handleLauncherClick}
         className={`
           pointer-events-auto
-          flex h-[68px] w-[68px]
+          flex h-16 w-16
           items-center justify-center
           rounded-full
           bg-transparent
@@ -490,16 +509,15 @@ function HelpWidgetSession({
           focus-visible:outline-offset-2
           focus-visible:outline-focus
           motion-reduce:transform-none
-          ${open ? "hidden" : ""}
         `}
       >
         <Image
           src="/help/mora-avatar.png"
           alt=""
-          width={68}
-          height={68}
+          width={56}
+          height={56}
           priority
-          className="h-[68px] w-[68px] object-contain drop-shadow-[0_8px_12px_rgba(76,37,98,0.22)]"
+          className="h-16 w-16 object-contain drop-shadow-[0_10px_18px_rgba(76,37,98,0.22)] -scale-x-100"
         />
       </button>
     </div>
