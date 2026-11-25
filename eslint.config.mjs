@@ -12,9 +12,10 @@ const eslintConfig = defineConfig([
     rules: { "playwright/no-focused-test": "error" },
   },
   // Frontera lib/db (ver lib/db/AGENTS.md): la persistencia solo se importa
-  // desde lib/services/ y desde los tests. Todo lo demás pasa por services.
+  // desde lib/services/ y desde los tests (incluidos sus ayudantes en
+  // tests/support/). Todo lo demás pasa por services.
   {
-    ignores: ["lib/db/**", "lib/services/**", "**/*.test.*"],
+    ignores: ["lib/db/**", "lib/services/**", "**/*.test.*", "tests/support/**"],
     rules: {
       "no-restricted-imports": [
         "error",
