@@ -18,10 +18,10 @@ type AuthPageShellProps = {
 export function AuthPageShell({ hero, title, subtitle, icon, centered = false, showHomeLink = false, children }: AuthPageShellProps) {
   return (
     <main className="min-h-screen overflow-hidden px-4 py-6 text-fg sm:px-8 sm:py-10">
-      <div className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-[64rem] items-center gap-8 sm:min-h-[calc(100vh-5rem)] lg:grid-cols-[minmax(0,1fr)_25.25rem] lg:gap-10">
+      <div className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-[64rem] items-center gap-6 sm:min-h-[calc(100vh-5rem)] sm:gap-8 lg:grid-cols-[minmax(0,1fr)_25.25rem] lg:gap-12">
         {hero}
 
-        <section className="w-full rounded-2xl border border-surface/80 bg-surface/95 p-5 shadow-[0_16px_36px_rgba(24,105,52,0.15)] sm:p-6 lg:p-7">
+        <section className="w-full rounded-2xl border border-surface/80 bg-surface/95 p-5 shadow-[0_16px_36px_rgba(24,105,52,0.15)] sm:p-6 lg:p-8">
           {showHomeLink && (
             <Link
               href="/"
