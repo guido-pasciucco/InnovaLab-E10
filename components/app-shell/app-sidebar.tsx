@@ -23,7 +23,7 @@ export function AppSidebar({ userName, userEmail, businessName, chatDatosEnabled
   const section = sectionFromPathname(pathname, navSections({ chatDatosEnabled }));
 
   return (
-    <aside className="flex w-full min-w-0 shrink-0 flex-col gap-5 border-b border-border-default bg-surface p-3.5 print:hidden md:min-h-screen md:w-56 md:border-r md:border-b-0">
+    <aside className="flex w-full min-w-0 shrink-0 flex-col gap-5 border-b border-border-default bg-surface p-3.5 print:hidden md:fixed md:inset-y-0 md:left-0 md:h-screen md:w-56 md:border-r md:border-b-0">
       <div className="min-w-0">
         <Link href="/inicio" aria-label="Numora, ir al inicio" className="block h-8 w-36 overflow-hidden">
           <NumoraLogo variant="light" />
