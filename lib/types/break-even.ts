@@ -41,6 +41,9 @@ export type BreakEvenExcludedProduct = {
   productId: string;
   name: string;
   reason: BreakEvenExclusionReason;
+  // Present for a row left out because it has no capacity: the product, or
+  // its presentations. Other reasons keep the screen's fixed link.
+  editHref?: string;
 };
 
 // The whole quota ("38") comes from the engine as breakEvenUnitsWhole, rounded

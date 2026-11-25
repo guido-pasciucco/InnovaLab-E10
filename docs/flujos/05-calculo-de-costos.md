@@ -49,15 +49,15 @@ margen real     = (precio sugerido − costo total unitario) ÷ precio sugerido
 
 Con costo total unitario de `$ 7.000` y recargo de `30 %`: precio `$ 9.100`, ganancia `$ 2.100` y margen real `23,08 %`. El recargo y el margen real son números distintos y se muestran por separado: el recargo es lo que el usuario carga, el margen real es lo que efectivamente gana sobre el precio. Un recargo de cero o negativo deja el precio igual o por debajo del costo y se pide corregirlo.
 
-La base es el costo total unitario: el costo variable de la receta y las presentaciones más la parte de los gastos del mes que le toca al producto según su capacidad. No entran comisiones por venta ni impuestos, y la mano de obra ya está dentro de los gastos del período.
+La base es el costo total unitario de lo que se vende. Si el producto tiene presentaciones, cada una es una fila ("Alfajor · Caja x6"): el costo variable es el de esa presentación, packaging incluido, y la parte de los gastos del mes se reparte con la capacidad de la presentación. Si no tiene presentaciones, la fila es el producto en su unidad base. No entran comisiones por venta ni impuestos, y la mano de obra ya está dentro de los gastos del período.
 
-### Recargo por defecto y por producto
+### Recargo por defecto y por fila
 
-- El negocio tiene un **recargo por defecto** y cada producto puede tener uno **propio** que lo pisa. Un producto sin recargo propio usa el del negocio, y se puede volver a él borrando el propio.
+- El negocio tiene un **recargo por defecto**. Cada fila puede tener uno **propio** que lo pisa: el de la presentación, o el del producto cuando no tiene presentaciones. Una fila sin recargo propio usa el del negocio, y se puede volver a él borrando el propio.
 - Motivo: cada producto compite en un mercado distinto; con un único recargo, ajustar uno obligaría a cambiar todos. El default evita tener que cargar un recargo por producto.
-- Se guarda solo el porcentaje (`default_markup_percent` en el negocio y `markup_percent` en el producto, anulable). El precio, la ganancia y el margen real **no se guardan**: se calculan en cada lectura con el costo total que surge del reparto vigente. Así, cambiar el precio de un insumo, una capacidad o un gasto del período cambia el precio sugerido sin guardar nada más.
+- Se guarda solo el porcentaje (`default_markup_percent` en el negocio, `markup_percent` en el producto y en la presentación, anulables). El precio, la ganancia y el margen real **no se guardan**: se calculan en cada lectura con el costo total que surge del reparto vigente. Así, cambiar el precio de un insumo, de un packaging, una capacidad o un gasto del período cambia el precio sugerido sin guardar nada más.
 - El porcentaje se carga como número de porcentaje: `30.00` es 30 %, con hasta dos decimales y un tope de 1000 %. Un recargo de cero o negativo se rechaza porque el precio quedaría igual o por debajo del costo.
-- La pantalla `/precios`, en la sección Catálogo del menú, muestra el recargo por defecto editable y una fila por producto con: Producto · Costo total (por unidad) · Recargo · Precio sugerido · Ganancia (por unidad) · Margen real. El recargo se edita en la misma fila e indica si es propio o del negocio; si es propio, ofrece volver al del negocio.
+- La pantalla `/precios`, en la sección Catálogo del menú, muestra el recargo por defecto editable y una fila por lo que se vende: Producto · Presentación, o el producto solo si no tiene presentaciones. Columnas: nombre · Costo total · Recargo · Precio sugerido · Ganancia · Margen real. El recargo se edita en la misma fila e indica si es propio o del negocio; si es propio, ofrece volver al del negocio.
 - Recargo y margen real se nombran por separado: el porcentaje cargado nunca se rotula "margen". Los importes se muestran con `formatARS`, los porcentajes con dos decimales y coma.
 - Sin productos, sin capacidades o sin gastos del período se muestra el estado vacío con el enlace a la pantalla donde se carga el dato que falta. Un producto sin costo total muestra "No disponible" con el motivo, nunca `$ 0`; sin recargo cargado pide cargarlo y no muestra precio.
 - La leyenda lo dice explícitamente: el precio no incluye comisiones por venta ni impuestos ("sin costos de venta").
@@ -68,7 +68,7 @@ El trabajo propio del emprendedor es **un gasto fijo más** del período: se car
 
 ## Equilibrio y tablero
 
-La vista **Equilibrio** (`/equilibrio`, sección Catálogo, después de Precios) responde cuánto aporta cada producto a cubrir los gastos del mes y cuánto hay que vender para no perder. Es de solo lectura: toma del servicio de precios el precio sugerido, el costo variable, la capacidad de cada producto y los gastos del mes, y no guarda ningún resultado.
+La vista **Equilibrio** (`/equilibrio`, sección Catálogo, después de Precios) responde cuánto aporta cada cosa que se vende a cubrir los gastos del mes y cuánto hay que vender para no perder. Es de solo lectura: toma del servicio de precios el precio sugerido, el costo variable, la capacidad de cada fila y los gastos del mes, y no guarda ningún resultado. Una fila es una presentación ("21 cajas x6") o el producto cuando no tiene presentaciones.
 
 ```text
 mezclaᵢ                = capacidadᵢ ÷ Σ capacidades

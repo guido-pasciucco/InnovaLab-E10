@@ -24,6 +24,10 @@ Los costos de **un cálculo concreto** (alquiler, harina, horas de amasado…).
 El **catálogo de costos del negocio**, cargados una vez para toda la lista de productos y reutilizarlos en varios cálculos. Desde #243 guarda los gastos del período por mes (`period`, `AAAA-MM`); el prorrateo entre productos es #244.
 *"Renglones de costo del negocio".*
 
+**Presentación (`presentations`)**
+Una forma de vender un producto: nombre ("Caja x6"), unidades base que contiene, packaging, capacidad mensual y recargo. En Costo total, Precios y Equilibrio cada presentación es una fila ("Producto · Presentación"). Si el producto no tiene presentaciones, la fila es el producto en su unidad base, con la capacidad y el recargo del producto.
+*Se llama así porque es la unidad en la que el negocio cobra, no la unidad de medida de un insumo.*
+
 **`calculation` (cálculo)**
 Una vez que el usuario costea un producto: una "hoja de presupuesto" con fecha. Un producto puede tener muchos.
 *Se separa del producto para poder tener historial y alternativas sin pisar datos.*

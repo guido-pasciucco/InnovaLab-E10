@@ -136,6 +136,10 @@ export function toBreakEvenView(result: BreakEven): BreakEvenView {
     exclusions: result.excluded.map((product) => ({
       ...product,
       ...EXCLUSION_CONTENT[product.reason],
+      href:
+        product.reason === "NO_CAPACITY" && product.editHref
+          ? product.editHref
+          : EXCLUSION_CONTENT[product.reason].href,
     })),
     hasNegativeContribution: result.hasNegativeContribution,
   };

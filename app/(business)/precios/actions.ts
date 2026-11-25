@@ -8,7 +8,7 @@ import { handleActionErrors } from "@/lib/errors/handle-action-errors";
 import {
   getPricingService,
   saveDefaultMarkupPercentService,
-  saveProductMarkupPercentService,
+  saveSaleRowMarkupPercentService,
 } from "@/lib/services/pricing";
 
 const PRECIOS_PATH = "/precios";
@@ -33,12 +33,14 @@ export const saveDefaultMarkup = handleActionErrors(
 export const saveProductMarkup = handleActionErrors(
   async (
     _prev: unknown,
-    data: { productId: string; markupPercent: string | null },
+    data: { productId: string; presentationId: string | null; markupPercent: string | null },
   ) => {
     const user = await requireUser();
-    await saveProductMarkupPercentService(user.id, data.productId, {
-      markupPercent: data.markupPercent,
-    });
+    await saveSaleRowMarkupPercentService(
+      user.id,
+      { productId: data.productId, presentationId: data.presentationId },
+      { markupPercent: data.markupPercent },
+    );
 
     revalidatePath(PRECIOS_PATH);
 

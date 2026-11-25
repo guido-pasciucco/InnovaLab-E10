@@ -36,7 +36,14 @@ function ProductRow({ row }: { row: DistributionRowView }) {
       <th scope="row" className="min-w-40 px-2 py-3 text-left font-semibold text-fg">
         {row.name}
         {row.note && (
-          <span className="mt-1 block text-xs font-normal text-warning">{row.note}</span>
+          <span className="mt-1 block text-xs font-normal text-warning">
+            {row.note}{" "}
+            {row.noteHref && (
+              <Link href={row.noteHref} className="font-semibold text-link underline underline-offset-2">
+                Cargar capacidad
+              </Link>
+            )}
+          </span>
         )}
       </th>
       <td className="px-2 py-3 whitespace-nowrap text-fg-muted">{row.capacity}</td>

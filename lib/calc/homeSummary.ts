@@ -6,13 +6,16 @@ import type { BreakEvenStatus } from "@/lib/types/break-even";
 
 export type HomeSummaryInput = {
   supplies: readonly { kind: "supply" | "packaging" }[];
-  products: readonly {
-    variableCosts: unknown;
-    variableCostsUnavailableCode: string | null;
-    monthlyCapacity: number | null;
-  }[];
+  products: readonly { variableCosts: unknown; variableCostsUnavailableCode: string | null }[];
   periodCostLineCount: number;
-  pricingRows: readonly { unavailableCode: string | null }[];
+  // One row per thing that is sold (#321): a product without presentations, or
+  // each presentation of a product. Capacity is loaded per row, at editHref.
+  pricingRows: readonly {
+    unavailableCode: string | null;
+    capacity: number | null;
+    variableUnit: string | null;
+    editHref: string;
+  }[];
   breakEven: {
     status: BreakEvenStatus;
     totals: { breakEvenSales: string } | null;
@@ -25,7 +28,7 @@ export type HomePendingTask =
   | { kind: "completeRecipes"; count: number }
   | { kind: "reviewUnavailableCosts"; count: number }
   | { kind: "loadPeriodCosts" }
-  | { kind: "loadCapacity"; count: number }
+  | { kind: "loadCapacity"; count: number; href: string }
   | { kind: "loadMarkup"; count: number }
   | { kind: "reviewPrices" };
 
@@ -60,13 +63,14 @@ export function buildHomeSummary({
   ).length;
   const unavailableCount = productCount - readyProductCount - recipePendingCount;
   const hasPeriodCosts = periodCostLineCount > 0;
-  // Products without a recipe are already covered by "completeRecipes"; only
-  // priced products can enter the mix, so only they can be missing capacity.
-  const capacityPendingCount = products.filter(
-    (product) =>
-      product.variableCosts !== null &&
-      (product.monthlyCapacity === null || product.monthlyCapacity === 0),
-  ).length;
+  // Rows without a variable cost are already covered by "completeRecipes" or
+  // "reviewUnavailableCosts"; only costed rows can enter the mix. A product with
+  // presentations loads its capacity in each presentation, not in the product.
+  const capacityPendingRows = pricingRows.filter(
+    (row) => row.variableUnit !== null && (row.capacity === null || row.capacity === 0),
+  );
+  const capacityHrefs = new Set(capacityPendingRows.map((row) => row.editHref));
+  const capacityHref = capacityHrefs.size === 1 ? [...capacityHrefs][0] : "/products";
   const markupPendingCount = pricingRows.filter((row) => row.unavailableCode === "NO_MARKUP").length;
   const breakEvenReady = breakEven.status === "ready" && breakEven.totals !== null;
 
@@ -76,7 +80,9 @@ export function buildHomeSummary({
   if (recipePendingCount > 0) pendingTasks.push({ kind: "completeRecipes", count: recipePendingCount });
   if (unavailableCount > 0) pendingTasks.push({ kind: "reviewUnavailableCosts", count: unavailableCount });
   if (!hasPeriodCosts && productCount > 0) pendingTasks.push({ kind: "loadPeriodCosts" });
-  if (capacityPendingCount > 0) pendingTasks.push({ kind: "loadCapacity", count: capacityPendingCount });
+  if (capacityPendingRows.length > 0) {
+    pendingTasks.push({ kind: "loadCapacity", count: capacityPendingRows.length, href: capacityHref });
+  }
   if (markupPendingCount > 0) pendingTasks.push({ kind: "loadMarkup", count: markupPendingCount });
   if (breakEven.status === "no_break_even") pendingTasks.push({ kind: "reviewPrices" });
 

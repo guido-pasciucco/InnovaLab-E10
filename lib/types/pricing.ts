@@ -35,10 +35,14 @@ export type PricingUnavailableCode =
   | "NO_MARKUP";
 
 export type PricingRow = {
+  rowId: string;
   productId: string;
+  presentationId: string | null;
   name: string;
-  // Saved monthly capacity, or null when it was never loaded.
+  // Saved monthly capacity of the row, or null when it was never loaded.
   capacity: number | null;
+  // Where the row's capacity is loaded.
+  editHref: string;
   // Variable cost of one unit, or null while the recipe cannot be costed.
   variableUnit: string | null;
   variableUnavailableCode: VariableCostUnavailableCode;

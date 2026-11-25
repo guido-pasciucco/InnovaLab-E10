@@ -126,6 +126,7 @@ describe("presentations service", () => {
       id: expect.any(String),
       name: "Caja x6",
       unitsPerPresentation: "6",
+      monthlyCapacity: null,
       packaging: [
         { supplyId: boxRow.id, supplyName: "Caja", quantity: "1", unit: "unidad" },
         { supplyId: labelRow.id, supplyName: "Etiqueta", quantity: "0.5", unit: "docena" },
@@ -302,6 +303,7 @@ describe("presentations service", () => {
       id: created!.id,
       name: "Caja x12",
       unitsPerPresentation: "12",
+      monthlyCapacity: null,
       packaging: [{ supplyId: boxRow.id, supplyName: "Caja", quantity: "2", unit: "unidad" }],
     });
   });

@@ -182,6 +182,13 @@ export const presentations = pgTable("presentations", {
     precision: 14,
     scale: 4,
   }).notNull(),
+  // How many of this presentation the business plans to sell in the month
+  // (#321, D45). NULL means "not loaded". It is not copied from the product:
+  // the product capacity counts base units and this one counts packs.
+  monthlyCapacity: integer("monthly_capacity"),
+  // Own markup (%) for this presentation (#321). NULL means "use the business
+  // default". The product markup is not used once the product has presentations.
+  markupPercent: numeric("markup_percent", { precision: 7, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -190,6 +197,7 @@ export const presentations = pgTable("presentations", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 }, (table) => [
+  check("presentations_monthly_capacity_non_negative", sql`${table.monthlyCapacity} >= 0`),
   check("presentations_units_positive", sql`${table.unitsPerPresentation} > 0`),
   check(
     "presentations_units_integer",

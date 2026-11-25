@@ -40,10 +40,12 @@ Si hay error, se marca en el formulario y el renglón no entra al cálculo hasta
 
 ## Capacidad y presentación de resultados
 
-- La capacidad va en el bloque principal del formulario, junto a nombre y rendimiento, visible sin scroll.
+- Si el producto no tiene presentaciones, la capacidad va en el bloque principal del formulario, junto a nombre y rendimiento, visible sin scroll.
+- Si el producto tiene presentaciones, ese campo se reemplaza por el texto "La capacidad se carga en cada presentación", con un enlace a ellas. La capacidad y el recargo del producto no entran en Costo total, Precios ni Equilibrio.
+- Cada presentación tiene su propia capacidad mensual: cuántas de esa presentación se pueden hacer por mes. Se carga en el formulario de la presentación.
 - El listado muestra la capacidad cargada de cada producto.
 - Con capacidad `0` o vacía se guarda igual, se avisa y se excluye del prorrateo; el CVU se calcula de todas formas porque depende de la receta, no de la capacidad.
-- La capacidad es un atributo del producto, no del período: para un mes nuevo se edita cada producto.
+- La capacidad no es del período: para un mes nuevo se edita el producto o cada presentación.
 
 ## Presentaciones
 
@@ -59,7 +61,7 @@ La pantalla propia del producto (P12) muestra por separado el costo variable de 
 
 Un packaging usado por una presentación no se puede borrar ni cambiar de tipo o de familia de unidad: primero hay que quitarlo de las presentaciones que lo usan, la misma regla que para los insumos de una receta.
 
-Queda fuera de alcance la capacidad de cada presentación (Diferencia 1·bis, pendiente) y el precio de venta.
+La capacidad mensual de cada presentación se carga en este formulario. El precio de venta no se carga acá: sale en Precios a partir del costo total y el recargo.
 
 ## Mermas, pérdidas y sobrantes
 

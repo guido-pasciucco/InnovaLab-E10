@@ -31,6 +31,7 @@ type PresentationFormProps = {
 const SERVER_FIELDS: readonly Path<PresentationFormValues>[] = [
   "name",
   "unitsPerPresentation",
+  "monthlyCapacity",
   "packaging",
 ];
 
@@ -38,12 +39,19 @@ function emptyPackagingRow(): PresentationFormValues["packaging"][number] {
   return { supplyId: "", quantity: "", unit: "" };
 }
 
+function capacityDefault(value: number | null | undefined): string {
+  return value === null || value === undefined ? "" : String(value);
+}
+
 function toDefaultValues(presentation: PresentationItem | null): PresentationFormValues {
-  if (!presentation) return { name: "", unitsPerPresentation: "", packaging: [] };
+  if (!presentation) {
+    return { name: "", unitsPerPresentation: "", monthlyCapacity: "", packaging: [] };
+  }
 
   return {
     name: presentation.name,
     unitsPerPresentation: presentation.unitsPerPresentation,
+    monthlyCapacity: capacityDefault(presentation.monthlyCapacity),
     packaging: presentation.packaging.map(({ supplyId, quantity, unit }) => ({
       supplyId,
       quantity,
@@ -120,7 +128,7 @@ export function PresentationForm({
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
+      <div className="grid gap-4 sm:grid-cols-3">
         <TextField
           label="Nombre de la presentación"
           placeholder="Caja x6"
@@ -137,7 +145,19 @@ export function PresentationForm({
           error={errors.unitsPerPresentation?.message}
           {...register("unitsPerPresentation")}
         />
+        <TextField
+          label="Capacidad mensual"
+          placeholder="50"
+          inputMode="numeric"
+          autoComplete="off"
+          disabled={isPending}
+          error={errors.monthlyCapacity?.message}
+          {...register("monthlyCapacity")}
+        />
       </div>
+      <p className="text-sm text-fg-muted">
+        Cuántas de estas presentaciones podés hacer por mes. Con eso se reparten los gastos y se arma el precio.
+      </p>
 
       <fieldset className="flex flex-col gap-3">
         <legend className="text-base font-semibold text-fg">Packaging</legend>

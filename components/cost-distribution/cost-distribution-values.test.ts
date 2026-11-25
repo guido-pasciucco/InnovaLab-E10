@@ -6,7 +6,11 @@ import { formatPeriod, formatShare, toCostDistributionView } from "./cost-distri
 
 function row(overrides: Partial<CostDistributionRow>): CostDistributionRow {
   return {
+    rowId: "p1",
     productId: "p1",
+    presentationId: null,
+    ownMarkupPercent: null,
+    editHref: "/products",
     name: "Pan",
     capacity: 180,
     absorbsExpenses: true,
@@ -62,6 +66,7 @@ describe("toCostDistributionView", () => {
       fixedShare: "$ 297.000,00",
       unitCost: "$ 4.850,00",
       note: null,
+      noteHref: null,
     });
     expect(view.explanation).toEqual({
       totalExpenses: "$ 330.000,00",
