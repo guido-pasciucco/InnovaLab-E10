@@ -19,7 +19,9 @@ describe("combined migration history", () => {
   });
 
   it("preserves historical SQL and verifies both recorded checkout hashes", () => {
-    const repair = readFileSync(join(root, `${journal.entries.at(-1)!.tag}.sql`), "utf8");
+    const repairTag = "20261124153914_reconcile_help_usage";
+    expect(journal.entries.map((e) => e.tag)).toContain(repairTag);
+    const repair = readFileSync(join(root, `${repairTag}.sql`), "utf8");
     for (const [tag, expected] of [
       ["20261121185825_confused_hellion", "5e8358a68d1a21b746d766e07fd64a6357d146e4b4c0a19237876899bc68bf0c"],
       ["20261121185953_help_usage_security", "95678fdd46c5939e950775c6bd566d0f5ddca2cdc6fb3bf9e448c275c31f531f"],

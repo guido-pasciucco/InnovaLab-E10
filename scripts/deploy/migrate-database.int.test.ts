@@ -18,9 +18,11 @@ const root = join(process.cwd(), "drizzle");
 const journal = JSON.parse(readFileSync(join(root, "meta/_journal.json"), "utf8")) as {
   entries: { idx: number; tag: string; when: number }[];
 };
-const repair = journal.entries.at(-1)!;
+// Later migrations append after this repair. Drizzle will not run it once a newer one is applied.
+const repair = journal.entries.find((e) => e.tag === "20261124153914_reconcile_help_usage");
+if (repair === undefined) throw new Error("Journal is missing 20261124153914_reconcile_help_usage");
 const mora = journal.entries.filter((e) => e.when === 1795287505824 || e.when === 1795287593887);
-const main = journal.entries.filter((e) => !mora.includes(e) && e !== repair);
+const main = journal.entries.filter((e) => !mora.includes(e) && e.when < repair.when);
 const created: { name: string; client: postgres.Sql; folder: string }[] = [];
 const userId = "a251a2fd-6c13-4c42-bb5c-7842a3398242";
 const leaseId = "a251a2fd-6c13-4c42-bb5c-7842a3398243";
@@ -180,7 +182,7 @@ describe("Mora forward migration on local PostgreSQL", () => {
 
   it("repairs a partially applied history and revokes table, PUBLIC and column grants", async () => {
     const { client, folder, url } = await database();
-    await apply(url, folder, journal.entries.filter((e) => e !== mora[1] && e !== repair));
+    await apply(url, folder, journal.entries.filter((e) => e !== mora[1] && e.when < repair.when));
     await seed(client, true);
     await client.unsafe(`GRANT SELECT ON public.help_usage TO PUBLIC, anon;
       GRANT UPDATE (request_count) ON public.help_usage TO authenticated;`);
