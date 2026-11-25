@@ -35,12 +35,12 @@ describe("formatAnalystSchema", () => {
 
   it("follows the order of ANALYST_VIEWS and separates views with a blank line", () => {
     const text = formatAnalystSchema([
-      column({ view: "scenarios", column: "name", type: "text", comment: null, viewComment: null }),
+      column({ view: "supplies", column: "name", type: "text", comment: null, viewComment: null }),
       column({ view: "products", column: "id", comment: null, viewComment: null }),
     ]);
 
-    expect(text.indexOf("Vista products")).toBeLessThan(text.indexOf("Vista scenarios"));
-    expect(text).toContain("\n\nVista scenarios");
+    expect(text.indexOf("Vista products")).toBeLessThan(text.indexOf("Vista supplies"));
+    expect(text).toContain("\n\nVista supplies");
   });
 
   it("leaves out views the validator would reject", () => {
