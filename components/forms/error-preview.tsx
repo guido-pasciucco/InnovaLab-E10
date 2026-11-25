@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import { useState } from "react";
 
@@ -39,36 +40,36 @@ export function ErrorPreviewControl({ scenarios, selected, onSelect }: ErrorPrev
           className="flex flex-wrap gap-1 rounded-lg border border-border-default bg-surface p-1.5 shadow-md"
         >
           {scenarios.map((scenario) => (
-            <button
+            <Button variant="ghost" size="sm"
               key={scenario.id}
               type="button"
               aria-pressed={selected === scenario.id}
               onClick={() => onSelect(selected === scenario.id ? null : scenario.id)}
-              className={`rounded-md px-2 py-1 text-[11px] font-medium transition ${
+              className={`min-h-0! rounded-md! px-2 py-1 text-[11px]! font-medium! transition! ${
                 selected === scenario.id
-                  ? "bg-action-primary text-on-action-primary"
-                  : "text-fg-muted hover:bg-action-tonal"
+                  ? "bg-action-primary! text-on-action-primary!"
+                  : "text-fg-muted! hover:bg-action-tonal!"
               }`}
             >
               {scenario.label}
-            </button>
+            </Button>
           ))}
         </div>
       )}
-      <button
+      <Button variant="ghost" size="sm"
         type="button"
         onClick={toggle}
         aria-pressed={open}
         aria-expanded={open}
         aria-controls="error-preview-scenarios"
-        className="flex items-center gap-1.5 rounded-full border border-border-default bg-surface px-3 py-1.5 text-[11px] font-semibold text-fg-muted shadow-md transition hover:border-accent-glow"
+        className="flex! items-center! gap-1.5! rounded-full! border! border-border-default! bg-surface! px-3! py-1.5! text-[11px]! font-semibold! text-fg-muted! shadow-md! transition! hover:border-accent-glow!"
       >
         <span
           aria-hidden="true"
           className={`size-2 rounded-full ${open ? "bg-danger" : "bg-accent-glow"}`}
         />
         {open ? "Ocultar errores (demo)" : "Mostrar errores (demo)"}
-      </button>
+      </Button>
     </div>
   );
 }

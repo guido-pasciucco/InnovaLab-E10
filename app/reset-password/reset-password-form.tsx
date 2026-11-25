@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import Link from "next/link";
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
@@ -178,13 +179,13 @@ function ResetPasswordFormBody({
           >
             Ir a iniciar sesión
           </Link>
-          <button
+          <Button variant="outline" size="md"
             type="button"
             onClick={onRequestAnother}
-            className="flex h-10 flex-1 items-center justify-center rounded-md border border-border-default bg-action-tonal px-4 text-sm font-semibold text-on-action-tonal transition hover:border-accent-glow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            className="flex! h-10! flex-1! items-center! justify-center! rounded-md! border! border-border-default! bg-action-tonal! px-4! text-sm! font-semibold! text-on-action-tonal! transition! hover:border-accent-glow! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus!"
           >
             Solicitar otro enlace
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -240,13 +241,13 @@ function ResetPasswordFormBody({
           </p>
         )}
 
-        <button
+        <Button variant="primary" size="md"
           type="submit"
           disabled={pending || previewActive}
-          className="mt-1 h-10 w-full rounded-md bg-action-primary px-4 text-sm font-bold text-on-action-primary shadow-[0_4px_10px_rgba(10,122,18,0.3)] transition hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-action-disabled disabled:text-fg-disabled lg:h-[44px] lg:text-base"
+          className="mt-1! h-10! w-full! rounded-md! bg-action-primary! px-4! text-sm! font-bold! text-on-action-primary! shadow-[0_4px_10px_rgba(10,122,18,0.3)]! transition! hover:bg-action-primary-hover! active:bg-action-primary-pressed! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:bg-action-disabled! disabled:text-fg-disabled! lg:h-[44px]! lg:text-base!"
         >
           {pending ? "Enviando enlace…" : "Enviar enlace"}
-        </button>
+        </Button>
 
         <p className="text-center text-xs text-fg-muted lg:text-sm">
           ¿No tenés cuenta?{" "}

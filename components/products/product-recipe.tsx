@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import Link from "next/link";
 
@@ -101,13 +102,13 @@ export function ProductRecipe({ product, onEdit }: ProductRecipeProps) {
         >
           Ir a presentaciones
         </Link>
-        <button
+        <Button variant="outline" size="md"
           type="button"
           onClick={onEdit}
-          className="min-h-11 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          className="min-h-11! rounded-[14px]! border! border-border-control! bg-surface! px-4! py-2! text-sm! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus!"
         >
           Editar receta
-        </button>
+        </Button>
       </div>
     </section>
   );

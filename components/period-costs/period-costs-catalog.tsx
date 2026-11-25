@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import { useMemo, useState, useTransition } from "react";
 
@@ -131,14 +132,14 @@ export function PeriodCostsCatalog({
           <h2 className="text-lg font-semibold text-fg">
             Gastos de {formatPeriodLabel(period)} ({filtered.length})
           </h2>
-          <button
+          <Button variant="primary" size="md"
             type="button"
             onClick={handleNew}
             disabled={isDeleting}
-            className="min-h-11 shrink-0 rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11! shrink-0! rounded-[14px]! bg-action-primary! px-5! py-2! text-sm! font-semibold! text-on-action-primary! hover:bg-action-primary-hover! active:bg-action-primary-pressed! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50!"
           >
             + Nuevo
-          </button>
+          </Button>
         </div>
 
         <div

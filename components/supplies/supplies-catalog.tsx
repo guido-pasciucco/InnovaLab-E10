@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import { useMemo, useState } from "react";
 
@@ -19,7 +20,7 @@ type SuppliesCatalogProps = {
 };
 
 const TAB_BASE =
-  "min-h-10 rounded-[10px] px-4 py-1.5 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+  "min-h-10! rounded-[10px]! px-4! py-1.5! text-sm! font-semibold! transition! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus!";
 
 // Client wrapper: the Insumos / Packaging tabs own the list, the search and the
 // create/edit modal, so the form never renders inline below the table.
@@ -87,32 +88,32 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
         aria-label="Tipo de ítem"
         className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-border-default bg-surface p-1 shadow-sm"
       >
-        <button
+        <Button variant="ghost" size="sm"
           type="button"
           role="tab"
           aria-selected={activeKind === "supply"}
           onClick={() => handleTab("supply")}
           className={`${TAB_BASE} ${
             activeKind === "supply"
-              ? "bg-surface text-fg shadow-sm"
-              : "text-fg-muted hover:text-fg"
+              ? "bg-surface! text-fg! shadow-sm!"
+              : "text-fg-muted! hover:text-fg!"
           }`}
         >
           Insumos ({counts.supply})
-        </button>
-        <button
+        </Button>
+        <Button variant="ghost" size="sm"
           type="button"
           role="tab"
           aria-selected={activeKind === "packaging"}
           onClick={() => handleTab("packaging")}
           className={`${TAB_BASE} ${
             activeKind === "packaging"
-              ? "bg-surface text-fg shadow-sm"
-              : "text-fg-muted hover:text-fg"
+              ? "bg-surface! text-fg! shadow-sm!"
+              : "text-fg-muted! hover:text-fg!"
           }`}
         >
           Packaging ({counts.packaging})
-        </button>
+        </Button>
       </div>
 
       <section
@@ -124,13 +125,13 @@ export function SuppliesCatalog({ supplies }: SuppliesCatalogProps) {
             <h2 className="text-lg font-semibold text-fg">{activeLabel}</h2>
             <p className="mt-0.5 text-xs text-fg-muted">{filtered.length} {filtered.length === 1 ? "ítem" : "ítems"}</p>
           </div>
-          <button
+          <Button variant="primary" size="md"
             type="button"
             onClick={handleNew}
-            className="min-h-10 shrink-0 rounded-xl bg-action-primary px-4 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            className="min-h-10! shrink-0! rounded-xl! bg-action-primary! px-4! py-2! text-sm! font-semibold! text-on-action-primary! hover:bg-action-primary-hover! active:bg-action-primary-pressed! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus!"
           >
             + Nuevo
-          </button>
+          </Button>
         </div>
 
         {counts[activeKind] > 0 && (

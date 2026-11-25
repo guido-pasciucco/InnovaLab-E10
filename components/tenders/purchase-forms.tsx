@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import { useState } from "react";
 
@@ -13,7 +14,7 @@ import { formatMoney } from "./format";
 const inputClass =
   "min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-3 py-2 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-invalid:border-danger";
 const buttonClass =
-  "min-h-11 shrink-0 rounded-[14px] bg-action-primary px-4 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover disabled:opacity-60";
+  "min-h-11! shrink-0! rounded-[14px]! bg-action-primary! px-4! text-sm! font-semibold! text-on-action-primary! hover:bg-action-primary-hover! disabled:opacity-60!";
 
 function FieldError({ message }: { message?: string }) {
   return message ? (
@@ -78,9 +79,9 @@ export function AwardItemForm({
           onChange={(e) => setUnitPrice(e.target.value)}
         />
       </label>
-      <button type="submit" disabled={pending} className={buttonClass}>
+      <Button variant="primary" size="md" type="submit" disabled={pending} className={buttonClass}>
         {pending ? "Guardando…" : current ? "Cambiar" : "Elegir"}
-      </button>
+      </Button>
       <div className="sm:col-span-3">
         <FieldError message={fieldErrors.unitPrice} />
         <FormBanner message={formError} />
@@ -105,9 +106,9 @@ export function NegotiationForm({
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="text-sm font-semibold text-brand-green-700 underline">
+      <Button variant="ghost" size="sm" type="button" onClick={() => setOpen(true)} className="text-sm! font-semibold! text-brand-green-700! underline!">
         Pedir negociar
-      </button>
+      </Button>
     );
   }
 
@@ -126,9 +127,9 @@ export function NegotiationForm({
       </label>
       <FieldError message={fieldErrors.contact} />
       <p className="text-sm text-fg-muted">El proveedor lo ve en su panel. La negociación sigue por fuera de la aplicación.</p>
-      <button type="submit" disabled={pending} className={buttonClass}>
+      <Button variant="primary" size="md" type="submit" disabled={pending} className={buttonClass}>
         {pending ? "Enviando…" : "Avisar al proveedor"}
-      </button>
+      </Button>
       <FormBanner message={formError} />
     </form>
   );
@@ -169,9 +170,9 @@ export function PurchaseOrderForm({ tenderId, invitationId }: { tenderId: string
       <p className="text-sm text-fg-muted">
         Una vez generada, la orden no se puede cambiar. La imprimís o la guardás como PDF y se la mandás vos.
       </p>
-      <button type="submit" disabled={pending} className={buttonClass}>
+      <Button variant="primary" size="md" type="submit" disabled={pending} className={buttonClass}>
         {pending ? "Generando…" : "Generar orden de compra"}
-      </button>
+      </Button>
       <FormBanner message={formError} />
     </form>
   );
@@ -185,9 +186,9 @@ export function ThankYouNoteButton({ tenderId }: { tenderId: string }) {
   return (
     <form onSubmit={onSubmit} className="space-y-2">
       <input type="hidden" name="tenderId" value={tenderId} />
-      <button type="submit" disabled={pending} className={buttonClass}>
+      <Button variant="primary" size="md" type="submit" disabled={pending} className={buttonClass}>
         {pending ? "Enviando…" : "Mostrar la nota de agradecimiento"}
-      </button>
+      </Button>
       <FormBanner message={formError} />
     </form>
   );

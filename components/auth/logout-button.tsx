@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -38,14 +39,14 @@ export default function LogoutButton() {
 
   return (
     <div className="flex flex-col gap-1">
-      <button
+      <Button variant="primary" size="md"
         type="button"
         onClick={handleLogout}
         disabled={loading}
-        className="rounded-md bg-action-primary px-4 py-2 text-sm font-medium text-on-action-primary hover:bg-action-primary-hover disabled:bg-action-disabled disabled:text-fg-disabled"
+        className="rounded-md! bg-action-primary! px-4! py-2! text-sm! font-medium! text-on-action-primary! hover:bg-action-primary-hover! disabled:bg-action-disabled! disabled:text-fg-disabled!"
       >
         {loading ? "Signing out..." : "Sign out"}
-      </button>
+      </Button>
       {errorMessage && (
         <p role="alert" className="text-sm text-danger">
           {errorMessage}

@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import { useState } from "react";
 
@@ -57,13 +58,13 @@ export function InviteLinkForm() {
               className="min-h-11 w-full rounded-[10px] border border-border-control bg-surface-tint px-3 text-sm text-fg"
               onFocus={(event) => event.currentTarget.select()}
             />
-            <button
+            <Button variant="ghost" size="md"
               type="button"
               onClick={() => copy(created.link)}
-              className="min-h-11 shrink-0 rounded-[14px] px-5 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-focus"
+              className="min-h-11! shrink-0! rounded-[14px]! px-5! text-sm! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-focus!"
             >
               {copied ? "Copiado" : "Copiar enlace"}
-            </button>
+            </Button>
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import Link from "next/link";
 import {
@@ -359,14 +360,14 @@ export function ProductForm({
                     ))}
                   </SelectField>
 
-                  <button
+                  <Button variant="danger" size="md"
                     type="button"
                     onClick={() => remove(index)}
                     disabled={fields.length === 1 || isPending}
-                    className="min-h-11 rounded-[10px] border border-border-control bg-surface px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50 sm:mt-7"
+                    className="min-h-11! rounded-[10px]! border! border-border-control! bg-surface! px-3! py-2! text-sm! font-semibold! text-danger! hover:bg-danger-subtle! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50! sm:mt-7!"
                   >
                     Quitar
-                  </button>
+                  </Button>
                 </div>
               );
             })}
@@ -379,14 +380,14 @@ export function ProductForm({
           </p>
         )}
 
-        <button
+        <Button variant="outline" size="md"
           type="button"
           onClick={() => append(emptyRecipeRow())}
           disabled={!hasSupplies || isPending}
-          className="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-dashed border-border-control bg-surface px-4 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex! min-h-11! items-center! justify-center! rounded-[10px]! border! border-dashed! border-border-control! bg-surface! px-4! py-2! text-sm! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50!"
         >
           + Agregar insumo
-        </button>
+        </Button>
       </FormSection>
 
       <RecipeYieldField
@@ -428,14 +429,14 @@ export function ProductForm({
         >
           {isPending ? "Guardando…" : "Guardar"}
         </PrimaryButton>
-        <button
+        <Button variant="ghost" size="md"
           type="button"
           onClick={onCancel}
           disabled={isPending}
-          className="min-h-11 flex-1 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-base font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11! flex-1! rounded-[14px]! border! border-border-control! bg-surface! px-4! py-2! text-base! font-semibold! text-fg! hover:bg-surface-tint! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50!"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
 
       <p className="-mt-2 text-xs text-fg-muted">

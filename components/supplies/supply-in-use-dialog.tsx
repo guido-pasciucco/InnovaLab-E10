@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -167,16 +168,16 @@ export function SupplyInUseDialog({
                       </>
                     )}
                   </div>
-                  <button
+                  <Button variant="outline" size="sm"
                     type="button"
                     onClick={() => handleRemove(usage)}
                     disabled={isPending || isOnlyIngredient || isInactive}
-                    className="min-h-9 shrink-0 rounded-[10px] border border-border-control px-3 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
+                    className="min-h-9! shrink-0! rounded-[10px]! border! border-border-control! px-3! py-1! text-sm! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:opacity-50!"
                   >
                     {usage.kind === "recipe"
                       ? `Quitar de ${usage.productName}`
                       : `Quitar de ${usage.presentationName}`}
-                  </button>
+                  </Button>
                 </li>
               );
             })}
@@ -184,15 +185,15 @@ export function SupplyInUseDialog({
         )}
 
         <div className="flex justify-end gap-2 border-t border-border-control pt-4">
-          <button
+          <Button variant="ghost" size="md"
             type="button"
             onClick={onClose}
             disabled={isPending}
-            className="min-h-11 rounded-[14px] border border-border-control px-4 py-2 text-sm font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
+            className="min-h-11! rounded-[14px]! border! border-border-control! px-4! py-2! text-sm! font-semibold! text-fg! hover:bg-surface-tint! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:opacity-50!"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button variant="danger" size="md"
             type="button"
             onClick={handleDelete}
             disabled={isPending || usages.length > 0}
@@ -201,10 +202,10 @@ export function SupplyInUseDialog({
                 ? "Primero quitá el insumo de todos los lugares donde se usa"
                 : undefined
             }
-            className="min-h-11 rounded-[14px] bg-danger px-4 py-2 text-sm font-semibold text-white hover:bg-danger/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
+            className="min-h-11! rounded-[14px]! bg-danger! px-4! py-2! text-sm! font-semibold! text-white! hover:bg-danger/90! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:opacity-50!"
           >
             Borrar {noun}
-          </button>
+          </Button>
         </div>
       </div>
     </CatalogModal>

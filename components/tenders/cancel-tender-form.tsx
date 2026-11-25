@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import { useState } from "react";
 
@@ -14,13 +15,13 @@ export function CancelTenderForm({ tenderId, label = "Cancelar licitación" }: {
 
   if (!confirming) {
     return (
-      <button
+      <Button variant="danger" size="md"
         type="button"
         onClick={() => setConfirming(true)}
-        className="min-h-11 rounded-[14px] px-5 text-sm font-semibold text-danger hover:bg-danger-subtle focus-visible:outline-2 focus-visible:outline-focus"
+        className="min-h-11! rounded-[14px]! px-5! text-sm! font-semibold! text-danger! hover:bg-danger-subtle! focus-visible:outline-2! focus-visible:outline-focus!"
       >
         {label}
-      </button>
+      </Button>
     );
   }
 
@@ -32,20 +33,20 @@ export function CancelTenderForm({ tenderId, label = "Cancelar licitación" }: {
         otra vez, publicás una nueva.
       </p>
       <div className="flex gap-2">
-        <button
+        <Button variant="danger" size="md"
           type="submit"
           disabled={pending}
-          className="min-h-11 rounded-[14px] bg-danger px-5 text-sm font-semibold text-white disabled:opacity-60"
+          className="min-h-11! rounded-[14px]! bg-danger! px-5! text-sm! font-semibold! text-white! disabled:opacity-60!"
         >
           {pending ? "Cancelando…" : "Sí, cancelar"}
-        </button>
-        <button
+        </Button>
+        <Button variant="ghost" size="md"
           type="button"
           onClick={() => setConfirming(false)}
-          className="min-h-11 rounded-[14px] px-5 text-sm font-semibold text-fg hover:bg-surface-tint"
+          className="min-h-11! rounded-[14px]! px-5! text-sm! font-semibold! text-fg! hover:bg-surface-tint!"
         >
           No
-        </button>
+        </Button>
       </div>
       <FormBanner message={formError} />
     </form>

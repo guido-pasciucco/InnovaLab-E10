@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { useState } from "react";
@@ -56,17 +57,17 @@ export function PasswordInput({
           aria-describedby={describedBy || undefined}
           className={fieldInputClassName(Boolean(error), `${icon ? "pl-10" : "pl-3"} pr-10`)}
         />
-        <button
+        <Button variant="ghost" size="sm"
           type="button"
           onClick={() => setShow((visible) => !visible)}
           aria-pressed={show}
           aria-controls={id}
           aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
           disabled={disabled}
-          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-accent-glow"
+          className="absolute! inset-y-0! right-0! flex! w-10! items-center! justify-center! rounded-r-md! text-fg-muted! hover:text-fg! focus-visible:outline-2! focus-visible:outline-offset-[-3px]! focus-visible:outline-accent-glow!"
         >
           <EyeIcon visible={show} />
-        </button>
+        </Button>
       </div>
       {hint && (
         <p id={hintId} className="text-[10px] text-fg-muted lg:text-[13px]">

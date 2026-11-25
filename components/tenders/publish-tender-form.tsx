@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import Link from "next/link";
 import { startTransition, useActionState, useState, type FormEvent, type ReactNode } from "react";
@@ -39,7 +40,7 @@ function FieldError({ message }: { message?: string }) {
 }
 
 const secondaryButtonClass =
-  "min-h-11 rounded-[14px] px-5 text-base font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-focus disabled:opacity-60";
+  "min-h-11! rounded-[14px]! px-5! text-base! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-focus! disabled:opacity-60!";
 
 // Publish form (RN-02, RN-05). Supplies are picked from the catalog with the
 // starting price prefilled from it; every linked supplier starts selected and
@@ -312,23 +313,23 @@ export function PublishTenderForm({
         <PrimaryButton type="submit" disabled={pending || Boolean(publishBlocked)}>
           {pending ? "Publicando…" : "Publicar licitación"}
         </PrimaryButton>
-        <button
+        <Button variant="ghost" size="md"
           type="button"
           onClick={onSaveDraft}
           disabled={savingDraft || selectedSupplies.length === 0}
           className={secondaryButtonClass}
         >
           {savingDraft ? "Guardando…" : "Guardar borrador"}
-        </button>
+        </Button>
         {draft && (
-          <button
+          <Button variant="ghost" size="md"
             type="button"
             onClick={() => startTransition(() => discard())}
             disabled={discarding}
             className={secondaryButtonClass}
           >
             {discarding ? "Descartando…" : "Descartar borrador"}
-          </button>
+          </Button>
         )}
       </div>
     </form>

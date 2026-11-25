@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useRef, type FormEvent } from "react";
@@ -233,14 +234,14 @@ export function PresentationForm({
                   ))}
                 </SelectField>
 
-                <button
+                <Button variant="danger" size="md"
                   type="button"
                   onClick={() => remove(index)}
                   disabled={isPending}
-                  className="min-h-11 rounded-[10px] border border-border-control px-3 py-2 text-sm font-semibold text-danger hover:bg-danger-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50 sm:mt-7"
+                  className="min-h-11! rounded-[10px]! border! border-border-control! px-3! py-2! text-sm! font-semibold! text-danger! hover:bg-danger-subtle! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50! sm:mt-7!"
                 >
                   Quitar
-                </button>
+                </Button>
               </div>
             </div>
           );
@@ -252,28 +253,28 @@ export function PresentationForm({
           </p>
         )}
 
-        <button
+        <Button variant="outline" size="md"
           type="button"
           onClick={() => append(emptyPackagingRow())}
           disabled={packaging.length === 0 || isPending}
-          className="min-h-11 self-start rounded-[10px] border border-border-control bg-surface px-4 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11! self-start! rounded-[10px]! border! border-border-control! bg-surface! px-4! py-2! text-sm! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50!"
         >
           + Agregar packaging
-        </button>
+        </Button>
       </fieldset>
 
       <div className="flex gap-3">
         <PrimaryButton type="submit" disabled={isPending}>
           {isPending ? "Guardando…" : "Guardar"}
         </PrimaryButton>
-        <button
+        <Button variant="ghost" size="md"
           type="button"
           onClick={onCancel}
           disabled={isPending}
-          className="min-h-11 flex-1 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-base font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11! flex-1! rounded-[14px]! border! border-border-control! bg-surface! px-4! py-2! text-base! font-semibold! text-fg! hover:bg-surface-tint! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50!"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   );

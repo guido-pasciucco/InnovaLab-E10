@@ -1,4 +1,5 @@
-"use client";
+"use client";import { Button } from "@/components/ui/button";
+
 
 import { acknowledgeNoOfferWarning } from "@/app/(business)/licitaciones/actions";
 import { useFormDataAction } from "@/components/forms/use-form-data-action";
@@ -24,13 +25,13 @@ export function NoOfferWarning({ tenderId, items }: { tenderId: string; items: s
       </p>
       <form onSubmit={onSubmit}>
         <input type="hidden" name="tenderId" value={tenderId} />
-        <button
+        <Button variant="primary" size="md"
           type="submit"
           disabled={pending}
-          className="min-h-11 rounded-[14px] bg-action-primary px-5 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover disabled:opacity-60"
+          className="min-h-11! rounded-[14px]! bg-action-primary! px-5! text-sm! font-semibold! text-on-action-primary! hover:bg-action-primary-hover! disabled:opacity-60!"
         >
           {pending ? "Guardando…" : "Dejar que siga"}
-        </button>
+        </Button>
       </form>
       <FormBanner message={formError} />
     </section>
