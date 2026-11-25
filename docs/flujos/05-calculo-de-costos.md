@@ -51,24 +51,57 @@ Con costo total unitario de `$ 7.000` y recargo de `30 %`: precio `$ 9.100`, gan
 
 La base es el costo total unitario: el costo variable de la receta y las presentaciones más la parte de los gastos del mes que le toca al producto según su capacidad. No entran comisiones por venta ni impuestos, y la mano de obra ya está dentro de los gastos del período.
 
+### Recargo por defecto y por producto
+
+- El negocio tiene un **recargo por defecto** y cada producto puede tener uno **propio** que lo pisa. Un producto sin recargo propio usa el del negocio, y se puede volver a él borrando el propio.
+- Motivo: cada producto compite en un mercado distinto; con un único recargo, ajustar uno obligaría a cambiar todos. El default evita tener que cargar un recargo por producto.
+- Se guarda solo el porcentaje (`default_markup_percent` en el negocio y `markup_percent` en el producto, anulable). El precio, la ganancia y el margen real **no se guardan**: se calculan en cada lectura con el costo total que surge del reparto vigente. Así, cambiar el precio de un insumo, una capacidad o un gasto del período cambia el precio sugerido sin guardar nada más.
+- El porcentaje se carga como número de porcentaje: `30.00` es 30 %, con hasta dos decimales y un tope de 1000 %. Un recargo de cero o negativo se rechaza porque el precio quedaría igual o por debajo del costo.
+- La pantalla `/precios`, en la sección Catálogo del menú, muestra el recargo por defecto editable y una fila por producto con: Producto · Costo total (por unidad) · Recargo · Precio sugerido · Ganancia (por unidad) · Margen real. El recargo se edita en la misma fila e indica si es propio o del negocio; si es propio, ofrece volver al del negocio.
+- Recargo y margen real se nombran por separado: el porcentaje cargado nunca se rotula "margen". Los importes se muestran con `formatARS`, los porcentajes con dos decimales y coma.
+- Sin productos, sin capacidades o sin gastos del período se muestra el estado vacío con el enlace a la pantalla donde se carga el dato que falta. Un producto sin costo total muestra "No disponible" con el motivo, nunca `$ 0`; sin recargo cargado pide cargarlo y no muestra precio.
+- La leyenda lo dice explícitamente: el precio no incluye comisiones por venta ni impuestos ("sin costos de venta").
+
 ## Trabajo propio
 
 El trabajo propio del emprendedor es **un gasto fijo más** del período: se carga en *Gastos del período* como cualquier otro concepto (por ejemplo "Mi sueldo — $ 300.000"), sin marca propia ni carga por horas, y se reparte por capacidad con el resto de los gastos. El personal contratado con sueldo mensual se carga igual.
 
 ## Equilibrio y tablero
 
-El tablero muestra por producto costo total unitario, contribución y margen; y como resumen la cuota mínima de cada producto y el equilibrio en unidades y en pesos, con un gráfico del punto de equilibrio.
-
-Las fórmulas que hoy se usan como propuesta pendiente de validar con la planilla de referencia son:
+La vista **Equilibrio** (`/equilibrio`, sección Catálogo, después de Precios) responde cuánto aporta cada producto a cubrir los gastos del mes y cuánto hay que vender para no perder. Es de solo lectura: toma del servicio de precios el precio sugerido, el costo variable, la capacidad de cada producto y los gastos del mes, y no guarda ningún resultado.
 
 ```text
-unidadesTotales   = costos indirectos del período ÷ contribución ponderada
-cuotaᵢ            = unidadesTotales × mezclaᵢ
-equilibrioEnPesos = Σ (cuotaᵢ × precio sugeridoᵢ)
-prueba de cierre  = Σ (cuotaᵢ × contribuciónᵢ) = costos indirectos del período
+mezclaᵢ                = capacidadᵢ ÷ Σ capacidades
+contribuciónᵢ          = precio sugeridoᵢ − costo variable unitarioᵢ
+contribución ponderada = Σ (mezclaᵢ × contribuciónᵢ)
+unidades de equilibrio = gastos del mes ÷ contribución ponderada
+cuotaᵢ                 = unidades de equilibrio × mezclaᵢ
+equilibrio en pesos    = Σ (cuotaᵢ × precio sugeridoᵢ)
+prueba de cierre       = Σ (cuotaᵢ × contribuciónᵢ) = gastos del mes
+margen realᵢ           = (precio sugeridoᵢ − costo total unitarioᵢ) ÷ precio sugeridoᵢ
 ```
 
-También están abiertos el eje del gráfico, los estados vacíos y el formato de cuotas fraccionarias; esos tres puntos siguen sin regla.
+- **Resumen:** gastos del mes, unidades de equilibrio y equilibrio en pesos. Debajo va el gráfico.
+- **Tabla por producto:** Producto · Precio sugerido · Costo variable (por unidad) · Contribución (por unidad) · Margen real · Mezcla · Cuota (unidades).
+- **Cuotas:** enteras redondeadas hacia arriba, porque no se vende una fracción de producto; el valor exacto se ve en el detalle de la fila.
+- **Prueba de cierre visible:** Σ cuota exacta × contribución contra los gastos del mes.
+- **Productos a revisar:** los que no tienen capacidad quedan excluidos y el resto se calcula. Si un producto con capacidad no tiene costo variable o precio, la vista queda incompleta y no muestra números. Cada uno aparece con el motivo y el enlace a la pantalla donde se corrige.
+- **Advertencias:** un producto con precio ≤ costo variable se marca y sigue en la mezcla. Si la contribución ponderada es ≤ 0 se muestra "No se alcanza el punto de equilibrio" en lugar de unidades o pesos.
+- **Estados vacíos:** sin productos, sin capacidades, sin gastos o sin precios se muestra el mensaje con el enlace a Productos, Gastos del período o Precios.
+- **Redondeo:** decimal sin redondeos intermedios; el dinero se muestra con 2 decimales y los porcentajes con 2 decimales y coma. La prueba de cierre se calcula con valores sin redondear.
+- Sin costos de venta: el precio no incluye comisiones ni impuestos.
+
+Las fórmulas siguen pendientes de validar con la planilla de referencia (#250).
+
+### Gráfico del punto de equilibrio
+
+El gráfico solo se muestra cuando el tablero está en estado `ready`; en el resto de los estados se muestra el mensaje correspondiente.
+
+- **Eje X:** ventas en pesos de la mezcla. Con varios productos las unidades no se suman entre sí, los pesos sí. El rango va de 0 al mayor entre la venta a capacidad plena (Σ capacidad × precio) y 1,5 × el equilibrio en pesos, para que el cruce siempre quede adentro.
+- **Líneas:** *Ingresos* (`y = ventas`), *Costos totales* (`gastos del mes + ventas × (1 − ratio de contribución)`) y *Gastos fijos* (`gastos del mes`, punteada).
+- **Cruce:** se marca en el equilibrio en pesos que devuelve el motor y se rotula "Equilibrio".
+- **Accesibilidad:** el gráfico tiene título y descripción, y una tabla alternativa con los puntos para lectores de pantalla. Se lee en el ancho de un teléfono sin scroll horizontal.
+
 
 ## Histórico: "Cerrar cálculo"
 

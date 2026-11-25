@@ -103,6 +103,13 @@ export const ERROR_CATALOG = {
     message: "Could not compute the cost summary",
     logLevel: "error",
   },
+  CALC_BREAK_EVEN_FAILED: {
+    // The break-even engine rejected the pricing rows (negative capacity or a
+    // malformed amount): a server-side data problem, not user input (#246).
+    status: 500,
+    message: "Could not compute the break-even",
+    logLevel: "error",
+  },
   CALC_DRAFT_MISSING: {
     // The user has not saved paso 1, so there is no draft to attach costs to.
     status: 404,
@@ -314,6 +321,25 @@ export const ERROR_CATALOG = {
     status: 503,
     message: "La búsqueda de documentos no está disponible.",
     logLevel: "error",
+  },
+
+  // Read-only SQL for the chat agent (chat-datos, #279). The model, not the
+  // user, writes the query: `details.reason` tells the model what to fix and
+  // is not meant for the screen. Nothing reads these codes until stage 3.
+  ANALYST_QUERY_REJECTED: {
+    status: 422,
+    message: "La consulta no está permitida.",
+    logLevel: "silent",
+  },
+  ANALYST_QUERY_FAILED: {
+    status: 422,
+    message: "La consulta no se pudo ejecutar.",
+    logLevel: "silent",
+  },
+  ANALYST_QUERY_TIMEOUT: {
+    status: 504,
+    message: "La consulta tardó demasiado.",
+    logLevel: "warn",
   },
 } as const satisfies Record<string, CatalogEntry>;
 

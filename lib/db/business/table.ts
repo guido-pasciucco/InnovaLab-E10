@@ -30,6 +30,9 @@ export const businesses = pgTable("businesses", {
     .references(() => profiles.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   businessType: text("business_type"),
+  // Default markup (%) applied to every product without its own (#312). NULL
+  // means "not loaded yet"; the percentage is stored as a number (30.00 = 30 %).
+  defaultMarkupPercent: numeric("default_markup_percent", { precision: 7, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -46,6 +49,9 @@ export const products = pgTable("products", {
   // per product, independent of the calculation period. NULL means "not
   // loaded" and is stored instead of 0 so the UI can tell empty from zero.
   monthlyCapacity: integer("monthly_capacity"),
+  // Own markup (%) that overrides the business default (#312). NULL means
+  // "use the business default"; the percentage is stored as a number.
+  markupPercent: numeric("markup_percent", { precision: 7, scale: 2 }),
   // Historical products can lack this source datum. New product writes require it.
   yieldQuantity: integer("yield_quantity"),
   // Current derived variable costs. These columns are intentionally nullable:

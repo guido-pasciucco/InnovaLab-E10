@@ -8,7 +8,9 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   // The step 8 PDF route renders with @react-pdf/renderer, which loads its
   // fonts and layout engine at runtime: keep it a Node require, not bundled.
-  serverExternalPackages: ["@react-pdf/renderer"],
+  // libpg-query (SQL validator of the chat agent) reads its .wasm file from
+  // disk at load time; bundled, it loses that path and fails (ENOENT).
+  serverExternalPackages: ["@react-pdf/renderer", "libpg-query"],
   async redirects() {
     return [{ source: "/insumos", destination: "/supplies", permanent: false }];
   },
