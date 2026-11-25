@@ -1,6 +1,6 @@
 # Chateá con tus datos
 
-Búsqueda sobre la documentación del producto y acceso de solo lectura a los datos del usuario, para el agente de la issue #279. La pantalla llega en una etapa posterior. El flujo completo está en `docs/assets/agent/agente-chat-datos-aws.drawio`.
+Búsqueda sobre la documentación del producto y acceso de solo lectura a los datos del usuario, para el agente de la issue #279. La pantalla está en `/chat-datos` (etapa 3) y entra al menú solo con `CHAT_DATOS_ENABLED`. El flujo completo está en `docs/assets/agent/agente-chat-datos-aws.drawio`.
 
 ## Etapa 1: búsqueda en documentos
 
@@ -20,7 +20,7 @@ Están en `.env.example`. Los valores reales van en `.env.local`, nunca en el re
 | `CHAT_DATOS_AWS_SECRET_ACCESS_KEY` | Secreto de esa clave |
 | `CHAT_DATOS_EMBEDDING_MODEL` | Opcional. Por defecto `amazon.titan-embed-text-v2:0` |
 
-`CHAT_DATOS_ENABLED`, `CHAT_DATOS_SHOW_SQL` y `CHAT_DATOS_MODEL` las usa la pantalla, en la etapa 3.
+`CHAT_DATOS_ENABLED` prende la pestaña y la ruta. `CHAT_DATOS_SHOW_SQL` deja ver el SQL de la respuesta. `CHAT_DATOS_MODEL` elige el modelo.
 
 ### Ingesta
 
@@ -61,7 +61,7 @@ Las vistas llevan `security_barrier`, para que una función escrita por el model
 | `analyst.presentations` | Formas de vender cada producto y cuántas unidades entran |
 | `analyst.presentation_packaging` | Envase de cada presentación |
 
-Fuera de las vistas: licitaciones, proveedores, órdenes de compra, `profiles` y las notas de texto libre de los gastos. Cálculos, escenarios, precio sugerido y punto de equilibrio no tienen tabla en el esquema vigente: el agente no puede consultarlos. Cada vista y cada columna tienen un comentario en español: es lo que el modelo lee para interpretar los datos, así que se revisa como documentación.
+Fuera de las vistas: licitaciones, proveedores, órdenes de compra, `profiles` y las notas de texto libre de los gastos. Cálculos, escenarios, precio sugerido y punto de equilibrio no tienen tabla en el esquema vigente: el agente no puede consultarlos. El recargo sí se guarda (`businesses.default_markup_percent` y `products.markup_percent`), pero las vistas no lo exponen. Las pantallas Precios y Equilibrio calculan el precio y el equilibrio en cada lectura y no los guardan. Cada vista y cada columna tienen un comentario en español: es lo que el modelo lee para interpretar los datos, así que se revisa como documentación.
 
 ### Regla para el equipo
 
@@ -74,7 +74,7 @@ Antes de borrar o cambiar el tipo de una de esas columnas, recreá la vista en l
 - **Probar la migración en Supabase antes de mergear.** Crear el rol `analyst_reader` y hacer `GRANT analyst_reader TO postgres` funciona en local, pero en Supabase el usuario `postgres` no es superusuario y no se puede probar desde acá. `bun run deploy` aplica las migraciones a producción: si esta falla, el deploy de cualquiera del equipo queda bloqueado. Lo recomendado es ensayarla antes en un proyecto de Supabase aparte (por ejemplo, el de São Paulo) y recién después mergear.
 - **`set_config` es el punto sensible.** El filtro por usuario depende de `app.user_id`. Si el SQL del modelo lograra llamar a `set_config('app.user_id', ...)`, podría cambiar de usuario. La defensa es el validador de SQL (ver "Validador de SQL"), que rechaza esa función y cualquiera fuera de una lista permitida, más los tests de aislamiento. Además tendría que conocer el UUID de otro usuario, y ninguna vista lo expone.
 - **El rol hereda permisos abiertos de Postgres.** Puede ejecutar funciones de extensiones (por ejemplo `pgcrypto`, `vector`) y leer `extensions.pg_stat_statements`, porque Postgres las deja abiertas a todos los roles. No se pueden cerrar sin afectar a Supabase. Por eso el validador no puede omitirse y el test de permisos lista esas dos vistas de forma explícita.
-- **Orden de migraciones.** `20261123121144_chat_datos_analyst_views` queda última en el journal, después de las migraciones de `main` que borran las tablas del cálculo viejo y las columnas `minimum_unit` y `conversion_factor`. Su fecha `when` también tiene que ser posterior a la de cualquier migración ya aplicada: Drizzle mira esa fecha, no el lugar en la lista. Si es más vieja, saltea el archivo y `bun run deploy` se frena. Una base vacía aplica primero el esquema vigente y después estas vistas.
+- **Orden de migraciones.** `20261123121144_chat_datos_analyst_views` queda última en el journal, después de las migraciones de `main`: las que borran las tablas del cálculo viejo y las columnas `minimum_unit` y `conversion_factor`, y `20261124153652_optimal_the_anarchist` (recargo por defecto del negocio y recargo por producto). Su fecha `when` también tiene que ser posterior a la de cualquier migración ya aplicada: Drizzle mira esa fecha, no el lugar en la lista. Si es más vieja, saltea el archivo y `bun run deploy` se frena. Una base vacía aplica primero el esquema vigente y después estas vistas.
 - **Límites del primer lanzamiento.** No hay historial de cálculos ni de escenarios. La comparación en el tiempo que sí existe es la de gastos, por la columna `period` (`AAAA-MM`).
 
 ### Validador de SQL
@@ -141,3 +141,19 @@ DROP ROLE analyst_reader;
 `lib/db/analyst-views.int.test.ts` (Postgres local) comprueba que cada vista devuelve solo las filas del usuario de la sesión, que sin usuario no devuelve nada, que cada vista y columna tiene comentario, y que `analyst_reader`, `anon` y `authenticated` no pueden leer tablas reales, escribir ni crear objetos.
 
 `lib/services/analyst-query.int.test.ts` prueba el recorrido completo, sin el modelo: cada vista devuelve solo las filas del usuario (incluso con 24 consultas simultáneas de dos usuarios), 16 intentos de ataque se rechazan (cambiar de usuario con `set_config`, leer el catálogo, tablas reales, `reset role`, varias sentencias), el límite de filas y el `truncated`, el tiempo máximo, los errores de la consulta y que el pool no queda con usuario ni rol. Incluye un test que muestra que, sin el validador, `set_config` sí cambiaría de usuario: deja a la vista que el validador es una barrera obligatoria.
+
+## Etapa 3: la pantalla
+
+La pestaña "Chateá con tus datos" está en el menú superior. Lleva dos estrellas violetas y solo aparece si `CHAT_DATOS_ENABLED` está prendido. Con el flag apagado, `/chat-datos` y `POST /api/chat-datos` responden 404.
+
+La conversación de esa pestaña queda en `sessionStorage` (`chat-datos.session`). Cerrar la pestaña la borra. No se guarda en la base.
+
+### Micrófono
+
+El botón del micrófono usa el reconocimiento de voz del navegador. La pantalla solo recibe el texto. El audio no se guarda en la base ni se envía a AWS.
+
+En Chrome y Edge el navegador manda la grabación al servicio de reconocimiento de Google, junto con el dominio del sitio, el idioma del navegador y el idioma de la página (`es-AR`). No manda cookies, ni la cuenta de InnovaLab, ni el catálogo, ni la conversación. Google no publica cuánto tiempo conserva esa grabación.
+
+En Firefox el botón no aparece: ese navegador no tiene esta función.
+
+El texto que queda en el cuadro se envía al chat recién cuando la persona manda la pregunta, igual que si lo hubiera escrito.
