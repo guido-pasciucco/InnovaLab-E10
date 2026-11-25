@@ -1,6 +1,6 @@
 {
   "id": "30a180df-dcbc-4d3d-b18a-8550ddce7d52",
-  "prevId": "d2d19f7e-0da7-44a8-aab6-9f7276bb4195",
+  "prevId": "095a3236-fe6b-4b5b-bdff-55831ced1f38",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -39,6 +39,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "default_markup_percent": {
+          "name": "default_markup_percent",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -538,6 +544,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "markup_percent": {
+          "name": "markup_percent",
+          "type": "numeric(7, 2)",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

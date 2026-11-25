@@ -13,6 +13,7 @@ import {
   recipeSupplyIdField,
   recipeUnitField,
 } from "@/lib/schemas/products/fields";
+import { markupPercentField } from "@/lib/schemas/pricing/fields";
 import { recipeYieldField } from "@/lib/schemas/recipe-yield/fields";
 import { quantityString } from "../formats";
 import {
@@ -149,6 +150,19 @@ export const saveProductInputSchema = z
     });
   });
 
+// Markup writes (#312). These are single-field inputs composed from the shared
+// rule in lib/schemas/pricing/fields.ts, so the form and the server enforce the
+// exact same message. `null` is the explicit "clear the own markup" command:
+// the product goes back to using the business default. It is not the same as
+// omitting the field, which is rejected.
+export const setDefaultMarkupInputSchema = z.object({
+  defaultMarkupPercent: markupPercentField.nullable(),
+});
+
+export const setProductMarkupInputSchema = z.object({
+  markupPercent: markupPercentField.nullable(),
+});
+
 // --- Inferred input/row types: single source of truth, no manual interfaces. ---
 
 export type BusinessRow = z.infer<typeof businessRowSchema>;
@@ -167,3 +181,5 @@ export type PresentationPackagingInput = z.infer<
   typeof presentationPackagingInputSchema
 >;
 export type SavePresentationInput = z.infer<typeof savePresentationInputSchema>;
+export type SetDefaultMarkupInput = z.infer<typeof setDefaultMarkupInputSchema>;
+export type SetProductMarkupInput = z.infer<typeof setProductMarkupInputSchema>;

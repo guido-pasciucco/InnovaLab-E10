@@ -103,6 +103,13 @@ export const ERROR_CATALOG = {
     message: "Could not compute the cost summary",
     logLevel: "error",
   },
+  CALC_BREAK_EVEN_FAILED: {
+    // The break-even engine rejected the pricing rows (negative capacity or a
+    // malformed amount): a server-side data problem, not user input (#246).
+    status: 500,
+    message: "Could not compute the break-even",
+    logLevel: "error",
+  },
   CALC_DRAFT_MISSING: {
     // The user has not saved paso 1, so there is no draft to attach costs to.
     status: 404,

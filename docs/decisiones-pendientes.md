@@ -8,16 +8,8 @@ Cada fila dice de dónde viene. Cuando una decisión se cierra, se saca de este 
 
 | ID | Tema | Estado | Origen | Bloquea |
 | --- | --- | --- | --- | --- |
-| P-05 | Cuota, equilibrio en pesos y prueba de cierre | Abierta | Fase 2 · Bloque 3 | Fórmulas del equilibrio |
-| P-06 | Recargo global vs. por producto | Abierta | Fase 2 · Bloque 3 | Interfaz de precios |
 | P-09 | Planilla #250 como oráculo de validación | Dependencia externa | Fase 2 · Bloque 3 | QA de todas las fórmulas |
-| P-10 | Eje X del gráfico del equilibrio | Abierta | Fase 2 · Bloque 4 | Gráfico multi-producto |
-| P-11 | Líneas del gráfico del equilibrio | Abierta | Fase 2 · Bloque 4 | Gráfico multi-producto |
-| P-12 | Estados vacíos del tablero | Abierta | Fase 2 · Bloque 4 | Tablero |
-| P-13 | Cuotas fraccionarias: precisión y formato | Abierta | Fase 2 · Bloque 4 | Tablero |
-| P-14 | Resultados que muestra el tablero y sus fórmulas | Abierta | Fase 2 · Bloque 4 | Tablero |
 | P-20 | Tratamiento de mermas y desperdicios | Diferida a largo plazo | Producto · §11 | Cálculo de recetas |
-| P-21 | Redondeo monetario y unidades del equilibrio | Abierta | Producto · §11 | Contrato de precisión |
 | P-22 | Qué resultados son proyecciones y cuáles son reales | Abierta | Producto · §11 | Comunicación al usuario |
 | P-23 | Validar el modelo con el mentor y dos rubros distintos | Abierta | Producto · §11 | Validación del producto |
 | P-24 | Desactivar un producto para el cálculo sin borrarlo | Diferida | Fase 2 · Bloque 2 | Ciclo de vida del producto |
@@ -33,22 +25,11 @@ Las decisiones abiertas de **licitaciones** no se incluyen en este recolector.
 
 ### Bloque 3 — Costos indirectos, precio y equilibrio
 
-- **P-05** — Interpretación final de la cuota por producto, del equilibrio en pesos y de la prueba de cierre. Las fórmulas propuestas necesitan validación contra la planilla.
-- **P-06** — El recargo sobre el costo total unitario ya está decidido como convención; falta definir si el porcentaje es uno solo para todo el negocio o uno por producto. Hoy no se guarda en ningún lado, así que define dónde vive el dato y cómo es la pantalla de precios.
 - **P-09** — Sin la planilla #250 no hay oráculo para verificar ninguna fórmula. Es la dependencia de QA más importante del flujo.
-
-### Bloque 4 — Tablero
-
-- **P-10** — Con varios productos no está definido qué significa el eje X del gráfico. La propuesta es unidades totales vendidas de la mezcla.
-- **P-11** — No está detallado qué líneas se dibujan. La propuesta es indirectos del período (constante) contra contribución acumulada de la mezcla.
-- **P-12** — Qué ve el usuario en el tablero sin productos, sin gastos del período o sin capacidades cargadas.
-- **P-13** — Las cuotas pueden dar decimales; no está definido si se muestran exactas, redondeadas o como "unidades vendibles".
-- **P-14** — Qué resultados se muestran (precio sugerido, contribución, equilibro, recargo) y con qué fórmulas.
 
 ### Definición conceptual del producto
 
 - **P-20** — Tratamiento de mermas y desperdicios. Diferida: es una idea a largo plazo, no algo para implementar ahora; requiere conversación y acuerdo con el equipo antes de entrar en alcance. Las reglas de mermas quedan como propuesta documentada, no como norma vigente.
-- **P-21** — Reglas de redondeo monetario y de unidades del punto de equilibrio.
 - **P-22** — Acordar qué resultados son proyecciones y cuáles pueden basarse en datos reales.
 - **P-23** — Validar el modelo con el mentor y con al menos dos rubros distintos.
 
