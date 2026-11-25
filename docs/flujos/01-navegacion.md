@@ -11,7 +11,9 @@ Cómo se mueve el usuario por el producto. El área privada tiene un menú later
 ## Inicio
 
 - Es el primer destino del menú (`/inicio`) y la pantalla a la que llega el usuario al iniciar sesión.
-- Resume el estado del catálogo y muestra las tareas pendientes con accesos a cada sección.
+- Resume el estado del catálogo y muestra las tareas pendientes hasta el equilibrio: capacidad mensual, recargo y revisión de precios cuando no se llega al equilibrio.
+- La tarjeta **Equilibrio** muestra las ventas de equilibrio del motor cuando el estado es `ready` y enlaza a `/equilibrio`; con cualquier otro estado muestra "Pendiente · faltan datos".
+- Ofrece accesos rápidos a Insumos, Productos, Gastos del período, Precios y Equilibrio.
 - No fuerza un orden ni bloquea secciones. `/dashboard` solo redirige a Inicio para no romper enlaces viejos.
 
 ## Destinos
@@ -28,7 +30,7 @@ Cómo se mueve el usuario por el producto. El área privada tiene un menú later
 | Chateá con tus datos | `/chat-datos` | Sección propia del menú superior, con dos estrellas violetas. Solo aparece si `CHAT_DATOS_ENABLED` está prendido; si no, la ruta responde 404. La conversación queda en el navegador, en esa pestaña |
 | Licitaciones | `/licitaciones` | Sección propia del menú |
 | Proveedores | `/proveedores` | Sección propia del menú |
-| Tablero | — | Pendiente de definir |
+| Tablero | — | Reemplazado en Inicio por la tarjeta Equilibrio, que enlaza a `/equilibrio` |
 | Datos históricos | — | Consulta del histórico de cierres, sin construir |
 
 ## Navegación por destinos, no por pasos
