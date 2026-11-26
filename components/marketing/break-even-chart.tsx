@@ -10,6 +10,7 @@ const MAX_UNITS = 100;
 const MAX_VALUE = 100_000;
 const FIXED_COSTS = 30_000;
 const { weightedPrice, weightedContribution, breakEvenUnits } = referenceTotals;
+const weightedUnitCost = weightedPrice - weightedContribution;
 
 const Y_TICKS = [100_000, 75_000, 50_000, 25_000, 0];
 const X_TICKS = [0, 25, 50, 75, 100];
@@ -29,7 +30,7 @@ function revenue(units: number) {
 }
 
 function totalCost(units: number) {
-  return FIXED_COSTS + units * weightedContribution;
+  return FIXED_COSTS + units * weightedUnitCost;
 }
 
 function moneyLabel(value: number) {
