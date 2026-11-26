@@ -59,6 +59,18 @@ describe("legacy calculator removal", () => {
     ).toEqual([]);
   });
 
+  it("keeps the only native <button> inside components/ui/button.tsx", () => {
+    const files = [...sources(join(ROOT, "app")), ...sources(join(ROOT, "components"))];
+    // The SSR test's `/<button\b/` is a regex literal, not a rendered tag:
+    // `\b` is neither whitespace nor `>`, so `<button[\s>]` never matches it.
+    const offenders = files
+      .filter((file) => !relative(ROOT, file).replace(/\\/g, "/").endsWith("ui/button.tsx"))
+      .filter((file) => /<button[\s>]/.test(readFileSync(file, "utf8")))
+      .map((file) => relative(ROOT, file));
+
+    expect(offenders).toEqual([]);
+  });
+
   it("keeps the modules shared with the new flow", () => {
     for (const file of [
       "lib/services/calculations.ts",

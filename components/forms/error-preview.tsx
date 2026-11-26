@@ -63,7 +63,7 @@ export function ErrorPreviewControl({ scenarios, selected, onSelect }: ErrorPrev
         aria-pressed={open}
         aria-expanded={open}
         aria-controls="error-preview-scenarios"
-        className="flex! items-center! gap-1.5! rounded-full! border! border-border-default! bg-surface! px-3! py-1.5! text-[11px]! font-semibold! text-fg-muted! shadow-md! transition! hover:border-accent-glow!"
+        className="min-h-0! flex! items-center! gap-1.5! rounded-full! border! border-border-default! bg-surface! px-3! py-1.5! text-[11px]! font-semibold! text-fg-muted! shadow-md! transition! hover:border-accent-glow!"
       >
         <span
           aria-hidden="true"

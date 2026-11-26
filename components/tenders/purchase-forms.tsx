@@ -107,7 +107,7 @@ export function NegotiationForm({
 
   if (!open) {
     return (
-      <Button variant="ghost" size="sm" type="button" onClick={() => setOpen(true)} className="text-sm! font-semibold! text-brand-green-700! underline!">
+      <Button variant="ghost" size="sm" type="button" onClick={() => setOpen(true)} className="min-h-0! text-sm! font-semibold! text-brand-green-700! underline!">
         Pedir negociar
       </Button>
     );

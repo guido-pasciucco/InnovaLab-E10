@@ -477,19 +477,19 @@ function HelpWidgetSession({
               }
               aria-label="Enviar pregunta"
               className="
-                flex! min-h-11 min-w-11
-                items-center justify-center
+                flex! min-h-11! min-w-11!
+                items-center! justify-center!
                 rounded-[14px]!
-                bg-action-primary
-                text-on-action-primary
-                transition-colors
-                hover:bg-action-primary-hover
-                focus-visible:outline-2
-                focus-visible:outline-offset-2
-                focus-visible:outline-focus
-                disabled:cursor-not-allowed
-                disabled:bg-action-disabled
-                disabled:text-fg-disabled
+                bg-action-primary!
+                text-on-action-primary!
+                transition-colors!
+                hover:bg-action-primary-hover!
+                focus-visible:outline-2!
+                focus-visible:outline-offset-2!
+                focus-visible:outline-focus!
+                disabled:cursor-not-allowed!
+                disabled:bg-action-disabled!
+                disabled:text-fg-disabled!
               "
             >
               <ArrowUp aria-hidden="true" size={20} />
@@ -530,20 +530,20 @@ function HelpWidgetSession({
           handleLauncherClick();
         }}
         className={`
-          pointer-events-auto
-          relative
-          flex h-[77px] w-[77px]
-          items-center justify-center
+          pointer-events-auto!
+          relative!
+          flex! h-[77px]! w-[77px]!
+          items-center! justify-center!
           rounded-full!
           bg-transparent!
           p-0!
           transition-transform!
           hover:bg-transparent!
-          hover:scale-105
-          focus-visible:outline-2
-          focus-visible:outline-offset-2
-          focus-visible:outline-focus
-          motion-reduce:transform-none
+          hover:scale-105!
+          focus-visible:outline-2!
+          focus-visible:outline-offset-2!
+          focus-visible:outline-focus!
+          motion-reduce:transform-none!
         `}
       >
         {!open && greetingVisible && (
