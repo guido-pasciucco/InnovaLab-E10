@@ -39,7 +39,9 @@ describe("NAV_SECTIONS", () => {
     const catalog = NAV_SECTIONS.find((section) => section.id === "catalogo");
     const hrefs = catalog?.items.map((item) => item.href);
 
-    expect(catalog?.items).toContainEqual(expect.objectContaining({ href: "/equilibrio", label: "Equilibrio" }));
+    expect(catalog?.items).toContainEqual(
+      expect.objectContaining({ href: "/equilibrio", label: "Punto de Equilibrio" }),
+    );
     expect(hrefs?.indexOf("/equilibrio")).toBe((hrefs?.indexOf("/precios") ?? -2) + 1);
   });
 });
