@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useId, useState } from "react";
 
 type HelpTooltipProps = {
@@ -17,7 +19,7 @@ export function HelpTooltip({ label, text, align = "left" }: HelpTooltipProps) {
 
   return (
     <span className="relative inline-flex items-center">
-      <button
+      <Button variant="ghost" size="sm"
         type="button"
         aria-label={`Ayuda: ${label}`}
         aria-expanded={open}
@@ -35,10 +37,10 @@ export function HelpTooltip({ label, text, align = "left" }: HelpTooltipProps) {
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border-control bg-surface text-xs font-bold text-fg-muted hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        className="inline-flex! min-h-5! h-5! w-5! items-center! justify-center! rounded-full! border! border-border-control! bg-surface! text-xs! font-bold! text-fg-muted! hover:bg-surface-tint! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus!"
       >
         ?
-      </button>
+      </Button>
       {open && (
         <span
           id={tooltipId}

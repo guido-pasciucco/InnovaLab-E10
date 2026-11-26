@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useActionState, useEffect, useState, useSyncExternalStore } from "react";
 
 import { dispatchInTransition } from "@/components/forms/dispatch-in-transition";
@@ -28,7 +30,7 @@ export function ResendButton() {
 
   return (
     <>
-      <button
+      <Button variant="outline" size="md"
         type="button"
         disabled={disabled}
         onClick={() => {
@@ -36,10 +38,10 @@ export function ResendButton() {
           setCooldown(COOLDOWN_SECONDS);
           dispatchInTransition(submitAction)({ email });
         }}
-        className="h-11 w-full rounded-lg border border-border-default bg-action-tonal px-4 text-sm font-bold text-on-action-tonal transition hover:bg-border-default disabled:cursor-not-allowed disabled:opacity-60 lg:text-base"
+        className="h-11! w-full! rounded-lg! border! border-border-default! bg-action-tonal! px-4! text-sm! font-bold! text-on-action-tonal! transition! hover:bg-border-default! disabled:cursor-not-allowed! disabled:opacity-60! lg:text-base!"
       >
         {pending ? "Enviando…" : cooldown > 0 ? `Reenviar correo (${cooldown}s)` : "Reenviar correo"}
-      </button>
+      </Button>
       {state?.ok && <p role="status" className="text-center text-xs text-fg-muted">Te lo reenviamos. Revisá tu bandeja de entrada.</p>}
       {state && !state.ok && <p role="alert" className="text-center text-xs text-danger">{state.message}</p>}
       {transportError && <p role="alert" className="text-center text-xs text-danger">{transportError}</p>}

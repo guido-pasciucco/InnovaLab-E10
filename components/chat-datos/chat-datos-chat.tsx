@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { ArrowUp, Mic } from "lucide-react";
@@ -176,41 +178,41 @@ export function ChatDatosChat() {
           </span>
         )}
         {canDictate && (
-          <button
+          <Button variant="ghost" size="sm"
             type="button"
             aria-label={listening ? "Dejar de escuchar" : "Hablar"}
             aria-pressed={listening}
             disabled={busy}
             onClick={toggleMic}
-            className={`mb-1 inline-flex size-9 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:text-fg-disabled ${
+            className={`mb-1 inline-flex size-9 shrink-0 items-center justify-center rounded-full! p-0! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:text-fg-disabled! ${
               listening
-                ? "bg-action-primary text-on-action-primary hover:bg-action-primary-hover"
-                : "text-fg-muted hover:bg-brand-green-50 hover:text-brand-green-700"
+                ? "bg-action-primary! text-on-action-primary! hover:bg-action-primary-hover!"
+                : "text-fg-muted! hover:bg-brand-green-50! hover:text-brand-green-700!"
             }`}
           >
             <Mic aria-hidden="true" size={18} />
-          </button>
+          </Button>
         )}
         {input.trim() !== "" && (
-          <button
+          <Button variant="primary" size="sm"
             type="submit"
             aria-label="Enviar"
             disabled={busy}
-            className="mb-1 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-action-primary text-on-action-primary hover:bg-action-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-action-disabled disabled:text-fg-disabled"
+            className="mb-1! inline-flex! size-9! shrink-0! items-center! justify-center! rounded-full! bg-action-primary! text-on-action-primary! hover:bg-action-primary-hover! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:bg-action-disabled! disabled:text-fg-disabled!"
           >
             <ArrowUp aria-hidden="true" size={18} strokeWidth={2.5} />
-          </button>
+          </Button>
         )}
       </div>
       {!empty && (
-        <button
+        <Button variant="ghost" size="md"
           type="button"
           onClick={reset}
           disabled={busy}
-          className="inline-flex min-h-11 items-center rounded-[14px] px-3 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:text-fg-disabled"
+          className="inline-flex! min-h-11! items-center! rounded-[14px]! px-3! text-sm! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:text-fg-disabled!"
         >
           Nueva conversación
-        </button>
+        </Button>
       )}
     </form>
   );
@@ -229,13 +231,13 @@ export function ChatDatosChat() {
           <ul className="grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-2" aria-label="Preguntas de ejemplo">
             {SUGGESTIONS.map((suggestion) => (
               <li key={suggestion}>
-                <button
+                <Button variant="outline" size="md"
                   type="button"
                   onClick={() => ask(suggestion)}
-                  className="flex min-h-16 w-full cursor-pointer items-center rounded-2xl border border-border-default bg-surface px-4 py-3 text-left text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  className="flex! min-h-16! w-full! cursor-pointer! items-center! rounded-2xl! border! border-border-default! bg-surface! px-4! py-3! text-left! text-sm! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus!"
                 >
                   {suggestion}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

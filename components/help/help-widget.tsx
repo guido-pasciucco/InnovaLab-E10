@@ -1,6 +1,6 @@
-
 "use client";
 
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { ArrowUp, X } from "lucide-react";
 import {
@@ -125,15 +125,15 @@ export function MoraWelcome({
         aria-label="Preguntas sugeridas"
       >
         {SUGGESTED_QUESTIONS.map((question) => (
-          <button
+          <Button variant="ghost" size="md"
             key={question}
             type="button"
             disabled={disabled}
             onClick={() => onSelect(question)}
-            className="min-h-11 rounded-full border border-border-default bg-surface-tint px-3 py-2 text-left text-xs font-medium text-fg transition-colors hover:border-action-primary hover:bg-action-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
+            className="min-h-11! rounded-full! border! border-border-default! bg-surface-tint! px-3! py-2! text-left! text-xs! font-medium! text-fg! transition-colors! hover:border-action-primary! hover:bg-action-tonal! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:opacity-50!"
           >
             {question}
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -168,13 +168,6 @@ function HelpWidgetSession({
       guard.invalidate();
     };
   }, []);
-
-  useEffect(() => {
-    if (open) {
-      setGreetingVisible(false);
-      setAvatarHovered(false);
-    }
-  }, [open]);
 
   // Persistir la conversación por usuario.
   useEffect(() => {
@@ -306,6 +299,8 @@ function HelpWidgetSession({
 
   function openAssistant() {
     loadedRef.current = true;
+    setGreetingVisible(false);
+    setAvatarHovered(false);
 
     if (userId) {
       setMessages(readHelpThread(sessionStorage, userId));
@@ -385,15 +380,15 @@ function HelpWidgetSession({
               )}
             </div>
 
-            <button
+            <Button variant="ghost" size="md"
               ref={closeButtonRef}
               type="button"
               onClick={closeAssistant}
               aria-label="Cerrar Mora"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-fg-muted transition-colors hover:bg-action-tonal hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="flex! min-h-11! min-w-11! items-center! justify-center! rounded-xl! text-fg-muted! transition-colors! hover:bg-action-tonal! hover:text-fg! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus!"
             >
               <X aria-hidden="true" size={20} />
-            </button>
+            </Button>
           </header>
 
           {/* Conversación */}
@@ -475,36 +470,36 @@ function HelpWidgetSession({
               "
             />
 
-            <button
+            <Button variant="primary" size="md"
               type="submit"
               disabled={
                 preview || pending || draft.trim().length === 0
               }
               aria-label="Enviar pregunta"
               className="
-                flex min-h-11 min-w-11
-                items-center justify-center
-                rounded-[14px]
-                bg-action-primary
-                text-on-action-primary
-                transition-colors
-                hover:bg-action-primary-hover
-                focus-visible:outline-2
-                focus-visible:outline-offset-2
-                focus-visible:outline-focus
-                disabled:cursor-not-allowed
-                disabled:bg-action-disabled
-                disabled:text-fg-disabled
+                flex! min-h-11! min-w-11!
+                items-center! justify-center!
+                rounded-[14px]!
+                bg-action-primary!
+                text-on-action-primary!
+                transition-colors!
+                hover:bg-action-primary-hover!
+                focus-visible:outline-2!
+                focus-visible:outline-offset-2!
+                focus-visible:outline-focus!
+                disabled:cursor-not-allowed!
+                disabled:bg-action-disabled!
+                disabled:text-fg-disabled!
               "
             >
               <ArrowUp aria-hidden="true" size={20} />
-            </button>
+            </Button>
           </form>
         </section>
       )}
 
       {/* Botón flotante: solo la mascota, sin recuadro */}
-      <button
+      <Button variant="ghost" size="md"
         ref={launcherRef}
         type="button"
         aria-expanded={open}
@@ -535,18 +530,20 @@ function HelpWidgetSession({
           handleLauncherClick();
         }}
         className={`
-          pointer-events-auto
-          relative
-          flex h-[77px] w-[77px]
-          items-center justify-center
-          rounded-full
-          bg-transparent
-          transition-transform
-          hover:scale-105
-          focus-visible:outline-2
-          focus-visible:outline-offset-2
-          focus-visible:outline-focus
-          motion-reduce:transform-none
+          pointer-events-auto!
+          relative!
+          flex! h-[77px]! w-[77px]!
+          items-center! justify-center!
+          rounded-full!
+          bg-transparent!
+          p-0!
+          transition-transform!
+          hover:bg-transparent!
+          hover:scale-105!
+          focus-visible:outline-2!
+          focus-visible:outline-offset-2!
+          focus-visible:outline-focus!
+          motion-reduce:transform-none!
         `}
       >
         {!open && greetingVisible && (
@@ -585,7 +582,7 @@ function HelpWidgetSession({
             className="h-[77px] w-[77px] object-contain drop-shadow-[0_10px_18px_rgba(76,37,98,0.22)]"
           />
         </span>
-      </button>
+      </Button>
     </div>
   );
 }

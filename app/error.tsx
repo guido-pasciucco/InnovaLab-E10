@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useEffect } from "react";
 
 export default function Error({
@@ -25,13 +27,13 @@ export default function Error({
         Algo salió mal. Inténtalo de nuevo.
       </p>
 
-      <button
+      <Button variant="primary" size="md"
         type="button"
         onClick={() => retry()}
-        className= "rounded bg-action-primary px-4 py-2 font-medium text-on-action-primary hover:bg-action-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+        className="rounded! bg-action-primary! px-4! py-2! font-medium! text-on-action-primary! hover:bg-action-primary-hover! focus-visible:outline-none! focus-visible:ring-2! focus-visible:ring-focus! focus-visible:ring-offset-2!"
       >
         Reintentar
-      </button>
+      </Button>
     </div>
   );
 }
