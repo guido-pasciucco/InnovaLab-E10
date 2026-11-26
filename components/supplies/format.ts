@@ -8,12 +8,13 @@ export const moneyFormat = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-// The cost per minimum unit can need more than 2 decimals (e.g. $0,006/g).
+// The cost per minimum unit is displayed with exactly 2 decimals, like any
+// money amount; the engine keeps the exact value and only the display rounds.
 export const unitPriceFormat = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
   minimumFractionDigits: 2,
-  maximumFractionDigits: 4,
+  maximumFractionDigits: 2,
 });
 
 export const quantityFormat = new Intl.NumberFormat("es-AR", {
