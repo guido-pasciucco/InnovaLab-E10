@@ -1,16 +1,17 @@
+import { referenceTotals } from "./reference-example";
+
+// Same visual language as the old home preview, now driven by the worked
+// example: one "mix unit" is the weighted average of the two presentations.
 const WIDTH = 560;
 const HEIGHT = 300;
 const PADDING = { top: 24, right: 18, bottom: 38, left: 58 };
 
 const MAX_UNITS = 100;
-const MAX_VALUE = 2_600_000;
-const FIXED_COSTS = 180_000;
-const UNIT_PRICE = 24_900;
-const UNIT_COST = 21_065;
-const BREAK_EVEN_UNITS = 47;
-const BREAK_EVEN_VALUE = BREAK_EVEN_UNITS * UNIT_PRICE;
+const MAX_VALUE = 100_000;
+const FIXED_COSTS = 30_000;
+const { weightedPrice, weightedContribution, breakEvenUnits } = referenceTotals;
 
-const Y_TICKS = [2_600_000, 1_950_000, 1_300_000, 650_000, 0];
+const Y_TICKS = [100_000, 75_000, 50_000, 25_000, 0];
 const X_TICKS = [0, 25, 50, 75, 100];
 
 function x(units: number) {
@@ -24,29 +25,22 @@ function y(value: number) {
 }
 
 function revenue(units: number) {
-  return units * UNIT_PRICE;
+  return units * weightedPrice;
 }
 
 function totalCost(units: number) {
-  return FIXED_COSTS + units * UNIT_COST;
+  return FIXED_COSTS + units * weightedContribution;
 }
 
 function moneyLabel(value: number) {
-  if (value === 0) {
-    return "$0";
-  }
-
-  if (value >= 1_000_000) {
-    const millions = Math.round((value / 1_000_000) * 100) / 100;
-    return `$${String(millions).replace(".", ",")} M`;
-  }
-
+  if (value === 0) return "$0";
   return `$${Math.round(value / 1000)} mil`;
 }
 
-export function BreakEvenPreviewChart() {
+export function BreakEvenChart() {
+  const breakEvenValue = revenue(breakEvenUnits);
   const profitArea = [
-    `${x(BREAK_EVEN_UNITS)} ${y(revenue(BREAK_EVEN_UNITS))}`,
+    `${x(breakEvenUnits)} ${y(breakEvenValue)}`,
     `${x(MAX_UNITS)} ${y(revenue(MAX_UNITS))}`,
     `${x(MAX_UNITS)} ${y(totalCost(MAX_UNITS))}`,
   ].join(" L ");
@@ -55,18 +49,17 @@ export function BreakEvenPreviewChart() {
     <svg
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
       role="img"
-      aria-labelledby="break-even-chart-title break-even-chart-description"
+      aria-labelledby="reference-chart-title reference-chart-description"
       className="h-auto w-full"
     >
-      <title id="break-even-chart-title">Gráfico de punto de equilibrio</title>
-      <desc id="break-even-chart-description">
-        Los ingresos y los costos totales se cruzan en 47 unidades. Con costos fijos de $180.000,
-        costo variable unitario de $21.065 y precio de venta de $24.900, el punto de equilibrio es de
-        $1.170.300.
+      <title id="reference-chart-title">Gráfico del punto de equilibrio del ejemplo</title>
+      <desc id="reference-chart-description">
+        Con gastos de 30.000 pesos, los ingresos y los costos totales se cruzan en 62,07 unidades de
+        mezcla, lo que equivale a 52.758,62 pesos de ventas.
       </desc>
 
       <defs>
-        <linearGradient id="break-even-profit" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="reference-break-even-profit" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--color-action-primary)" stopOpacity="0.22" />
           <stop offset="100%" stopColor="var(--color-action-primary)" stopOpacity="0.04" />
         </linearGradient>
@@ -95,7 +88,7 @@ export function BreakEvenPreviewChart() {
         </g>
       ))}
 
-      <path d={`M ${profitArea} Z`} fill="url(#break-even-profit)" />
+      <path d={`M ${profitArea} Z`} fill="url(#reference-break-even-profit)" />
 
       <line
         x1={x(0)}
@@ -106,7 +99,6 @@ export function BreakEvenPreviewChart() {
         strokeWidth="1.6"
         strokeDasharray="5 5"
       />
-
       <line
         x1={x(0)}
         y1={y(revenue(0))}
@@ -127,9 +119,9 @@ export function BreakEvenPreviewChart() {
       />
 
       <line
-        x1={x(BREAK_EVEN_UNITS)}
-        y1={y(BREAK_EVEN_VALUE)}
-        x2={x(BREAK_EVEN_UNITS)}
+        x1={x(breakEvenUnits)}
+        y1={y(breakEvenValue)}
+        x2={x(breakEvenUnits)}
         y2={y(0)}
         stroke="var(--color-action-primary)"
         strokeWidth="1"
@@ -137,8 +129,8 @@ export function BreakEvenPreviewChart() {
         opacity="0.5"
       />
       <circle
-        cx={x(BREAK_EVEN_UNITS)}
-        cy={y(BREAK_EVEN_VALUE)}
+        cx={x(breakEvenUnits)}
+        cy={y(breakEvenValue)}
         r="4.5"
         fill="var(--color-action-primary)"
         stroke="var(--color-surface)"
@@ -147,30 +139,25 @@ export function BreakEvenPreviewChart() {
 
       <g>
         <rect
-          x={x(BREAK_EVEN_UNITS) + 10}
-          y={y(BREAK_EVEN_VALUE) - 48}
-          width="152"
+          x={x(breakEvenUnits) + 10}
+          y={y(breakEvenValue) - 48}
+          width="160"
           height="38"
           rx="9"
           fill="var(--color-surface)"
           stroke="var(--color-border-default)"
         />
-        <text
-          x={x(BREAK_EVEN_UNITS) + 20}
-          y={y(BREAK_EVEN_VALUE) - 33}
-          fontSize="9"
-          fill="var(--color-fg-muted)"
-        >
-          Punto de equilibrio
+        <text x={x(breakEvenUnits) + 20} y={y(breakEvenValue) - 33} fontSize="9" fill="var(--color-fg-muted)">
+          Ventas de equilibrio
         </text>
         <text
-          x={x(BREAK_EVEN_UNITS) + 20}
-          y={y(BREAK_EVEN_VALUE) - 19}
+          x={x(breakEvenUnits) + 20}
+          y={y(breakEvenValue) - 19}
           fontSize="11"
           fontWeight="700"
           fill="var(--color-fg)"
         >
-          47 unidades
+          {referenceTotals.breakEvenSales}
         </text>
       </g>
 
@@ -184,7 +171,7 @@ export function BreakEvenPreviewChart() {
           fontWeight="500"
           fill="var(--color-fg-muted)"
         >
-          {tick === MAX_UNITS ? "100 u." : tick}
+          {tick === MAX_UNITS ? "100 u. de mezcla" : tick}
         </text>
       ))}
     </svg>
