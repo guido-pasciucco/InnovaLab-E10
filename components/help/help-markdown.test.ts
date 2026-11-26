@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import { HelpMarkdown } from "./help-markdown";
 
-function render(content: string): string {
-  return renderToStaticMarkup(createElement(HelpMarkdown, { content }));
+function render(content: string, chatDatosEnabled = false): string {
+  return renderToStaticMarkup(createElement(HelpMarkdown, { content, chatDatosEnabled }));
 }
 
 describe("HelpMarkdown", () => {
@@ -72,5 +72,20 @@ expect(ordered).toContain(">segundo</li>");
 
   it("renders nothing for empty content", () => {
     expect(render("")).toBe("");
+  });
+
+  it("keeps the data-agent label as plain text while the feature is disabled", () => {
+    const html = render("Usá Hablá con tus datos para analizarlo.");
+
+    expect(html).toContain("Hablá con tus datos");
+    expect(html).not.toContain("href=");
+  });
+
+  it("links the data-agent label to the fixed internal route while enabled", () => {
+    const html = render("Usá Hablá con tus datos para analizarlo.", true);
+
+    expect(html).toContain('href="/chat-datos"');
+    expect(html).not.toContain("http://");
+    expect(html).not.toContain("https://");
   });
 });

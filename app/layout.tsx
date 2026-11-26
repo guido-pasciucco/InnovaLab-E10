@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { HelpWidget } from "@/components/help/help-widget";
+import { isChatDatosEnabled } from "@/lib/chat-datos/config";
 import { isHelpEnabled, isHelpPreviewEnabled } from "@/lib/help/config";
 import { getOptionalUser } from "@/lib/auth/optional-user";
 import "./globals.css";
@@ -27,7 +28,8 @@ export default async function RootLayout({
 }>) {
   const helpEnabled = isHelpEnabled();
   const helpPreview = !helpEnabled && isHelpPreviewEnabled();
-  const user = helpEnabled ? await getOptionalUser() : null;
+  const user = helpEnabled || helpPreview ? await getOptionalUser() : null;
+  const chatDatosEnabled = Boolean(user) && isChatDatosEnabled();
 
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased overflow-x-clip`}>
@@ -81,6 +83,7 @@ export default async function RootLayout({
             enabled={helpEnabled}
             preview={helpPreview}
             userId={user?.id ?? null}
+            chatDatosEnabled={chatDatosEnabled}
           />
         </div>
       </body>

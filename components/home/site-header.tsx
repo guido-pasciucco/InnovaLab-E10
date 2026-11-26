@@ -253,4 +253,3 @@ export function SiteHeader({ isSignedIn }: SiteHeaderProps) {
     </header>
   );
 }
-

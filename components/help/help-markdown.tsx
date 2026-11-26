@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 // Safe Markdown renderer for the assistant's replies in the help chat.
@@ -90,9 +91,16 @@ export function parseHelpMarkdown(source: string): Block[] {
 
 // Inline formatting: **bold**, *italic* and `code`. Unmatched markers stay
 // visible as text, which is what a half-streamed message needs.
-const INLINE_PATTERN = /(\*\*[^*]+\*\*|\*[^*\n]+\*|`[^`]+`)/g;
+// Only this fixed internal destination may become a link. The model never
+// supplies a URL; the phrase is replaced by a validated Next.js route.
+const CHAT_DATOS_LABEL = "Hablá con tus datos";
+const CHAT_DATOS_HREF = "/chat-datos";
+const INLINE_PATTERN = new RegExp(
+  `(\\*\\*[^*]+\\*\\*|\\*[^*\\n]+\\*|\`[^\`]+\`|${CHAT_DATOS_LABEL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+  "g",
+);
 
-function renderInline(text: string, keyPrefix: string): ReactNode[] {
+function renderInline(text: string, keyPrefix: string, chatDatosEnabled: boolean): ReactNode[] {
   const nodes: ReactNode[] = [];
   INLINE_PATTERN.lastIndex = 0;
   let cursor = 0;
@@ -107,7 +115,21 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
     pushText(text.slice(cursor, match.index));
     const token = match[0];
     const key = `${keyPrefix}-${order}`;
-    if (token.startsWith("**")) {
+    if (token === CHAT_DATOS_LABEL) {
+      if (chatDatosEnabled) {
+        nodes.push(
+          <Link
+            key={key}
+            href={CHAT_DATOS_HREF}
+            className="font-medium text-brand-green-700 underline underline-offset-2 hover:text-brand-green-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            {CHAT_DATOS_LABEL}
+          </Link>,
+        );
+      } else {
+        pushText(CHAT_DATOS_LABEL);
+      }
+    } else if (token.startsWith("**")) {
       nodes.push(<strong key={key}>{token.slice(2, -2)}</strong>);
     } else if (token.startsWith("`")) {
       nodes.push(
@@ -128,7 +150,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
 
 // Headings stay chat-sized: a styled paragraph instead of h1-h6, so a reply
 // never breaks the page's heading outline or dwarfs the surrounding text.
-function renderBlock(block: Block, index: number): ReactNode {
+function renderBlock(block: Block, index: number, chatDatosEnabled: boolean): ReactNode {
   const key = String(index);
   switch (block.type) {
     case "heading":
@@ -141,13 +163,13 @@ function renderBlock(block: Block, index: number): ReactNode {
               : "text-xs font-semibold text-fg-muted"
           }
         >
-          {renderInline(block.text, key)}
+          {renderInline(block.text, key, chatDatosEnabled)}
         </p>
       );
     case "list": {
       const items = block.items.map((item, itemIndex) => (
         <li key={`${key}-${itemIndex}`} className="whitespace-pre-line">
-          {renderInline(item, `${key}-${itemIndex}`)}
+          {renderInline(item, `${key}-${itemIndex}`, chatDatosEnabled)}
         </li>
       ));
       return block.ordered ? (
@@ -163,7 +185,7 @@ function renderBlock(block: Block, index: number): ReactNode {
     case "paragraph":
       return (
         <p key={key} className="whitespace-pre-line">
-          {renderInline(block.text, key)}
+          {renderInline(block.text, key, chatDatosEnabled)}
         </p>
       );
   }
@@ -171,10 +193,15 @@ function renderBlock(block: Block, index: number): ReactNode {
 
 type HelpMarkdownProps = {
   content: string;
+  chatDatosEnabled?: boolean;
 };
 
-export function HelpMarkdown({ content }: HelpMarkdownProps) {
+export function HelpMarkdown({ content, chatDatosEnabled = false }: HelpMarkdownProps) {
   const blocks = parseHelpMarkdown(content);
   if (blocks.length === 0) return null;
-  return <div className="space-y-2 leading-relaxed">{blocks.map(renderBlock)}</div>;
+  return (
+    <div className="space-y-2 leading-relaxed">
+      {blocks.map((block, index) => renderBlock(block, index, chatDatosEnabled))}
+    </div>
+  );
 }

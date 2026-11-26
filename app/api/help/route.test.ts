@@ -8,6 +8,7 @@ const acquireHelpLeaseService = vi.fn();
 const readHelpConfig = vi.fn();
 const readHelpContext = vi.fn();
 const createBedrockHelpModel = vi.fn();
+const isChatDatosEnabled = vi.fn();
 
 vi.mock("@/lib/supabase/rsc", () => ({ createRscSupabaseClient: async () => ({ tag: "rsc-client" }) }));
 vi.mock("@/lib/services/auth", () => ({
@@ -22,6 +23,7 @@ vi.mock("@/lib/help/corpus", () => ({
   readHelpContext: (...args: unknown[]) => readHelpContext(...args),
 }));
 vi.mock("@/lib/help/bedrock", () => ({ createBedrockHelpModel: () => createBedrockHelpModel() }));
+vi.mock("@/lib/chat-datos/config", () => ({ isChatDatosEnabled: () => isChatDatosEnabled() }));
 
 const { POST } = await import("./route");
 
@@ -93,6 +95,7 @@ describe("POST /api/help", () => {
       secretAccessKey: "secret",
     });
     readHelpContext.mockReturnValue("Margen: parte del precio de venta que no es costo.");
+    isChatDatosEnabled.mockReturnValue(false);
     createBedrockHelpModel.mockReturnValue(fakeModel(yielding("Es la parte ", "del precio.")));
     getSessionUserService.mockResolvedValue(sessionUser);
     acquireHelpLeaseService.mockResolvedValue({ id: "lease-1", release: vi.fn() });
@@ -138,6 +141,22 @@ describe("POST /api/help", () => {
     expect(readHelpContext).toHaveBeenCalledWith(validThread);
     expect(system).toContain("Sos Mora");
     expect(system).toContain("Margen: parte del precio de venta que no es costo.");
+    expect(system).toContain("no está disponible para esta persona");
+  });
+
+  it("allows recommending the data agent only when the shared feature flag is enabled", async () => {
+    let system = "";
+    isChatDatosEnabled.mockReturnValue(true);
+    createBedrockHelpModel.mockReturnValue(
+      fakeModel(yielding("ok"), (input) => {
+        system = (input as unknown as { system?: string }).system ?? "";
+      }),
+    );
+
+    await POST(post(validThread));
+
+    expect(system).toContain("La función «Hablá con tus datos» está disponible");
+    expect(system).toContain("enlace interno seguro");
   });
 
   it("keeps the plain text contract of the response", async () => {

@@ -40,8 +40,18 @@ export function isHelpEnabled(env: HelpEnv = process.env): boolean {
   return readHelpConfig(env) !== null;
 }
 
-// Visual preview of the assistant: shows the launcher and panel with queries
-// disabled, so the design can be reviewed without AWS credentials.
+// Visual-only mode for local review. Requiring both the development runtime
+// and an explicit loopback SITE_URL keeps it unavailable in deployments.
 export function isHelpPreviewEnabled(env: HelpEnv = process.env): boolean {
-  return env.HELP_PREVIEW === "true";
+  if (env.NODE_ENV !== "development" || env.HELP_PREVIEW !== "true") return false;
+
+  try {
+    const url = new URL(env.SITE_URL ?? "");
+    return (
+      url.protocol === "http:" &&
+      ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+    );
+  } catch {
+    return false;
+  }
 }
