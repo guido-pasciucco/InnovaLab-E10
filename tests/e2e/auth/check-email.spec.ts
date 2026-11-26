@@ -21,6 +21,9 @@ test("a new user resends the confirmation email and sees the cooldown", async ({
   const resendButton = page.getByRole("button", { name: /^(Reenviar correo|Enviando…)/ });
   await expect(resendButton).toBeVisible();
 
+  // GoTrue rejects a resend that lands in the same second as the signup email.
+  await page.waitForTimeout(1500);
+
   // Act
   await resendButton.click();
 
