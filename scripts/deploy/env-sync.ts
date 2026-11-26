@@ -167,6 +167,10 @@ async function main(): Promise<void> {
       if (REQUIRED.includes(key)) problems.push(`${key}: falta en ${ENV_FILE}`);
       continue;
     }
+    if (key === "HELP_PREVIEW" && environment === "production") {
+      problems.push(`${key}: no debe sincronizarse a production`);
+      continue;
+    }
     const problem = describeProblem(key, value);
     if (problem) {
       problems.push(`${key}: ${problem}`);
