@@ -141,6 +141,23 @@ export function PeriodCostsCatalog({
           </button>
         </div>
 
+        <div
+          role="note"
+          className="flex flex-col gap-3 rounded-[16px] border border-border-tonal bg-surface-tint px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-sm text-fg">
+            ¿Cargaste tu trabajo del mes? Tu sueldo también es un gasto del período: sumalo como un gasto más para que el cálculo te dé el número real.
+          </p>
+          <button
+            type="button"
+            onClick={handleNew}
+            disabled={isDeleting}
+            className="min-h-11 w-full shrink-0 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-sm font-semibold text-fg hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          >
+            Cargar mi sueldo
+          </button>
+        </div>
+
         {lines.length > 0 && (
           <div className="flex flex-col gap-1">
             <label htmlFor="period-costs-search" className="text-sm font-semibold text-fg-muted">

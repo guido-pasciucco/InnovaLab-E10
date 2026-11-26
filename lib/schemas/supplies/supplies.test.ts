@@ -67,4 +67,29 @@ describe("supplySchema", () => {
       purchaseQuantity: ["La cantidad debe tener hasta 4 decimales."],
     });
   });
+
+  it.each([
+    { raw: "1,5", normalized: "1.5" },
+    { raw: "1,2345", normalized: "1.2345" },
+  ])("accepts the comma quantity $raw and stores $normalized", ({ raw, normalized }) => {
+    const result = supplySchema.safeParse({ ...validSupply, purchaseQuantity: raw });
+
+    expect(result.success).toBe(true);
+    expect(result.success ? result.data.purchaseQuantity : null).toBe(normalized);
+  });
+
+  it("rejects more than four quantity decimals written with a comma", () => {
+    expect(fieldErrors(supplySchema, { ...validSupply, purchaseQuantity: "1,23456" })).toEqual({
+      purchaseQuantity: ["La cantidad debe tener hasta 4 decimales."],
+    });
+  });
+
+  it.each([",5", "1,", "1,2,3"])(
+    "rejects the comma quantity %j because it is not one decimal number",
+    (purchaseQuantity) => {
+      expect(fieldErrors(supplySchema, { ...validSupply, purchaseQuantity })).toEqual({
+        purchaseQuantity: ["La cantidad debe ser un número."],
+      });
+    },
+  );
 });
