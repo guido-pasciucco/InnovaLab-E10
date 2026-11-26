@@ -123,7 +123,7 @@ export default function SignupForm() {
           type="button"
           onClick={() => setShowPreviewErrors((visible) => !visible)}
           aria-pressed={showPreviewErrors}
-          className="fixed! bottom-3! left-3! z-40! flex! items-center! gap-1.5! rounded-full! border! border-border-default! bg-surface! px-3! py-1.5! text-[11px]! font-semibold! text-fg-muted! shadow-md! transition! hover:border-accent-glow! sm:left-auto! sm:right-3!"
+          className="min-h-0! fixed! bottom-3! left-3! z-40! flex! items-center! gap-1.5! rounded-full! border! border-border-default! bg-surface! px-3! py-1.5! text-[11px]! font-semibold! text-fg-muted! shadow-md! transition! hover:border-accent-glow! sm:left-auto! sm:right-3!"
         >
           <span aria-hidden="true" className={`size-2 rounded-full ${showPreviewErrors ? "bg-danger" : "bg-accent-glow"}`} />
           {showPreviewErrors ? "Ocultar errores (demo)" : "Mostrar errores (demo)"}
