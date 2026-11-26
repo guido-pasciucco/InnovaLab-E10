@@ -101,7 +101,7 @@ El precio acordado puede reemplazar al del insumo en el Maestro de Insumos y ali
 | <a id="RN-10"></a>RN-10 | En cada ronda el proveedor puede mejorar con precio menor al suyo anterior (llegue o no al objetivo) o ratificar. Nunca oferta por encima de su último precio; la primera oferta no supera el precio de partida. Sin respuesta, ratifica. |
 | <a id="RN-11"></a>RN-11 | En la primera versión todos los proveedores invitados siguen en carrera hasta el cierre: el emprendedor no puede excluir a ninguno durante la licitación. |
 | <a id="RN-12"></a>RN-12 | La licitación cierra sola al vencer la duración y no se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires). |
-| <a id="RN-18"></a>RN-18 | Si al terminar la primera ronda uno o más insumos no recibieron ofertas, la aplicación avisa una sola vez cuáles son. El emprendedor puede dejarla seguir (lo que pasa si no hace nada) o cancelar la licitación entera; no puede sumar proveedores ni quitar insumos. |
+| <a id="RN-18"></a>RN-18 | Si al terminar la primera ronda uno o más insumos no recibieron ofertas, la aplicación avisa una sola vez cuáles son. El aviso solo ofrece "Dejar que siga" (equivalente a no hacer nada); la cancelación se hace aparte, con doble confirmación, desde las acciones generales de la licitación. No se pueden sumar proveedores ni quitar insumos. |
 | <a id="RN-20"></a>RN-20 | En una canasta el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. RN-10 se aplica insumo por insumo. En el cuadro, un insumo no cotizado figura sin oferta. |
 
 ### 3.4 Cierre y compra
@@ -287,7 +287,7 @@ Los textos entre comillas son los que debe mostrar la aplicación. El detalle co
 | QA-31 | Pasar a ronda 2 | Aviso con objetivo $ 900,00 y botón "Enviar ofertas de la ronda 2". |
 | QA-32 | Ronda 2 dejando vacío el primer insumo | La oferta de 950 sigue vigente. |
 | QA-33 | Ofertar desde pestaña tras el cierre | "La licitación ya cerró o fue cancelada." |
-| QA-34 | Insumo sin ofertas al pasar a ronda 2 | Aviso en licitación y `/licitaciones`, con "Dejar que siga" y "Cancelar la licitación". |
+| QA-34 | Insumo sin ofertas al pasar a ronda 2 | Aviso en licitación y `/licitaciones`, solo con "Dejar que siga"; la cancelación sigue en las acciones generales. |
 | QA-35 | Tocar "Dejar que siga" | El aviso desaparece y no vuelve. |
 | QA-36 | Cerrar y abrir licitación | "Cuadro comparativo" ordenado, mínimo resaltado, diferencias en pesos y %, sin elegir por E1. |
 | QA-37 | Mirar insumo sin ofertas | Marcado "Desierto": "Nadie ofertó por este insumo. Podés publicar una licitación nueva para él." |
