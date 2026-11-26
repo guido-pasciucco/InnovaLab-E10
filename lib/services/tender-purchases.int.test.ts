@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
 
-import { createLinkedSupplier, createSupply } from "../../tests/support/factories/tender";
+import { createRegisteredSupplier, createSupply } from "../../tests/support/factories/tender";
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
 import {
@@ -71,9 +71,9 @@ async function closedTender({ withSilentSupplier = false } = {}) {
   track(owner);
   const flour = await createSupply(owner.id, "Harina 000", db);
   const sugar = await createSupply(owner.id, "Azúcar", db);
-  const molino = await createLinkedSupplier(owner, db, track, "Molino San José");
-  const dulce = await createLinkedSupplier(owner, db, track, "Dulce SA");
-  const silent = withSilentSupplier ? await createLinkedSupplier(owner, db, track, "Sin Oferta SRL") : null;
+  const molino = await createRegisteredSupplier(db, track, "Molino San José");
+  const dulce = await createRegisteredSupplier(db, track, "Dulce SA");
+  const silent = withSilentSupplier ? await createRegisteredSupplier(db, track, "Sin Oferta SRL") : null;
   const { id } = await publishTenderService(
     owner.id,
     {
@@ -84,7 +84,6 @@ async function closedTender({ withSilentSupplier = false } = {}) {
         { supplyId: flour.id, quantity: "50", startingPrice: "800.00" },
         { supplyId: sugar.id, quantity: "20", startingPrice: "1000.00" },
       ],
-      supplierIds: silent ? [molino.id, dulce.id, silent.id] : [molino.id, dulce.id],
     },
     db,
     start,
@@ -92,7 +91,8 @@ async function closedTender({ withSilentSupplier = false } = {}) {
   const detail = await getTenderDetailService(owner.id, id, db, start);
   const flourId = detail.items[0]!.id;
   const sugarId = detail.items[1]!.id;
-  const invitation = (supplier: CreatedUser) => detail.invitations.find((i) => i.supplierUserId === supplier.id)!.id;
+  // Offers and awards are keyed by the supplier's user id (#309).
+  const userId = (supplier: CreatedUser) => supplier.id;
   await submitOffersService(
     molino.id,
     id,
@@ -113,9 +113,9 @@ async function closedTender({ withSilentSupplier = false } = {}) {
     tenderId: id,
     flourId,
     sugarId,
-    molinoInv: invitation(molino),
-    dulceInv: invitation(dulce),
-    silentInv: silent ? invitation(silent) : null,
+    molinoUserId: userId(molino),
+    dulceUserId: userId(dulce),
+    silentUserId: silent ? userId(silent) : null,
   };
 }
 
@@ -123,14 +123,14 @@ describe("awardItemService (RN-14)", () => {
   it("chooses a supplier per item, splitting the purchase, and allows changing the choice", async () => {
     const t = await closedTender();
 
-    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.molinoInv, unitPrice: "780" }, db, at(25));
-    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.dulceInv, unitPrice: "740" }, db, at(26));
-    await awardItemService(t.owner.id, t.tenderId, { itemId: t.sugarId, invitationId: t.molinoInv, unitPrice: "940" }, db, at(26));
+    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.molinoUserId, unitPrice: "780" }, db, at(25));
+    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.dulceUserId, unitPrice: "740" }, db, at(26));
+    await awardItemService(t.owner.id, t.tenderId, { itemId: t.sugarId, supplierUserId: t.molinoUserId, unitPrice: "940" }, db, at(26));
 
     const detail = await getTenderDetailService(t.owner.id, t.tenderId, db, at(27));
     expect(detail.awards).toEqual([
-      { itemId: t.flourId, invitationId: t.dulceInv, unitPrice: "740.00", createdAt: at(26) },
-      { itemId: t.sugarId, invitationId: t.molinoInv, unitPrice: "940.00", createdAt: at(26) },
+      { itemId: t.flourId, supplierUserId: t.dulceUserId, unitPrice: "740.00", createdAt: at(26) },
+      { itemId: t.sugarId, supplierUserId: t.molinoUserId, unitPrice: "940.00", createdAt: at(26) },
     ]);
   });
 
@@ -139,12 +139,12 @@ describe("awardItemService (RN-14)", () => {
 
     expect(
       (await failure(
-        awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.dulceInv, unitPrice: "740" }, db, at(23)),
+        awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.dulceUserId, unitPrice: "740" }, db, at(23)),
       )).code,
     ).toBe("TENDER_NOT_CLOSED");
     expect(
       (await failure(
-        awardItemService(t.owner.id, t.tenderId, { itemId: t.sugarId, invitationId: t.dulceInv, unitPrice: "900" }, db, at(25)),
+        awardItemService(t.owner.id, t.tenderId, { itemId: t.sugarId, supplierUserId: t.dulceUserId, unitPrice: "900" }, db, at(25)),
       )).code,
     ).toBe("TENDER_NO_OFFER");
   });
@@ -155,7 +155,7 @@ describe("awardItemService (RN-14)", () => {
 
     expect(
       (await failure(
-        awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.dulceInv, unitPrice: "740" }, db, at(25)),
+        awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.dulceUserId, unitPrice: "740" }, db, at(25)),
       )).code,
     ).toBe("TENDER_NOT_CLOSED");
   });
@@ -165,9 +165,9 @@ describe("requestNegotiationService (RN-21)", () => {
   it("tells the supplier in its panel and shares the emprendedor's contact", async () => {
     const t = await closedTender();
 
-    await requestNegotiationService(t.owner.id, t.tenderId, { invitationId: t.molinoInv, contact: "ana@panaderia.test / 11 5555-0000" }, db, at(25));
+    await requestNegotiationService(t.owner.id, t.tenderId, { supplierUserId: t.molinoUserId, contact: "ana@panaderia.test / 11 5555-0000" }, db, at(25));
     // A second request keeps the first one.
-    await requestNegotiationService(t.owner.id, t.tenderId, { invitationId: t.molinoInv, contact: "otro" }, db, at(26));
+    await requestNegotiationService(t.owner.id, t.tenderId, { supplierUserId: t.molinoUserId, contact: "otro" }, db, at(26));
 
     const view = await getSupplierTenderService(t.molino.id, t.tenderId, db, at(27));
     expect(view.negotiation).toEqual({ requestedAt: at(25), contact: "ana@panaderia.test / 11 5555-0000" });
@@ -185,7 +185,7 @@ describe("requestNegotiationService (RN-21)", () => {
     const t = await closedTender({ withSilentSupplier: true });
     expect(
       (await failure(
-        requestNegotiationService(t.owner.id, t.tenderId, { invitationId: t.silentInv!, contact: "11 5555-0000" }, db, at(25)),
+        requestNegotiationService(t.owner.id, t.tenderId, { supplierUserId: t.silentUserId!, contact: "11 5555-0000" }, db, at(25)),
       )).code,
     ).toBe("TENDER_NO_OFFER");
   });
@@ -193,7 +193,7 @@ describe("requestNegotiationService (RN-21)", () => {
   it("requires a contact", async () => {
     const t = await closedTender();
     await expect(
-      requestNegotiationService(t.owner.id, t.tenderId, { invitationId: t.molinoInv, contact: "" }, db, at(25)),
+      requestNegotiationService(t.owner.id, t.tenderId, { supplierUserId: t.molinoUserId, contact: "" }, db, at(25)),
     ).rejects.toBeInstanceOf(ZodError);
   });
 });
@@ -201,20 +201,20 @@ describe("requestNegotiationService (RN-21)", () => {
 describe("issuePurchaseOrderService (RN-15)", () => {
   it("issues one order per awarded supplier, with lines, total, terms and a correlative number", async () => {
     const t = await closedTender();
-    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.dulceInv, unitPrice: "735.50" }, db, at(25));
-    await awardItemService(t.owner.id, t.tenderId, { itemId: t.sugarId, invitationId: t.molinoInv, unitPrice: "950" }, db, at(25));
+    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.dulceUserId, unitPrice: "735.50" }, db, at(25));
+    await awardItemService(t.owner.id, t.tenderId, { itemId: t.sugarId, supplierUserId: t.molinoUserId, unitPrice: "950" }, db, at(25));
 
     const first = await issuePurchaseOrderService(
       t.owner.id,
       t.tenderId,
-      { invitationId: t.dulceInv, deliveryTerms: "En el local, el lunes", paymentTerms: "Transferencia a 15 días" },
+      { supplierUserId: t.dulceUserId, deliveryTerms: "En el local, el lunes", paymentTerms: "Transferencia a 15 días" },
       db,
       at(26),
     );
     const second = await issuePurchaseOrderService(
       t.owner.id,
       t.tenderId,
-      { invitationId: t.molinoInv, deliveryTerms: "Retiro", paymentTerms: "Contado" },
+      { supplierUserId: t.molinoUserId, deliveryTerms: "Retiro", paymentTerms: "Contado" },
       db,
       at(27),
     );
@@ -237,8 +237,8 @@ describe("issuePurchaseOrderService (RN-15)", () => {
 
   it("is final: no second order for the supplier and no change to the items it covers", async () => {
     const t = await closedTender();
-    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.dulceInv, unitPrice: "740" }, db, at(25));
-    const terms = { invitationId: t.dulceInv, deliveryTerms: "Local", paymentTerms: "Contado" };
+    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.dulceUserId, unitPrice: "740" }, db, at(25));
+    const terms = { supplierUserId: t.dulceUserId, deliveryTerms: "Local", paymentTerms: "Contado" };
     await issuePurchaseOrderService(t.owner.id, t.tenderId, terms, db, at(26));
 
     expect((await failure(issuePurchaseOrderService(t.owner.id, t.tenderId, terms, db, at(27)))).code).toBe(
@@ -246,7 +246,7 @@ describe("issuePurchaseOrderService (RN-15)", () => {
     );
     expect(
       (await failure(
-        awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.molinoInv, unitPrice: "780" }, db, at(27)),
+        awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.molinoUserId, unitPrice: "780" }, db, at(27)),
       )).code,
     ).toBe("TENDER_ORDER_EXISTS");
   });
@@ -255,18 +255,18 @@ describe("issuePurchaseOrderService (RN-15)", () => {
     const t = await closedTender();
     expect(
       (await failure(
-        issuePurchaseOrderService(t.owner.id, t.tenderId, { invitationId: t.molinoInv, deliveryTerms: "a", paymentTerms: "b" }, db, at(25)),
+        issuePurchaseOrderService(t.owner.id, t.tenderId, { supplierUserId: t.molinoUserId, deliveryTerms: "a", paymentTerms: "b" }, db, at(25)),
       )).code,
     ).toBe("TENDER_NOTHING_AWARDED");
   });
 
   it("never shows an order to another emprendedor", async () => {
     const t = await closedTender();
-    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.dulceInv, unitPrice: "740" }, db, at(25));
+    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.dulceUserId, unitPrice: "740" }, db, at(25));
     const { id } = await issuePurchaseOrderService(
       t.owner.id,
       t.tenderId,
-      { invitationId: t.dulceInv, deliveryTerms: "Local", paymentTerms: "Contado" },
+      { supplierUserId: t.dulceUserId, deliveryTerms: "Local", paymentTerms: "Contado" },
       db,
       at(26),
     );
@@ -280,7 +280,7 @@ describe("issuePurchaseOrderService (RN-15)", () => {
 describe("sendThankYouNoteService (RN-16)", () => {
   it("shows the same note to the suppliers not chosen, without prices or results", async () => {
     const t = await closedTender();
-    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.dulceInv, unitPrice: "740" }, db, at(25));
+    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.dulceUserId, unitPrice: "740" }, db, at(25));
 
     expect((await failure(sendThankYouNoteService(t.owner.id, t.tenderId, db, at(23)))).code).toBe("TENDER_NOT_CLOSED");
     await sendThankYouNoteService(t.owner.id, t.tenderId, db, at(26));
@@ -298,12 +298,12 @@ describe("sendThankYouNoteService (RN-16)", () => {
 describe("getTenderHistoryService (RN-17)", () => {
   it("lists the whole process with date and time, oldest first", async () => {
     const t = await closedTender();
-    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, invitationId: t.dulceInv, unitPrice: "740" }, db, at(25));
-    await requestNegotiationService(t.owner.id, t.tenderId, { invitationId: t.molinoInv, contact: "11 5555-0000" }, db, at(25.5));
+    await awardItemService(t.owner.id, t.tenderId, { itemId: t.flourId, supplierUserId: t.dulceUserId, unitPrice: "740" }, db, at(25));
+    await requestNegotiationService(t.owner.id, t.tenderId, { supplierUserId: t.molinoUserId, contact: "11 5555-0000" }, db, at(25.5));
     await issuePurchaseOrderService(
       t.owner.id,
       t.tenderId,
-      { invitationId: t.dulceInv, deliveryTerms: "Local", paymentTerms: "Contado" },
+      { supplierUserId: t.dulceUserId, deliveryTerms: "Local", paymentTerms: "Contado" },
       db,
       at(26),
     );
@@ -339,7 +339,7 @@ describe("history of a void tender (RN-17, RN-18, RN-19)", () => {
     const owner = await createUser();
     track(owner);
     const flour = await createSupply(owner.id, "Harina 000", db);
-    const molino = await createLinkedSupplier(owner, db, track, "Molino San José");
+    await createRegisteredSupplier(db, track, "Molino San José");
     const { id } = await publishTenderService(
       owner.id,
       {
@@ -347,7 +347,6 @@ describe("history of a void tender (RN-17, RN-18, RN-19)", () => {
         roundCount: 2,
         decrementPercent: "10",
         items: [{ supplyId: flour.id, quantity: "5", startingPrice: "800" }],
-        supplierIds: [molino.id],
       },
       db,
       start,

@@ -67,7 +67,7 @@ export default async function TenderPage({ params }: TenderPageProps) {
               .
             </p>
           ) : (
-            <ComparisonTable items={tender.items} invitations={tender.invitations} comparison={tender.comparison} />
+            <ComparisonTable items={tender.items} suppliers={tender.suppliers} comparison={tender.comparison} />
           )}
         </Card>
       )}
@@ -150,21 +150,25 @@ export default async function TenderPage({ params }: TenderPageProps) {
             La última oferta de cada proveedor por insumo. Los proveedores no ven estas ofertas ni saben cuántos
             compiten.
           </p>
-          <OffersTable items={tender.items} invitations={tender.invitations} offers={tender.offers} />
+          <OffersTable items={tender.items} suppliers={tender.suppliers} offers={tender.offers} />
         </Card>
       )}
 
-      <Card title={`Proveedores invitados (${tender.invitations.length})`} id="invitados">
-        <ul className="divide-y divide-border-default">
-          {tender.invitations.map((invitation) => (
-            <li key={invitation.id} className="py-2 text-sm">
-              <p className="font-semibold text-fg">{invitation.businessName}</p>
-              <p className="text-fg-muted">
-                CUIT {formatCuit(invitation.cuit)} · {invitation.contactName} · {invitation.phone} · {invitation.email}
-              </p>
-            </li>
-          ))}
-        </ul>
+      <Card title={`Proveedores que ofertaron (${tender.suppliers.length})`} id="proveedores">
+        {tender.suppliers.length === 0 ? (
+          <p className="text-sm text-fg-muted">Todavía no ofertó ningún proveedor.</p>
+        ) : (
+          <ul className="divide-y divide-border-default">
+            {tender.suppliers.map((supplier) => (
+              <li key={supplier.supplierUserId} className="py-2 text-sm">
+                <p className="font-semibold text-fg">{supplier.businessName}</p>
+                <p className="text-fg-muted">
+                  CUIT {formatCuit(supplier.cuit)} · {supplier.contactName} · {supplier.phone} · {supplier.email}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <Card title="Historial" id="historial">

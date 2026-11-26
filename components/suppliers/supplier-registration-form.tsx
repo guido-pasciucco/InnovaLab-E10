@@ -1,6 +1,6 @@
 "use client";
 
-import { registerSupplier, startSupplierSignup } from "@/app/proveedores/invitacion/[token]/actions";
+import { registerSupplier, startSupplierSignup } from "@/app/proveedores/registro/actions";
 import { PasswordInput } from "@/components/forms/password-input";
 import { useFormDataAction } from "@/components/forms/use-form-data-action";
 import { FormBanner } from "@/components/ui/page-shell";
@@ -8,16 +8,15 @@ import { PrimaryButton } from "@/components/ui/primary-button";
 import { TextField } from "@/components/ui/text-field";
 
 type SupplierRegistrationFormProps = {
-  token: string;
-  ownerName: string;
   // "signup": new account (email + password, confirmed by email).
   // "profile": signed-in account that only needs the supplier data.
   mode: "signup" | "profile";
 };
 
-// Supplier data (annex 03, step 5: business, CUIT, contact and rubros) and the
-// terms. In "signup" mode it also creates the account.
-export function SupplierRegistrationForm({ token, ownerName, mode }: SupplierRegistrationFormProps) {
+// Supplier data (business, CUIT, contact and rubros) and the terms. In
+// "signup" mode it also creates the account. No invitation token or
+// emprendedor link (issue #309).
+export function SupplierRegistrationForm({ mode }: SupplierRegistrationFormProps) {
   const action = mode === "signup" ? startSupplierSignup : registerSupplier;
   const { state, pending, onSubmit, fieldErrors, formError } = useFormDataAction<unknown>(action);
 
@@ -28,7 +27,7 @@ export function SupplierRegistrationForm({ token, ownerName, mode }: SupplierReg
         <p className="font-semibold">Revisá tu mail</p>
         <p>
           Te mandamos un enlace a <strong>{sentTo}</strong> para confirmar tu cuenta. Cuando lo abras, vas a quedar
-          registrado como proveedor de {ownerName}.
+          registrado como proveedor y vas a poder ver todas las licitaciones activas.
         </p>
       </div>
     );
@@ -36,7 +35,6 @@ export function SupplierRegistrationForm({ token, ownerName, mode }: SupplierReg
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <input type="hidden" name="token" value={token} />
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField label="Nombre del negocio" name="businessName" autoComplete="organization" maxLength={120} error={fieldErrors.businessName} required />
         <TextField label="CUIT" name="cuit" inputMode="numeric" placeholder="20-12345678-6" error={fieldErrors.cuit} required />

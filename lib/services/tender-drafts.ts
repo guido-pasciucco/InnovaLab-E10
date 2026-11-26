@@ -10,8 +10,8 @@ import { AppError } from "@/lib/errors/app-error";
 import type { VerifiedUserId } from "@/lib/services/auth";
 
 // Tender drafts: the emprendedor loads the supplies to publish and saves
-// them, even before any supplier is registered, and publishes later. One
-// draft per emprendedor; publishing deletes it (publishTenderService).
+// them, and publishes later. One draft per emprendedor; publishing deletes it
+// (publishTenderService).
 
 export type TenderDraft = TenderDraftContent;
 

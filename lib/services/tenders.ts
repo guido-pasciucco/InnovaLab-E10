@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, gt, inArray, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
 import { latestAwards, type AwardRecord } from "@/lib/calc/purchaseOrder";
@@ -21,13 +21,13 @@ import {
 } from "@/lib/calc/tenderRounds";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { profiles } from "@/lib/db/profile/table";
-import { supplierLinks, suppliers } from "@/lib/db/suppliers/table";
+import { suppliers } from "@/lib/db/suppliers/table";
 import { supplies } from "@/lib/db/supplies/table";
 import {
   purchaseOrders,
   tenderAwards,
-  tenderInvitations,
   tenderItems,
+  tenderNegotiations,
   tenderOffers,
   tenders,
   type Tender,
@@ -37,14 +37,14 @@ import { AppError } from "@/lib/errors/app-error";
 import { formatARS } from "@/lib/money/format";
 import { offerAboveLastMessage, offerAboveStartingMessage } from "@/lib/schemas/tenders/fields";
 import type { VerifiedUserId } from "@/lib/services/auth";
-import { listLinkedSuppliersService, type LinkedSupplier } from "@/lib/services/suppliers";
 import { discardTenderDraftService, loadTenderDraft, type TenderDraft } from "@/lib/services/tender-drafts";
 
-// Supply tenders, emprendedor and supplier sides (docs/flujos/09-licitaciones.md).
-// Owner scoping: emprendedor reads and writes filter by owner_user_id; the
-// supplier side only reaches tenders it was invited to. Services throw;
-// doors translate. `now` is a parameter so the clock-driven rules (rounds,
-// closing) are testable; doors leave the default (the server clock, RN-12).
+// Supply tenders, emprendedor and supplier sides (docs/flujos/09-licitaciones.md,
+// issue #309). Owner scoping: emprendedor reads and writes filter by
+// owner_user_id; every registered supplier may see every active tender (RN-05
+// rewritten) and only its own offers. Services throw; doors translate. `now` is
+// a parameter so the clock-driven rules (rounds, closing) are testable; doors
+// leave the default (the server clock, RN-12).
 
 const UNNAMED_OWNER = "Emprendedor sin nombre";
 // How long the "closed" and "cancelled" notices stay in the panels (RN-24).
@@ -55,7 +55,7 @@ const tenderIdSchema = z.uuid();
 export type { TenderPhase };
 
 // ---------------------------------------------------------------------------
-// Publish (RN-01 to RN-05)
+// Publish (RN-01 to RN-03)
 // ---------------------------------------------------------------------------
 
 export type TenderFormSupply = {
@@ -69,7 +69,6 @@ export type TenderFormSupply = {
 export type TenderFormData = {
   draft: TenderDraft | null;
   supplies: TenderFormSupply[];
-  suppliers: LinkedSupplier[];
   activeTender: { id: string; number: number } | null;
 };
 
@@ -83,20 +82,19 @@ async function findActiveTender(userId: VerifiedUserId, db: Db | Tx, now: Date) 
 }
 
 // What the publish form needs: the catalog with the suggested starting price
-// (RN-02), every linked supplier preselected with its rubros (RN-05), and the
-// active tender if there is one (RN-03).
+// (RN-02) and the active tender if there is one (RN-03). There is no supplier
+// selection any more: every registered supplier may participate (#309).
 export async function getTenderFormDataService(
   userId: VerifiedUserId,
   db: Db = getDrizzleClient(),
   now: Date = new Date(),
 ): Promise<TenderFormData> {
-  const [catalog, linked, activeTender] = await Promise.all([
+  const [catalog, activeTender] = await Promise.all([
     db
       .select()
       .from(supplies)
       .where(eq(supplies.userId, userId))
       .orderBy(asc(supplies.name), asc(supplies.id)),
-    listLinkedSuppliersService(userId, db),
     findActiveTender(userId, db, now),
   ]);
 
@@ -111,7 +109,6 @@ export async function getTenderFormDataService(
       unit: supply.purchaseUnit,
       suggestedPrice: catalogUnitPrice(supply.purchasePrice, supply.purchaseQuantity),
     })),
-    suppliers: linked,
     activeTender,
   };
 }
@@ -140,12 +137,6 @@ export async function publishTenderService(
       .where(and(eq(supplies.userId, userId), inArray(supplies.id, supplyIds)));
     if (catalog.length !== supplyIds.length) throw new AppError("TENDER_SUPPLY_NOT_FOUND");
     const supplyById = new Map(catalog.map((supply) => [supply.id, supply]));
-
-    const links = await tx
-      .select({ supplierUserId: supplierLinks.supplierUserId })
-      .from(supplierLinks)
-      .where(and(eq(supplierLinks.ownerUserId, userId), inArray(supplierLinks.supplierUserId, data.supplierIds)));
-    if (links.length !== data.supplierIds.length) throw new AppError("TENDER_SUPPLIER_NOT_LINKED");
 
     const [last] = await tx
       .select({ number: sql<number | null>`max(${tenders.number})` })
@@ -186,11 +177,8 @@ export async function publishTenderService(
       }),
     );
 
-    await tx.insert(tenderInvitations).values(
-      data.supplierIds.map((supplierUserId) => ({ tenderId: tender.id, supplierUserId, createdAt: now })),
-    );
-
-    // The draft became this tender.
+    // No invitations: publishing makes the tender visible to every registered
+    // supplier (#309). The draft became this tender.
     await discardTenderDraftService(userId, tx);
 
     return tender;
@@ -240,7 +228,7 @@ export type TenderSummary = {
   currentRound: number | null;
   roundCount: number;
   itemCount: number;
-  invitedCount: number;
+  supplierCount: number;
 };
 
 export async function listTendersService(
@@ -256,20 +244,24 @@ export async function listTendersService(
   if (rows.length === 0) return [];
 
   const ids = rows.map((tender) => tender.id);
-  const [itemCounts, invitedCounts] = await Promise.all([
+  const [itemCounts, supplierCounts] = await Promise.all([
     db
       .select({ tenderId: tenderItems.tenderId, count: sql<number>`count(*)::int` })
       .from(tenderItems)
       .where(inArray(tenderItems.tenderId, ids))
       .groupBy(tenderItems.tenderId),
     db
-      .select({ tenderId: tenderInvitations.tenderId, count: sql<number>`count(*)::int` })
-      .from(tenderInvitations)
-      .where(inArray(tenderInvitations.tenderId, ids))
-      .groupBy(tenderInvitations.tenderId),
+      .select({
+        tenderId: tenderItems.tenderId,
+        count: sql<number>`count(distinct ${tenderOffers.supplierUserId})::int`,
+      })
+      .from(tenderOffers)
+      .innerJoin(tenderItems, eq(tenderItems.id, tenderOffers.tenderItemId))
+      .where(inArray(tenderItems.tenderId, ids))
+      .groupBy(tenderItems.tenderId),
   ]);
   const itemsBy = new Map(itemCounts.map((row) => [row.tenderId, Number(row.count)]));
-  const invitedBy = new Map(invitedCounts.map((row) => [row.tenderId, Number(row.count)]));
+  const suppliersBy = new Map(supplierCounts.map((row) => [row.tenderId, Number(row.count)]));
 
   return rows.map((tender) => ({
     id: tender.id,
@@ -280,7 +272,7 @@ export async function listTendersService(
     currentRound: tenderPhase(tender, now) === "active" ? currentRound(tender, now) : null,
     roundCount: tender.roundCount,
     itemCount: itemsBy.get(tender.id) ?? 0,
-    invitedCount: invitedBy.get(tender.id) ?? 0,
+    supplierCount: suppliersBy.get(tender.id) ?? 0,
   }));
 }
 
@@ -297,8 +289,7 @@ export type TenderDetailItem = {
   currentTarget: string | null;
 };
 
-export type TenderDetailInvitation = {
-  id: string;
+export type TenderDetailSupplier = {
   supplierUserId: string;
   businessName: string;
   cuit: string;
@@ -324,7 +315,9 @@ export type TenderDetail = {
   noOfferWarningAckAt: Date | null;
   thankYouNoteAt: Date | null;
   items: TenderDetailItem[];
-  invitations: TenderDetailInvitation[];
+  // Suppliers that quoted this tender, with their identity (RN-08). They are
+  // the participants now that invitations no longer exist (#309).
+  suppliers: TenderDetailSupplier[];
   // Every offer, oldest first (RN-08: with identity, from the start).
   offers: OfferRecord[];
   // RN-18: items without offers in round 1, while the warning is pending.
@@ -334,9 +327,9 @@ export type TenderDetail = {
   // RN-19: closed with no offer for any item.
   isVoid: boolean;
   // RN-14: the current choice per item, in item order.
-  awards: { itemId: string; invitationId: string; unitPrice: string; createdAt: Date }[];
+  awards: { itemId: string; supplierUserId: string; unitPrice: string; createdAt: Date }[];
   // RN-15: issued purchase orders.
-  orders: { id: string; number: number; invitationId: string; issuedAt: Date; total: string }[];
+  orders: { id: string; number: number; supplierUserId: string; issuedAt: Date; total: string }[];
 };
 
 // Every choice of a tender, oldest first (earlier choices stay in the history).
@@ -345,7 +338,7 @@ export async function loadAwards(tenderId: string, db: Db | Tx): Promise<AwardRe
     .select({
       id: tenderAwards.id,
       itemId: tenderAwards.tenderItemId,
-      invitationId: tenderAwards.invitationId,
+      supplierUserId: tenderAwards.supplierUserId,
       unitPrice: tenderAwards.unitPrice,
       createdAt: tenderAwards.createdAt,
     })
@@ -370,12 +363,16 @@ function pendingNoOfferWarning(
 }
 
 // Offers of a tender, oldest first; optionally only one supplier's.
-export async function loadOffers(tenderId: string, db: Db | Tx, invitationId?: string): Promise<OfferRecord[]> {
+export async function loadOffers(
+  tenderId: string,
+  db: Db | Tx,
+  supplierUserId?: string,
+): Promise<OfferRecord[]> {
   return db
     .select({
       id: tenderOffers.id,
       itemId: tenderOffers.tenderItemId,
-      invitationId: tenderOffers.invitationId,
+      supplierUserId: tenderOffers.supplierUserId,
       round: tenderOffers.round,
       unitPrice: tenderOffers.unitPrice,
       createdAt: tenderOffers.createdAt,
@@ -383,8 +380,8 @@ export async function loadOffers(tenderId: string, db: Db | Tx, invitationId?: s
     .from(tenderOffers)
     .innerJoin(tenderItems, eq(tenderItems.id, tenderOffers.tenderItemId))
     .where(
-      invitationId
-        ? and(eq(tenderItems.tenderId, tenderId), eq(tenderOffers.invitationId, invitationId))
+      supplierUserId
+        ? and(eq(tenderItems.tenderId, tenderId), eq(tenderOffers.supplierUserId, supplierUserId))
         : eq(tenderItems.tenderId, tenderId),
     )
     .orderBy(asc(tenderOffers.createdAt), asc(tenderOffers.round), desc(tenderOffers.unitPrice));
@@ -415,8 +412,42 @@ async function loadItems(tender: Tender, db: Db | Tx, now: Date): Promise<Tender
   });
 }
 
+// Suppliers that quoted a tender, with their public registry data and the
+// negotiation state of this tender (RN-08, RN-21).
+async function loadTenderSuppliers(tenderId: string, db: Db | Tx): Promise<TenderDetailSupplier[]> {
+  const quoted = await db
+    .selectDistinct({ supplierUserId: tenderOffers.supplierUserId })
+    .from(tenderOffers)
+    .innerJoin(tenderItems, eq(tenderItems.id, tenderOffers.tenderItemId))
+    .where(eq(tenderItems.tenderId, tenderId));
+  if (quoted.length === 0) return [];
+
+  return db
+    .select({
+      supplierUserId: suppliers.userId,
+      businessName: suppliers.businessName,
+      cuit: suppliers.cuit,
+      contactName: suppliers.contactName,
+      phone: suppliers.phone,
+      email: suppliers.email,
+      categories: suppliers.categories,
+      negotiationRequestedAt: tenderNegotiations.negotiationRequestedAt,
+      negotiationContact: tenderNegotiations.negotiationContact,
+    })
+    .from(suppliers)
+    .leftJoin(
+      tenderNegotiations,
+      and(
+        eq(tenderNegotiations.tenderId, tenderId),
+        eq(tenderNegotiations.supplierUserId, suppliers.userId),
+      ),
+    )
+    .where(inArray(suppliers.userId, quoted.map((row) => row.supplierUserId)))
+    .orderBy(asc(suppliers.businessName));
+}
+
 // Full detail for the emprendedor: terms, items with every round's target,
-// and the invited suppliers with their identity (RN-08).
+// and the suppliers that participated with their identity (RN-08).
 export async function getTenderDetailService(
   userId: VerifiedUserId,
   tenderId: string,
@@ -424,32 +455,16 @@ export async function getTenderDetailService(
   now: Date = new Date(),
 ): Promise<TenderDetail> {
   const tender = await getOwnedTender(userId, tenderId, db);
-  const [items, invitations, offers, awards, orders] = await Promise.all([
+  const [items, tenderSuppliers, offers, awards, orders] = await Promise.all([
     loadItems(tender, db, now),
-    db
-      .select({
-        id: tenderInvitations.id,
-        supplierUserId: tenderInvitations.supplierUserId,
-        businessName: suppliers.businessName,
-        cuit: suppliers.cuit,
-        contactName: suppliers.contactName,
-        phone: suppliers.phone,
-        email: suppliers.email,
-        categories: suppliers.categories,
-        negotiationRequestedAt: tenderInvitations.negotiationRequestedAt,
-        negotiationContact: tenderInvitations.negotiationContact,
-      })
-      .from(tenderInvitations)
-      .innerJoin(suppliers, eq(suppliers.userId, tenderInvitations.supplierUserId))
-      .where(eq(tenderInvitations.tenderId, tender.id))
-      .orderBy(asc(suppliers.businessName)),
+    loadTenderSuppliers(tender.id, db),
     loadOffers(tender.id, db),
     loadAwards(tender.id, db),
     db
       .select({
         id: purchaseOrders.id,
         number: purchaseOrders.number,
-        invitationId: purchaseOrders.invitationId,
+        supplierUserId: purchaseOrders.supplierUserId,
         issuedAt: purchaseOrders.issuedAt,
         total: purchaseOrders.total,
       })
@@ -460,7 +475,7 @@ export async function getTenderDetailService(
   const currentAwards = latestAwards(awards);
 
   const phase = tenderPhase(tender, now);
-  const comparison = phase === "closed" ? buildComparison(items, invitations, offers) : null;
+  const comparison = phase === "closed" ? buildComparison(items, tenderSuppliers, offers) : null;
   return {
     id: tender.id,
     number: tender.number,
@@ -475,7 +490,7 @@ export async function getTenderDetailService(
     noOfferWarningAckAt: tender.noOfferWarningAckAt,
     thankYouNoteAt: tender.thankYouNoteAt,
     items,
-    invitations,
+    suppliers: tenderSuppliers,
     offers,
     noOfferWarning: pendingNoOfferWarning(tender, items, offers, now),
     comparison,
@@ -483,7 +498,7 @@ export async function getTenderDetailService(
     awards: items.flatMap((item) => {
       const award = currentAwards.get(item.id);
       return award
-        ? [{ itemId: item.id, invitationId: award.invitationId, unitPrice: award.unitPrice, createdAt: award.createdAt }]
+        ? [{ itemId: item.id, supplierUserId: award.supplierUserId, unitPrice: award.unitPrice, createdAt: award.createdAt }]
         : [];
     }),
     orders,
@@ -491,8 +506,8 @@ export async function getTenderDetailService(
 }
 
 // RN-16: a supplier "no elegido" has no current choice in the tender.
-export function isAwarded(awards: readonly AwardRecord[], invitationId: string): boolean {
-  return [...latestAwards(awards).values()].some((award) => award.invitationId === invitationId);
+export function isAwarded(awards: readonly AwardRecord[], supplierUserId: string): boolean {
+  return [...latestAwards(awards).values()].some((award) => award.supplierUserId === supplierUserId);
 }
 
 // RN-18: "El emprendedor puede dejarla seguir": hides the warning; the tender
@@ -514,7 +529,7 @@ export async function acknowledgeNoOfferWarningService(
 }
 
 // ---------------------------------------------------------------------------
-// Supplier reads (RN-06, RN-07, RN-22)
+// Supplier reads (RN-06, RN-07, issue #309: no invitation filter)
 // ---------------------------------------------------------------------------
 
 export type SupplierTenderSummary = {
@@ -529,19 +544,35 @@ export type SupplierTenderSummary = {
   roundCount: number;
 };
 
-// Every tender the supplier was invited to, with the emprendedor's name so the
-// panel can group them (RN-22: "separadas por emprendedor").
+// Every active tender is visible to every registered supplier. Closed and
+// cancelled ones stay visible only to suppliers that took part in them, so the
+// history remains "solo lo suyo" (RN-17).
 export async function listSupplierTendersService(
   supplierUserId: VerifiedUserId,
   db: Db = getDrizzleClient(),
   now: Date = new Date(),
 ): Promise<SupplierTenderSummary[]> {
+  const quoted = exists(
+    db
+      .select({ one: sql`1` })
+      .from(tenderOffers)
+      .innerJoin(tenderItems, eq(tenderItems.id, tenderOffers.tenderItemId))
+      .where(and(eq(tenderItems.tenderId, tenders.id), eq(tenderOffers.supplierUserId, supplierUserId))),
+  );
+  const awarded = exists(
+    db
+      .select({ one: sql`1` })
+      .from(tenderAwards)
+      .innerJoin(tenderItems, eq(tenderItems.id, tenderAwards.tenderItemId))
+      .where(and(eq(tenderItems.tenderId, tenders.id), eq(tenderAwards.supplierUserId, supplierUserId))),
+  );
   const rows = await db
     .select({ tender: tenders, ownerName: profiles.displayName })
-    .from(tenderInvitations)
-    .innerJoin(tenders, eq(tenders.id, tenderInvitations.tenderId))
+    .from(tenders)
     .innerJoin(profiles, eq(profiles.id, tenders.ownerUserId))
-    .where(eq(tenderInvitations.supplierUserId, supplierUserId))
+    .where(
+      or(and(isNull(tenders.cancelledAt), gt(tenders.endsAt, now)), quoted, awarded) ?? undefined,
+    )
     .orderBy(desc(tenders.startsAt));
 
   return rows.map(({ tender, ownerName }) => {
@@ -576,7 +607,6 @@ export type SupplierTenderItem = {
 export type SupplierTenderView = {
   id: string;
   number: number;
-  invitationId: string;
   ownerName: string;
   phase: TenderPhase;
   startsAt: Date;
@@ -589,22 +619,44 @@ export type SupplierTenderView = {
   showThankYouNote: boolean;
 };
 
-// The invitation of this supplier to this tender, or TENDER_NOT_FOUND.
-export async function getSupplierInvitation(
+// The tender and its owner, provided it is active or this supplier took part
+// in it; TENDER_NOT_FOUND otherwise (missing, foreign and malformed ids look
+// the same).
+async function getTenderForSupplier(
   supplierUserId: VerifiedUserId,
   tenderId: string,
   db: Db | Tx,
-): Promise<{ invitation: typeof tenderInvitations.$inferSelect; tender: Tender; ownerName: string }> {
+  now: Date,
+  // Writes check the phase after loading the tender, so a late offer gets
+  // TENDER_NOT_ACTIVE even from a supplier that never took part (RN-12).
+  requireParticipation = true,
+): Promise<{ tender: Tender; ownerName: string }> {
   if (!tenderIdSchema.safeParse(tenderId).success) throw new AppError("TENDER_NOT_FOUND");
   const [row] = await db
-    .select({ invitation: tenderInvitations, tender: tenders, ownerName: profiles.displayName })
-    .from(tenderInvitations)
-    .innerJoin(tenders, eq(tenders.id, tenderInvitations.tenderId))
+    .select({ tender: tenders, ownerName: profiles.displayName })
+    .from(tenders)
     .innerJoin(profiles, eq(profiles.id, tenders.ownerUserId))
-    .where(and(eq(tenderInvitations.tenderId, tenderId), eq(tenderInvitations.supplierUserId, supplierUserId)))
+    .where(eq(tenders.id, tenderId))
     .limit(1);
   if (!row) throw new AppError("TENDER_NOT_FOUND");
-  return { invitation: row.invitation, tender: row.tender, ownerName: row.ownerName ?? UNNAMED_OWNER };
+  if (tenderPhase(row.tender, now) === "active" || !requireParticipation) {
+    return { tender: row.tender, ownerName: row.ownerName ?? UNNAMED_OWNER };
+  }
+
+  const [own] = await db
+    .select({ id: tenderOffers.id })
+    .from(tenderOffers)
+    .innerJoin(tenderItems, eq(tenderItems.id, tenderOffers.tenderItemId))
+    .where(and(eq(tenderItems.tenderId, tenderId), eq(tenderOffers.supplierUserId, supplierUserId)))
+    .limit(1);
+  const [awarded] = await db
+    .select({ id: tenderAwards.id })
+    .from(tenderAwards)
+    .innerJoin(tenderItems, eq(tenderItems.id, tenderAwards.tenderItemId))
+    .where(and(eq(tenderItems.tenderId, tenderId), eq(tenderAwards.supplierUserId, supplierUserId)))
+    .limit(1);
+  if (!own && !awarded) throw new AppError("TENDER_NOT_FOUND");
+  return { tender: row.tender, ownerName: row.ownerName ?? UNNAMED_OWNER };
 }
 
 // What the supplier may see (RN-06): start and end, items, quantities,
@@ -616,19 +668,29 @@ export async function getSupplierTenderService(
   db: Db = getDrizzleClient(),
   now: Date = new Date(),
 ): Promise<SupplierTenderView> {
-  const { invitation, tender, ownerName } = await getSupplierInvitation(supplierUserId, tenderId, db);
-  const [items, offers, awards] = await Promise.all([
+  const { tender, ownerName } = await getTenderForSupplier(supplierUserId, tenderId, db, now);
+  const [items, offers, awards, negotiations] = await Promise.all([
     loadItems(tender, db, now),
-    loadOffers(tender.id, db, invitation.id),
+    loadOffers(tender.id, db, supplierUserId),
     loadAwards(tender.id, db),
+    db
+      .select()
+      .from(tenderNegotiations)
+      .where(
+        and(
+          eq(tenderNegotiations.tenderId, tender.id),
+          eq(tenderNegotiations.supplierUserId, supplierUserId),
+        ),
+      )
+      .limit(1),
   ]);
   const latest = latestOffers(offers);
   const phase = tenderPhase(tender, now);
+  const negotiation = negotiations[0];
 
   return {
     id: tender.id,
     number: tender.number,
-    invitationId: invitation.id,
     ownerName,
     phase,
     startsAt: tender.startsAt,
@@ -644,16 +706,18 @@ export async function getSupplierTenderService(
       specs: item.specs,
       startingPrice: item.startingPrice,
       currentTarget: item.currentTarget,
-      myLastPrice: latest.get(offerKey(invitation.id, item.id))?.unitPrice ?? null,
+      myLastPrice: latest.get(offerKey(supplierUserId, item.id))?.unitPrice ?? null,
       myOffers: offers
         .filter((offer) => offer.itemId === item.id)
         .map((offer) => ({ round: offer.round, unitPrice: offer.unitPrice, createdAt: offer.createdAt })),
     })),
     negotiation:
-      invitation.negotiationRequestedAt && invitation.negotiationContact
-        ? { requestedAt: invitation.negotiationRequestedAt, contact: invitation.negotiationContact }
+      negotiation?.negotiationRequestedAt && negotiation.negotiationContact
+        ? { requestedAt: negotiation.negotiationRequestedAt, contact: negotiation.negotiationContact }
         : null,
-    showThankYouNote: tender.thankYouNoteAt !== null && !isAwarded(awards, invitation.id),
+    // #309: the thank-you note reaches every registered supplier without an
+    // award, including those that did not quote.
+    showThankYouNote: tender.thankYouNoteAt !== null && !isAwarded(awards, supplierUserId),
   };
 }
 
@@ -674,18 +738,25 @@ export async function submitOffersService(
   now: Date = new Date(),
 ): Promise<{ round: number; count: number }> {
   const { offers } = submitOffersInputSchema.parse(input);
-  const { invitation, tender } = await getSupplierInvitation(supplierUserId, tenderId, db);
+  const [registered] = await db
+    .select({ userId: suppliers.userId })
+    .from(suppliers)
+    .where(eq(suppliers.userId, supplierUserId))
+    .limit(1);
+  if (!registered) throw new AppError("SUPPLIER_REQUIRED");
+  const { tender } = await getTenderForSupplier(supplierUserId, tenderId, db, now, false);
 
   const round = tenderPhase(tender, now) === "active" ? currentRound(tender, now) : null;
   if (round === null) throw new AppError("TENDER_NOT_ACTIVE");
 
   return db.transaction(async (tx) => {
-    // Serializes this supplier's submissions for this tender, so two quick
-    // submissions cannot both pass the "not above the last price" check.
+    // Serializes this supplier's submissions, so two quick submissions cannot
+    // both pass the "not above the last price" check. Without invitations we
+    // lock the supplier row (#309).
     await tx
-      .select({ id: tenderInvitations.id })
-      .from(tenderInvitations)
-      .where(eq(tenderInvitations.id, invitation.id))
+      .select({ userId: suppliers.userId })
+      .from(suppliers)
+      .where(eq(suppliers.userId, supplierUserId))
       .for("update");
 
     const items = await tx
@@ -695,11 +766,11 @@ export async function submitOffersService(
     const itemById = new Map(items.map((item) => [item.id, item]));
     if (offers.some((offer) => !itemById.has(offer.itemId))) throw new AppError("TENDER_NOT_FOUND");
 
-    const latest = latestOffers(await loadOffers(tender.id, tx, invitation.id));
+    const latest = latestOffers(await loadOffers(tender.id, tx, supplierUserId));
     const fieldErrors: Record<string, string[]> = {};
     for (const offer of offers) {
       const item = itemById.get(offer.itemId)!;
-      const lastPrice = latest.get(offerKey(invitation.id, item.id))?.unitPrice ?? null;
+      const lastPrice = latest.get(offerKey(supplierUserId, item.id))?.unitPrice ?? null;
       const check = checkOffer(offer.unitPrice, { startingPrice: item.startingPrice, lastPrice });
       if (!check.ok) {
         fieldErrors[`price-${item.id}`] = [
@@ -716,7 +787,7 @@ export async function submitOffersService(
     await tx.insert(tenderOffers).values(
       offers.map((offer) => ({
         tenderItemId: offer.itemId,
-        invitationId: invitation.id,
+        supplierUserId,
         round,
         unitPrice: offer.unitPrice,
         createdAt: now,
@@ -742,7 +813,7 @@ async function offersByTender(tenderIds: string[], db: Db): Promise<Map<string, 
       tenderId: tenderItems.tenderId,
       id: tenderOffers.id,
       itemId: tenderOffers.tenderItemId,
-      invitationId: tenderOffers.invitationId,
+      supplierUserId: tenderOffers.supplierUserId,
       round: tenderOffers.round,
       unitPrice: tenderOffers.unitPrice,
       createdAt: tenderOffers.createdAt,
@@ -810,53 +881,59 @@ export async function listTenderNoticesService(
 type SupplierNoticeBase = { tenderId: string; number: number; ownerName: string };
 
 export type SupplierNotice =
-  | (SupplierNoticeBase & { kind: "invited"; round: number; roundCount: number })
   | (SupplierNoticeBase & { kind: "round"; round: number; roundCount: number })
   | (SupplierNoticeBase & { kind: "negotiation"; contact: string })
   | (SupplierNoticeBase & { kind: "thank_you" })
   | (SupplierNoticeBase & { kind: "closed" })
   | (SupplierNoticeBase & { kind: "cancelled" });
 
-// The supplier's notices (RN-24): a new invitation it has not answered yet, a
-// new round with a new target price, the close and a cancellation, plus the
-// negotiation requests (RN-21) and the thank-you note (RN-16), for a week.
+// The supplier's notices (RN-24): a new round with a new target for every
+// active tender, plus negotiation requests (RN-21), the thank-you note (RN-16)
+// and the close/cancellation of the tenders it can see.
 export async function listSupplierNoticesService(
   supplierUserId: VerifiedUserId,
   db: Db = getDrizzleClient(),
   now: Date = new Date(),
 ): Promise<SupplierNotice[]> {
   const rows = await db
-    .select({ tender: tenders, invitation: tenderInvitations, ownerName: profiles.displayName })
-    .from(tenderInvitations)
-    .innerJoin(tenders, eq(tenders.id, tenderInvitations.tenderId))
+    .select({ tender: tenders, ownerName: profiles.displayName })
+    .from(tenders)
     .innerJoin(profiles, eq(profiles.id, tenders.ownerUserId))
-    .where(eq(tenderInvitations.supplierUserId, supplierUserId))
     .orderBy(desc(tenders.startsAt));
   if (rows.length === 0) return [];
 
-  const offers = await offersByTender(
-    rows.map((row) => row.tender.id),
-    db,
-  );
+  const [negotiations, awards] = await Promise.all([
+    db
+      .select()
+      .from(tenderNegotiations)
+      .where(eq(tenderNegotiations.supplierUserId, supplierUserId)),
+    db
+      .select({ tenderId: tenderItems.tenderId, supplierUserId: tenderAwards.supplierUserId })
+      .from(tenderAwards)
+      .innerJoin(tenderItems, eq(tenderItems.id, tenderAwards.tenderItemId))
+      .where(eq(tenderAwards.supplierUserId, supplierUserId)),
+  ]);
+  const negotiationBy = new Map(negotiations.map((row) => [row.tenderId, row]));
+  const awardedTenders = new Set(awards.map((row) => row.tenderId));
+
   const notices: SupplierNotice[] = [];
-  for (const { tender, invitation, ownerName } of rows) {
+  for (const { tender, ownerName } of rows) {
     const base = { tenderId: tender.id, number: tender.number, ownerName: ownerName ?? UNNAMED_OWNER };
     const phase = tenderPhase(tender, now);
-    const offered = (offers.get(tender.id) ?? []).some((offer) => offer.invitationId === invitation.id);
-    if (invitation.negotiationRequestedAt && invitation.negotiationContact && isRecent(invitation.negotiationRequestedAt, now)) {
-      notices.push({ ...base, kind: "negotiation", contact: invitation.negotiationContact });
-    }
+    const negotiation = negotiationBy.get(tender.id);
     if (
-      tender.thankYouNoteAt &&
-      isRecent(tender.thankYouNoteAt, now) &&
-      !isAwarded(await loadAwards(tender.id, db), invitation.id)
+      negotiation?.negotiationRequestedAt &&
+      negotiation.negotiationContact &&
+      isRecent(negotiation.negotiationRequestedAt, now)
     ) {
+      notices.push({ ...base, kind: "negotiation", contact: negotiation.negotiationContact });
+    }
+    if (tender.thankYouNoteAt && isRecent(tender.thankYouNoteAt, now) && !awardedTenders.has(tender.id)) {
       notices.push({ ...base, kind: "thank_you" });
     }
     if (phase === "active") {
       const round = currentRound(tender, now)!;
-      if (!offered) notices.push({ ...base, kind: "invited", round, roundCount: tender.roundCount });
-      else if (round >= 2) notices.push({ ...base, kind: "round", round, roundCount: tender.roundCount });
+      if (round >= 2) notices.push({ ...base, kind: "round", round, roundCount: tender.roundCount });
     } else if (phase === "closed" && isRecent(tender.endsAt, now)) {
       notices.push({ ...base, kind: "closed" });
     } else if (phase === "cancelled" && tender.cancelledAt && isRecent(tender.cancelledAt, now)) {

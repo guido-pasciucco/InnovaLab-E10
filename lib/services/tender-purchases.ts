@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 
 import { latestAwards, orderTotals } from "@/lib/calc/purchaseOrder";
@@ -14,8 +14,8 @@ import {
   purchaseOrderLines,
   purchaseOrders,
   tenderAwards,
-  tenderInvitations,
   tenderItems,
+  tenderNegotiations,
   tenders,
   type Tender,
 } from "@/lib/db/tenders/table";
@@ -31,7 +31,8 @@ import { getOwnedTender, loadAwards, loadOffers, type Tx } from "@/lib/services/
 // After the close: choosing a supplier per item (RN-14), negotiating (RN-21),
 // purchase orders (RN-15), the thank-you note (RN-16) and the history
 // (RN-17). Emprendedor side only; every write is scoped to the owner's
-// tender. Nothing here sends anything outside the app (RN-24).
+// tender. Ofers, awards, negotiations and orders identify the supplier
+// directly (#309). Nothing here sends anything outside the app (RN-24).
 
 const UNNAMED_OWNER = "Emprendedor sin nombre";
 const orderIdSchema = z.uuid();
@@ -42,22 +43,21 @@ function requireClosed(tender: Tender, now: Date): void {
   if (tenderPhase(tender, now) !== "closed") throw new AppError("TENDER_NOT_CLOSED");
 }
 
-async function requireInvitation(tenderId: string, invitationId: string, db: Db | Tx) {
-  const [invitation] = await db
-    .select()
-    .from(tenderInvitations)
-    .where(and(eq(tenderInvitations.id, invitationId), eq(tenderInvitations.tenderId, tenderId)))
+async function requireRegisteredSupplier(supplierUserId: string, db: Db | Tx): Promise<void> {
+  const [row] = await db
+    .select({ userId: suppliers.userId })
+    .from(suppliers)
+    .where(eq(suppliers.userId, supplierUserId))
     .limit(1);
-  if (!invitation) throw new AppError("TENDER_NOT_FOUND");
-  return invitation;
+  if (!row) throw new AppError("TENDER_SUPPLIER_NOT_FOUND");
 }
 
-async function invitationsWithOrder(tenderId: string, db: Db | Tx): Promise<Set<string>> {
+async function suppliersWithOrder(tenderId: string, db: Db | Tx): Promise<Set<string>> {
   const rows = await db
-    .select({ invitationId: purchaseOrders.invitationId })
+    .select({ supplierUserId: purchaseOrders.supplierUserId })
     .from(purchaseOrders)
     .where(eq(purchaseOrders.tenderId, tenderId));
-  return new Set(rows.map((row) => row.invitationId));
+  return new Set(rows.map((row) => row.supplierUserId));
 }
 
 // RN-14: "El emprendedor decide con qué proveedor contacta para comprar cada
@@ -74,7 +74,7 @@ export async function awardItemService(
   const data = awardItemInputSchema.parse(input);
   const tender = await getOwnedTender(userId, tenderId, db);
   requireClosed(tender, now);
-  await requireInvitation(tender.id, data.invitationId, db);
+  await requireRegisteredSupplier(data.supplierUserId, db);
 
   const [item] = await db
     .select({ id: tenderItems.id })
@@ -83,19 +83,19 @@ export async function awardItemService(
     .limit(1);
   if (!item) throw new AppError("TENDER_NOT_FOUND");
 
-  const offers = latestOffers(await loadOffers(tender.id, db, data.invitationId));
-  if (!offers.has(offerKey(data.invitationId, item.id))) throw new AppError("TENDER_NO_OFFER");
+  const offers = latestOffers(await loadOffers(tender.id, db, data.supplierUserId));
+  if (!offers.has(offerKey(data.supplierUserId, item.id))) throw new AppError("TENDER_NO_OFFER");
 
   await db.transaction(async (tx) => {
     await tx.select({ id: tenders.id }).from(tenders).where(eq(tenders.id, tender.id)).for("update");
-    const ordered = await invitationsWithOrder(tender.id, tx);
+    const ordered = await suppliersWithOrder(tender.id, tx);
     const current = latestAwards(await loadAwards(tender.id, tx)).get(item.id);
-    if (ordered.has(data.invitationId) || (current && ordered.has(current.invitationId))) {
+    if (ordered.has(data.supplierUserId) || (current && ordered.has(current.supplierUserId))) {
       throw new AppError("TENDER_ORDER_EXISTS");
     }
     await tx.insert(tenderAwards).values({
       tenderItemId: item.id,
-      invitationId: data.invitationId,
+      supplierUserId: data.supplierUserId,
       unitPrice: data.unitPrice,
       createdAt: now,
     });
@@ -115,13 +115,19 @@ export async function requestNegotiationService(
   const data = negotiationInputSchema.parse(input);
   const tender = await getOwnedTender(userId, tenderId, db);
   requireClosed(tender, now);
-  await requireInvitation(tender.id, data.invitationId, db);
-  if ((await loadOffers(tender.id, db, data.invitationId)).length === 0) throw new AppError("TENDER_NO_OFFER");
+  await requireRegisteredSupplier(data.supplierUserId, db);
+  if ((await loadOffers(tender.id, db, data.supplierUserId)).length === 0) throw new AppError("TENDER_NO_OFFER");
 
   await db
-    .update(tenderInvitations)
-    .set({ negotiationRequestedAt: now, negotiationContact: data.contact })
-    .where(and(eq(tenderInvitations.id, data.invitationId), isNull(tenderInvitations.negotiationRequestedAt)));
+    .insert(tenderNegotiations)
+    .values({
+      tenderId: tender.id,
+      supplierUserId: data.supplierUserId,
+      negotiationRequestedAt: now,
+      negotiationContact: data.contact,
+      createdAt: now,
+    })
+    .onConflictDoNothing();
 }
 
 // RN-15: one purchase order per awarded supplier, built from the current
@@ -137,7 +143,7 @@ export async function issuePurchaseOrderService(
   const data = purchaseOrderInputSchema.parse(input);
   const tender = await getOwnedTender(userId, tenderId, db);
   requireClosed(tender, now);
-  await requireInvitation(tender.id, data.invitationId, db);
+  await requireRegisteredSupplier(data.supplierUserId, db);
 
   return db.transaction(async (tx) => {
     // The profile lock keeps the per-emprendedor order number unique; the
@@ -145,12 +151,12 @@ export async function issuePurchaseOrderService(
     await tx.select({ id: profiles.id }).from(profiles).where(eq(profiles.id, userId)).for("update");
     await tx.select({ id: tenders.id }).from(tenders).where(eq(tenders.id, tender.id)).for("update");
 
-    if ((await invitationsWithOrder(tender.id, tx)).has(data.invitationId)) {
+    if ((await suppliersWithOrder(tender.id, tx)).has(data.supplierUserId)) {
       throw new AppError("TENDER_ORDER_EXISTS");
     }
 
     const awarded = [...latestAwards(await loadAwards(tender.id, tx)).values()].filter(
-      (award) => award.invitationId === data.invitationId,
+      (award) => award.supplierUserId === data.supplierUserId,
     );
     if (awarded.length === 0) throw new AppError("TENDER_NOTHING_AWARDED");
 
@@ -176,7 +182,7 @@ export async function issuePurchaseOrderService(
       .values({
         ownerUserId: userId,
         tenderId: tender.id,
-        invitationId: data.invitationId,
+        supplierUserId: data.supplierUserId,
         number,
         deliveryTerms: data.deliveryTerms,
         paymentTerms: data.paymentTerms,
@@ -241,8 +247,7 @@ export async function getPurchaseOrderService(
     .from(purchaseOrders)
     .innerJoin(tenders, eq(tenders.id, purchaseOrders.tenderId))
     .innerJoin(profiles, eq(profiles.id, purchaseOrders.ownerUserId))
-    .innerJoin(tenderInvitations, eq(tenderInvitations.id, purchaseOrders.invitationId))
-    .innerJoin(suppliers, eq(suppliers.userId, tenderInvitations.supplierUserId))
+    .innerJoin(suppliers, eq(suppliers.userId, purchaseOrders.supplierUserId))
     .where(and(eq(purchaseOrders.id, orderId), eq(purchaseOrders.ownerUserId, userId)))
     .limit(1);
   if (!row) throw new AppError("TENDER_NOT_FOUND");
@@ -276,7 +281,8 @@ export async function getPurchaseOrderService(
 
 // RN-16: "Si el emprendedor lo ordena, la aplicación muestra en el panel de
 // los proveedores no elegidos una nota de agradecimiento idéntica para todos".
-// Recorded once; the suppliers without a chosen item see it.
+// Recorded once; with no invitations every registered supplier without a
+// chosen item sees it (#309).
 export async function sendThankYouNoteService(
   userId: VerifiedUserId,
   tenderId: string,
@@ -313,23 +319,27 @@ export async function getTenderHistoryService(
   now: Date = new Date(),
 ): Promise<TenderHistoryEvent[]> {
   const tender = await getOwnedTender(userId, tenderId, db);
-  const [items, invitations, offers, awards, orders] = await Promise.all([
+  const [items, offers, awards, orders, negotiations] = await Promise.all([
     db.select({ id: tenderItems.id, name: tenderItems.supplyName }).from(tenderItems).where(eq(tenderItems.tenderId, tender.id)),
-    db
-      .select({
-        id: tenderInvitations.id,
-        name: suppliers.businessName,
-        negotiationRequestedAt: tenderInvitations.negotiationRequestedAt,
-      })
-      .from(tenderInvitations)
-      .innerJoin(suppliers, eq(suppliers.userId, tenderInvitations.supplierUserId))
-      .where(eq(tenderInvitations.tenderId, tender.id)),
     loadOffers(tender.id, db),
     loadAwards(tender.id, db),
     db.select().from(purchaseOrders).where(eq(purchaseOrders.tenderId, tender.id)),
+    db.select().from(tenderNegotiations).where(eq(tenderNegotiations.tenderId, tender.id)),
   ]);
   const itemName = new Map(items.map((item) => [item.id, item.name]));
-  const supplierName = new Map(invitations.map((invitation) => [invitation.id, invitation.name]));
+  const participantIds = [
+    ...offers.map((offer) => offer.supplierUserId),
+    ...awards.map((award) => award.supplierUserId),
+    ...orders.map((order) => order.supplierUserId),
+    ...negotiations.map((row) => row.supplierUserId),
+  ];
+  const supplierRows = participantIds.length
+    ? await db
+        .select({ userId: suppliers.userId, name: suppliers.businessName })
+        .from(suppliers)
+        .where(inArray(suppliers.userId, [...new Set(participantIds)]))
+    : [];
+  const supplierName = new Map(supplierRows.map((row) => [row.userId, row.name]));
 
   const events: TenderHistoryEvent[] = [
     {
@@ -353,7 +363,7 @@ export async function getTenderHistoryService(
     events.push({
       kind: "offer",
       at: offer.createdAt,
-      supplier: supplierName.get(offer.invitationId) ?? "",
+      supplier: supplierName.get(offer.supplierUserId) ?? "",
       item: itemName.get(offer.itemId) ?? "",
       round: offer.round,
       unitPrice: offer.unitPrice,
@@ -374,21 +384,25 @@ export async function getTenderHistoryService(
     events.push({
       kind: "award",
       at: award.createdAt,
-      supplier: supplierName.get(award.invitationId) ?? "",
+      supplier: supplierName.get(award.supplierUserId) ?? "",
       item: itemName.get(award.itemId) ?? "",
       unitPrice: award.unitPrice,
     });
   }
-  for (const invitation of invitations) {
-    if (invitation.negotiationRequestedAt) {
-      events.push({ kind: "negotiation", at: invitation.negotiationRequestedAt, supplier: invitation.name });
+  for (const negotiation of negotiations) {
+    if (negotiation.negotiationRequestedAt) {
+      events.push({
+        kind: "negotiation",
+        at: negotiation.negotiationRequestedAt,
+        supplier: supplierName.get(negotiation.supplierUserId) ?? "",
+      });
     }
   }
   for (const order of orders) {
     events.push({
       kind: "order",
       at: order.issuedAt,
-      supplier: supplierName.get(order.invitationId) ?? "",
+      supplier: supplierName.get(order.supplierUserId) ?? "",
       number: order.number,
       total: order.total,
     });

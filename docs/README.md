@@ -36,7 +36,7 @@ Prueba rápida: **¿la frase seguiría siendo verdad si el código se reescribie
 | [06 · Chat con datos](flujos/06-chat-con-datos.md) | Búsqueda sobre la documentación del producto |
 | [07 · Demo](flujos/07-demo.md) | Guía para presentar el producto |
 | [08 · Despliegue](flujos/08-despliegue.md) | Configuración y deploy en Vercel |
-| [09 · Licitaciones](flujos/09-licitaciones.md) | Flujo completo de licitaciones: proveedores, invitaciones, ofertas y órdenes |
+| [09 · Licitaciones](flujos/09-licitaciones.md) | Flujo completo de licitaciones: registro público de proveedores, ofertas y órdenes |
 | [09 · Licitaciones · pendientes](flujos/09-licitaciones-pendientes.md) | Dudas y puntos abiertos del flujo de licitaciones |
 
 ## Forma de una decisión de negocio

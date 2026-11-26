@@ -9,7 +9,6 @@ import {
   tenderItemsLengthMessage,
   tenderQuantityField,
   tenderSpecsField,
-  tenderSuppliersMessage,
 } from "./fields";
 
 // Client contract of the publish form: checks every item row before the
@@ -31,19 +30,17 @@ export const publishTenderFormSchema = z.object({
     )
     .min(1, { error: tenderItemsLengthMessage })
     .max(MAX_TENDER_ITEMS, { error: tenderItemsLengthMessage }),
-  supplierIds: z.array(z.string()).min(1, { error: tenderSuppliersMessage }),
 });
 
 export type PublishTenderFormValues = z.input<typeof publishTenderFormSchema>;
 
-// What "Guardar borrador" sends: the form as it is, valid or not, with the
-// suppliers the emprendedor unticked (server gate: tenderDraftInputSchema).
+// What "Guardar borrador" sends: the form as it is, valid or not (server gate:
+// tenderDraftInputSchema).
 export type TenderDraftFormValues = {
   roundHours: string;
   roundCount: string;
   decrementPercent: string;
   items: { supplyId: string; quantity: string; specs: string; startingPrice: string }[];
-  excludedSupplierIds: string[];
 };
 
 // Issue path → "items.0.quantity", the key the form uses for each input.

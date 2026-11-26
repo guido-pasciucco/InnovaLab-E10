@@ -79,14 +79,14 @@ describe("GET /auth/confirm", () => {
     // Opened on another device the code exchange fails, but the email is
     // confirmed: signing in continues the supplier signup.
     confirmAuthLinkService.mockRejectedValue(new AppError("AUTH_LINK_INVALID"));
-    const path = `/proveedores/invitacion/${"a".repeat(43)}/completar`;
+    const path = "/proveedores/registro/completar";
     await expect(
       redirectTarget(`http://localhost:3000/auth/confirm?code=bad&next=${encodeURIComponent(path)}`),
     ).resolves.toBe(`/login?error=AUTH_LINK_INVALID&next=${encodeURIComponent(path)}`);
   });
 
-  it("continues a confirmed supplier signup to its invite completion route", async () => {
-    const path = `/proveedores/invitacion/${"a".repeat(43)}/completar`;
+  it("continues a confirmed supplier signup to its completion route", async () => {
+    const path = "/proveedores/registro/completar";
     await expect(
       redirectTarget(`http://localhost:3000/auth/confirm?code=ok&next=${encodeURIComponent(path)}`),
     ).resolves.toBe(path);

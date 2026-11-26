@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
 
-import { createLinkedSupplier, createSupply } from "../../tests/support/factories/tender";
+import { createRegisteredSupplier, createSupply } from "../../tests/support/factories/tender";
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
 import {
@@ -62,8 +62,8 @@ async function publishedTender() {
   track(owner);
   const flour = await createSupply(owner.id, "Harina 000", db);
   const sugar = await createSupply(owner.id, "Azúcar", db);
-  const molino = await createLinkedSupplier(owner, db, track, "Molino San José");
-  const dulce = await createLinkedSupplier(owner, db, track, "Dulce SA");
+  const molino = await createRegisteredSupplier(db, track, "Molino San José");
+  const dulce = await createRegisteredSupplier(db, track, "Dulce SA");
   const { id } = await publishTenderService(
     owner.id,
     {
@@ -74,7 +74,6 @@ async function publishedTender() {
         { supplyId: flour.id, quantity: "50", startingPrice: "800.00" },
         { supplyId: sugar.id, quantity: "20", startingPrice: "1000.00" },
       ],
-      supplierIds: [molino.id, dulce.id],
     },
     db,
     start,
@@ -158,13 +157,12 @@ describe("emprendedor notices (RN-24)", () => {
 });
 
 describe("supplier notices (RN-24)", () => {
-  it("announces the invitation, the new rounds and the close in the panel", async () => {
+  it("announces the new rounds and the close, with no invitation notice (#309)", async () => {
     const t = await publishedTender();
     const base = { tenderId: t.tenderId, number: 1, ownerName: t.owner.displayName };
 
-    expect(await listSupplierNoticesService(t.molino.id, db, at(1))).toEqual([
-      { ...base, kind: "invited", round: 1, roundCount: 4 },
-    ]);
+    // In round 1 there is no notice: invitations no longer exist.
+    expect(await listSupplierNoticesService(t.molino.id, db, at(1))).toEqual([]);
 
     await submitOffersService(t.molino.id, t.tenderId, { offers: [{ itemId: t.flourId, unitPrice: "790" }] }, db, at(2));
     expect(await listSupplierNoticesService(t.molino.id, db, at(3))).toEqual([]);
@@ -174,7 +172,7 @@ describe("supplier notices (RN-24)", () => {
     expect(await listSupplierNoticesService(t.molino.id, db, at(25))).toEqual([{ ...base, kind: "closed" }]);
   });
 
-  it("tells invited suppliers when a tender is cancelled", async () => {
+  it("tells suppliers when a tender is cancelled", async () => {
     const t = await publishedTender();
     await cancelTenderService(t.owner.id, t.tenderId, db, at(2));
 

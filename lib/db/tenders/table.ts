@@ -89,8 +89,10 @@ export const tenderItems = pgTable(
   ],
 );
 
-export const tenderInvitations = pgTable(
-  "tender_invitations",
+// RN-21 negotiation state, keyed directly by supplier (#309): invitations were
+// removed, so any registered supplier may negotiate a tender they can see.
+export const tenderNegotiations = pgTable(
+  "tender_negotiations",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     tenderId: uuid("tender_id")
@@ -99,14 +101,13 @@ export const tenderInvitations = pgTable(
     supplierUserId: uuid("supplier_user_id")
       .notNull()
       .references(() => suppliers.userId, { onDelete: "cascade" }),
-    // RN-21: set once, when the emprendedor asks to negotiate.
     negotiationRequestedAt: timestamp("negotiation_requested_at", { withTimezone: true }),
     negotiationContact: text("negotiation_contact"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    unique("tender_invitations_tender_supplier_uq").on(table.tenderId, table.supplierUserId),
-    index("tender_invitations_supplier_idx").on(table.supplierUserId),
+    unique("tender_negotiations_tender_supplier_uq").on(table.tenderId, table.supplierUserId),
+    index("tender_negotiations_supplier_idx").on(table.supplierUserId),
   ],
 );
 
@@ -121,15 +122,16 @@ export const tenderOffers = pgTable(
     tenderItemId: uuid("tender_item_id")
       .notNull()
       .references(() => tenderItems.id, { onDelete: "cascade" }),
-    invitationId: uuid("invitation_id")
+    // #309: offers are identified by supplier, not by invitation.
+    supplierUserId: uuid("supplier_user_id")
       .notNull()
-      .references(() => tenderInvitations.id, { onDelete: "cascade" }),
+      .references(() => suppliers.userId, { onDelete: "cascade" }),
     round: integer("round").notNull(),
     unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    index("tender_offers_invitation_item_idx").on(table.invitationId, table.tenderItemId),
+    index("tender_offers_supplier_item_idx").on(table.supplierUserId, table.tenderItemId),
     index("tender_offers_item_idx").on(table.tenderItemId),
     check("tender_offers_unit_price_positive", sql`${table.unitPrice} > 0`),
     check("tender_offers_round_positive", sql`${table.round} >= 1`),
@@ -148,14 +150,16 @@ export const tenderAwards = pgTable(
     tenderItemId: uuid("tender_item_id")
       .notNull()
       .references(() => tenderItems.id, { onDelete: "cascade" }),
-    invitationId: uuid("invitation_id")
+    // #309: the chosen supplier is stored directly on the award.
+    supplierUserId: uuid("supplier_user_id")
       .notNull()
-      .references(() => tenderInvitations.id, { onDelete: "cascade" }),
+      .references(() => suppliers.userId, { onDelete: "cascade" }),
     unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("tender_awards_item_idx").on(table.tenderItemId),
+    index("tender_awards_supplier_idx").on(table.supplierUserId),
     check("tender_awards_unit_price_positive", sql`${table.unitPrice} > 0`),
   ],
 );
@@ -172,9 +176,10 @@ export const purchaseOrders = pgTable(
     tenderId: uuid("tender_id")
       .notNull()
       .references(() => tenders.id, { onDelete: "cascade" }),
-    invitationId: uuid("invitation_id")
+    // #309: one order per supplier per tender, no invitation in between.
+    supplierUserId: uuid("supplier_user_id")
       .notNull()
-      .references(() => tenderInvitations.id, { onDelete: "cascade" }),
+      .references(() => suppliers.userId, { onDelete: "cascade" }),
     // Correlative per emprendedor, separate from the tender number.
     number: integer("number").notNull(),
     deliveryTerms: text("delivery_terms").notNull(),
@@ -184,7 +189,7 @@ export const purchaseOrders = pgTable(
   },
   (table) => [
     unique("purchase_orders_owner_number_uq").on(table.ownerUserId, table.number),
-    unique("purchase_orders_tender_invitation_uq").on(table.tenderId, table.invitationId),
+    unique("purchase_orders_tender_supplier_uq").on(table.tenderId, table.supplierUserId),
   ],
 );
 
@@ -209,18 +214,14 @@ export const purchaseOrderLines = pgTable(
 );
 
 // Unpublished tender form of an emprendedor: one per emprendedor, saved
-// before publishing (for example, before any supplier is registered). The
-// content is the half-filled form, validated loosely on save and fully on
-// publish, so it is stored as one JSON document. Supplies deleted from the
-// catalog are dropped when the draft is loaded.
+// before publishing. The content is the half-filled form, validated loosely
+// on save and fully on publish, so it is stored as one JSON document. Supplies
+// deleted from the catalog are dropped when the draft is loaded.
 export type TenderDraftContent = {
   roundHours: string;
   roundCount: string;
   decrementPercent: string;
   items: { supplyId: string; quantity: string; specs: string; startingPrice: string }[];
-  // Linked suppliers the emprendedor unticked; suppliers registered later
-  // start invited, as on a new form.
-  excludedSupplierIds: string[];
 };
 
 export const tenderDrafts = pgTable("tender_drafts", {
@@ -234,4 +235,4 @@ export const tenderDrafts = pgTable("tender_drafts", {
 export type Tender = typeof tenders.$inferSelect;
 export type TenderOffer = typeof tenderOffers.$inferSelect;
 export type TenderItem = typeof tenderItems.$inferSelect;
-export type TenderInvitation = typeof tenderInvitations.$inferSelect;
+export type TenderNegotiation = typeof tenderNegotiations.$inferSelect;

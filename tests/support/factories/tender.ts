@@ -1,5 +1,5 @@
 import type { VerifiedUserId } from "@/lib/services/auth";
-import { createSupplierInviteService, registerSupplierService } from "@/lib/services/suppliers";
+import { registerSupplierService } from "@/lib/services/suppliers";
 import { createSupplyService } from "@/lib/services/supplies";
 
 import { buildSupplierProfile } from "./supplier";
@@ -9,8 +9,8 @@ import { createUser, type CreatedUser } from "./user";
 type Db = NonNullable<Parameters<typeof createSupplyService>[2]>;
 
 // Arranges the parties of a tender through the real services: an emprendedor
-// with catalog supplies and suppliers linked to them. `track` receives every
-// created user so the test can delete them afterwards.
+// with catalog supplies and suppliers registered publicly (issue #309).
+// `track` receives every created user so the test can delete them afterwards.
 
 export async function createSupply(
   ownerId: VerifiedUserId,
@@ -25,15 +25,13 @@ export async function createSupply(
   );
 }
 
-export async function createLinkedSupplier(
-  owner: CreatedUser,
+export async function createRegisteredSupplier(
   db: Db,
   track: (user: CreatedUser) => void,
   businessName = "Molino San José",
 ): Promise<CreatedUser> {
   const supplier = await createUser();
   track(supplier);
-  const { token } = await createSupplierInviteService(owner.id, { label: businessName }, db);
-  await registerSupplierService(supplier.id, supplier.email, token, buildSupplierProfile({ businessName }), db);
+  await registerSupplierService(supplier.id, supplier.email, buildSupplierProfile({ businessName }), db);
   return supplier;
 }

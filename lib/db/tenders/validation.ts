@@ -14,11 +14,10 @@ import {
   tenderItemsLengthMessage,
   tenderQuantityField,
   tenderSpecsField,
-  tenderSuppliersMessage,
   unitPriceField,
 } from "@/lib/schemas/tenders/fields";
 
-// Server gate for publishing a tender (RN-02, RN-05). Server-controlled
+// Server gate for publishing a tender (RN-02). Server-controlled
 // fields (owner, number, start and end times, catalog copies) are not part of
 // the input.
 
@@ -42,10 +41,6 @@ export const publishTenderInputSchema = z.object({
     .refine((items) => new Set(items.map((item) => item.supplyId)).size === items.length, {
       error: tenderDuplicateItemMessage,
     }),
-  supplierIds: z
-    .array(uuid, { error: tenderSuppliersMessage })
-    .min(1, { error: tenderSuppliersMessage })
-    .transform((ids) => [...new Set(ids)]),
 });
 
 export type PublishTenderInput = z.infer<typeof publishTenderInputSchema>;
@@ -73,10 +68,6 @@ export const tenderDraftInputSchema = z.object({
     .refine((items) => new Set(items.map((item) => item.supplyId)).size === items.length, {
       error: tenderDuplicateItemMessage,
     }),
-  excludedSupplierIds: z
-    .array(uuid)
-    .max(500)
-    .transform((ids) => [...new Set(ids)]),
 });
 
 export type TenderDraftInput = z.infer<typeof tenderDraftInputSchema>;
@@ -100,19 +91,19 @@ export const submitOffersInputSchema = z.object({
 // RN-14: choose the supplier of an item, at the agreed unit price.
 export const awardItemInputSchema = z.object({
   itemId: uuid,
-  invitationId: uuid,
+  supplierUserId: uuid,
   unitPrice: unitPriceField,
 });
 
 // RN-21: ask a supplier to negotiate, sharing the emprendedor's contact.
 export const negotiationInputSchema = z.object({
-  invitationId: uuid,
+  supplierUserId: uuid,
   contact: negotiationContactField,
 });
 
 // RN-15: the terms the emprendedor completes on the purchase order.
 export const purchaseOrderInputSchema = z.object({
-  invitationId: uuid,
+  supplierUserId: uuid,
   deliveryTerms: orderTermsField("las condiciones de entrega"),
   paymentTerms: orderTermsField("las condiciones de pago"),
 });

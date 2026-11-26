@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
 
-import { createLinkedSupplier, createSupply } from "../../tests/support/factories/tender";
+import { createRegisteredSupplier, createSupply } from "../../tests/support/factories/tender";
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
 import { deleteSupplyService } from "./supplies";
@@ -71,8 +71,8 @@ async function scenario() {
     purchaseQuantity: "1",
     purchaseUnit: "kg",
   });
-  const molino = await createLinkedSupplier(owner, db, track, "Molino San José");
-  const dulce = await createLinkedSupplier(owner, db, track, "Dulce SA");
+  const molino = await createRegisteredSupplier(db, track, "Molino San José");
+  const dulce = await createRegisteredSupplier(db, track, "Dulce SA");
   return { owner, flour, sugar, molino, dulce };
 }
 
@@ -85,13 +85,12 @@ function publishInput(s: Awaited<ReturnType<typeof scenario>>, overrides: Record
       { supplyId: s.flour.id, quantity: "50", specs: "Bolsa de 25 kg", startingPrice: "800" },
       { supplyId: s.sugar.id, quantity: "20", specs: "", startingPrice: "1000.00" },
     ],
-    supplierIds: [s.molino.id, s.dulce.id],
     ...overrides,
   };
 }
 
 describe("getTenderFormDataService", () => {
-  it("suggests each supply's catalog price per purchase unit and lists the linked suppliers (RN-02, RN-05)", async () => {
+  it("suggests each supply's catalog price per purchase unit (RN-02, #309)", async () => {
     const s = await scenario();
 
     const data = await getTenderFormDataService(s.owner.id, db);
@@ -101,7 +100,8 @@ describe("getTenderFormDataService", () => {
       unit: "kg",
       suggestedPrice: "750.00",
     });
-    expect(data.suppliers.map((x) => x.businessName).sort()).toEqual(["Dulce SA", "Molino San José"]);
+    // No supplier selection: every registered supplier may participate (#309).
+    expect(data).not.toHaveProperty("suppliers");
     expect(data.activeTender).toBeNull();
   });
 });
@@ -130,7 +130,7 @@ describe("publishTenderService", () => {
       ["Azúcar", "kg", "20.0000", "1000.00", "1000.00"],
     ]);
     expect(detail.items[0]?.targets).toEqual(["800.00", "720.00", "648.00", "583.20"]);
-    expect(detail.invitations).toHaveLength(2);
+    expect(detail.suppliers).toEqual([]); // nobody has offered yet
 
     // After it closes, the next one gets number 2.
     const later = new Date(now.getTime() + 25 * HOUR);
@@ -160,15 +160,13 @@ describe("publishTenderService", () => {
     );
   });
 
-  it("only invites suppliers registered with the emprendedor (RN-05)", async () => {
+  it("publishes without selecting suppliers: every registered supplier may see it (#309)", async () => {
     const s = await scenario();
-    const otherOwner = await makeUser();
-    const outsider = await createLinkedSupplier(otherOwner, db, track, "Ajeno SRL");
+    const outsider = await createRegisteredSupplier(db, track, "Ajeno SRL");
 
-    await expectAppError(
-      publishTenderService(s.owner.id, publishInput(s, { supplierIds: [outsider.id] }), db),
-      "TENDER_SUPPLIER_NOT_LINKED",
-    );
+    const { id } = await publishTenderService(s.owner.id, publishInput(s), db);
+    const list = await listSupplierTendersService(outsider.id, db);
+    expect(list.map((tender) => tender.id)).toEqual([id]);
   });
 
   it("rejects a missing starting price, a round length outside 6/12/24 and a round count outside 2–5", async () => {
@@ -178,7 +176,6 @@ describe("publishTenderService", () => {
       { items: [{ supplyId: s.flour.id, quantity: "1", startingPrice: "" }] },
       { roundHours: "8" },
       { roundCount: "6" },
-      { supplierIds: [] },
     ]) {
       await expect(publishTenderService(s.owner.id, publishInput(s, overrides), db)).rejects.toBeInstanceOf(
         ZodError,
@@ -248,7 +245,7 @@ describe("owner scoping", () => {
 });
 
 describe("supplier view (RN-06, RN-07, RN-22)", () => {
-  it("shows invited suppliers the terms and the current target, never the reference price", async () => {
+  it("shows any registered supplier the terms and the current target, never the reference price", async () => {
     const s = await scenario();
     const now = new Date("2026-11-21T12:00:00Z");
     const { id } = await publishTenderService(s.owner.id, publishInput(s), db, now);
@@ -272,12 +269,14 @@ describe("supplier view (RN-06, RN-07, RN-22)", () => {
     expect(serialized).not.toContain("Dulce SA");
   });
 
-  it("does not show a tender to a supplier that was not invited", async () => {
+  it("hides a closed tender from a supplier that did not take part in it (RN-17)", async () => {
     const s = await scenario();
-    const { id } = await publishTenderService(s.owner.id, publishInput(s, { supplierIds: [s.molino.id] }), db);
+    const now = new Date("2026-11-21T12:00:00Z");
+    const { id } = await publishTenderService(s.owner.id, publishInput(s), db, now);
+    const afterClose = new Date(now.getTime() + 25 * HOUR);
 
-    await expect(listSupplierTendersService(s.dulce.id, db)).resolves.toEqual([]);
-    await expectAppError(getSupplierTenderService(s.dulce.id, id, db), "TENDER_NOT_FOUND");
+    await expect(listSupplierTendersService(s.dulce.id, db, afterClose)).resolves.toEqual([]);
+    await expectAppError(getSupplierTenderService(s.dulce.id, id, db, afterClose), "TENDER_NOT_FOUND");
   });
 });
 
@@ -289,9 +288,9 @@ describe("listTendersService", () => {
     await publishTenderService(s.owner.id, publishInput(s), db, now);
 
     const list = await listTendersService(s.owner.id, db, now);
-    expect(list.map((t) => [t.number, t.phase, t.itemCount, t.invitedCount])).toEqual([
-      [2, "active", 2, 2],
-      [1, "closed", 2, 2],
+    expect(list.map((t) => [t.number, t.phase, t.itemCount, t.supplierCount])).toEqual([
+      [2, "active", 2, 0],
+      [1, "closed", 2, 0],
     ]);
   });
 });

@@ -19,9 +19,9 @@ const tenders = functionalityPages[1];
 const steps = [
   {
     number: "01",
-    title: "Registrar proveedores",
+    title: "Registro de proveedores",
     description:
-      "Generás un enlace personal por proveedor. Complete sus datos, confirme su correo y quede vinculado a tu negocio.",
+      "Cualquier proveedor se registra por su cuenta con sus datos y confirma su correo. No hace falta que lo invités.",
   },
   {
     number: "02",
@@ -50,9 +50,9 @@ const steps = [
 ] as const;
 
 const providerPoints = [
-  "Se registran con un enlace personal que sirve una sola vez y vence a los 7 días.",
+  "Se registran libremente, sin enlace ni invitación, con el mismo CUIT y confirmación de correo.",
   "Cargan negocio, CUIT, contacto y rubros; la cuenta se crea recién al confirmar el correo.",
-  "Ven en su panel las licitaciones de los negocios con los que están vinculados, separadas.",
+  "Ven en su panel todas las licitaciones activas, sin importar el negocio que las publicó.",
   "Nunca ven a los otros proveedores, sus ofertas ni el precio de tu catálogo.",
 ] as const;
 
@@ -139,7 +139,7 @@ export default async function TendersPage() {
           <div className="max-w-3xl">
             <p className={eyebrow}>El recorrido</p>
             <h2 id="tender-steps-title" className={sectionTitle}>
-              De la invitación a la orden de compra
+              Del registro a la orden de compra
             </h2>
             <p className={sectionLead}>
               Los avisos aparecen en el panel de cada persona: no se envían correos ni mensajes fuera
@@ -167,13 +167,13 @@ export default async function TendersPage() {
       >
         <div className={container}>
           <div className="max-w-3xl">
-            <p className={eyebrow}>Tus proveedores</p>
+            <p className={eyebrow}>Proveedores registrados</p>
             <h2 id="providers-title" className={sectionTitle}>
               Cada proveedor ve solo lo suyo
             </h2>
             <p className={sectionLead}>
-              El enlace de registro es personal y se muestra una sola vez. Tu proveedor carga sus
-              datos una vez y puede participar en todas las licitaciones para las que lo invites.
+              El registro es público: cargan sus datos una vez y pueden participar en todas las
+              licitaciones activas, sin que nadie los invite.
             </p>
           </div>
           <ul className="mt-8 grid gap-4 sm:grid-cols-2">

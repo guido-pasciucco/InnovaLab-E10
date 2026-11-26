@@ -67,7 +67,7 @@ export const awardItem = handleActionErrors(async (_previous: unknown, data: For
   const tenderId = String(data.get("tenderId") ?? "");
   await awardItemService(user.id, tenderId, {
     itemId: data.get("itemId"),
-    invitationId: data.get("invitationId"),
+    supplierUserId: data.get("supplierUserId"),
     unitPrice: data.get("unitPrice"),
   });
   refresh(tenderId);
@@ -79,7 +79,7 @@ export const requestNegotiation = handleActionErrors(async (_previous: unknown, 
   const user = await requireUser();
   const tenderId = String(data.get("tenderId") ?? "");
   await requestNegotiationService(user.id, tenderId, {
-    invitationId: data.get("invitationId"),
+    supplierUserId: data.get("supplierUserId"),
     contact: data.get("contact"),
   });
   refresh(tenderId);
@@ -91,7 +91,7 @@ export const issuePurchaseOrder = handleActionErrors(async (_previous: unknown, 
   const user = await requireUser();
   const tenderId = String(data.get("tenderId") ?? "");
   const order = await issuePurchaseOrderService(user.id, tenderId, {
-    invitationId: data.get("invitationId"),
+    supplierUserId: data.get("supplierUserId"),
     deliveryTerms: data.get("deliveryTerms"),
     paymentTerms: data.get("paymentTerms"),
   });

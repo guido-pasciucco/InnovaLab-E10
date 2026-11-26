@@ -1,9 +1,10 @@
 import { expect, test } from "../fixtures";
 
-// Tender drafts: an emprendedor without suppliers loads the supplies to
-// publish, saves the draft, and finds it again from the tender list.
-test("sin proveedores se cargan los insumos, se guarda el borrador y se retoma", async ({ authedPage }) => {
-  // Arrange: one catalog supply and no supplier.
+// Tender drafts: an emprendedor loads the supplies to publish, saves the
+// draft, and finds it again from the tender list. No supplier selection is
+// needed any more (#309).
+test("se cargan los insumos, se guarda el borrador y se retoma", async ({ authedPage }) => {
+  // Arrange: one catalog supply.
   await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
@@ -12,12 +13,9 @@ test("sin proveedores se cargan los insumos, se guarda el borrador y se retoma",
   await authedPage.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(authedPage.getByRole("cell", { name: "Harina 000", exact: true })).toBeVisible();
 
-  // Act: the form is available; publishing waits for a supplier.
+  // Act: the form is available and no supplier selection is shown.
   await authedPage.goto("/licitaciones/nueva");
-  await expect(authedPage.getByRole("button", { name: "Publicar licitación" })).toBeDisabled();
-  await expect(
-    authedPage.getByText("Para publicar necesitás al menos un proveedor registrado con vos."),
-  ).toBeVisible();
+  await expect(authedPage.getByRole("heading", { name: "Proveedores invitados" })).toHaveCount(0);
 
   await authedPage.getByLabel("Cantidad de rondas").selectOption("4");
   await authedPage.getByLabel("% de baja por ronda").fill("5");

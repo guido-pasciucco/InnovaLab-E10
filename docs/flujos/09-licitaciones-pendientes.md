@@ -21,7 +21,7 @@ Los IDs `ES-NN`, `DD-NN`, `N-NN`, `D-NN`, `C-NN` y `E-NN` son los originales. Lo
 | ES-10/1 | Ayuda para avisar a los proveedores por cuenta propia | abierta | 04-especificaciones.md |
 | ES-11/1 | Nota a invitados que no ofertaron | resuelta-parcialmente | 04-especificaciones.md |
 | ES-12/1 | Para qué servía excluir proveedores | en duda | 04-especificaciones.md → DD-02 |
-| DD-01 | Registro público de proveedores y licitaciones visibles | en duda (se mantiene en la 1ª versión) | 05-decisiones-en-duda.md |
+| DD-01 | Registro público de proveedores y licitaciones visibles | resuelta: se implementa en #309 (26 nov 2026) | 05-decisiones-en-duda.md |
 | DD-02 | Excluir proveedores durante la licitación | en duda | 05-decisiones-en-duda.md |
 | N-03 | Lista cerrada de rubros | abierta (diferida) | 06-decisiones-de-implementacion.md |
 | N-10 | Puntos cerrados por la opción más simple | resuelta-parcialmente | 06-decisiones-de-implementacion.md |
@@ -63,7 +63,7 @@ Los puntos siguientes son los items de la sección *Qué no decide* de cada espe
 
 ### <a id="DD-01"></a>DD-01. Registro público de proveedores y licitaciones visibles para todos
 
-- **Estado:** en duda — se mantiene en la primera versión. **Origen:** 05-decisiones-en-duda.md. Planteada el 21 de noviembre de 2026.
+- **Estado:** resuelta el 26 de noviembre de 2026 por la issue #309: se implementa el registro público y todas las licitaciones activas son visibles para cualquier proveedor registrado. **Origen:** 05-decisiones-en-duda.md. Planteada el 21 de noviembre de 2026.
 - **Qué está decidido hoy:** RN-05 invita solo a proveedores registrados con ese emprendedor; RN-07 impide que un proveedor vea el precio de referencia, catálogo o recetas; la nota *Queda ligado a un emprendedor* dice que para trabajar con otro se registra otra vez; el único camino de registro empieza con el enlace que difunde el emprendedor.
 - **La duda:** el proveedor debería poder registrarse públicamente, sin invitación, y ver las licitaciones publicadas para poder ofertar. Aunque la duda sigue abierta, para la primera versión se implementó lo que ya estaba escrito.
 
@@ -76,7 +76,7 @@ Los puntos siguientes son los items de la sección *Qué no decide* de cada espe
 
 - **Resguardos posibles si se cambia** (ideas, no decisiones): licitación privada o pública elegida por el emprendedor; verificar el CUIT antes de ofertar (ES-09); mostrar solo licitaciones del rubro o zona; que el emprendedor pueda bloquear a un proveedor; mostrar las licitaciones públicas sin el nombre del emprendedor hasta que elija negociar (RN-21 ya le pasa el contacto en ese momento).
 - **Puntos relacionados:** ES-07, ES-08, ES-09.
-- **Resolución:** la primera versión se implementa con lo que dicen las reglas: el proveedor entra solo invitado y no hay registro público. La duda queda abierta para una versión siguiente, con los resguardos anteriores como punto de partida.
+- **Resolución (#309, 26 nov 2026):** se adopta el cambio con los resguardos ya decididos: cualquier persona se registra como proveedor con CUIT válido y mail confirmado; ve todas las licitaciones activas con insumos, cantidades, precio de partida y objetivo; no ve ofertas ajenas ni el catálogo del emprendedor. Se eliminan los enlaces de invitación, `supplier_links`, `tender_invitations` y la selección de invitados al publicar. Las ofertas, adjudicaciones, órdenes y negociaciones se identifican por proveedor. Siguen sin decidirse los resguardos adicionales (licitación pública/privada, verificación de CUIT antes de ofertar, rubros/zonas, bloqueos, ocultar el nombre del emprendedor).
 
 ### <a id="DD-02"></a>DD-02. ¿Para qué sirve excluir proveedores durante la licitación?
 
@@ -124,10 +124,10 @@ Los puntos siguientes son los items de la sección *Qué no decide* de cada espe
 
   | Decisión | Qué cambia en el diagrama |
   | --- | --- |
-  | DD-01 | Se confirma para la primera versión: el proveedor entra solo por enlace de un emprendedor, sin registro público. |
-  | ES-07 | La nota *Al publicar* cambia: aparecen todos los registrados preseleccionados con sus rubros y el emprendedor quita a los que no van. |
-  | ES-08 | La nota *Queda ligado a un emprendedor* cambia: una sola cuenta, varios vínculos, dashboard con todos sus emprendedores. |
-  | ES-09 | *Difunde el enlace* es uno personal por proveedor, de un solo uso y con vencimiento a 7 días; se confirma mail y se controla CUIT. |
+  | DD-01 / #309 | El proveedor se registra públicamente, sin enlace ni vínculo, y ve todas las licitaciones activas. |
+  | ES-07 / #309 | La nota *Al publicar* cambia: no hay selección de proveedores; participa cualquier registrado. |
+  | ES-08 / #309 | La nota *Queda ligado a un emprendedor* desaparece: una sola cuenta, un panel con todas las licitaciones activas. |
+  | ES-09 / #309 | *Difunde el enlace* desaparece: se confirma mail y se controla CUIT en el registro público. |
   | ES-10 | No se piden avisos por separado ni hay mails opcionales: todo ocurre en el panel. |
 
 Los dos diagramas quedaron desactualizados frente a las decisiones posteriores; el proceso vigente se describe por escrito.

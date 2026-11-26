@@ -28,8 +28,8 @@ Documento de planificación, no de reglas vigentes. Las reglas que hoy rigen est
 | 24 nov 2026 | H-17 | Diferido: queda como idea; los avisos actuales se documentan como referencia | Ninguno: RN-23/N-24 y el servicio de avisos siguen vigentes |
 | 24 nov 2026 | H-19 | Mantener la generación de órdenes de compra | Ninguno: ES-11, RN-15 y N-28 quedan vigentes |
 | 24 nov 2026 | H-01 | Mantener el nombre "licitación de insumos" | Ninguno: el nombre del flujo y la documentación no cambian |
-| 24 nov 2026 | H-23 (visibilidad) | Ver todas las licitaciones; se conservan RN-06/RN-07 (sin ofertas ajenas ni catálogo) | Pendiente de bajar a reglas: se cae el filtro de invitaciones y se reescribe RN-05 |
-| 24 nov 2026 | H-23 (alta) | Quitar enlaces, `supplier_links` y selección de invitados; alta pública | Pendiente de bajar a reglas y esquema: RN-05, RN-23, ES-09, D-01 a D-03; H-21 queda sin efecto y H-02 queda absorbida |
+| 24 nov 2026 | H-23 (visibilidad) | Ver todas las licitaciones; se conservan RN-06/RN-07 (sin ofertas ajenas ni catálogo) | Implementado en #309: se cayó el filtro de invitaciones y se reescribió RN-05 |
+| 24 nov 2026 | H-23 (alta) | Quitar enlaces, `supplier_links` y selección de invitados; alta pública | Implementado en #309: RN-05, RN-23, ES-09, D-01 a D-03 reescritos; H-21 sin efecto y H-02 absorbida |
 | 24 nov 2026 | H-11 | Mantener el término "precio de partida" | Ninguno: RN-02 y la guía no cambian |
 | 24 nov 2026 | H-12 | Mantener el término "oferta" | Ninguno: RN-10, botones y mensajes no cambian |
 | 24 nov 2026 | H-08 | Mantener ronda y objetivo en el panel del proveedor | Ninguno: N-21 queda vigente; la frase "quitar ronda" no se adopta |
@@ -272,7 +272,7 @@ Agrupa hallazgos del mismo problema. **Son candidatos, no issues creadas.** La �
 | C-05 | H-07, H-08, H-18, H-20 | Visibilidad para el proveedor y negociación | Sin cambios en ronda, objetivo ni negociación; chat interno va a Ideas a futuro. |
 | C-06 | H-14, H-15, H-17 | Validación de precios y avisos por ronda | Bug de feedback registrado con diagnóstico; se quita "cancelar" del aviso; avisos por ronda van a Ideas a futuro. |
 | C-07 | H-01, H-02, H-11, H-12, H-19 | Alcance de la orden de compra y terminología | Sin cambios: orden de compra, "licitación", "precio de partida" y "oferta". H-02 absorbida por H-23. |
-| C-08 | H-23 | Registro público de proveedores y todas las licitaciones visibles | En especificación: ver todo salvo ofertas ajenas; alta pública sin enlaces ni vínculos. |
+| C-08 | H-23 | Registro público de proveedores y todas las licitaciones visibles | Implementado en #309: ver todo salvo ofertas ajenas; alta pública sin enlaces ni vínculos. |
 
 ## Requerimiento nuevo de la validación (a especificar)
 
@@ -287,7 +287,7 @@ Agrupa hallazgos del mismo problema. **Son candidatos, no issues creadas.** La �
   > no ahce falta que el emprendedor seleccione proveedores para invitar, participa el que quiera
   >
   > si tenes preguntas para espesificar mejor y explora como esta implementado ahora mejor
-- **Estado:** en especificación. Corresponde al DD-01 que `09-licitaciones-pendientes.md` tenía diferido para una versión siguiente.
+- **Estado:** implementado por la issue #309 el 26 nov 2026 (registro público, sin invitaciones, ofertas por proveedor). Corresponde al DD-01 que `09-licitaciones-pendientes.md` tenía diferido para una versión siguiente.
 - **Decisión parcial del 24 nov 2026:** cualquier proveedor registrado ve **todas** las licitaciones (insumos, cantidades, precio de partida y objetivo), pero se mantienen RN-06/RN-07: no ve ofertas de otros proveedores ni el catálogo del emprendedor. La opción "absolutamente todo" fue descartada.
 - **Decisión parcial del 24 nov 2026:** se eliminan los enlaces de invitación, `supplier_links` y la selección de invitados al publicar. El alta pasa a ser pública en una sección de proveedores; las ofertas se identifican por proveedor en lugar de por invitación (cambio de esquema). Esto deja sin efecto la decisión de H-21 y absorbe H-02.
 - **Qué cambia respecto de hoy:** (1) el alta de proveedor deja de exigir el enlace del emprendedor; (2) se cae `supplier_links` como filtro de la relación; (3) `tender_invitations` deja de ser el filtro de licitaciones visibles para el proveedor; (4) desaparece la selección de invitados al publicar.

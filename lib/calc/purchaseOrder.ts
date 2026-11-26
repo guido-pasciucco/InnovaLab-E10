@@ -6,7 +6,7 @@ import Decimal from "decimal.js";
 export type AwardRecord = {
   id: string;
   itemId: string;
-  invitationId: string;
+  supplierUserId: string;
   unitPrice: string;
   createdAt: Date;
 };

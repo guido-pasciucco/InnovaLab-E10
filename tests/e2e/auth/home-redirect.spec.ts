@@ -1,7 +1,6 @@
-import { randomValidCuit } from "../../support/factories/supplier";
 import { createUser } from "../../support/factories/user";
 import { expect, signInContext, test } from "../fixtures";
-import { generateInviteLink } from "../helpers/supplier-invite";
+import { registerSignedInSupplier } from "../helpers/supplier-registration";
 import { LoginPage } from "../pages/login.page";
 
 test("an anonymous visitor is redirected from /inicio to /login", async ({ page }) => {
@@ -27,28 +26,14 @@ test("the home header links a signed-in user into the app instead of Iniciar ses
   await expect(authedPage).toHaveURL("/inicio");
 });
 
-test("a supplier-only account logs in through the form and lands on its panel", async ({
-  authedPage,
-  browser,
-  cleanup,
-  baseURL,
-}) => {
-  // Arrange: an account that only completed its supplier data through an invite.
-  const link = await generateInviteLink(authedPage, "Molino San José");
+test("a supplier-only account logs in through the form and lands on its panel", async ({ browser, cleanup, baseURL }) => {
+  // Arrange: an account that only completed its supplier data publicly.
   const supplier = await createUser();
   cleanup.trackUserEmail(supplier.email);
   const registration = await browser.newContext();
   await signInContext(registration, supplier, baseURL!);
   const registrationPage = await registration.newPage();
-  await registrationPage.goto(link);
-  await registrationPage.getByLabel("Nombre del negocio").fill("Molino San José");
-  await registrationPage.getByLabel("CUIT").fill(randomValidCuit());
-  await registrationPage.getByLabel("Persona de contacto").fill("Ana Pérez");
-  await registrationPage.getByLabel("Teléfono").fill("+54 11 5555-1234");
-  await registrationPage.getByLabel("Rubros").fill("Harinas");
-  await registrationPage.getByRole("checkbox", { name: /Acepto los términos de uso/ }).check();
-  await registrationPage.getByRole("button", { name: "Registrarme como proveedor" }).click();
-  await expect(registrationPage).toHaveURL("/proveedor");
+  await registerSignedInSupplier(registrationPage, "Molino San José");
   await registration.close();
 
   // Act: a fresh session signs in through the login form.

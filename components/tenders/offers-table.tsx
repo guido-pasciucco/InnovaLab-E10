@@ -2,12 +2,20 @@ import { latestOffers, offerKey, type OfferRecord } from "@/lib/calc/tenderOffer
 import { formatDateTime, formatMoney, formatQuantity } from "./format";
 
 type Item = { id: string; supplyName: string; unit: string; quantity: string; startingPrice: string };
-type Invitation = { id: string; businessName: string };
+type Supplier = { supplierUserId: string; businessName: string };
 
 // Live offers per item for the emprendedor (RN-08: every offer with the
-// supplier's identity, from the start). A supplier that did not quote an
-// item shows "Sin oferta" (RN-20).
-export function OffersTable({ items, invitations, offers }: { items: Item[]; invitations: Invitation[]; offers: OfferRecord[] }) {
+// supplier's identity, from the start). A supplier that did not quote an item
+// shows "Sin oferta" (RN-20).
+export function OffersTable({
+  items,
+  suppliers,
+  offers,
+}: {
+  items: Item[];
+  suppliers: Supplier[];
+  offers: OfferRecord[];
+}) {
   const latest = latestOffers(offers);
 
   return (
@@ -28,11 +36,11 @@ export function OffersTable({ items, invitations, offers }: { items: Item[]; inv
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-default">
-                {invitations.map((invitation) => {
-                  const offer = latest.get(offerKey(invitation.id, item.id));
+                {suppliers.map((supplier) => {
+                  const offer = latest.get(offerKey(supplier.supplierUserId, item.id));
                   return (
-                    <tr key={invitation.id}>
-                      <td className="py-1 pr-4 text-fg">{invitation.businessName}</td>
+                    <tr key={supplier.supplierUserId}>
+                      <td className="py-1 pr-4 text-fg">{supplier.businessName}</td>
                       <td className="py-1 pr-4 font-semibold text-fg">{offer ? formatMoney(offer.unitPrice) : "Sin oferta"}</td>
                       <td className="py-1 pr-4 text-fg-muted">{offer ? offer.round : "—"}</td>
                       <td className="py-1 text-fg-muted">{offer ? formatDateTime(offer.createdAt) : "—"}</td>

@@ -19,7 +19,7 @@ Numora ayuda a pequeños emprendimientos que fabrican productos a ordenar sus co
 - Ver un resumen del costo, precio, margen y punto de equilibrio.
 - Mantener un catálogo de insumos y packaging, y usarlos en las recetas de productos.
 - Registrar costos generales del emprendimiento por período.
-- Invitar proveedores, recibir ofertas por rondas y emitir órdenes de compra en el flujo de licitaciones.
+- Publicar licitaciones, recibir ofertas por rondas de proveedores registrados y emitir órdenes de compra.
 
 ## Conceptos principales
 
@@ -55,7 +55,7 @@ Numora ayuda a pequeños emprendimientos que fabrican productos a ordenar sus co
 
 **Escenario:** variante para comparar qué pasaría si cambia un costo, un volumen o un precio.
 
-**Licitaciones:** las licitaciones de insumos se publican por rondas: el emprendedor invita a los proveedores, ellos ofertan en cada ronda y el resultado permite adjudicar y emitir órdenes de compra. Los proveedores no se dan de alta de forma libre: entran con una invitación del emprendedor. La actualización del precio del insumo a partir de la adjudicación todavía no está disponible: quedó para una versión siguiente.
+**Licitaciones:** las licitaciones de insumos se publican por rondas: los proveedores registrados ofertan en cada ronda y el resultado permite adjudicar y emitir órdenes de compra. El registro de proveedores es público y no requiere invitación: cualquier proveedor registrado ve todas las licitaciones activas, pero no las ofertas de los demás ni el catálogo del emprendedor. La actualización del precio del insumo a partir de la adjudicación todavía no está disponible: quedó para una versión siguiente.
 
 ## Límites del asistente
 

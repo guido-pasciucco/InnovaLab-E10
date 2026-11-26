@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
 
-import { createLinkedSupplier, createSupply } from "../../tests/support/factories/tender";
+import { createRegisteredSupplier, createSupply } from "../../tests/support/factories/tender";
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
 import {
@@ -57,14 +57,14 @@ async function failure(promise: Promise<unknown>): Promise<AppError> {
 const at = (hours: number) => new Date(start.getTime() + hours * HOUR);
 
 // A published basket (flour and sugar, 6-hour rounds × 4, 10 % per round)
-// with two invited suppliers.
+// visible to every registered supplier.
 async function publishedTender() {
   const owner = await createUser();
   track(owner);
   const flour = await createSupply(owner.id, "Harina 000", db);
   const sugar = await createSupply(owner.id, "Azúcar", db);
-  const molino = await createLinkedSupplier(owner, db, track, "Molino San José");
-  const dulce = await createLinkedSupplier(owner, db, track, "Dulce SA");
+  const molino = await createRegisteredSupplier(db, track, "Molino San José");
+  const dulce = await createRegisteredSupplier(db, track, "Dulce SA");
   const { id } = await publishTenderService(
     owner.id,
     {
@@ -75,7 +75,6 @@ async function publishedTender() {
         { supplyId: flour.id, quantity: "50", startingPrice: "800.00" },
         { supplyId: sugar.id, quantity: "20", startingPrice: "1000.00" },
       ],
-      supplierIds: [molino.id, dulce.id],
     },
     db,
     start,
@@ -197,21 +196,24 @@ describe("when offers are accepted (RN-12)", () => {
     expect((await failure(offer(3))).code).toBe("TENDER_NOT_ACTIVE");
   });
 
-  it("only accepts offers from invited suppliers, for items of that tender", async () => {
+  it("accepts offers from any registered supplier (#309), only for items of that tender", async () => {
     const t = await publishedTender();
-    const outsider = await createLinkedSupplier(t.owner, db, track, "Llegó tarde");
+    const newcomer = await createRegisteredSupplier(db, track, "Llegó a tiempo");
     const other = await publishedTender();
 
-    expect(
-      (await failure(
-        submitOffersService(outsider.id, t.tenderId, { offers: [{ itemId: t.flourItem.id, unitPrice: "700" }] }, db, at(1)),
-      )).code,
-    ).toBe("TENDER_NOT_FOUND");
+    await expect(
+      submitOffersService(newcomer.id, t.tenderId, { offers: [{ itemId: t.flourItem.id, unitPrice: "700" }] }, db, at(1)),
+    ).resolves.toEqual({ round: 1, count: 1 });
     expect(
       (await failure(
         submitOffersService(t.molino.id, t.tenderId, { offers: [{ itemId: other.flourItem.id, unitPrice: "700" }] }, db, at(1)),
       )).code,
     ).toBe("TENDER_NOT_FOUND");
+    expect(
+      (await failure(
+        submitOffersService(t.owner.id, t.tenderId, { offers: [{ itemId: t.flourItem.id, unitPrice: "700" }] }, db, at(1)),
+      )).code,
+    ).toBe("SUPPLIER_REQUIRED");
   });
 });
 
@@ -222,8 +224,8 @@ describe("who sees the offers (RN-06, RN-08)", () => {
     await submitOffersService(t.dulce.id, t.tenderId, { offers: [{ itemId: t.flourItem.id, unitPrice: "790" }] }, db, at(2));
 
     const detail = await getTenderDetailService(t.owner.id, t.tenderId, db, at(3));
-    const byName = new Map(detail.invitations.map((inv) => [inv.id, inv.businessName]));
-    expect(detail.offers.map((o) => [byName.get(o.invitationId), o.unitPrice, o.round])).toEqual([
+    const byName = new Map(detail.suppliers.map((supplier) => [supplier.supplierUserId, supplier.businessName]));
+    expect(detail.offers.map((o) => [byName.get(o.supplierUserId), o.unitPrice, o.round])).toEqual([
       ["Molino San José", "780.00", 1],
       ["Dulce SA", "790.00", 1],
     ]);
