@@ -17,7 +17,6 @@ const SUGGESTIONS = [
   "¿Cuántos productos tengo cargados?",
   "¿Qué insumos son los más caros?",
   "¿Cuáles son mis gastos del negocio?",
-  "¿Cómo se calcula el punto de equilibrio?",
 ];
 
 // The transport sends the new question and the history of finished pairs. The
