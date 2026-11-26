@@ -1,4 +1,6 @@
-"use client";import { Button } from "@/components/ui/button";
+"use client";
+
+import { Button } from "@/components/ui/button";
 
 import "./globals.css";
 import { useEffect } from "react";

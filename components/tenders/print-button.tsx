@@ -1,5 +1,6 @@
-"use client";import { Button } from "@/components/ui/button";
+"use client";
 
+import { Button } from "@/components/ui/button";
 
 // Opens the browser's print dialog, where the order can also be saved as PDF
 // (RN-15).

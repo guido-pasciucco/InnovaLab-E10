@@ -1,5 +1,6 @@
-"use client";import { Button } from "@/components/ui/button";
+"use client";
 
+import { Button } from "@/components/ui/button";
 
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
@@ -182,7 +183,7 @@ export default function LoginForm({ next = POST_LOGIN_HREF }: { next?: string })
       <Button variant="primary" size="md"
         type="submit"
         disabled={pending || Boolean(state?.ok)}
-        className="mt-1! flex! h-10! w-full! items-center! justify-center! gap-2! rounded-md! bg-action-primary! px-4! text-sm! font-bold! text-on-action-primary! shadow-[0_4px_10px_rgba(10,122,18,0.3)]! transition! hover:bg-action-primary-hover! active:bg-action-primary-pressed! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:bg-action-disabled! disabled:text-fg-disabled! lg:h-[44px]! lg:text-base!"
+        className="mt-1! flex! min-h-10! h-10! w-full! items-center! justify-center! gap-2! rounded-md! bg-action-primary! px-4! text-sm! font-bold! text-on-action-primary! shadow-[0_4px_10px_rgba(10,122,18,0.3)]! transition! hover:bg-action-primary-hover! active:bg-action-primary-pressed! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:bg-action-disabled! disabled:text-fg-disabled! lg:h-[44px]! lg:text-base!"
       >
         {pending ? "Ingresando…" : "Ingresar"}
         {!pending && <ArrowIcon />}

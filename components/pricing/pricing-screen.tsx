@@ -1,5 +1,6 @@
-"use client";import { Button } from "@/components/ui/button";
+"use client";
 
+import { Button } from "@/components/ui/button";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";

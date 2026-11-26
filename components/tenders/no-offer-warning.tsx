@@ -1,5 +1,6 @@
-"use client";import { Button } from "@/components/ui/button";
+"use client";
 
+import { Button } from "@/components/ui/button";
 
 import { acknowledgeNoOfferWarning } from "@/app/(business)/licitaciones/actions";
 import { useFormDataAction } from "@/components/forms/use-form-data-action";
