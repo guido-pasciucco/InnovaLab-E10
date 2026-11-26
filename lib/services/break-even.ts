@@ -51,7 +51,12 @@ export const getBreakEvenService: GetBreakEven = async (userId, deps) => {
   const excluded: BreakEvenExcludedProduct[] = [];
   for (const row of pricing.rows) {
     if (row.capacity === null || row.capacity === 0) {
-      excluded.push({ productId: row.productId, name: row.name, reason: "NO_CAPACITY" });
+      excluded.push({
+        productId: row.productId,
+        name: row.name,
+        reason: "NO_CAPACITY",
+        editHref: row.editHref,
+      });
       continue;
     }
     if (row.variableUnit === null) {
@@ -86,7 +91,7 @@ export const getBreakEvenService: GetBreakEven = async (userId, deps) => {
   }
 
   const products = inMix.map((row) => ({
-    id: row.productId,
+    id: row.rowId,
     name: row.name,
     capacity: row.capacity as number,
     variableUnit: row.variableUnit as string,

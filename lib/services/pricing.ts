@@ -5,7 +5,7 @@ import Decimal from "decimal.js";
 import { and, eq } from "drizzle-orm";
 
 import { suggestPrice } from "@/lib/calc/suggestPrice";
-import { businesses, products } from "@/lib/db/business/table";
+import { businesses, presentations, products } from "@/lib/db/business/table";
 import {
   setDefaultMarkupInputSchema,
   setProductMarkupInputSchema,
@@ -35,35 +35,14 @@ function money(value: string): string {
   return new Decimal(value).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2);
 }
 
-type OwnMarkups = {
-  defaultMarkupPercent: string | null;
-  byProduct: Map<string, string | null>;
-};
+async function getDefaultMarkup(userId: VerifiedUserId, db: Db): Promise<string | null> {
+  const [business] = await db
+    .select({ defaultMarkupPercent: businesses.defaultMarkupPercent })
+    .from(businesses)
+    .where(eq(businesses.ownerUserId, userId))
+    .limit(1);
 
-// Only the markup columns are read here. The products themselves (names,
-// capacities and costs) come from getCostDistributionService, which already
-// filters by the owner and does the proration.
-async function getOwnMarkups(
-  userId: VerifiedUserId,
-  db: Db,
-): Promise<OwnMarkups> {
-  const [[business], rows] = await Promise.all([
-    db
-      .select({ defaultMarkupPercent: businesses.defaultMarkupPercent })
-      .from(businesses)
-      .where(eq(businesses.ownerUserId, userId))
-      .limit(1),
-    db
-      .select({ id: products.id, markupPercent: products.markupPercent })
-      .from(products)
-      .innerJoin(businesses, eq(products.businessId, businesses.id))
-      .where(and(eq(businesses.ownerUserId, userId), eq(products.isActive, true))),
-  ]);
-
-  return {
-    defaultMarkupPercent: business?.defaultMarkupPercent ?? null,
-    byProduct: new Map(rows.map((row) => [row.id, row.markupPercent])),
-  };
+  return business?.defaultMarkupPercent ?? null;
 }
 
 export async function getPricingService(
@@ -71,21 +50,24 @@ export async function getPricingService(
   opts: ListPeriodCostsOptions = {},
   db: Db = getDrizzleClient(),
 ): Promise<Pricing> {
-  const [distribution, markups] = await Promise.all([
+  const [distribution, defaultMarkupPercent] = await Promise.all([
     getCostDistributionService(userId, opts, db),
-    getOwnMarkups(userId, db),
+    getDefaultMarkup(userId, db),
   ]);
 
   const rows: PricingRow[] = distribution.rows.map((row) => {
-    const own = markups.byProduct.get(row.productId) ?? null;
-    const markupPercent = own ?? markups.defaultMarkupPercent;
+    const own = row.ownMarkupPercent;
+    const markupPercent = own ?? defaultMarkupPercent;
     const markupSource: MarkupSource =
-      own !== null ? "product" : markups.defaultMarkupPercent !== null ? "business" : "none";
+      own !== null ? "product" : defaultMarkupPercent !== null ? "business" : "none";
 
     const base = {
+      rowId: row.rowId,
       productId: row.productId,
+      presentationId: row.presentationId,
       name: row.name,
       capacity: row.capacity,
+      editHref: row.editHref,
       variableUnit: row.variableUnit,
       variableUnavailableCode: row.variableUnavailableCode,
       unitCost: row.unitCost,
@@ -133,7 +115,7 @@ export async function getPricingService(
     period: distribution.period,
     status: distribution.status,
     totalExpenses: distribution.totalExpenses,
-    defaultMarkupPercent: markups.defaultMarkupPercent,
+    defaultMarkupPercent,
     rows,
   };
 }
@@ -193,6 +175,52 @@ export async function saveProductMarkupPercentService(
     .set({ markupPercent, updatedAt: new Date() })
     .where(eq(products.id, owned.id))
     .returning({ markupPercent: products.markupPercent });
+
+  return updated?.markupPercent ?? null;
+}
+
+/**
+ * Saves the markup of one sale row: the presentation when the row is one,
+ * otherwise the product.
+ * @throws AppError PRODUCT_NOT_FOUND when the row is invalid, foreign or inactive.
+ */
+export async function saveSaleRowMarkupPercentService(
+  userId: VerifiedUserId,
+  target: { productId: string; presentationId: string | null },
+  input: unknown,
+  db: Db = getDrizzleClient(),
+): Promise<string | null> {
+  if (!target.presentationId) {
+    return saveProductMarkupPercentService(userId, target.productId, input, db);
+  }
+
+  const { markupPercent } = setProductMarkupInputSchema.parse(input);
+  const presentationId = uuidString.safeParse(target.presentationId);
+  const productId = uuidString.safeParse(target.productId);
+  if (!presentationId.success || !productId.success) throw new AppError("PRODUCT_NOT_FOUND");
+
+  const [owned] = await db
+    .select({ id: presentations.id })
+    .from(presentations)
+    .innerJoin(products, eq(presentations.productId, products.id))
+    .innerJoin(businesses, eq(products.businessId, businesses.id))
+    .where(
+      and(
+        eq(presentations.id, presentationId.data),
+        eq(products.id, productId.data),
+        eq(businesses.ownerUserId, userId),
+        eq(products.isActive, true),
+      ),
+    )
+    .limit(1);
+
+  if (!owned) throw new AppError("PRODUCT_NOT_FOUND");
+
+  const [updated] = await db
+    .update(presentations)
+    .set({ markupPercent, updatedAt: new Date() })
+    .where(eq(presentations.id, owned.id))
+    .returning({ markupPercent: presentations.markupPercent });
 
   return updated?.markupPercent ?? null;
 }

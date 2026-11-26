@@ -10,6 +10,7 @@ export class PeriodCostsPage {
   readonly subtotal: Locator;
   readonly alerts: Locator;
   readonly dialog: Locator;
+  readonly ownWorkReminder: Locator;
 
   constructor(private readonly page: Page) {
     this.newButton = page.getByRole("button", { name: "+ Nuevo" });
@@ -18,6 +19,7 @@ export class PeriodCostsPage {
     this.subtotal = page.getByLabel(/^Total de gastos del período /);
     this.alerts = page.getByRole("alert");
     this.dialog = page.getByRole("dialog");
+    this.ownWorkReminder = page.getByRole("note");
   }
 
   async goto(): Promise<void> {

@@ -193,6 +193,7 @@ async function readPresentations(
     id: row.id,
     name: row.name,
     unitsPerPresentation: toFormQuantity(row.unitsPerPresentation),
+    monthlyCapacity: row.monthlyCapacity,
     packaging: linesByPresentation.get(row.id) ?? [],
   }));
 }
@@ -211,6 +212,7 @@ async function writePresentation(
   const values = {
     name: data.name,
     unitsPerPresentation: String(data.unitsPerPresentation),
+    monthlyCapacity: data.monthlyCapacity,
   };
 
   const [row] = existingId

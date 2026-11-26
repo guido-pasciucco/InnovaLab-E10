@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { deleteSupply } from "@/app/(business)/supplies/actions";
+import { Button } from "@/components/ui/button";
 import { calculateMinimumUnitPrice } from "@/lib/calc/supplyCost";
 import { getSupplyUnitBasis } from "@/lib/schemas/supplies/units";
 import type { SupplyKind } from "@/lib/schemas/supplies/fields";
@@ -136,24 +137,24 @@ export function SuppliesTable({
                 </td>
                 <td className="px-3 py-2.5 whitespace-nowrap text-right">
                   <div className="inline-flex gap-2">
-                    <button
-                      type="button"
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => onEdit(supply)}
                       disabled={isPending}
                       aria-label={`Editar ${supply.name}`}
-                      className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
                     >
                       Editar
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={() => handleDelete(supply)}
                       disabled={isPending}
                       aria-label={`Borrar ${supply.name}`}
-                      className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-danger hover:bg-danger/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
                     >
                       Borrar
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>

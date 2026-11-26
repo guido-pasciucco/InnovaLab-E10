@@ -92,9 +92,12 @@ export const productIngredientInputSchema = z.object({
 export const createPresentationInputSchema = createInsertSchema(presentations, {
   name: presentationNameField,
   unitsPerPresentation: presentationUnitsField,
+  monthlyCapacity: monthlyCapacityField,
 }).omit({
   id: true,
   productId: true,
+  // Edited from /precios, not from the presentation form.
+  markupPercent: true,
   createdAt: true,
   updatedAt: true,
 });

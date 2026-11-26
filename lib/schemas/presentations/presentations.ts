@@ -9,6 +9,7 @@ import {
 import {
   PACKAGING_DUPLICATE_MESSAGE,
   PACKAGING_UNIT_FAMILY_MESSAGE,
+  monthlyCapacityField,
   packagingSupplyField,
   presentationNameField,
   recipeQuantityField,
@@ -49,6 +50,7 @@ export function createPresentationFormSchema(options: readonly PackagingOption[]
         .string({ error: PRESENTATION_UNITS_FORM_MESSAGE })
         .trim()
         .regex(/^[1-9]\d{0,5}$/, { error: PRESENTATION_UNITS_FORM_MESSAGE }),
+      monthlyCapacity: monthlyCapacityField,
       packaging: z.array(presentationPackagingFormSchema),
     })
     .superRefine((value, ctx) => {
@@ -114,6 +116,7 @@ export type PresentationItem = {
   id: string;
   name: string;
   unitsPerPresentation: string;
+  monthlyCapacity: number | null;
   packaging: PresentationPackagingItem[];
 };
 

@@ -22,7 +22,7 @@ test("the home header links a signed-in user into the app instead of Iniciar ses
 
   const banner = authedPage.getByRole("banner");
   await expect(banner.getByRole("link", { name: "Iniciar sesión" })).toHaveCount(0);
-  await banner.getByRole("link", { name: "Dashboard" }).click();
+  await banner.getByRole("link", { name: "Ir a mi negocio" }).click();
 
   await expect(authedPage).toHaveURL("/inicio");
 });

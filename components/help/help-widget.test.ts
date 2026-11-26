@@ -13,18 +13,33 @@ describe("HelpWidget", () => {
     expect(render(createElement(HelpWidget, { enabled: false, userId: "user-a" }))).toBe("");
   });
 
+  it("renders nothing without an authenticated user", () => {
+    expect(render(createElement(HelpWidget, { enabled: true, userId: null }))).toBe("");
+  });
+
   it("renders the launcher button for a signed-in user", () => {
     const html = render(createElement(HelpWidget, { enabled: true, userId: "user-a" }));
     expect(html).toContain('aria-label="Abrir ayuda de Mora"');
     expect(html).toContain('aria-expanded="false"');
-    expect(html).toContain("mora-avatar.png");
+    expect(html).toContain("mora-quieta-transparente.png");
     expect(html).toContain('alt=""');
     expect(html).not.toContain("Vista previa");
   });
 
-  it("renders the launcher in visual preview mode without enabling help", () => {
-    const html = render(createElement(HelpWidget, { enabled: false, preview: true, userId: null }));
+  it("keeps a single launcher button in the closed state", () => {
+    const html = render(createElement(HelpWidget, { enabled: true, userId: "user-a" }));
+    expect(html.match(/<button\b/g)).toHaveLength(1);
     expect(html).toContain('aria-label="Abrir ayuda de Mora"');
+    expect(html).toContain("mora-quieta-transparente.png");
+  });
+
+  it("renders the launcher in visual preview mode for an authenticated user", () => {
+    const html = render(createElement(HelpWidget, { enabled: false, preview: true, userId: "user-a" }));
+    expect(html).toContain('aria-label="Abrir ayuda de Mora"');
+  });
+
+  it("renders nothing in visual preview mode without an authenticated user", () => {
+    expect(render(createElement(HelpWidget, { enabled: false, preview: true, userId: null }))).toBe("");
   });
 
 });

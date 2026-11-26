@@ -22,7 +22,7 @@ export default async function FlowOneLayout({ children }: { children: ReactNode 
         businessName={businessName}
         chatDatosEnabled={chatDatosEnabled}
       />
-      <div className="min-w-0 max-w-full flex-1 pb-20">
+      <div className="min-w-0 max-w-full flex-1 pb-20 md:pl-56">
         <AppNavbar chatDatosEnabled={chatDatosEnabled} />
         {children}
       </div>

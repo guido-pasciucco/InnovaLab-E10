@@ -106,6 +106,26 @@ La guía propone un tablero multiproducto con costos totales, contribución, mar
 - **«¿Dónde veo el equilibrio de todo mi catálogo?»** Informar que el tablero multiproducto pertenece a la fase 2 y que la ayuda actual no certifica su disponibilidad.
 - Cuando la persona pregunte por un botón, error o ruta no documentados, decir que no se dispone de información verificada, en lugar de inventar un recorrido.
 
+## Chatea con tus datos
+
+Mora puede orientar a la persona hacia **Hablá con tus datos** cuando la consulta requiere analizar información de su cuenta y esa función está disponible. El agente es de solo lectura y consulta vistas SQL y la base de conocimiento del producto.
+
+Capacidades disponibles:
+- Productos: cantidad, nombre, capacidad mensual y costo variable.
+- Insumos y packaging: nombre, precio y unidades de compra.
+- Recetas: insumos utilizados y sus cantidades.
+- Presentaciones: formas de venta, unidades incluidas y envases.
+- Gastos mensuales identificados por AAAA-MM: concepto, importe y comparaciones entre meses.
+- Listados, totales y gráficos simples de los datos anteriores.
+
+Limitaciones actuales:
+- No dispone de datos suficientes para margen real, recargo real, contribución ni punto de equilibrio.
+- No dispone de información específica de Licitaciones.
+- No cubre históricos que dependan de funcionalidades aún no implementadas, como cerrar cálculo.
+- La disponibilidad depende de que la función esté habilitada en la aplicación.
+
+Nombres equivalentes: «Chatea con tus datos» y «Hablá con tus datos».
+
 ## Advertencias editoriales y validación pendiente
 
 - **Por validar en código/despliegue:** estado exacto P00–P18 y estructura actual de menú.

@@ -152,7 +152,11 @@ function MarkupRowForm({
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     void handleSubmit((data) => {
-      dispatchInTransition(submitAction)({ productId: row.id, markupPercent: data.markupPercent });
+      dispatchInTransition(submitAction)({
+        productId: row.productId,
+        presentationId: row.presentationId,
+        markupPercent: data.markupPercent,
+      });
     })(event);
   };
 
@@ -160,7 +164,8 @@ function MarkupRowForm({
     setClearError(null);
     startClear(async () => {
       const result = await saveProductMarkup(undefined, {
-        productId: row.id,
+        productId: row.productId,
+        presentationId: row.presentationId,
         markupPercent: null,
       });
       if (!result.ok) {
@@ -336,7 +341,14 @@ export function PricingScreen({ initialView }: { initialView: PricingView }) {
                       <th scope="row" className="min-w-40 px-2 py-3 text-left font-semibold text-fg">
                         {row.name}
                         {row.note && (
-                          <span className="mt-1 block text-xs font-normal text-warning">{row.note}</span>
+                          <span className="mt-1 block text-xs font-normal text-warning">
+                            {row.note}{" "}
+                            {row.noteHref && (
+                              <Link href={row.noteHref} className="font-semibold underline underline-offset-2">
+                                Cargar capacidad
+                              </Link>
+                            )}
+                          </span>
                         )}
                         <span className="mt-1 block text-xs font-normal text-fg-muted">
                           Recargo vigente: {row.markupDisplay} · {row.markupSourceLabel}

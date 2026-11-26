@@ -8,8 +8,12 @@ import { getBreakEvenService } from "./break-even";
 const userId = "00000000-0000-4000-8000-000000000246" as VerifiedUserId;
 
 function row(overrides: Partial<PricingRow> = {}): PricingRow {
+  const productId = overrides.productId ?? "product-1";
   return {
-    productId: "product-1",
+    rowId: overrides.rowId ?? productId,
+    productId,
+    presentationId: overrides.presentationId ?? null,
+    editHref: overrides.editHref ?? "/products",
     name: "Cuaderno",
     capacity: 100,
     variableUnit: "500.00",
@@ -135,7 +139,9 @@ describe("getBreakEvenService", () => {
     );
 
     expect(result.status).toBe("ready");
-    expect(result.excluded).toEqual([{ productId: "C", name: "C", reason: "NO_CAPACITY" }]);
+    expect(result.excluded).toEqual([
+      { productId: "C", name: "C", reason: "NO_CAPACITY", editHref: "/products" },
+    ]);
     expect(result.rows.map((r) => r.breakEvenUnitsWhole)).toEqual(["167", "84"]);
     expect(result.totals).toMatchObject({ breakEvenSales: "325000.00" });
   });
@@ -202,7 +208,7 @@ describe("getBreakEvenService", () => {
     expect(result.status).toBe("ready");
     expect(result.rows).toHaveLength(1);
     expect(result.excluded).toEqual([
-      { productId: "product-2", name: "Cuaderno", reason: "NO_CAPACITY" },
+      { productId: "product-2", name: "Cuaderno", reason: "NO_CAPACITY", editHref: "/products" },
     ]);
   });
 
