@@ -169,13 +169,6 @@ function HelpWidgetSession({
     };
   }, []);
 
-  useEffect(() => {
-    if (open) {
-      setGreetingVisible(false);
-      setAvatarHovered(false);
-    }
-  }, [open]);
-
   // Persistir la conversación por usuario.
   useEffect(() => {
     if (!userId || !loadedRef.current) return;
@@ -306,6 +299,8 @@ function HelpWidgetSession({
 
   function openAssistant() {
     loadedRef.current = true;
+    setGreetingVisible(false);
+    setAvatarHovered(false);
 
     if (userId) {
       setMessages(readHelpThread(sessionStorage, userId));
