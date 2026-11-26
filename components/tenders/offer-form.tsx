@@ -25,6 +25,16 @@ export function OfferForm({ tenderId, round, items }: { tenderId: string; round:
   const { state, pending, onSubmit, fieldErrors, formError } = useFormDataAction(submitOffers);
   const saved = state?.ok ? state.data : null;
 
+  // Zod rejects a malformed price as `offers.<index>.unitPrice`, a key this
+  // form does not render as an input. Those messages used to leave both the
+  // banner and every row empty, so the supplier saw nothing at all. Business
+  // errors are already keyed `price-<itemId>` and stay under their input.
+  const visibleFields = new Set(items.map((item) => `price-${item.id}`));
+  const detachedErrors = Object.entries(fieldErrors)
+    .filter(([name]) => !visibleFields.has(name))
+    .map(([, message]) => message);
+  const detachedError = detachedErrors.length ? [...new Set(detachedErrors)].join(" ") : null;
+
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
       <input type="hidden" name="tenderId" value={tenderId} />
@@ -67,7 +77,7 @@ export function OfferForm({ tenderId, round, items }: { tenderId: string; round:
           );
         })}
       </ul>
-      <FormBanner message={formError} />
+      <FormBanner message={formError ?? detachedError} />
       <FormBanner
         tone="success"
         message={
