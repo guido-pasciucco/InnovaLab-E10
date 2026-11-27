@@ -40,18 +40,16 @@ describe("publishFormErrors", () => {
         { supplyId: "a", quantity: "10", specs: "", startingPrice: "100" },
         { supplyId: "b", quantity: "", specs: "", startingPrice: "100" },
       ],
-      supplierIds: [],
     });
 
     expect(errors).toEqual({
       "items.1.quantity": "Escribí la cantidad.",
-      supplierIds: "Dejá al menos un proveedor invitado.",
     });
   });
 
   it("asks for at least one supply", () => {
     expect(
-      publishFormErrors({ roundHours: "6", roundCount: "4", decrementPercent: "10", items: [], supplierIds: ["x"] }),
+      publishFormErrors({ roundHours: "6", roundCount: "4", decrementPercent: "10", items: [] }),
     ).toEqual({ items: "Elegí entre 1 y 20 insumos." });
   });
 });

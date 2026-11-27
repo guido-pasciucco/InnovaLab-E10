@@ -5,10 +5,10 @@ import { buildComparison, isTenderVoid, itemsWithoutRoundOneOffers, priceDiffere
 const t = (iso: string) => new Date(iso);
 const flour = { id: "flour", startingPrice: "800.00", referencePrice: "750.00" };
 const sugar = { id: "sugar", startingPrice: "1000.00", referencePrice: null };
-const offer = (id: string, itemId: string, invitationId: string, round: number, unitPrice: string, at: string) => ({
+const offer = (id: string, itemId: string, supplierUserId: string, round: number, unitPrice: string, at: string) => ({
   id,
   itemId,
-  invitationId,
+  supplierUserId,
   round,
   unitPrice,
   createdAt: t(at),
@@ -35,7 +35,11 @@ describe("priceDifference (RN-13)", () => {
 });
 
 describe("buildComparison (RN-13, RN-19, RN-20)", () => {
-  const invitations = [{ id: "a" }, { id: "b" }, { id: "c" }];
+  const suppliers = [
+    { supplierUserId: "a" },
+    { supplierUserId: "b" },
+    { supplierUserId: "c" },
+  ];
   const offers = [
     offer("1", "flour", "a", 1, "790.00", "2026-11-21T13:00:00Z"),
     offer("2", "flour", "a", 3, "740.00", "2026-11-22T01:00:00Z"),
@@ -43,11 +47,11 @@ describe("buildComparison (RN-13, RN-19, RN-20)", () => {
   ];
 
   it("ranks each item's last offers from the lowest, with the suppliers that did not quote last", () => {
-    const [flourRow] = buildComparison([flour, sugar], invitations, offers);
+    const [flourRow] = buildComparison([flour, sugar], suppliers, offers);
 
     expect(flourRow?.isVoid).toBe(false);
     expect(flourRow?.best).toBe("740.00");
-    expect(flourRow?.rows.map((row) => [row.invitationId, row.unitPrice, row.round])).toEqual([
+    expect(flourRow?.rows.map((row) => [row.supplierUserId, row.unitPrice, row.round])).toEqual([
       ["a", "740.00", 3],
       ["b", "760.00", 2],
       ["c", null, null],
@@ -57,7 +61,7 @@ describe("buildComparison (RN-13, RN-19, RN-20)", () => {
   });
 
   it("marks an item without any offer as void and keeps the rest (RN-19)", () => {
-    const comparison = buildComparison([flour, sugar], invitations, offers);
+    const comparison = buildComparison([flour, sugar], suppliers, offers);
 
     expect(comparison[1]).toMatchObject({ itemId: "sugar", isVoid: true, best: null });
     expect(comparison[1]?.rows.every((row) => row.unitPrice === null)).toBe(true);
@@ -65,13 +69,13 @@ describe("buildComparison (RN-13, RN-19, RN-20)", () => {
   });
 
   it("is a void tender when no item got offers", () => {
-    expect(isTenderVoid(buildComparison([flour, sugar], invitations, []))).toBe(true);
+    expect(isTenderVoid(buildComparison([flour, sugar], suppliers, []))).toBe(true);
   });
 
   it("has no reference difference when the item has no catalog price", () => {
     const [, sugarRow] = buildComparison(
       [flour, sugar],
-      invitations,
+      suppliers,
       [offer("9", "sugar", "b", 1, "900.00", "2026-11-21T13:00:00Z")],
     );
     expect(sugarRow?.rows[0]).toMatchObject({ unitPrice: "900.00", vsReference: null });
@@ -80,7 +84,7 @@ describe("buildComparison (RN-13, RN-19, RN-20)", () => {
   it("has no reference difference when the catalog price was 0", () => {
     const [row] = buildComparison(
       [{ id: "flour", startingPrice: "800.00", referencePrice: "0.00" }],
-      [{ id: "a" }],
+      [{ supplierUserId: "a" }],
       [offer("1", "flour", "a", 1, "700.00", "2026-11-21T13:00:00Z")],
     );
     expect(row?.rows[0]?.vsReference).toBeNull();

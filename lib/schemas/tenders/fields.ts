@@ -90,7 +90,6 @@ export const offerAboveLastMessage = (lastPrice: string) =>
 export const offerEmptyMessage = "Escribí el precio de al menos un insumo.";
 
 export const tenderItemsLengthMessage = `Elegí entre 1 y ${MAX_TENDER_ITEMS} insumos.`;
-export const tenderSuppliersMessage = "Dejá al menos un proveedor invitado.";
 export const tenderDraftItemsMessage = "Elegí al menos un insumo para guardar el borrador.";
 export const tenderDuplicateItemMessage = "Cada insumo puede estar una sola vez en la licitación.";
 

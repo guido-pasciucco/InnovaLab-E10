@@ -28,10 +28,10 @@ describe("checkOffer (RN-10)", () => {
 describe("latestOffers", () => {
   it("keeps each supplier's last offer per item", () => {
     const offers = [
-      { id: "1", itemId: "flour", invitationId: "a", round: 1, unitPrice: "800.00", createdAt: new Date("2026-11-21T12:00:00Z") },
-      { id: "2", itemId: "flour", invitationId: "a", round: 2, unitPrice: "760.00", createdAt: new Date("2026-11-21T18:30:00Z") },
-      { id: "3", itemId: "flour", invitationId: "b", round: 1, unitPrice: "790.00", createdAt: new Date("2026-11-21T13:00:00Z") },
-      { id: "4", itemId: "sugar", invitationId: "a", round: 1, unitPrice: "990.00", createdAt: new Date("2026-11-21T12:00:00Z") },
+      { id: "1", itemId: "flour", supplierUserId: "a", round: 1, unitPrice: "800.00", createdAt: new Date("2026-11-21T12:00:00Z") },
+      { id: "2", itemId: "flour", supplierUserId: "a", round: 2, unitPrice: "760.00", createdAt: new Date("2026-11-21T18:30:00Z") },
+      { id: "3", itemId: "flour", supplierUserId: "b", round: 1, unitPrice: "790.00", createdAt: new Date("2026-11-21T13:00:00Z") },
+      { id: "4", itemId: "sugar", supplierUserId: "a", round: 1, unitPrice: "990.00", createdAt: new Date("2026-11-21T12:00:00Z") },
     ];
 
     const latest = latestOffers(offers);
@@ -46,16 +46,16 @@ describe("latestOffers", () => {
     // RN-10 only accepts prices at or below the current one, so the offer that
     // committed last is always the lowest, whatever time it was stamped with.
     const offers = [
-      { id: "1", itemId: "flour", invitationId: "a", round: 1, unitPrice: "700.00", createdAt: new Date("2026-11-21T12:00:00.000Z") },
-      { id: "2", itemId: "flour", invitationId: "a", round: 1, unitPrice: "720.00", createdAt: new Date("2026-11-21T12:00:00.005Z") },
+      { id: "1", itemId: "flour", supplierUserId: "a", round: 1, unitPrice: "700.00", createdAt: new Date("2026-11-21T12:00:00.000Z") },
+      { id: "2", itemId: "flour", supplierUserId: "a", round: 1, unitPrice: "720.00", createdAt: new Date("2026-11-21T12:00:00.005Z") },
     ];
     expect(latestOffers(offers).get("a:flour")?.unitPrice).toBe("700.00");
   });
 
   it("keeps the later round when the price was ratified", () => {
     const offers = [
-      { id: "1", itemId: "flour", invitationId: "a", round: 1, unitPrice: "700.00", createdAt: new Date("2026-11-21T12:00:00Z") },
-      { id: "2", itemId: "flour", invitationId: "a", round: 2, unitPrice: "700.00", createdAt: new Date("2026-11-21T19:00:00Z") },
+      { id: "1", itemId: "flour", supplierUserId: "a", round: 1, unitPrice: "700.00", createdAt: new Date("2026-11-21T12:00:00Z") },
+      { id: "2", itemId: "flour", supplierUserId: "a", round: 2, unitPrice: "700.00", createdAt: new Date("2026-11-21T19:00:00Z") },
     ];
     expect(latestOffers(offers).get("a:flour")?.round).toBe(2);
   });

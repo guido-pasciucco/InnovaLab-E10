@@ -16,7 +16,7 @@ type LoginPageProps = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const linkError = linkErrorMessage(params.error);
-  // Where to continue after signing in (e.g. back to a supplier invite link).
+  // Where to continue after signing in (e.g. back to public supplier registration).
   // Sanitized so it can only point inside the app.
   const next = safeNextPath(typeof params.next === "string" ? params.next : null, "/inicio");
 

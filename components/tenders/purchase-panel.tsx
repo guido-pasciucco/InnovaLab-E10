@@ -15,9 +15,9 @@ const linkClass = "font-semibold text-brand-green-700 underline";
 export function PurchasePanel({ tender, defaultContact }: { tender: TenderDetail; defaultContact: string }) {
   const latest = latestOffers(tender.offers);
   const awardByItem = new Map(tender.awards.map((award) => [award.itemId, award]));
-  const orderByInvitation = new Map(tender.orders.map((order) => [order.invitationId, order]));
+  const orderBySupplier = new Map(tender.orders.map((order) => [order.supplierUserId, order]));
   const offeredItems = tender.items.filter((item) =>
-    tender.invitations.some((invitation) => latest.has(offerKey(invitation.id, item.id))),
+    tender.suppliers.some((supplier) => latest.has(offerKey(supplier.supplierUserId, item.id))),
   );
 
   return (
@@ -30,14 +30,14 @@ export function PurchasePanel({ tender, defaultContact }: { tender: TenderDetail
         <ul className="divide-y divide-border-default">
           {offeredItems.map((item) => {
             const award = awardByItem.get(item.id) ?? null;
-            const order = award ? orderByInvitation.get(award.invitationId) : undefined;
-            const candidates = tender.invitations.flatMap((invitation) => {
-              const offer = latest.get(offerKey(invitation.id, item.id));
+            const order = award ? orderBySupplier.get(award.supplierUserId) : undefined;
+            const candidates = tender.suppliers.flatMap((supplier) => {
+              const offer = latest.get(offerKey(supplier.supplierUserId, item.id));
               return offer
-                ? [{ invitationId: invitation.id, businessName: invitation.businessName, unitPrice: offer.unitPrice }]
+                ? [{ supplierUserId: supplier.supplierUserId, businessName: supplier.businessName, unitPrice: offer.unitPrice }]
                 : [];
             });
-            const chosen = award && tender.invitations.find((invitation) => invitation.id === award.invitationId);
+            const chosen = award && tender.suppliers.find((supplier) => supplier.supplierUserId === award.supplierUserId);
             return (
               <li key={item.id} className="space-y-2 py-3">
                 <p className="text-sm font-semibold text-fg">
@@ -56,7 +56,7 @@ export function PurchasePanel({ tender, defaultContact }: { tender: TenderDetail
                     itemId={item.id}
                     unit={item.unit}
                     candidates={candidates}
-                    current={award ? { invitationId: award.invitationId, unitPrice: award.unitPrice } : null}
+                    current={award ? { supplierUserId: award.supplierUserId, unitPrice: award.unitPrice } : null}
                   />
                 )}
               </li>
@@ -67,23 +67,23 @@ export function PurchasePanel({ tender, defaultContact }: { tender: TenderDetail
 
       <Card title="Compra por proveedor" id="compra">
         <ul className="divide-y divide-border-default">
-          {tender.invitations.map((invitation) => {
+          {tender.suppliers.map((supplier) => {
             const awarded = tender.items.flatMap((item) => {
               const award = awardByItem.get(item.id);
-              return award?.invitationId === invitation.id ? [{ item, unitPrice: award.unitPrice }] : [];
+              return award?.supplierUserId === supplier.supplierUserId ? [{ item, unitPrice: award.unitPrice }] : [];
             });
-            const offered = tender.items.some((item) => latest.has(offerKey(invitation.id, item.id)));
-            const order = orderByInvitation.get(invitation.id);
+            const offered = tender.items.some((item) => latest.has(offerKey(supplier.supplierUserId, item.id)));
+            const order = orderBySupplier.get(supplier.supplierUserId);
             const estimate =
               awarded.length > 0
                 ? orderTotals(awarded.map((line) => ({ quantity: line.item.quantity, unitPrice: line.unitPrice }))).total
                 : null;
             return (
-              <li key={invitation.id} className="space-y-3 py-4">
+              <li key={supplier.supplierUserId} className="space-y-3 py-4">
                 <div>
-                  <p className="font-semibold text-fg">{invitation.businessName}</p>
+                  <p className="font-semibold text-fg">{supplier.businessName}</p>
                   <p className="text-sm text-fg-muted">
-                    {invitation.contactName} · {invitation.phone} · {invitation.email}
+                    {supplier.contactName} · {supplier.phone} · {supplier.email}
                   </p>
                 </div>
                 {awarded.length > 0 ? (
@@ -96,13 +96,13 @@ export function PurchasePanel({ tender, defaultContact }: { tender: TenderDetail
                   </p>
                 )}
                 {offered &&
-                  (invitation.negotiationRequestedAt ? (
+                  (supplier.negotiationRequestedAt ? (
                     <p className="text-sm text-fg-muted">
-                      Pediste negociar el {formatDateTime(invitation.negotiationRequestedAt)}. Le compartiste:{" "}
-                      {invitation.negotiationContact}
+                      Pediste negociar el {formatDateTime(supplier.negotiationRequestedAt)}. Le compartiste:{" "}
+                      {supplier.negotiationContact}
                     </p>
                   ) : (
-                    <NegotiationForm tenderId={tender.id} invitationId={invitation.id} defaultContact={defaultContact} />
+                    <NegotiationForm tenderId={tender.id} supplierUserId={supplier.supplierUserId} defaultContact={defaultContact} />
                   ))}
                 {order ? (
                   <p className="text-sm">
@@ -112,7 +112,7 @@ export function PurchasePanel({ tender, defaultContact }: { tender: TenderDetail
                     <span className="text-fg-muted">· {formatMoney(order.total)}</span>
                   </p>
                 ) : (
-                  awarded.length > 0 && <PurchaseOrderForm tenderId={tender.id} invitationId={invitation.id} />
+                  awarded.length > 0 && <PurchaseOrderForm tenderId={tender.id} supplierUserId={supplier.supplierUserId} />
                 )}
               </li>
             );

@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 
-import Link from "next/link";
 import { startTransition, useActionState, useState, type FormEvent, type ReactNode } from "react";
 
 import { discardTenderDraft, publishTender, saveTenderDraft } from "@/app/(business)/licitaciones/actions";
@@ -21,11 +20,9 @@ import {
   type PublishTenderFormValues,
   type TenderDraftFormValues,
 } from "@/lib/schemas/tenders/publish";
-import { formatCuit } from "@/lib/schemas/suppliers/cuit";
 import { formatMoney } from "./format";
 
 type FormSupply = { id: string; name: string; unit: string; suggestedPrice: string };
-type FormSupplier = { userId: string; businessName: string; cuit: string; categories: string[] };
 type ItemDraft = { quantity: string; specs: string; startingPrice: string };
 
 const inputClass =
@@ -43,19 +40,17 @@ function FieldError({ message }: { message?: string }) {
 const secondaryButtonClass =
   "min-h-11! rounded-[14px]! px-5! text-base! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-focus! disabled:opacity-60!";
 
-// Publish form (RN-02, RN-05). Supplies are picked from the catalog with the
-// starting price prefilled from it; every linked supplier starts selected and
-// the emprendedor unticks the ones not to invite. The form can be saved as a
-// draft at any time (also without suppliers) and reopens from it.
-// `publishBlocked` explains why it cannot be published yet, if so.
+// Publish form (RN-02). Supplies are picked from the catalog with the
+// starting price prefilled from it. There is no supplier selection: every
+// registered supplier may participate (#309). The form can be saved as a
+// draft at any time and reopens from it. `publishBlocked` explains why it
+// cannot be published yet, if so.
 export function PublishTenderForm({
   supplies,
-  suppliers,
   draft,
   publishBlocked,
 }: {
   supplies: FormSupply[];
-  suppliers: FormSupplier[];
   draft: TenderDraftFormValues | null;
   publishBlocked: ReactNode;
 }) {
@@ -73,9 +68,6 @@ export function PublishTenderForm({
         { quantity, specs, startingPrice },
       ]),
     ),
-  );
-  const [invited, setInvited] = useState<string[]>(
-    suppliers.map((s) => s.userId).filter((id) => !draft?.excludedSupplierIds.includes(id)),
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -96,10 +88,6 @@ export function PublishTenderForm({
     setDrafts((current) => ({ ...current, [id]: { ...current[id], [field]: value } }));
   }
 
-  function toggleSupplier(id: string) {
-    setInvited((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
-  }
-
   function previewTargets(startingPrice: string): string[] | null {
     const price = startingPrice.trim().replace(",", ".");
     const percent = decrementPercent.trim().replace(",", ".");
@@ -115,7 +103,6 @@ export function PublishTenderForm({
       roundCount,
       decrementPercent,
       items: selectedSupplies.map((supply) => ({ supplyId: supply.id, ...drafts[supply.id] })),
-      supplierIds: invited,
     };
     const found = publishFormErrors(payload);
     setErrors(found);
@@ -129,7 +116,6 @@ export function PublishTenderForm({
       roundCount,
       decrementPercent,
       items: selectedSupplies.map((supply) => ({ supplyId: supply.id, ...drafts[supply.id] })),
-      excludedSupplierIds: suppliers.map((s) => s.userId).filter((id) => !invited.includes(id)),
     };
     setErrors({});
     startTransition(() => saveDraft(payload));
@@ -260,44 +246,6 @@ export function PublishTenderForm({
               </li>
             );
           })}
-        </ul>
-      </section>
-
-      <section className="space-y-4 rounded-3xl bg-surface p-5 shadow-sm sm:p-6" aria-labelledby="invitados">
-        <h2 id="invitados" className="text-lg font-bold text-fg">
-          Proveedores invitados
-        </h2>
-        <p className="text-sm text-fg-muted">
-          Están todos tus proveedores registrados. Destildá a los que no querés invitar: solo los tildados ven la
-          licitación, en su panel.
-        </p>
-        <FieldError message={errors.supplierIds} />
-        {suppliers.length === 0 && (
-          <p className="text-sm text-fg">
-            Todavía no tenés proveedores registrados. Guardá el borrador y{" "}
-            <Link href="/proveedores" className="font-semibold text-brand-green-700 underline">
-              invitá a tus proveedores
-            </Link>
-            : cuando se registren, aparecen acá para publicar.
-          </p>
-        )}
-        <ul className="space-y-2">
-          {suppliers.map((supplier) => (
-            <li key={supplier.userId}>
-              <label className="flex items-start gap-2 text-sm text-fg">
-                <input
-                  type="checkbox"
-                  className="mt-1 size-4"
-                  checked={invited.includes(supplier.userId)}
-                  onChange={() => toggleSupplier(supplier.userId)}
-                />
-                <span>
-                  <strong>{supplier.businessName}</strong> · CUIT {formatCuit(supplier.cuit)}
-                  <span className="block text-fg-muted">Rubros: {supplier.categories.join(", ")}</span>
-                </span>
-              </label>
-            </li>
-          ))}
         </ul>
       </section>
 

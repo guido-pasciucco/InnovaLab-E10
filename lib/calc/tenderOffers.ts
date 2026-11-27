@@ -22,14 +22,15 @@ export function checkOffer(
 export type OfferRecord = {
   id: string;
   itemId: string;
-  invitationId: string;
+  // #309: the offer belongs to a supplier, not to an invitation.
+  supplierUserId: string;
   round: number;
   unitPrice: string;
   createdAt: Date;
 };
 
-export function offerKey(invitationId: string, itemId: string): string {
-  return `${invitationId}:${itemId}`;
+export function offerKey(supplierUserId: string, itemId: string): string {
+  return `${supplierUserId}:${itemId}`;
 }
 
 // True when `a` replaces `b` as the supplier's current offer. RN-10 only
@@ -44,13 +45,13 @@ function isNewer(a: OfferRecord, b: OfferRecord): boolean {
   return a.createdAt.getTime() > b.createdAt.getTime();
 }
 
-// Current offer of each supplier (invitation) for each item. RN-10: "Si no
+// Current offer of each supplier for each item. RN-10: "Si no
 // responde, se considera que ratifica", so the last offer stands until a
 // newer one replaces it.
 export function latestOffers<T extends OfferRecord>(offers: readonly T[]): Map<string, T> {
   const latest = new Map<string, T>();
   for (const offer of offers) {
-    const key = offerKey(offer.invitationId, offer.itemId);
+    const key = offerKey(offer.supplierUserId, offer.itemId);
     const current = latest.get(key);
     if (!current || isNewer(offer, current)) latest.set(key, offer);
   }

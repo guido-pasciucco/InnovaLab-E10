@@ -21,13 +21,13 @@ describe("orderTotals (RN-15)", () => {
 describe("latestAwards (RN-14)", () => {
   it("keeps the latest choice per item", () => {
     const awards = [
-      { id: "1", itemId: "flour", invitationId: "a", unitPrice: "740.00", createdAt: new Date("2026-11-22T13:00:00Z") },
-      { id: "2", itemId: "flour", invitationId: "b", unitPrice: "760.00", createdAt: new Date("2026-11-22T14:00:00Z") },
-      { id: "3", itemId: "sugar", invitationId: "a", unitPrice: "900.00", createdAt: new Date("2026-11-22T13:00:00Z") },
+      { id: "1", itemId: "flour", supplierUserId: "a", unitPrice: "740.00", createdAt: new Date("2026-11-22T13:00:00Z") },
+      { id: "2", itemId: "flour", supplierUserId: "b", unitPrice: "760.00", createdAt: new Date("2026-11-22T14:00:00Z") },
+      { id: "3", itemId: "sugar", supplierUserId: "a", unitPrice: "900.00", createdAt: new Date("2026-11-22T13:00:00Z") },
     ];
 
     const latest = latestAwards(awards);
-    expect(latest.get("flour")?.invitationId).toBe("b");
-    expect(latest.get("sugar")?.invitationId).toBe("a");
+    expect(latest.get("flour")?.supplierUserId).toBe("b");
+    expect(latest.get("sugar")?.supplierUserId).toBe("a");
   });
 });

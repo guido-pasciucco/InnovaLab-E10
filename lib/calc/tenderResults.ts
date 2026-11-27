@@ -25,7 +25,7 @@ export function priceDifference(price: string, base: string): PriceDifference {
 }
 
 export type ComparisonRow = {
-  invitationId: string;
+  supplierUserId: string;
   unitPrice: string | null;
   round: number | null;
   vsStarting: PriceDifference | null;
@@ -46,19 +46,19 @@ export type ComparisonItem = {
 // that did not quote the item come last, "sin oferta" (RN-20).
 export function buildComparison(
   items: readonly ResultItem[],
-  invitations: readonly { id: string }[],
+  suppliers: readonly { supplierUserId: string }[],
   offers: readonly OfferRecord[],
 ): ComparisonItem[] {
   const latest = latestOffers(offers);
 
   return items.map((item) => {
-    const rows: ComparisonRow[] = invitations.map((invitation) => {
-      const offer = latest.get(offerKey(invitation.id, item.id));
+    const rows: ComparisonRow[] = suppliers.map((supplier) => {
+      const offer = latest.get(offerKey(supplier.supplierUserId, item.id));
       if (!offer) {
-        return { invitationId: invitation.id, unitPrice: null, round: null, vsStarting: null, vsReference: null };
+        return { supplierUserId: supplier.supplierUserId, unitPrice: null, round: null, vsStarting: null, vsReference: null };
       }
       return {
-        invitationId: invitation.id,
+        supplierUserId: supplier.supplierUserId,
         unitPrice: offer.unitPrice,
         round: offer.round,
         vsStarting: priceDifference(offer.unitPrice, item.startingPrice),

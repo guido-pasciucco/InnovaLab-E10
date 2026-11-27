@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { AppError } from "@/lib/errors/app-error";
 
-import { createLinkedSupplier, createSupply } from "../../tests/support/factories/tender";
+import { createSupply } from "../../tests/support/factories/tender";
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
 import { deleteSupplyService } from "./supplies";
@@ -60,26 +60,23 @@ function draftInput(supplyId: string, overrides: Record<string, unknown> = {}) {
     roundCount: "3",
     decrementPercent: "10",
     items: [{ supplyId, quantity: "40", specs: "Marca indistinta", startingPrice: "700" }],
-    excludedSupplierIds: [],
     ...overrides,
   };
 }
 
 describe("saveTenderDraftService", () => {
-  it("saves a draft without any linked supplier and returns it with the form data", async () => {
+  it("saves a draft and returns it with the form data", async () => {
     const owner = await makeUser();
     const flour = await createSupply(owner.id, "Harina 000", db);
 
     await saveTenderDraftService(owner.id, draftInput(flour.id), db);
 
     const data = await getTenderFormDataService(owner.id, db);
-    expect(data.suppliers).toEqual([]);
     expect(data.draft).toEqual({
       roundHours: "12",
       roundCount: "3",
       decrementPercent: "10",
       items: [{ supplyId: flour.id, quantity: "40", specs: "Marca indistinta", startingPrice: "700" }],
-      excludedSupplierIds: [],
     });
   });
 
@@ -196,7 +193,6 @@ describe("publishing a draft", () => {
     const owner = await makeUser();
     const flour = await createSupply(owner.id, "Harina 000", db);
     await saveTenderDraftService(owner.id, draftInput(flour.id), db);
-    const molino = await createLinkedSupplier(owner, db, track);
 
     await publishTenderService(
       owner.id,
@@ -205,7 +201,6 @@ describe("publishing a draft", () => {
         roundCount: "3",
         decrementPercent: "10",
         items: [{ supplyId: flour.id, quantity: "40", specs: "", startingPrice: "700" }],
-        supplierIds: [molino.id],
       },
       db,
     );
@@ -218,7 +213,7 @@ describe("publishing a draft", () => {
     const flour = await createSupply(owner.id, "Harina 000", db);
     await saveTenderDraftService(owner.id, draftInput(flour.id), db);
     const other = await makeUser();
-    const foreign = await createLinkedSupplier(other, db, track);
+    const foreign = await createSupply(other.id, "Ajena", db);
 
     await expectAppError(
       publishTenderService(
@@ -227,12 +222,11 @@ describe("publishing a draft", () => {
           roundHours: "12",
           roundCount: "3",
           decrementPercent: "10",
-          items: [{ supplyId: flour.id, quantity: "40", specs: "", startingPrice: "700" }],
-          supplierIds: [foreign.id],
+          items: [{ supplyId: foreign.id, quantity: "40", specs: "", startingPrice: "700" }],
         },
         db,
       ),
-      "TENDER_SUPPLIER_NOT_LINKED",
+      "TENDER_SUPPLY_NOT_FOUND",
     );
 
     expect((await getTenderFormDataService(owner.id, db)).draft).not.toBeNull();

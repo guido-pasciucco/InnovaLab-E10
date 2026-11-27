@@ -30,7 +30,8 @@ export default async function NewTenderPage() {
   }
 
   // The form is always available to load and save a draft; publishing waits
-  // for a linked supplier and for the active tender to end (RN-03, RN-05).
+  // for the active tender to end (RN-03). Every registered supplier may
+  // participate, so there is no supplier selection (#309).
   const publishBlocked = data.activeTender ? (
     <p>
       Ya tenés en curso la{" "}
@@ -39,23 +40,16 @@ export default async function NewTenderPage() {
       </Link>
       . Por ahora puede haber una sola por vez: guardá el borrador y publicalo cuando cierre o la canceles.
     </p>
-  ) : data.suppliers.length === 0 ? (
-    <p>Para publicar necesitás al menos un proveedor registrado con vos. Mientras tanto, guardá el borrador.</p>
   ) : null;
 
   return (
     <PageShell
       eyebrow="Licitaciones"
       title="Nueva licitación"
-      description="Elegí los insumos, cuánto necesitás y el precio máximo. Tus proveedores ofertan por rondas sin ver los precios de los demás."
+      description="Elegí los insumos, cuánto necesitás y el precio máximo. Los proveedores registrados ofertan por rondas sin ver los precios de los demás."
       links={links}
     >
-      <PublishTenderForm
-        supplies={data.supplies}
-        suppliers={data.suppliers}
-        draft={data.draft}
-        publishBlocked={publishBlocked}
-      />
+      <PublishTenderForm supplies={data.supplies} draft={data.draft} publishBlocked={publishBlocked} />
     </PageShell>
   );
 }

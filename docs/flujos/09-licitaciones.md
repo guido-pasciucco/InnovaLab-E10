@@ -4,7 +4,7 @@ Documento único de la funcionalidad de licitaciones: qué es, quiénes particip
 
 ## 1. Qué es y quiénes participan
 
-Funcionalidad complementaria de la Calculadora de Costos: el emprendedor publica una compra de insumos, sus proveedores registrados compiten con ofertas selladas por rondas y el precio resultante puede alimentar el Maestro de Insumos.
+Funcionalidad complementaria de la Calculadora de Costos: el emprendedor publica una compra de insumos, los proveedores registrados compiten con ofertas selladas por rondas y el precio resultante puede alimentar el Maestro de Insumos.
 
 - **Modelo:** subasta inversa por rondas con ofertas selladas. No es una subasta japonesa pura: en esa el proveedor solo acepta el precio de cada paso o sale; acá propone su propio precio.
 - **Alcance:** la aplicación sistematiza el proceso. No interviene en el pago, la entrega ni el contrato, que se acuerdan entre emprendedor y proveedor.
@@ -20,7 +20,7 @@ Funcionalidad complementaria de la Calculadora de Costos: el emprendedor publica
 | Precio de partida | Techo inicial que publica el emprendedor. Ninguna oferta puede superarlo. |
 | Ronda | Intervalo (6, 12 o 24 hs; 6 hs por defecto) en el que rige un precio objetivo. |
 | Precio objetivo | Referencia de la ronda: precio objetivo anterior × (1 − % de baja). No es obligatorio alcanzarlo. |
-| En carrera | Proveedores que pueden ofertar en la ronda. En la primera versión son todos los invitados, hasta el cierre. |
+| En carrera | Proveedores que pueden ofertar en la ronda. Desde #309 son todos los registrados, hasta el cierre. |
 
 ## 2. Recorrido de punta a punta
 
@@ -28,13 +28,12 @@ Funcionalidad complementaria de la Calculadora de Costos: el emprendedor publica
 
 ![Diagrama BPMN: registro del proveedor](../duda/assets/licitaciones/registro-del-proveedor.png)
 
-Antes de la primera licitación, el proveedor queda registrado con el emprendedor. El enlace personal es el camino feliz; la invitación directa pasa por la misma verificación.
+El registro del proveedor es público (RN-23, #309): no hace falta que ningún emprendedor lo invite.
 
-1. El emprendedor genera un enlace por proveedor y se lo envía por el medio que quiera.
-2. El proveedor abre el enlace, completa negocio, CUIT, contacto y rubros, y acepta los términos.
-3. Confirma su mail; recién entonces se crea la cuenta y el vínculo con ese emprendedor (RN-23).
-4. Con una cuenta existente no vuelve a cargar sus datos: solo se vincula al nuevo emprendedor (RN-22).
-5. El proveedor ve en su panel las licitaciones de los emprendedores con los que está vinculado, separadas por emprendedor.
+1. El proveedor entra a la sección de registro, completa negocio, CUIT, contacto y rubros, y acepta los términos.
+2. Confirma su mail; recién entonces se crea la cuenta y el registro de proveedor (RN-23).
+3. Si ya tiene cuenta, solo completa sus datos de proveedor desde esa misma sección, sin volver a crearla (RN-22).
+4. El proveedor ve en su panel todas las licitaciones activas, sin importar qué emprendedor las publicó.
 
 ### 2.2 Publicación
 
@@ -43,7 +42,7 @@ Antes de la primera licitación, el proveedor queda registrado con el emprendedo
 1. El emprendedor elige entre 1 y 20 insumos del Maestro de Insumos (RN-01, N-17), ajusta cantidades y especificaciones y publica, o guarda un borrador (N-31).
 2. La aplicación sugiere el precio de partida de cada insumo desde el catálogo; es obligatorio y se puede cambiar (RN-02, ES-02).
 3. El emprendedor fija una sola vez el % de baja, la duración de cada ronda (6, 12 o 24 hs) y la cantidad de rondas (2 a 5). La duración total es el producto de ambos valores (RN-09, ES-01, ES-03).
-4. Aparecen todos los proveedores registrados, preseleccionados y con sus rubros a la vista; el emprendedor destilda a quienes no quiere invitar (RN-05, ES-07).
+4. No hay selección de proveedores: al publicar, la licitación queda visible para todos los registrados (RN-05, #309).
 5. La licitación recibe un número correlativo por emprendedor (N-20) y arranca al publicarse (N-12). Publicada, no se modifica: solo puede cancelarse antes del cierre (RN-03).
 
 ### 2.3 Ofertas por rondas
@@ -85,13 +84,13 @@ El precio acordado puede reemplazar al del insumo en el Maestro de Insumos y ali
 
 | ID | Regla |
 | --- | --- |
-| <a id="RN-05"></a>RN-05 | Participan solo proveedores registrados con ese emprendedor. Al publicar aparecen todos, preseleccionados y con sus rubros a la vista; el emprendedor puede quitar a quienes no quiere invitar y solo los que quedan reciben la invitación. |
+| <a id="RN-05"></a>RN-05 | Puede participar cualquier proveedor registrado, sin invitación ni selección previa del emprendedor. Al publicar, la licitación queda visible para todos (#309). |
 | <a id="RN-06"></a>RN-06 | Los proveedores no se conocen entre sí. Cada uno ve términos de la licitación (inicio, fin, insumos, cantidades, precio de partida y objetivo vigente) y su propia oferta. No recibe señales de su posición ni de cuántos compiten. |
 | <a id="RN-07"></a>RN-07 | Ningún proveedor ve el precio de compra de referencia del emprendedor, su catálogo ni sus recetas. |
 | <a id="RN-08"></a>RN-08 | El emprendedor ve la identidad de los proveedores y todas las ofertas, con nombre, desde el inicio. |
-| <a id="RN-22"></a>RN-22 | Un proveedor tiene una sola cuenta y puede estar vinculado a varios emprendedores. Cada emprendedor lo vincula con su propio enlace; si ya tiene cuenta, entra con ella sin volver a cargar datos. Ve solo las licitaciones de sus emprendedores, separadas, y ningún emprendedor ve con cuáles otros trabaja. |
-| <a id="RN-23"></a>RN-23 | El enlace de invitación es personal, sirve una sola vez y vence a los 7 días; si vence se genera otro. Antes de crear la cuenta se confirma el mail y se valida el CUIT (formato y dígito verificador). Si el CUIT ya tiene cuenta, no se crea otra: se entra con ella y queda vinculado. |
-| <a id="RN-24"></a>RN-24 | Todos los avisos se muestran solo en el panel: invitaciones, rondas nuevas con su objetivo, pedidos de negociación, insumos sin ofertas y cierre con el cuadro listo. No hay mails, WhatsApp ni SMS por avisos; el único mail es el de confirmación de cuenta. |
+| <a id="RN-22"></a>RN-22 | Un proveedor tiene una sola cuenta, con un registro público único. Con esa cuenta ve todas las licitaciones de todos los emprendedores; nadie queda vinculado a un emprendedor en particular y ningún emprendedor ve con cuáles otros trabaja (#309). |
+| <a id="RN-23"></a>RN-23 | El alta es pública y no requiere enlace ni invitación. Se valida el CUIT (formato y dígito verificador) y se confirma el mail antes de crear la cuenta. Si el CUIT ya tiene cuenta, no se crea otra: se entra con ella (#309). |
+| <a id="RN-24"></a>RN-24 | Todos los avisos se muestran solo en el panel: rondas nuevas con su objetivo, pedidos de negociación, insumos sin ofertas y cierre con el cuadro listo. No hay mails, WhatsApp ni SMS por avisos; el único mail es el de confirmación de cuenta. |
 
 ### 3.3 Rondas
 
@@ -99,7 +98,7 @@ El precio acordado puede reemplazar al del insumo en el Maestro de Insumos y ali
 | --- | --- |
 | <a id="RN-09"></a>RN-09 | En cada ronda (6, 12 o 24 hs, según lo publicado) rige un nuevo precio objetivo. El % de baja se define una sola vez, al publicar, y la aplicación avanza las rondas y calcula el objetivo sin intervención. El objetivo es referencia, no obligación. |
 | <a id="RN-10"></a>RN-10 | En cada ronda el proveedor puede mejorar con precio menor al suyo anterior (llegue o no al objetivo) o ratificar. Nunca oferta por encima de su último precio; la primera oferta no supera el precio de partida. Sin respuesta, ratifica. |
-| <a id="RN-11"></a>RN-11 | En la primera versión todos los proveedores invitados siguen en carrera hasta el cierre: el emprendedor no puede excluir a ninguno durante la licitación. |
+| <a id="RN-11"></a>RN-11 | Todos los proveedores registrados siguen en carrera hasta el cierre: el emprendedor no puede excluir a ninguno durante la licitación. |
 | <a id="RN-12"></a>RN-12 | La licitación cierra sola al vencer la duración y no se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires). |
 | <a id="RN-18"></a>RN-18 | Si al terminar la primera ronda uno o más insumos no recibieron ofertas, la aplicación avisa una sola vez cuáles son. El aviso solo ofrece "Dejar que siga" (equivalente a no hacer nada); la cancelación se hace aparte, con doble confirmación, desde las acciones generales de la licitación. No se pueden sumar proveedores ni quitar insumos. |
 | <a id="RN-20"></a>RN-20 | En una canasta el proveedor cotiza cada insumo por separado y puede cotizar solo algunos. RN-10 se aplica insumo por insumo. En el cuadro, un insumo no cotizado figura sin oferta. |
@@ -156,12 +155,12 @@ Las 13 especificaciones están decididas; la sección "Abiertas" del documento d
 | <a id="ES-04"></a>ES-04 | Aviso cuando nadie oferta | Al terminar la primera ronda, aviso una vez; dejar seguir o cancelar; cerrar sin ofertas deja la licitación desierta. | 21 nov 2026 | Agrega RN-18 y RN-19 |
 | <a id="ES-05"></a>ES-05 | Canasta o ítem | La canasta solo agrupa; precio por insumo y el proveedor puede cotizar solo algunos. Un precio total rompería el cuadro, el reparto y CC-02. | 21 nov 2026 | RN-02; agrega RN-20 |
 | <a id="ES-06"></a>ES-06 | Qué habilita la negociación | El emprendedor ve datos y ofertas desde el inicio (RN-08); al negociar, la aplicación avisa al proveedor, le pasa el contacto y lo registra (RN-17). | 21 nov 2026 | Agrega RN-21 |
-| <a id="ES-07"></a>ES-07 | A quién se invita | Todos los registrados preseleccionados con rubros a la vista; el emprendedor destilda. Invitar a quien no vende un insumo no rompe nada (RN-20), así que no hace falta clasificar insumos. | 21 nov 2026 | RN-05 |
-| <a id="ES-08"></a>ES-08 | Cuenta del proveedor | Una sola cuenta con varios vínculos: datos una vez, licitaciones separadas por emprendedor y confidencialidad entre emprendedores. | 21 nov 2026 | Agrega RN-22 |
-| <a id="ES-09"></a>ES-09 | Enlace y verificación | Enlace personal de un uso, 7 días de vigencia, mail confirmado y CUIT con formato y dígito verificador (sin consultar AFIP en esta versión). | 21 nov 2026 | Agrega RN-23 |
+| <a id="ES-07"></a>ES-07 | A quién se invita | Sin invitaciones: participa cualquier registrado (#309). Invitar a quien no vende un insumo no rompe nada (RN-20), así que no hace falta clasificar insumos. | 21 nov 2026, modificada 26 nov | RN-05 |
+| <a id="ES-08"></a>ES-08 | Cuenta del proveedor | Una sola cuenta pública: datos una vez y una sola lista de licitaciones activas. Cada proveedor ve solo sus propias ofertas; nunca las de los demás. | 21 nov 2026, modificada 26 nov | RN-22 |
+| <a id="ES-09"></a>ES-09 | Verificación | Sin enlace: mail confirmado y CUIT con formato y dígito verificador (sin consultar AFIP en esta versión). | 21 nov 2026, modificada 26 nov | RN-23 |
 | <a id="ES-10"></a>ES-10 | Canal de avisos | Solo el panel; sin mails, WhatsApp ni SMS. El único mail es el de confirmación de cuenta. No hay capacidad de envío masivo. | 21 nov 2026 | Agrega RN-24 |
 | <a id="ES-11"></a>ES-11 | Orden y agradecimiento | Ambas en la primera versión: orden imprimible por proveedor adjudicado y nota en el panel. Se sacan el mail de próxima licitación y el consentimiento. | 21 nov 2026 | RN-15, RN-16 |
-| <a id="ES-12"></a>ES-12 | Proveedores en carrera | Todos los invitados hasta el cierre, sin exclusión. El resultado es el mismo porque las ofertas no obligan (RN-14). | 21 nov 2026 | En carrera, RN-11 |
+| <a id="ES-12"></a>ES-12 | Proveedores en carrera | Todos los registrados hasta el cierre, sin exclusión. El resultado es el mismo porque las ofertas no obligan (RN-14). | 21 nov 2026 | En carrera, RN-11 |
 | <a id="ES-13"></a>ES-13 | Insumo sin ofertas en canasta | Aviso y desierto se aplican insumo por insumo; no se puede sacar un solo insumo porque la licitación no se modifica (RN-03). | 21 nov 2026 | RN-18, RN-19 |
 
 ## 5. Decisiones de implementación cerradas
@@ -172,16 +171,16 @@ Tomadas el 21 de noviembre de 2026. Las que cambian lo que ve o puede hacer una 
 
 | ID | Decisión |
 | --- | --- |
-| <a id="N-01"></a>N-01 | El enlace se muestra una sola vez al generarlo, con botón de copiar; la base guarda solo su huella SHA-256, no el enlace. Alternativa descartada: guardarlo para volver a mostrarlo (riesgo de registro indebido si se lee la base). |
-| <a id="N-02"></a>N-02 | Cada enlace lleva el nombre de para quién es, visible solo para el emprendedor. Sin nombre, la lista sería indistinguible. |
+| <a id="N-01"></a>N-01 | Sin enlaces de invitación: la inscripción es pública. No se guarda ningún token ni huella de enlace (#309). |
+| <a id="N-02"></a>N-02 | El registro público muestra negocio, CUIT, contacto, teléfono y rubros de cada proveedor; no hay lista privada por emprendedor (#309). |
 | <a id="N-03"></a>N-03 | Rubros en texto libre, separados por coma, hasta 10 y sin repetidos: el Maestro no tiene categorías. Alternativa futura: lista cerrada cuando exista clasificación de insumos. |
 | <a id="N-04"></a>N-04 | CUIT de 11 números con dígito verificador válido, con o sin guiones; no se valida el prefijo contra una lista fija porque AFIP agregó prefijos nuevos. |
 | <a id="N-05"></a>N-05 | El registro pide negocio, CUIT, persona de contacto, teléfono y rubros; el mail es el de la cuenta ya confirmada. |
-| <a id="N-06"></a>N-06 | La cuenta se crea al confirmar el mail: los datos quedan atados al enlace con que se cargaron y se consumen al final. Confirmar en otro dispositivo deja el mail confirmado y pide ingresar para terminar el alta. |
-| <a id="N-07"></a>N-07 | Una cuenta existente puede sumarse como proveedor cargando solo sus datos, o solo confirmar el vínculo si ya lo es (RN-22). |
-| <a id="N-08"></a>N-08 | Si el emprendedor abre su propio enlace, se le recuerda que debe mandárselo al proveedor. |
+| <a id="N-06"></a>N-06 | La cuenta se crea al confirmar el mail: los datos quedan en la metadata de la cuenta hasta que se consume el alta. Confirmar en otro dispositivo deja el mail confirmado y pide ingresar para terminar el alta. |
+| <a id="N-07"></a>N-07 | Una cuenta existente puede registrarse como proveedor cargando solo sus datos, sin crear otra cuenta (RN-22). |
+| <a id="N-08"></a>N-08 | Sin efecto desde #309: ya no hay enlaces propios que difundir. |
 | <a id="N-09"></a>N-09 | Cuenta sin negocio propio entra al panel de proveedor; si también compra, entra a `/supplies`. `/inicio` decide la ruta. |
-| <a id="N-10"></a>N-10 | La primera versión no permite anular un enlace antes de vencer, desvincular proveedores ni aceptar términos por emprendedor: resuelve puntos abiertos de ES-08 y ES-09 por la opción más simple. |
+| <a id="N-10"></a>N-10 | Sin vínculos que anular: el alta es pública y los términos se aceptan una sola vez (#309). |
 | <a id="N-11"></a>N-11 | % de baja mayor a 0 y hasta 50 %, con dos decimales. Alternativa: otro tope si hay casos reales. |
 | <a id="N-12"></a>N-12 | La licitación arranca al publicarse; no se puede programar inicio posterior (ES-03 lo dejó abierto). |
 | <a id="N-13"></a>N-13 | Las cantidades se cargan a mano: todavía no se guarda producción planificada (RN-01). |
@@ -200,7 +199,7 @@ Tomadas el 21 de noviembre de 2026. Las que cambian lo que ve o puede hacer una 
 | <a id="N-26"></a>N-26 | Un insumo se compra a un solo proveedor; el reparto es entre insumos distintos. Solo se elige a quien ofertó y después del cierre; el precio acordado arranca en la última oferta y se puede cambiar hasta generar la orden. |
 | <a id="N-27"></a>N-27 | Se puede pedir negociar con varios proveedores a la vez, antes o después de elegir, usando el contacto sugerido. Un pedido por proveedor y licitación; elegir sin negociar no avisa. |
 | <a id="N-28"></a>N-28 | Una orden por proveedor elegido, con subtotales redondeados a centavos y total que siempre cierra. Definitiva al generarse; botón de imprimir o guardar como PDF. |
-| <a id="N-29"></a>N-29 | Nota fija e idéntica, sin precios ni resultados; la ven todos los invitados sin insumo elegido, incluidos los que no ofertaron. Se muestra una sola vez y no se retira. |
+| <a id="N-29"></a>N-29 | Nota fija e idéntica, sin precios ni resultados; la ven todos los proveedores registrados sin insumo elegido, incluidos los que no ofertaron (#309). Se muestra una sola vez y no se retira. |
 | <a id="N-30"></a>N-30 | Historial completo para el emprendedor y solo lo propio para el proveedor, con fecha y hora (RN-17). |
 | <a id="N-31"></a>N-31 | Borrador por emprendedor que se reemplaza al guardar de nuevo: se puede preparar la licitación sin proveedores, Publicar queda deshabilitado hasta que los haya y se guardan los proveedores destildados. Publicar borra el borrador en la misma transacción. Alternativa descartada: varios borradores. |
 
@@ -208,15 +207,15 @@ Tomadas el 21 de noviembre de 2026. Las que cambian lo que ve o puede hacer una 
 
 | ID | Decisión y rationale |
 | --- | --- |
-| D-01 | Tres tablas de registro: `suppliers` (una fila por cuenta, CUIT único)`, `supplier_links` (vínculo único emprendedor-proveedor) y `supplier_invites` (huella SHA-256, destinatario, vencimiento y uso). |
-| D-02 | Consumir el enlace es una única actualización condicional: solo lo logra quien lo usa primero si no está usado ni vencido. Alta, consumo y vínculo van en la misma transacción. |
+| D-01 | Una tabla de registro: `suppliers` (una fila por cuenta, CUIT único). Sin `supplier_links` ni `supplier_invites` (#309). |
+| D-02 | Sin enlaces que consumir: el alta escribe el registro de proveedor en una transacción y el CUIT único evita duplicados (#309). |
 | D-03 | Sin RLS en las tablas nuevas, como en `supplies`: la API pública está cerrada por privilegios revocados y cada consulta filtra por el usuario de la sesión. |
 | D-04 | El mail de contacto se copia a la tabla de proveedores porque el esquema de autenticación queda fuera de las consultas de la aplicación. |
 | D-05 | Las rondas no se guardan: se calculan con la hora de inicio, duración, cantidad y cierre. Así avanzan y cierran solas (RN-09, RN-12) sin tareas programadas que puedan fallar. El estado no es una columna, se deriva. |
 | D-06 | Cada ítem copia nombre, unidad y precio de catálogo al publicar: si el insumo se borra después, el ítem queda igual y solo pierde el enlace. |
 | D-07 | Publicar bloquea la fila del perfil para que dos publicaciones simultáneas no repitan número ni violen la licitación activa única (RN-03). |
-| D-08 | `tenders`, `tender_items` y `tender_invitations` (una fila por proveedor invitado, con el pedido de negociación de RN-21). Borrar la cuenta de un proveedor borra sus invitaciones y ofertas. |
-| D-09 | `tender_offers` guarda una fila por oferta y nunca se modifica (RN-17); cada envío bloquea la invitación para evitar saltos de precio. La oferta vigente es la de menor precio, y ante empate la de ronda más reciente: comparar precios evita invertir horas en envíos simultáneos. Límite conocido: una oferta en el instante de la cancelación puede quedar un momento después; no cambia nada porque no hay cuadro ni compra. Alternativa diferida: trigger en la base que prohíba modificar o borrar ofertas. |
+| D-08 | `tenders`, `tender_items` y `tender_negotiations` (un pedido de negociación por proveedor y licitación, RN-21). Borrar la cuenta de un proveedor borra sus ofertas, negociaciones, adjudicaciones y órdenes (#309). |
+| D-09 | `tender_offers` guarda una fila por oferta, identificada por `supplier_user_id`, y nunca se modifica (RN-17); cada envío bloquea la fila del proveedor para evitar saltos de precio. La oferta vigente es la de menor precio, y ante empate la de ronda más reciente. Límite conocido: una oferta en el instante de la cancelación puede quedar un momento después; no cambia nada porque no hay cuadro ni compra. Alternativa diferida: trigger en la base que prohíba modificar o borrar ofertas. |
 | D-10 | Los avisos no se guardan: se calculan al abrir el panel desde el estado de las licitaciones (RN-24). Nada que sincronizar ni envíos externos. |
 | D-11 | `tender_awards` guarda cada elección sin modificarla; la vigente es la más reciente (RN-17). `purchase_orders` y `purchase_order_lines` copian ítems y precios; generar bloquea perfil y licitación. |
 | D-12 | El borrador es un documento `jsonb` en `tender_drafts`, una fila por emprendedor: está a medio cargar y las columnas tipadas obligarían a permitir nulos en todo o a validar como al publicar. Alternativa descartada: reutilizar `tenders` con estado "borrador", que rompería sus restricciones. |
@@ -230,8 +229,8 @@ Tomadas el 21 de noviembre de 2026. Las que cambian lo que ve o puede hacer una 
 | C-03 | Piezas compartidas: el alta de cuentas acepta datos extra para el registro de proveedor; la confirmación trata al proveedor como un alta; el login acepta `?next=` saneado; `/inicio` reparte entre panel de proveedor y `/supplies`; un marco de página común da el mismo encabezado. |
 | C-04 | La lógica de rondas es pura y no toca base de datos ni React (`lib/calc/tenderRounds.ts`); los servicios reciben el reloj como parámetro para testear sin esperar horas. |
 | C-05 | El formulario de publicación valida también en el navegador para mostrar cada error bajo su campo; el servidor vuelve a validar con las mismas reglas. |
-| C-06 | Verificación independiente sin bloqueantes; sus advertencias se corrigieron: datos en espera atados al enlace, oferta vigente por precio, sin porcentaje contra precio 0, negociar solo con quien ofertó, texto de la nota, avisos y desierto en el historial, confirmación desde otro dispositivo y redirección del dashboard. |
-| C-07 | Licitaciones vive en la sección de emprendedor (`app/(business)`), con navbar y dos secciones: Catálogo y Licitaciones. La página pública del enlace y el panel del proveedor quedan fuera de ese grupo; el dashboard ya no tiene accesos ni avisos de licitaciones. |
+| C-06 | Verificación independiente sin bloqueantes; sus advertencias se corrigieron: datos en espera en la metadata de la cuenta, oferta vigente por precio, sin porcentaje contra precio 0, negociar solo con quien ofertó, texto de la nota, avisos y desierto en el historial, confirmación desde otro dispositivo y redirección del dashboard. |
+| C-07 | Licitaciones vive en la sección de emprendedor (`app/(business)`), con navbar y dos secciones: Catálogo y Licitaciones. El registro público del proveedor (`/proveedores/registro`) y su panel quedan fuera de ese grupo; el dashboard ya no tiene accesos ni avisos de licitaciones. |
 
 ### 5.4 Entrega
 
@@ -244,36 +243,36 @@ Tomadas el 21 de noviembre de 2026. Las que cambian lo que ve o puede hacer una 
 
 Los textos entre comillas son los que debe mostrar la aplicación. El detalle completo de pasos quedó consolidado en esta sección de QA.
 
-**Preparación.** Levantar la base con `bun run e2e:up` y la aplicación en el puerto 3100 con `.env.test`; los mails llegan a Mailpit en el puerto 54324. Usar una ventana por persona (E1 emprendedor principal, E2 otro emprendedor, P1 y P2 proveedores de E1, P3 cuenta común que se suma como proveedor), con al menos dos insumos en E1. Para mover el reloj se actualizan `starts_at`/`ends_at` en `tenders` o `expires_at` en `supplier_invites` y se recarga; el historial puede mostrar eventos en orden no real, y eso no es un error.
+**Preparación.** Levantar la base con `bun run e2e:up` y la aplicación en el puerto 3100 con `.env.test`; los mails llegan a Mailpit en el puerto 54324. Usar una ventana por persona (E1 emprendedor principal, E2 otro emprendedor, P1, P2 y P3 proveedores registrados públicamente), con al menos dos insumos en E1. Para mover el reloj se actualizan `starts_at`/`ends_at` en `tenders` y se recarga; el historial puede mostrar eventos en orden no real, y eso no es un error.
 
 | ID | Validar | Resultado esperado |
 | --- | --- | --- |
-| QA-01 | Generar enlace con destinatario | Se ve una vez, con copiar, un uso y vencimiento a 7 días; después solo datos, nunca el enlace. |
-| QA-02 | Abrir enlace y crear cuenta de proveedor | "Revisá tu mail"; antes de confirmar, E1 no lo ve y el enlace sigue sin usar. |
-| QA-03 | Confirmar mail en Mailpit | Entra a `/proveedor`; E1 ya lo ve y el enlace figura usado. |
-| QA-04 | Reabrir enlace usado o vencido | "Este enlace de invitación ya no sirve… Pedile uno nuevo…". |
+| QA-01 | Registro público sin invitación | `/proveedores/registro` muestra el formulario sin enlace ni destinatario (#309). |
+| QA-02 | Crear cuenta de proveedor | "Revisá tu mail"; antes de confirmar, el proveedor no existe en el registro público. |
+| QA-03 | Confirmar mail en Mailpit | Entra a `/proveedor`; el proveedor aparece en el registro público. |
+| QA-04 | Sin enlaces de invitación | No hay pantallas ni accesos que dependan de un token de invitación (#309). |
 | QA-05 | CUIT inválido, con y sin guiones | Rechaza `20-12345678-0`, conserva lo cargado y acepta `20123456786` o `20-12345678-6`. |
-| QA-06 | CUIT ya registrado | Mensaje para ingresar con esa cuenta y volver a abrir el enlace. |
-| QA-07 | Emprendedor abre su enlace | "Este enlace lo generaste vos: mandáselo al proveedor…". |
-| QA-08 | Cuenta común abre enlace | No pide mail ni contraseña; botón "Registrarme como proveedor". |
-| QA-09 | Proveedor abre enlace de otro emprendedor | "Vincularme con…", sin recargar datos; ve ambos emprendedores separados. |
-| QA-10 | Enlace vencido | Mismo aviso de QA-04. |
+| QA-06 | CUIT ya registrado | "Ese CUIT ya tiene una cuenta de proveedor. Ingresá con esa cuenta." |
+| QA-07 | Cuenta común se registra como proveedor | No pide mail ni contraseña; botón "Registrarme como proveedor". |
+| QA-08 | Varios proveedores, una sola cuenta | No existen vínculos por emprendedor: todos ven las mismas licitaciones activas (#309). |
+| QA-09 | Proveedor registrado ve licitaciones de todos | Todas las activas, sin separación por emprendedor (#309). |
+| QA-10 | Sin vencimiento de enlaces | No hay enlaces de invitación que venzan (#309). |
 | QA-11 | Confirmar mail en otro navegador | Va a `/login` y termina el alta al ingresar. |
 | QA-12 | Ingresos por rol | P1 entra a `/proveedor`; E1 a `/supplies`. |
 | QA-13 | Emprendedor abre `/proveedor` | Lo manda a `/supplies`. |
 | QA-14 | Emprendedor sin insumos abre nueva licitación | "Solo se licitan insumos de tu catálogo." |
-| QA-14b | Con insumo, sin proveedores | Formulario visible; Publicar deshabilitado con aviso para guardar borrador. |
+| QA-14b | Con insumo, sin proveedores | Formulario visible y se puede publicar; no hay selección de proveedores (#309). |
 | QA-14c | Guardar borrador incompleto | "Borrador guardado. Podés seguir cuando quieras desde Licitaciones." |
 | QA-14d | Volver a Licitaciones | Botón "Seguir con el borrador", con lo guardado aunque esté incompleto. |
-| QA-14e | Registrar proveedor y publicar | Proveedor tildado, publicación permitida y borrador borrado. |
+| QA-14e | Registrar proveedor y publicar | Publicación permitida sin seleccionar proveedores y borrador borrado (#309). |
 | QA-14f | Descartar borrador | Vuelve a `/licitaciones`, sin borrador. |
 | QA-14g | Borrar insumo del catálogo | Al abrir el borrador solo queda el insumo existente. |
 | QA-15 | Tildar insumo con 25 kg a $ 18.750 | Sugiere $ 750 por kg y avisa que los proveedores lo ven. |
 | QA-16 | 6 hs, 2 rondas, 10 %, partida 1000 | "$ 1.000,00 → $ 900,00" y duración de 12 horas. |
 | QA-17 | % de baja 0, 51, 10,555 y vacío | Errores por cada campo: > 0, máximo 50 %, hasta 2 decimales y obligatorio. |
 | QA-18 | Cantidad o precio vacíos o en 0 | Error bajo el campo del insumo, sin perder lo demás. |
-| QA-19 | Sin insumos, sin proveedores | "Elegí entre 1 y 20 insumos." / "Dejá al menos un proveedor invitado." |
-| QA-20 | Publicar invitando solo a P1 | Detalle "Licitación N° 1"; solo P1 la ve, P2 da "no encontrado". |
+| QA-19 | Sin insumos | "Elegí entre 1 y 20 insumos." No hace falta proveedor para publicar (#309). |
+| QA-20 | Publicar sin invitados | Detalle "Licitación N° 1"; P1, P2 y P3 la ven en su panel (#309). |
 | QA-21 | Nueva licitación con una en curso | Formulario para borrador, Publicar deshabilitado con aviso y enlace. |
 | QA-22 | Proveedor abre licitación | Ve términos y objetivo, no ve % de baja, precio de catálogo ni otros proveedores. |
 | QA-23 | Cancelar en curso | Pide confirmación, avisa al proveedor, ya no puede ofertar y se puede publicar otra. |
@@ -302,7 +301,7 @@ Los textos entre comillas son los que debe mostrar la aplicación. El detalle co
 | QA-46 | Mostrar nota de agradecimiento | Texto fijo para todos los sin insumo elegido, sin precios; el elegido no la ve. |
 | QA-47 | Revisar historial | E1 ve todo con fecha y hora; P1 solo lo suyo. |
 | QA-48 | Abrir licitación u orden de E1 como E2 | "No encontrado". |
-| QA-49 | Abrir licitación como proveedor no invitado | "No encontrado". |
+| QA-49 | Abrir licitación activa como proveedor registrado | La ve con insumos, cantidades, precio de partida y objetivo; solo sus propias ofertas (#309). |
 | QA-50 | Abrir rutas protegidas sin sesión | Va a ingresar. |
 | QA-51 | `/login?next=//sitio-externo.com` | Entra a la aplicación, nunca sale a otro sitio. |
 | QA-52 | Alta común y confirmación | "¡Cuenta creada!" y después el login, como antes. |
@@ -313,7 +312,7 @@ Los textos entre comillas son los que debe mostrar la aplicación. El detalle co
 | QA-57 | Cambiar entre secciones | Pasa al dashboard y vuelve a `/supplies`; selector en navbar, no flotante. |
 | QA-58 | Imprimir orden de compra | La impresión no incluye navbar ni sidebar. |
 
-**Fuera de alcance (no probar como error):** actualizar el costo del insumo (CC-01 a CC-05, E-02); anular enlaces, desvincular proveedores, programar inicio y marcar avisos como leídos (N-10, N-12, N-24); mails o mensajes fuera de la aplicación (RN-24); repartir un mismo insumo entre dos proveedores (N-26).
+**Fuera de alcance (no probar como error):** actualizar el costo del insumo (CC-01 a CC-05, E-02); programar inicio y marcar avisos como leídos (N-12, N-24); mails o mensajes fuera de la aplicación (RN-24); repartir un mismo insumo entre dos proveedores (N-26); licitaciones públicas/privadas, verificación de CUIT previa a ofertar, filtros por rubro o zona, bloqueo de proveedores y ocultar el nombre del emprendedor (resguardos de DD-01, sin decidir).
 
 ## 7. Historial / documentos de origen
 

@@ -9,7 +9,7 @@ type Item = {
   startingPrice: string;
   referencePrice: string | null;
 };
-type Invitation = { id: string; businessName: string };
+type Supplier = { supplierUserId: string; businessName: string };
 
 function Difference({ value }: { value: PriceDifference | null }) {
   if (!value) return <span className="text-fg-muted">—</span>;
@@ -31,14 +31,14 @@ function Difference({ value }: { value: PriceDifference | null }) {
 // suppliers that did not quote (RN-20) are marked as such.
 export function ComparisonTable({
   items,
-  invitations,
+  suppliers,
   comparison,
 }: {
   items: Item[];
-  invitations: Invitation[];
+  suppliers: Supplier[];
   comparison: ComparisonItem[];
 }) {
-  const nameOf = new Map(invitations.map((invitation) => [invitation.id, invitation.businessName]));
+  const nameOf = new Map(suppliers.map((supplier) => [supplier.supplierUserId, supplier.businessName]));
 
   return (
     <div className="space-y-6">
@@ -73,8 +73,8 @@ export function ComparisonTable({
                   </thead>
                   <tbody className="divide-y divide-border-default">
                     {row.rows.map((offer) => (
-                      <tr key={offer.invitationId}>
-                        <td className="py-1 pr-4 text-fg">{nameOf.get(offer.invitationId)}</td>
+                      <tr key={offer.supplierUserId}>
+                        <td className="py-1 pr-4 text-fg">{nameOf.get(offer.supplierUserId)}</td>
                         <td className={`py-1 pr-4 ${offer.unitPrice === row.best ? "font-bold text-brand-green-700" : "text-fg"}`}>
                           {offer.unitPrice ? formatMoney(offer.unitPrice) : "Sin oferta"}
                         </td>

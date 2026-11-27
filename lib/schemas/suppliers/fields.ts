@@ -74,15 +74,3 @@ export const supplierTermsField = z
     error: "Para registrarte tenés que aceptar los términos.",
   })
   .transform(() => true as const);
-
-// Who the personal invite link is for, so the emprendedor can tell the links
-// apart in the list (RN-23: one link per supplier).
-export const supplierInviteLabelField = z
-  .string({ error: "Escribí para quién es el enlace." })
-  .trim()
-  .min(1, { error: "Escribí para quién es el enlace." })
-  .max(80, { error: "El nombre debe tener como máximo 80 caracteres." });
-
-// Token in the personal invite link: 32 random bytes in base64url
-// (43 characters). Anything else is not a link the app generated.
-export const inviteTokenField = z.string().regex(/^[A-Za-z0-9_-]{43}$/);

@@ -7,17 +7,16 @@ import {
   supplierBusinessNameField,
   supplierCategoriesField,
   supplierContactNameField,
-  supplierInviteLabelField,
   supplierPhoneField,
   supplierTermsField,
 } from "@/lib/schemas/suppliers/fields";
-import { supplierInvites, suppliers } from "./table";
+import { suppliers } from "./table";
 
 // Server gate for the supplier services (ADR 02). Inputs exclude every field
 // the server controls: ids, the account id, the email (read from the verified
 // session) and timestamps.
 
-// Supplier data typed in the registration form (annex 03, step 5).
+// Supplier data typed in the public registration form.
 export const supplierProfileInputSchema = createInsertSchema(suppliers, {
   businessName: supplierBusinessNameField,
   cuit: cuitField,
@@ -34,18 +33,12 @@ export const supplierProfileInputSchema = createInsertSchema(suppliers, {
   })
   .extend({ acceptTerms: supplierTermsField });
 
-// A new account through the invite link: supplier data plus the credentials
-// of the account to create.
+// New account through the public registration form: supplier data plus the
+// credentials of the account to create.
 export const supplierSignupInputSchema = supplierProfileInputSchema.extend({
   email: emailField,
   password: passwordField,
 });
-
-export const createSupplierInviteInputSchema = createInsertSchema(supplierInvites, {
-  label: supplierInviteLabelField,
-}).pick({ label: true });
-
-export { inviteTokenField as inviteTokenSchema } from "@/lib/schemas/suppliers/fields";
 
 export type SupplierProfileInput = z.infer<typeof supplierProfileInputSchema>;
 export type SupplierSignupInput = z.infer<typeof supplierSignupInputSchema>;

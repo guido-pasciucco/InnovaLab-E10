@@ -50,8 +50,6 @@ export function TenderNotices({ notices }: { notices: TenderNotice[] }) {
 
 function supplierText(notice: SupplierNotice): React.ReactNode {
   switch (notice.kind) {
-    case "invited":
-      return `te invitó a la licitación N° ${notice.number}. Está en la ronda ${notice.round} de ${notice.roundCount}.`;
     case "round":
       return `empezó la ronda ${notice.round} de ${notice.roundCount} de la licitación N° ${notice.number}, con un nuevo precio objetivo.`;
     case "negotiation":

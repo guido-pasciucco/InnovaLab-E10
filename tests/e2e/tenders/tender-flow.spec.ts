@@ -1,7 +1,6 @@
-import { randomValidCuit } from "../../support/factories/supplier";
 import { createUser } from "../../support/factories/user";
 import { expect, signInContext, test } from "../fixtures";
-import { generateInviteLink } from "../helpers/supplier-invite";
+import { registerSignedInSupplier } from "../helpers/supplier-registration";
 import { moveTenderToRoundTwo, moveTenderToThePast } from "../helpers/tender-clock";
 
 // docs/flujos/09-licitaciones.md end to end (ES-03 to ES-10): the emprendedor publishes,
@@ -15,8 +14,8 @@ test("publicar, ofertar, cerrar, elegir y generar la orden de compra", async ({
 }) => {
   test.slow();
 
-  // Arrange: a catalog supply and a supplier linked through the invite link
-  // (an existing account completing its supplier data, no email round trip).
+  // Arrange: a catalog supply and a supplier registered publicly from an
+  // existing account (no email round trip, no invitation).
   await authedPage.goto("/supplies");
   await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
   await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
@@ -25,21 +24,12 @@ test("publicar, ofertar, cerrar, elegir y generar la orden de compra", async ({
   await authedPage.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(authedPage.getByRole("cell", { name: "Harina 000", exact: true })).toBeVisible();
 
-  const link = await generateInviteLink(authedPage, "Molino San José");
   const supplier = await createUser();
   cleanup.trackUserEmail(supplier.email);
   const supplierContext = await browser.newContext();
   await signInContext(supplierContext, supplier, baseURL!);
   const supplierPage = await supplierContext.newPage();
-  await supplierPage.goto(link);
-  await supplierPage.getByLabel("Nombre del negocio").fill("Molino San José");
-  await supplierPage.getByLabel("CUIT").fill(randomValidCuit());
-  await supplierPage.getByLabel("Persona de contacto").fill("Ana Pérez");
-  await supplierPage.getByLabel("Teléfono").fill("+54 11 5555-1234");
-  await supplierPage.getByLabel("Rubros").fill("Harinas");
-  await supplierPage.getByRole("checkbox", { name: /Acepto los términos de uso/ }).check();
-  await supplierPage.getByRole("button", { name: "Registrarme como proveedor" }).click();
-  await expect(supplierPage).toHaveURL("/proveedor");
+  await registerSignedInSupplier(supplierPage, "Molino San José");
 
   // Act 1: publish (RN-01 to RN-07).
   await authedPage.goto("/licitaciones/nueva");
@@ -50,7 +40,6 @@ test("publicar, ofertar, cerrar, elegir y generar la orden de compra", async ({
   await authedPage.getByLabel("Cantidad (kg)").fill("10");
   await authedPage.getByLabel("Precio de partida por kg").fill("1000");
   await expect(authedPage.getByText("Precio objetivo por ronda: $ 1.000,00 → $ 900,00")).toBeVisible();
-  await expect(authedPage.getByRole("checkbox", { name: /Molino San José/ })).toBeChecked();
   await authedPage.getByRole("button", { name: "Publicar licitación" }).click();
 
   await expect(authedPage).toHaveURL(/\/licitaciones\/[0-9a-f-]{36}$/);
@@ -59,7 +48,8 @@ test("publicar, ofertar, cerrar, elegir y generar la orden de compra", async ({
 
   // Act 2: the supplier offers (RN-08, RN-10). A price the server rejects
   // must show a message (#306); above the starting price is rejected under
-  // the item, and a valid offer is recorded for round 1.
+  // the item, and a valid offer is recorded for round 1. Every registered
+  // supplier sees the tender without an invitation (#309).
   await supplierPage.goto("/proveedor");
   await supplierPage.getByRole("link", { name: /^Licitación N° \d+$/ }).click();
   const price = supplierPage.getByLabel("Precio por kg");
@@ -130,21 +120,12 @@ test("aviso de insumos sin ofertas solo deja seguir, sin cancelar", async ({
   await authedPage.getByRole("combobox", { name: "Unidad de medida" }).selectOption("kg");
   await authedPage.getByRole("button", { name: "Guardar", exact: true }).click();
 
-  const link = await generateInviteLink(authedPage, "Molino San José");
   const supplier = await createUser();
   cleanup.trackUserEmail(supplier.email);
   const supplierContext = await browser.newContext();
   await signInContext(supplierContext, supplier, baseURL!);
   const supplierPage = await supplierContext.newPage();
-  await supplierPage.goto(link);
-  await supplierPage.getByLabel("Nombre del negocio").fill("Molino San José");
-  await supplierPage.getByLabel("CUIT").fill(randomValidCuit());
-  await supplierPage.getByLabel("Persona de contacto").fill("Ana Pérez");
-  await supplierPage.getByLabel("Teléfono").fill("+54 11 5555-1234");
-  await supplierPage.getByLabel("Rubros").fill("Harinas");
-  await supplierPage.getByRole("checkbox", { name: /Acepto los términos de uso/ }).check();
-  await supplierPage.getByRole("button", { name: "Registrarme como proveedor" }).click();
-  await expect(supplierPage).toHaveURL("/proveedor");
+  await registerSignedInSupplier(supplierPage, "Molino San José");
 
   await authedPage.goto("/licitaciones/nueva");
   await authedPage.getByLabel("Duración de cada ronda").selectOption("6");

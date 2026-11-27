@@ -25,7 +25,7 @@ function FieldError({ message }: { message?: string }) {
   ) : null;
 }
 
-type Candidate = { invitationId: string; businessName: string; unitPrice: string };
+type Candidate = { supplierUserId: string; businessName: string; unitPrice: string };
 
 // RN-14: one supplier per item, among those that offered for it. The agreed
 // price starts at that supplier's last offer and can be changed after a
@@ -41,18 +41,18 @@ export function AwardItemForm({
   itemId: string;
   unit: string;
   candidates: Candidate[];
-  current: { invitationId: string; unitPrice: string } | null;
+  current: { supplierUserId: string; unitPrice: string } | null;
 }) {
   const { pending, onSubmit, fieldErrors, formError } = useFormDataAction<unknown>(awardItem);
-  const initial = current?.invitationId ?? candidates[0]?.invitationId ?? "";
-  const [invitationId, setInvitationId] = useState(initial);
+  const initial = current?.supplierUserId ?? candidates[0]?.supplierUserId ?? "";
+  const [supplierUserId, setsupplierUserId] = useState(initial);
   const [unitPrice, setUnitPrice] = useState(
-    current?.unitPrice ?? candidates.find((c) => c.invitationId === initial)?.unitPrice ?? "",
+    current?.unitPrice ?? candidates.find((c) => c.supplierUserId === initial)?.unitPrice ?? "",
   );
 
   function choose(id: string) {
-    setInvitationId(id);
-    setUnitPrice(candidates.find((c) => c.invitationId === id)?.unitPrice ?? "");
+    setsupplierUserId(id);
+    setUnitPrice(candidates.find((c) => c.supplierUserId === id)?.unitPrice ?? "");
   }
 
   return (
@@ -61,9 +61,9 @@ export function AwardItemForm({
       <input type="hidden" name="itemId" value={itemId} />
       <label className="flex flex-col gap-1 text-sm font-semibold text-fg">
         Le compro a
-        <select name="invitationId" className={inputClass} value={invitationId} onChange={(e) => choose(e.target.value)}>
+        <select name="supplierUserId" className={inputClass} value={supplierUserId} onChange={(e) => choose(e.target.value)}>
           {candidates.map((candidate) => (
-            <option key={candidate.invitationId} value={candidate.invitationId}>
+            <option key={candidate.supplierUserId} value={candidate.supplierUserId}>
               {candidate.businessName} ({formatMoney(candidate.unitPrice)})
             </option>
           ))}
@@ -95,11 +95,11 @@ export function AwardItemForm({
 // outside the app.
 export function NegotiationForm({
   tenderId,
-  invitationId,
+  supplierUserId,
   defaultContact,
 }: {
   tenderId: string;
-  invitationId: string;
+  supplierUserId: string;
   defaultContact: string;
 }) {
   const { pending, onSubmit, fieldErrors, formError } = useFormDataAction<unknown>(requestNegotiation);
@@ -116,7 +116,7 @@ export function NegotiationForm({
   return (
     <form onSubmit={onSubmit} className="space-y-2">
       <input type="hidden" name="tenderId" value={tenderId} />
-      <input type="hidden" name="invitationId" value={invitationId} />
+      <input type="hidden" name="supplierUserId" value={supplierUserId} />
       <label className="flex flex-col gap-1 text-sm font-semibold text-fg">
         Tu contacto para el proveedor
         <input
@@ -137,13 +137,13 @@ export function NegotiationForm({
 }
 
 // RN-15: delivery and payment terms; the order is final once generated.
-export function PurchaseOrderForm({ tenderId, invitationId }: { tenderId: string; invitationId: string }) {
+export function PurchaseOrderForm({ tenderId, supplierUserId }: { tenderId: string; supplierUserId: string }) {
   const { pending, onSubmit, fieldErrors, formError } = useFormDataAction<unknown>(issuePurchaseOrder);
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
       <input type="hidden" name="tenderId" value={tenderId} />
-      <input type="hidden" name="invitationId" value={invitationId} />
+      <input type="hidden" name="supplierUserId" value={supplierUserId} />
       <label className="flex flex-col gap-1 text-sm font-semibold text-fg">
         Condiciones de entrega
         <textarea

@@ -21,7 +21,7 @@ export default async function TendersPage() {
     <PageShell
       eyebrow="Compras de insumos"
       title="Licitaciones"
-      description="Publicá una compra y tus proveedores compiten por rondas, sin conocerse entre sí. Vos decidís a quién le comprás."
+      description="Publicá una compra y los proveedores registrados compiten por rondas, sin conocerse entre sí. Vos decidís a quién le comprás."
       actions={
         // Always open: a draft can be prepared while another tender runs.
         <Link
@@ -45,8 +45,8 @@ export default async function TendersPage() {
                     Licitación N° {tender.number}
                   </Link>
                   <p className="text-sm text-fg-muted">
-                    {tender.itemCount} {tender.itemCount === 1 ? "insumo" : "insumos"} · {tender.invitedCount}{" "}
-                    {tender.invitedCount === 1 ? "proveedor invitado" : "proveedores invitados"} · del{" "}
+                    {tender.itemCount} {tender.itemCount === 1 ? "insumo" : "insumos"} · {tender.supplierCount}{" "}
+                    {tender.supplierCount === 1 ? "proveedor ofertó" : "proveedores ofertaron"} · del{" "}
                     {formatDateTime(tender.startsAt)} al {formatDateTime(tender.endsAt)}
                   </p>
                 </div>
