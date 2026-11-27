@@ -18,34 +18,23 @@ const tenders = functionalityPages[1];
 
 const steps = [
   {
-    number: "01",
-    title: "Registro de proveedores",
+    title: "Registrar proveedores",
     description:
       "Cualquier proveedor se registra por su cuenta con sus datos y confirma su correo. No hace falta que lo invités.",
   },
   {
-    number: "02",
     title: "Publicar la compra",
     description:
-      "Elegís entre 1 y 20 insumos del catálogo, cargás cantidades y precio de partida, y fijás el porcentaje de baja, la duración de cada ronda y cuántas rondas habrá.",
+      "Elegís los insumos del catálogo, cargás cantidades, precio de partida y tiempo que dura tu licitación.",
   },
   {
-    number: "03",
     title: "Rondas automáticas",
-    description:
-      "Cada ronda tiene un precio objetivo nuevo. Los proveedores bajan o ratifican su oferta sin ver a los demás; la aplicación avanza las rondas por vos.",
+    description: "Las rondas le muestran a los proveedores tu pedido de compra y ellos ofertan.",
   },
   {
-    number: "04",
     title: "Comparar ofertas",
     description:
       "Al cierre ves un cuadro por insumo con la última oferta de cada proveedor y la diferencia contra el precio de partida y el del catálogo.",
-  },
-  {
-    number: "05",
-    title: "Elegir y generar la orden",
-    description:
-      "Elegís con quién comprar cada insumo, acordás el precio y generás una orden imprimible. Las ofertas no son vinculantes.",
   },
 ] as const;
 
@@ -146,13 +135,10 @@ export default async function TendersPage() {
               de la aplicación.
             </p>
           </div>
-          <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ol className="mt-10 grid gap-4 sm:grid-cols-2">
             {steps.map((step) => (
-              <li key={step.number} className="flex h-full flex-col rounded-2xl border border-border-default bg-surface-tint p-5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-action-tonal text-xs font-bold text-link">
-                  {step.number}
-                </span>
-                <h3 className="mt-4 text-base font-semibold text-fg">{step.title}</h3>
+              <li key={step.title} className="flex h-full flex-col rounded-2xl border border-border-default bg-surface-tint p-5">
+                <h3 className="text-base font-semibold text-fg">{step.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-6 text-fg-muted">{step.description}</p>
               </li>
             ))}
@@ -167,9 +153,9 @@ export default async function TendersPage() {
       >
         <div className={container}>
           <div className="max-w-3xl">
-            <p className={eyebrow}>Proveedores registrados</p>
+            <p className={eyebrow}>Tus proveedores</p>
             <h2 id="providers-title" className={sectionTitle}>
-              Cada proveedor ve solo lo suyo
+              Acceso exclusivo por proveedor
             </h2>
             <p className={sectionLead}>
               El registro es público: cargan sus datos una vez y pueden participar en todas las
@@ -188,7 +174,7 @@ export default async function TendersPage() {
       </section>
 
       <FaqSection
-        title="Preguntas sobre licitaciones"
+        title="Sobre licitaciones"
         lead="Lo que conviene saber antes de publicar una compra."
         faqs={faqs}
       />

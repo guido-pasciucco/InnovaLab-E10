@@ -14,11 +14,11 @@ export function BreakEvenExample() {
         <div className="max-w-3xl">
           <p className={eyebrow}>Punto de equilibrio</p>
           <h2 id="break-even-title" className={sectionTitle}>
-            El equilibrio se calcula sobre{" "}
-            <span className="text-link">toda la mezcla de productos</span>
+            Toda la mezcla de productos{" "}
+            <span className="text-link">define el punto de equilibrio</span>
           </h2>
           <p className={sectionLead}>
-            Cada producto aporta según su contribución y la cantidad que hacés por mes. Con el
+            Cada producto influye en este punto según la cantidad que fabricás por mes. Con el
             ejemplo de los alfajores, los gastos de {referenceTotals.fixedCosts} se cubren vendiendo{" "}
             {referenceRows[0].wholeUnits} unidades y {referenceRows[1].wholeUnits} cajas x6.
           </p>
@@ -50,7 +50,7 @@ export function BreakEvenExample() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[680px] text-left text-sm">
                 <caption className="sr-only">
-                  Costos, precios y cuotas de equilibrio del ejemplo de alfajores
+                  Costos, precios y unidades de equilibrio del ejemplo de alfajores
                 </caption>
                 <thead className="bg-surface-tint text-xs text-fg-muted">
                   <tr>
@@ -61,7 +61,7 @@ export function BreakEvenExample() {
                       Costo variable
                     </th>
                     <th scope="col" className="px-4 py-3 text-right font-semibold">
-                      Indirecto
+                      Costo fijo
                     </th>
                     <th scope="col" className="px-4 py-3 text-right font-semibold">
                       Costo total
@@ -73,7 +73,7 @@ export function BreakEvenExample() {
                       Contribución
                     </th>
                     <th scope="col" className="px-4 py-3 text-right font-semibold">
-                      Cuota
+                      Unidades
                     </th>
                   </tr>
                 </thead>
@@ -117,9 +117,9 @@ export function BreakEvenExample() {
 
         <p className="mt-6 flex items-start gap-2 text-sm leading-6 text-fg-muted">
           <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-link" />
-          Las cuotas se redondean hacia arriba: no se puede vender una fracción de unidad. Los gastos
-          se reparten por la cantidad que hacés por mes, así que el indirecto por unidad es el mismo
-          en todas las presentaciones.
+          Las unidades se redondean hacia arriba: no se puede vender una fracción de unidad. Los
+          gastos se reparten por la cantidad que hacés por mes, así que el costo fijo por unidad es
+          el mismo en todas las presentaciones.
         </p>
       </div>
     </section>

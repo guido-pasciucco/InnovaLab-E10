@@ -20,16 +20,16 @@ const faqs: readonly FaqItem[] = [
   {
     question: "¿Puedo usarla si vendo más de un producto?",
     answer:
-      "Sí. Cargás todos tus productos y sus presentaciones; los gastos del mes se reparten entre ellos según cuánto hacés de cada uno.",
+      "Sí. Cargás tus productos y los gastos del mes se reparten entre las cantidades que fabricás de cada uno.",
   },
   {
-    question: "¿Dónde cargo mi sueldo?",
-    answer: "Como un gasto más del mes en Gastos del período.",
+    question: "¿Cargo mi sueldo?",
+    answer: "Sí, como un costo fijo más del mes.",
   },
   {
     question: "¿Qué pasa si sube un insumo?",
     answer:
-      "Lo actualizás en Insumos y los costos, los precios y el equilibrio se recalculan solos.",
+      "Sólo actualizás el importe en insumo y Numora recalcula el resto automáticamente.",
   },
 ];
 

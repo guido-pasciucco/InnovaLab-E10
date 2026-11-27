@@ -47,15 +47,15 @@ export default async function AssistantPage() {
         eyebrow="Asistente IA"
         title="Preguntale a tus datos"
         highlight="y entendé tu negocio hablando."
-        description="Escribí una pregunta en lenguaje natural y Numora responde con los datos de tu cuenta, con tablas y gráficos cuando ayudan a ver mejor el resultado."
+        description="Escribí una pregunta en lenguaje natural y Numora responde con los datos de tu cuenta."
         ctaHref={ctaHref}
         ctaLabel={assistant.ctaLabel}
-        anchorLabel="Chat con tus datos"
+        anchorLabel="Qué es?"
         anchorHref="#chat-con-tus-datos"
         icon={SparklesIcon}
         stats={[
           { value: "Lenguaje natural", label: "preguntás como hablás, sin comandos especiales" },
-          { value: "Tablas y gráficos", label: "cuando la respuesta se entiende mejor así" },
+          { value: "Información fácil de interpretar" },
           { value: "Solo tu cuenta", label: "el chat consulta únicamente tus propios datos" },
         ]}
       />
@@ -67,7 +67,7 @@ export default async function AssistantPage() {
       >
         <div className={`${container} grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-start`}>
           <div>
-            <p className={eyebrow}>Chat con tus datos</p>
+            <p className={eyebrow}>Qué es?</p>
             <h2 id="chat-title" className={sectionTitle}>
               Una pregunta, una respuesta con tus números
             </h2>
@@ -100,9 +100,9 @@ export default async function AssistantPage() {
       <section id="mora" aria-labelledby="mora-title" className="scroll-mt-36 py-16 sm:py-20">
         <div className={container}>
           <div className="max-w-3xl">
-            <p className={eyebrow}>Mora, tu ayuda</p>
+            <p className={eyebrow}>Mora</p>
             <h2 id="mora-title" className={sectionTitle}>
-              Un botón flotante cuando no sabés dónde cargar algo
+              Tu asistente dentro de la plataforma.
             </h2>
             <p className={sectionLead}>
               Mora es el asistente de ayuda de la aplicación: te explica dónde se carga cada dato y
@@ -158,7 +158,7 @@ export default async function AssistantPage() {
       </section>
 
       <FaqSection
-        title="Preguntas sobre el asistente"
+        title="Sobre el asistente"
         lead="Las dudas más comunes antes de usar el chat."
         faqs={faqs}
       />
