@@ -135,7 +135,7 @@ export default async function TendersPage() {
               de la aplicación.
             </p>
           </div>
-          <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+          <ol className="mt-10 grid gap-4 sm:grid-cols-2">
             {steps.map((step) => (
               <li key={step.title} className="flex h-full flex-col rounded-2xl border border-border-default bg-surface-tint p-5">
                 <h3 className="text-base font-semibold text-fg">{step.title}</h3>
