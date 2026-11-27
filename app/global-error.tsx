@@ -1,4 +1,7 @@
 "use client";
+
+import { Button } from "@/components/ui/button";
+
 import "./globals.css";
 import { useEffect } from "react";
 
@@ -31,12 +34,12 @@ export default function GlobalError({
             </p>
           )}
 
-          <button
+          <Button variant="primary" size="md"
             onClick={() => retry()}
-            className="rounded bg-action-primary px-4 py-2 text-on-action-primary"
+            className="rounded! bg-action-primary! px-4! py-2! text-on-action-primary!"
           >
             Reintentar
-          </button>
+          </Button>
         </div>
       </body>
     </html>

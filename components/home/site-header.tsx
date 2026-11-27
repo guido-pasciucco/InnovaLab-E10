@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
+import { Button } from "@/components/ui/button";
+
 import { BrandMark } from "./brand-mark";
 import { ArrowRightIcon, ChevronDownIcon } from "./icons";
 import {
@@ -100,7 +102,7 @@ export function SiteHeader({ isSignedIn }: SiteHeaderProps) {
 
             return (
               <div key={page.id} className="relative">
-                <button
+                <Button variant="ghost" size="md"
                   type="button"
                   ref={(node) => {
                     triggerRefs.current[page.id] = node;
@@ -110,17 +112,17 @@ export function SiteHeader({ isSignedIn }: SiteHeaderProps) {
                   aria-haspopup="true"
                   onClick={() => setOpenId(isOpen ? null : page.id)}
                   onKeyDown={(event) => onTriggerKeyDown(event, page.id)}
-                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                  className={`inline-flex! min-h-11! items-center! gap-1.5! rounded-lg! px-3! text-sm! font-medium! transition-colors! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! ${
                     isCurrent || isOpen
-                      ? "bg-action-tonal text-link"
-                      : "text-fg-muted hover:bg-surface hover:text-link"
+                      ? "bg-action-tonal! text-link! hover:bg-action-tonal!"
+                      : "text-fg-muted! hover:bg-surface! hover:text-link!"
                   }`}
                 >
                   {page.label}
                   <ChevronDownIcon
                     className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
                   />
-                </button>
+                </Button>
 
                 {isOpen ? (
                   <ul
@@ -170,7 +172,7 @@ export function SiteHeader({ isSignedIn }: SiteHeaderProps) {
             <ArrowRightIcon className="h-4 w-4" />
           </Link>
 
-          <button
+          <Button variant="ghost" size="md"
             type="button"
             aria-expanded={mobileOpen}
             aria-controls="mobile-navegacion"
@@ -178,11 +180,11 @@ export function SiteHeader({ isSignedIn }: SiteHeaderProps) {
               setMobileOpen(!mobileOpen);
               setOpenId(null);
             }}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border-default bg-surface px-3 text-sm font-semibold text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus lg:hidden"
+            className="inline-flex min-h-11! items-center! gap-2! rounded-lg! border! border-border-default! bg-surface! px-3! text-sm! font-semibold! text-fg! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! lg:hidden!"
           >
             Menú
             <ChevronDownIcon className={`h-4 w-4 transition-transform ${mobileOpen ? "rotate-180" : ""}`} />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -199,20 +201,22 @@ export function SiteHeader({ isSignedIn }: SiteHeaderProps) {
 
               return (
                 <li key={page.id} className="rounded-xl border border-border-default">
-                  <button
+                  <Button variant="ghost" size="md"
                     type="button"
                     aria-expanded={expanded}
                     aria-controls={`mobile-nav-${page.id}`}
                     onClick={() => setMobileExpanded(expanded ? null : page.id)}
-                    className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-xl px-4 text-left text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-                      isCurrent ? "bg-action-tonal text-link" : "text-fg"
+                    className={`flex! min-h-12! w-full! items-center! justify-between! gap-3! rounded-xl! px-4! text-left! text-sm! font-semibold! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! ${
+                      isCurrent
+                        ? "bg-action-tonal! text-link! hover:bg-action-tonal!"
+                        : "text-fg!"
                     }`}
                   >
                     {page.label}
                     <ChevronDownIcon
                       className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
                     />
-                  </button>
+                  </Button>
                   {expanded ? (
                     <ul id={`mobile-nav-${page.id}`} className="space-y-1 px-3 pb-3">
                       {page.sections.map((section) => (
@@ -253,4 +257,3 @@ export function SiteHeader({ isSignedIn }: SiteHeaderProps) {
     </header>
   );
 }
-

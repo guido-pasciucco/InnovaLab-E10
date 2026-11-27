@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
 type CatalogModalProps = {
@@ -143,15 +145,15 @@ export function CatalogModal({
               <p className="mt-1 text-sm text-fg-muted">{description}</p>
             )}
           </div>
-          <button
+          <Button variant="ghost" size="sm"
             ref={closeRef}
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="min-h-9 min-w-9 shrink-0 rounded-[10px] border border-border-control text-lg font-semibold text-fg-muted hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            className="min-h-9! min-w-9! shrink-0! rounded-[10px]! border! border-border-control! text-lg! font-semibold! text-fg-muted! hover:bg-surface-tint! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus!"
           >
             ×
-          </button>
+          </Button>
         </div>
 
         <div ref={contentRef} className="mt-4">{children}</div>

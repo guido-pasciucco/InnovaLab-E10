@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import Link from "next/link";
 import { startTransition, useActionState, useEffect, useState, type FormEvent, type ReactNode } from "react";
 
@@ -38,7 +40,7 @@ function FieldError({ message }: { message?: string }) {
 }
 
 const secondaryButtonClass =
-  "min-h-11 rounded-[14px] px-5 text-base font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-focus disabled:opacity-60";
+  "min-h-11! rounded-[14px]! px-5! text-base! font-semibold! text-brand-green-700! hover:bg-brand-green-50! focus-visible:outline-2! focus-visible:outline-focus! disabled:opacity-60!";
 
 function integerFieldMessage(field: typeof roundHoursField, value: string): string | undefined {
   const result = field.safeParse(value);
@@ -346,23 +348,23 @@ export function PublishTenderForm({
         <PrimaryButton type="submit" disabled={pending || Boolean(publishBlocked)}>
           {pending ? "Publicando…" : "Publicar licitación"}
         </PrimaryButton>
-        <button
+        <Button variant="ghost" size="md"
           type="button"
           onClick={onSaveDraft}
           disabled={savingDraft || selectedSupplies.length === 0}
           className={secondaryButtonClass}
         >
           {savingDraft ? "Guardando…" : "Guardar borrador"}
-        </button>
+        </Button>
         {draft && (
-          <button
+          <Button variant="ghost" size="md"
             type="button"
             onClick={() => startTransition(() => discard())}
             disabled={discarding}
             className={secondaryButtonClass}
           >
             {discarding ? "Descartando…" : "Descartar borrador"}
-          </button>
+          </Button>
         )}
       </div>
     </form>

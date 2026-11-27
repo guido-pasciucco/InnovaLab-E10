@@ -289,6 +289,18 @@ export const HELP_TOPIC_RULES: readonly HelpTopicRule[] = [
     ],
     glosario: ["Antes de interpretar el tablero"],
   },
+  {
+    id: "chat-datos",
+    keywords: [
+      "chatea con tus datos",
+      "habla con tus datos",
+      "chat con datos",
+      "analizar mis datos",
+      "analizar datos",
+      "para que sirve chatea",
+    ],
+    navegacion: ["Chatea con tus datos"],
+  },
 ];
 
 // Lowercase without accents, so "sesión" matches the keyword "sesion".
@@ -351,7 +363,8 @@ export function buildHelpContext(
   question: string,
   documents: HelpDocuments,
 ): string {
-  const room = HELP_CONTEXT_MAX_CHARS - base.length;
+  const baseTrimmed = base.trimEnd();
+  const room = HELP_CONTEXT_MAX_CHARS - baseTrimmed.length;
   if (room <= 0 || !question.trim()) return base;
 
   const sections = {
@@ -374,8 +387,10 @@ export function buildHelpContext(
         seen.add(token);
 
         const block = blockOf(section);
-        if (used + block.length > room) continue;
-        used += block.length;
+        // Each accepted block is joined to the previous output with "\n\n".
+        const separatorLength = 2;
+        if (used + separatorLength + block.length > room) continue;
+        used += separatorLength + block.length;
         picked.push({ ...section, doc, rank: picked.length });
       }
     }
@@ -389,7 +404,7 @@ export function buildHelpContext(
 
   if (ordered.length === 0) return base;
 
-  return [base.trimEnd(), ...ordered.map(blockOf)].join("\n\n");
+  return [baseTrimmed, ...ordered.map(blockOf)].join("\n\n");
 }
 
 // The last user message of the request body, taken defensively: the route

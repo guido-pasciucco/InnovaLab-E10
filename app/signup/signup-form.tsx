@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
@@ -111,21 +113,21 @@ export default function SignupForm() {
       {state && !state.ok && !hasServerFieldErrors && <p role="alert" className="text-xs text-danger">{state.message}</p>}
       {transportError && <p role="alert" className="text-xs text-danger">{transportError}</p>}
 
-      <button type="submit" disabled={pending || Boolean(state?.ok)} className="mt-1 h-10 w-full rounded-md bg-action-primary px-4 text-sm font-bold text-on-action-primary shadow-[0_4px_10px_rgba(37,213,73,0.35)] transition hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-action-disabled disabled:text-fg-disabled lg:h-[44px] lg:text-base">
+      <Button variant="primary" size="md" type="submit" disabled={pending || Boolean(state?.ok)} className="mt-1! min-h-10! h-10! w-full! rounded-md! bg-action-primary! px-4! text-sm! font-bold! text-on-action-primary! shadow-[0_4px_10px_rgba(37,213,73,0.35)]! transition! hover:bg-action-primary-hover! active:bg-action-primary-pressed! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:bg-action-disabled! disabled:text-fg-disabled! lg:h-[44px]! lg:text-base!">
         {pending ? "Creando cuenta…" : "Crear cuenta"}
-      </button>
+      </Button>
       <p className="text-center text-xs text-fg-muted lg:text-sm">¿Ya tenés cuenta? <Link href="/login" className="font-semibold text-link underline-offset-2 hover:underline">Iniciar sesión</Link></p>
 
       {SHOW_ERROR_PREVIEW && (
-        <button
+        <Button variant="ghost" size="sm"
           type="button"
           onClick={() => setShowPreviewErrors((visible) => !visible)}
           aria-pressed={showPreviewErrors}
-          className="fixed bottom-3 left-3 z-40 flex items-center gap-1.5 rounded-full border border-border-default bg-surface px-3 py-1.5 text-[11px] font-semibold text-fg-muted shadow-md transition hover:border-accent-glow sm:left-auto sm:right-3"
+          className="min-h-0! fixed! bottom-3! left-3! z-40! flex! items-center! gap-1.5! rounded-full! border! border-border-default! bg-surface! px-3! py-1.5! text-[11px]! font-semibold! text-fg-muted! shadow-md! transition! hover:border-accent-glow! sm:left-auto! sm:right-3!"
         >
           <span aria-hidden="true" className={`size-2 rounded-full ${showPreviewErrors ? "bg-danger" : "bg-accent-glow"}`} />
           {showPreviewErrors ? "Ocultar errores (demo)" : "Mostrar errores (demo)"}
-        </button>
+        </Button>
       )}
     </form>
   );

@@ -1,6 +1,6 @@
-
 "use client";
 
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { ArrowUp, X } from "lucide-react";
 import {
@@ -28,6 +28,7 @@ type HelpWidgetProps = {
   enabled: boolean;
   preview?: boolean;
   userId: string | null;
+  chatDatosEnabled?: boolean;
 };
 
 export const SUGGESTED_QUESTIONS = [
@@ -36,14 +37,16 @@ export const SUGGESTED_QUESTIONS = [
   "¿Qué es el punto de equilibrio?",
 ] as const;
 
-export function HelpWidget({ enabled, preview = false, userId }: HelpWidgetProps) {
-  if (!enabled && !preview) return null;
+export function HelpWidget({ enabled, preview = false, userId, chatDatosEnabled = false }: HelpWidgetProps) {
+  // Mora requires an authenticated user in every mode, including preview.
+  if (!userId || (!enabled && !preview)) return null;
 
   return (
     <HelpWidgetSession
       key={userId ?? "signed-out"}
       preview={preview}
       userId={userId}
+      chatDatosEnabled={chatDatosEnabled}
     />
   );
 }
@@ -53,9 +56,11 @@ export function HelpWidget({ enabled, preview = false, userId }: HelpWidgetProps
 export function HelpMessageItem({
   message,
   streaming,
+  chatDatosEnabled = false,
 }: {
   message: HelpMessage;
   streaming: boolean;
+  chatDatosEnabled?: boolean;
 }) {
   if (message.role === "user") {
     return (
@@ -76,7 +81,7 @@ export function HelpMessageItem({
     <div className="flex justify-start">
       <div className="min-w-0 max-w-[88%] break-words rounded-[18px] bg-surface-tint px-3 py-2 text-sm leading-6 text-fg">
         {message.content ? (
-          <HelpMarkdown content={message.content} />
+          <HelpMarkdown content={message.content} chatDatosEnabled={chatDatosEnabled} />
         ) : (
           <span
             role="status"
@@ -120,15 +125,15 @@ export function MoraWelcome({
         aria-label="Preguntas sugeridas"
       >
         {SUGGESTED_QUESTIONS.map((question) => (
-          <button
+          <Button variant="ghost" size="md"
             key={question}
             type="button"
             disabled={disabled}
             onClick={() => onSelect(question)}
-            className="min-h-11 rounded-full border border-border-default bg-surface-tint px-3 py-2 text-left text-xs font-medium text-fg transition-colors hover:border-action-primary hover:bg-action-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
+            className="min-h-11! rounded-full! border! border-border-default! bg-surface-tint! px-3! py-2! text-left! text-xs! font-medium! text-fg! transition-colors! hover:border-action-primary! hover:bg-action-tonal! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:opacity-50!"
           >
             {question}
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -138,8 +143,11 @@ export function MoraWelcome({
 function HelpWidgetSession({
   preview = false,
   userId,
-}: Pick<HelpWidgetProps, "preview" | "userId">) {
+  chatDatosEnabled = false,
+}: Pick<HelpWidgetProps, "preview" | "userId" | "chatDatosEnabled">) {
   const [open, setOpen] = useState(false);
+  const [greetingVisible, setGreetingVisible] = useState(false);
+  const [avatarHovered, setAvatarHovered] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<HelpMessage[]>([]);
   const [pending, setPending] = useState(false);
@@ -269,17 +277,17 @@ function HelpWidgetSession({
           withAssistantSnapshot(current, snapshot),
         );
       }
+
+      if (!isCurrent()) return;
+
+      if (!answer.trim()) {
+        setError("No pude generar una respuesta. Probá de nuevo.");
+        setMessages(next);
+        return;
+      }
     } catch (caught) {
-      if (
-        isCurrent() &&
-        !(
-          caught instanceof DOMException &&
-          caught.name === "AbortError"
-        )
-      ) {
-        setError(
-          "No pude obtener una respuesta. Probá de nuevo.",
-        );
+      if (isCurrent()) {
+        setError("No pude obtener una respuesta. Probá de nuevo.");
       }
     } finally {
       if (isCurrent()) {
@@ -291,6 +299,8 @@ function HelpWidgetSession({
 
   function openAssistant() {
     loadedRef.current = true;
+    setGreetingVisible(false);
+    setAvatarHovered(false);
 
     if (userId) {
       setMessages(readHelpThread(sessionStorage, userId));
@@ -370,15 +380,15 @@ function HelpWidgetSession({
               )}
             </div>
 
-            <button
+            <Button variant="ghost" size="md"
               ref={closeButtonRef}
               type="button"
               onClick={closeAssistant}
               aria-label="Cerrar Mora"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-fg-muted transition-colors hover:bg-action-tonal hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="flex! min-h-11! min-w-11! items-center! justify-center! rounded-xl! text-fg-muted! transition-colors! hover:bg-action-tonal! hover:text-fg! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus!"
             >
               <X aria-hidden="true" size={20} />
-            </button>
+            </Button>
           </header>
 
           {/* Conversación */}
@@ -409,6 +419,7 @@ function HelpWidgetSession({
                 key={`${message.role}-${index}`}
                 message={message}
                 streaming={pending}
+                chatDatosEnabled={chatDatosEnabled}
               />
             ))}
 
@@ -459,36 +470,36 @@ function HelpWidgetSession({
               "
             />
 
-            <button
+            <Button variant="primary" size="md"
               type="submit"
               disabled={
                 preview || pending || draft.trim().length === 0
               }
               aria-label="Enviar pregunta"
               className="
-                flex min-h-11 min-w-11
-                items-center justify-center
-                rounded-[14px]
-                bg-action-primary
-                text-on-action-primary
-                transition-colors
-                hover:bg-action-primary-hover
-                focus-visible:outline-2
-                focus-visible:outline-offset-2
-                focus-visible:outline-focus
-                disabled:cursor-not-allowed
-                disabled:bg-action-disabled
-                disabled:text-fg-disabled
+                flex! min-h-11! min-w-11!
+                items-center! justify-center!
+                rounded-[14px]!
+                bg-action-primary!
+                text-on-action-primary!
+                transition-colors!
+                hover:bg-action-primary-hover!
+                focus-visible:outline-2!
+                focus-visible:outline-offset-2!
+                focus-visible:outline-focus!
+                disabled:cursor-not-allowed!
+                disabled:bg-action-disabled!
+                disabled:text-fg-disabled!
               "
             >
               <ArrowUp aria-hidden="true" size={20} />
-            </button>
+            </Button>
           </form>
         </section>
       )}
 
       {/* Botón flotante: solo la mascota, sin recuadro */}
-      <button
+      <Button variant="ghost" size="md"
         ref={launcherRef}
         type="button"
         aria-expanded={open}
@@ -496,30 +507,82 @@ function HelpWidgetSession({
         aria-label={
           open ? "Cerrar Mora" : "Abrir ayuda de Mora"
         }
-        onClick={handleLauncherClick}
+        onMouseEnter={() => {
+          if (
+            typeof window !== "undefined" &&
+            window.matchMedia("(hover: hover)").matches &&
+            !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ) {
+            setAvatarHovered(true);
+            if (!open) setGreetingVisible(true);
+          }
+        }}
+        onMouseLeave={() => {
+          setAvatarHovered(false);
+          setGreetingVisible(false);
+        }}
+        onFocus={() => {
+          if (!open) setGreetingVisible(true);
+        }}
+        onBlur={() => setGreetingVisible(false)}
+        onClick={() => {
+          setGreetingVisible(false);
+          handleLauncherClick();
+        }}
         className={`
-          pointer-events-auto
-          flex h-16 w-16
-          items-center justify-center
-          rounded-full
-          bg-transparent
-          transition-transform
-          hover:scale-105
-          focus-visible:outline-2
-          focus-visible:outline-offset-2
-          focus-visible:outline-focus
-          motion-reduce:transform-none
+          pointer-events-auto!
+          relative!
+          flex! h-[77px]! w-[77px]!
+          items-center! justify-center!
+          rounded-full!
+          bg-transparent!
+          p-0!
+          transition-transform!
+          hover:bg-transparent!
+          hover:scale-105!
+          focus-visible:outline-2!
+          focus-visible:outline-offset-2!
+          focus-visible:outline-focus!
+          motion-reduce:transform-none!
         `}
       >
-        <Image
-          src="/help/mora-avatar.png"
-          alt=""
-          width={56}
-          height={56}
-          priority
-          className="h-16 w-16 object-contain drop-shadow-[0_10px_18px_rgba(76,37,98,0.22)] -scale-x-100"
-        />
-      </button>
+        {!open && greetingVisible && (
+          <span
+            role="status"
+            aria-live="polite"
+            className="pointer-events-none absolute bottom-full right-0 mb-2 whitespace-nowrap rounded-xl border border-[#D6B7EB] bg-white px-3 py-1.5 text-sm font-medium text-[#4C2562] shadow-[0_8px_20px_rgba(76,37,98,0.12)]"
+          >
+            ¡Hola! Soy Mora 👋
+            <svg
+              aria-hidden="true"
+              className="pointer-events-none absolute -bottom-[9px] right-5"
+              width="12"
+              height="9"
+              viewBox="0 0 12 9"
+              fill="none"
+            >
+              <path
+                d="M0 0 L6 9 L12 0"
+                fill="white"
+                stroke="#D6B7EB"
+                strokeWidth="1"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        )}
+        <span className="inline-block">
+          <Image
+            src={avatarHovered && !open ? "/help/mora-saludo-transparente.gif" : "/help/mora-quieta-transparente.png"}
+            alt=""
+            width={77}
+            height={77}
+            unoptimized={avatarHovered && !open}
+            priority={!avatarHovered || open}
+            className="h-[77px] w-[77px] object-contain drop-shadow-[0_10px_18px_rgba(76,37,98,0.22)]"
+          />
+        </span>
+      </Button>
     </div>
   );
 }
