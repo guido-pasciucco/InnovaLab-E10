@@ -52,8 +52,8 @@ export const functionalityPages: readonly FunctionalityPage[] = [
     href: "/asistente-ia",
     sections: [
       { label: "Ver todo", hash: "" },
-      { label: "Chat con tus datos", hash: "#chat-con-tus-datos" },
-      { label: "Mora, tu ayuda", hash: "#mora" },
+      { label: "Qué es?", hash: "#chat-con-tus-datos" },
+      { label: "Mora", hash: "#mora" },
       { label: "Tus datos seguros", hash: "#privacidad" },
       { label: "Preguntas", hash: "#preguntas" },
     ],
