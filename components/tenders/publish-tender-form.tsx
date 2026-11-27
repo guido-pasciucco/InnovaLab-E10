@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useState, type FormEvent, type ReactNode } from "react";
+import { startTransition, useActionState, useEffect, useState, type FormEvent, type ReactNode } from "react";
 
 import { discardTenderDraft, publishTender, saveTenderDraft } from "@/app/(business)/licitaciones/actions";
 import { FormBanner } from "@/components/ui/page-shell";
@@ -10,9 +10,8 @@ import { targetPrices } from "@/lib/calc/tenderRounds";
 import {
   DEFAULT_ROUND_COUNT,
   DEFAULT_ROUND_HOURS,
-  MAX_ROUND_COUNT,
-  MIN_ROUND_COUNT,
-  ROUND_HOURS_OPTIONS,
+  roundCountField,
+  roundHoursField,
 } from "@/lib/schemas/tenders/fields";
 import {
   publishFormErrors,
@@ -40,6 +39,11 @@ function FieldError({ message }: { message?: string }) {
 
 const secondaryButtonClass =
   "min-h-11 rounded-[14px] px-5 text-base font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-focus disabled:opacity-60";
+
+function integerFieldMessage(field: typeof roundHoursField, value: string): string | undefined {
+  const result = field.safeParse(value);
+  return result.success ? undefined : result.error.issues[0]?.message;
+}
 
 // Publish form (RN-02, RN-05). Supplies are picked from the catalog with the
 // starting price prefilled from it; every linked supplier starts selected and
@@ -121,6 +125,25 @@ export function PublishTenderForm({
     startTransition(() => dispatch(payload));
   }
 
+  function onRoundFieldChange(key: "roundHours" | "roundCount", value: string) {
+    if (key === "roundHours") setRoundHours(value);
+    else setRoundCount(value);
+  }
+
+  useEffect(() => {
+    const hoursMessage = integerFieldMessage(roundHoursField, roundHours);
+    const countMessage = integerFieldMessage(roundCountField, roundCount);
+    setErrors((current) => {
+      if (current.roundHours === hoursMessage && current.roundCount === countMessage) return current;
+      const next = { ...current };
+      if (hoursMessage) next.roundHours = hoursMessage;
+      else delete next.roundHours;
+      if (countMessage) next.roundCount = countMessage;
+      else delete next.roundCount;
+      return next;
+    });
+  }, [roundHours, roundCount]);
+
   function onSaveDraft() {
     const payload: TenderDraftFormValues = {
       roundHours,
@@ -129,7 +152,12 @@ export function PublishTenderForm({
       items: selectedSupplies.map((supply) => ({ supplyId: supply.id, ...drafts[supply.id] })),
       excludedSupplierIds: suppliers.map((s) => s.userId).filter((id) => !invited.includes(id)),
     };
-    setErrors({});
+    setErrors((current) => {
+      const next: Record<string, string> = {};
+      if (current.roundHours) next.roundHours = current.roundHours;
+      if (current.roundCount) next.roundCount = current.roundCount;
+      return next;
+    });
     startTransition(() => saveDraft(payload));
   }
 
@@ -138,7 +166,10 @@ export function PublishTenderForm({
     (draftState && !draftState.ok ? draftState.message : null) ??
     (discardState && !discardState.ok ? discardState.message : null);
   const draftSaved = draftState?.ok ? "Borrador guardado. Podés seguir cuando quieras desde Licitaciones." : null;
-  const totalHours = Number(roundHours) * Number(roundCount);
+  const hours = Number(roundHours);
+  const rounds = Number(roundCount);
+  const totalHours =
+    Number.isInteger(hours) && Number.isInteger(rounds) && hours > 0 && rounds > 0 ? hours * rounds : null;
 
   return (
     <form onSubmit={onSubmit} className="space-y-6" noValidate>
@@ -148,25 +179,27 @@ export function PublishTenderForm({
         </h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="flex flex-col gap-1 text-base font-semibold text-fg">
-            Duración de cada ronda
-            <select className={inputClass} value={roundHours} onChange={(e) => setRoundHours(e.target.value)}>
-              {ROUND_HOURS_OPTIONS.map((hours) => (
-                <option key={hours} value={hours}>
-                  {hours} horas
-                </option>
-              ))}
-            </select>
+            Duración de cada ronda (hs)
+            <input
+              className={inputClass}
+              inputMode="numeric"
+              placeholder="Ej: 6"
+              value={roundHours}
+              aria-invalid={errors.roundHours ? true : undefined}
+              onChange={(e) => onRoundFieldChange("roundHours", e.target.value)}
+            />
             <FieldError message={errors.roundHours} />
           </label>
           <label className="flex flex-col gap-1 text-base font-semibold text-fg">
             Cantidad de rondas
-            <select className={inputClass} value={roundCount} onChange={(e) => setRoundCount(e.target.value)}>
-              {Array.from({ length: MAX_ROUND_COUNT - MIN_ROUND_COUNT + 1 }, (_, i) => MIN_ROUND_COUNT + i).map((n) => (
-                <option key={n} value={n}>
-                  {n} rondas
-                </option>
-              ))}
-            </select>
+            <input
+              className={inputClass}
+              inputMode="numeric"
+              placeholder="Ej: 4"
+              value={roundCount}
+              aria-invalid={errors.roundCount ? true : undefined}
+              onChange={(e) => onRoundFieldChange("roundCount", e.target.value)}
+            />
             <FieldError message={errors.roundCount} />
           </label>
           <label className="flex flex-col gap-1 text-base font-semibold text-fg">
@@ -183,8 +216,9 @@ export function PublishTenderForm({
           </label>
         </div>
         <p className="text-sm text-fg-muted">
-          La licitación dura {totalHours} horas desde que la publicás y cierra sola. En cada ronda el precio objetivo
-          baja ese porcentaje: es una referencia para los proveedores, no una obligación.
+          {totalHours !== null ? `La licitación dura ${totalHours} horas desde que la publicás y cierra sola. ` : null}
+          En cada ronda el precio objetivo baja ese porcentaje: es una referencia para los proveedores, no una
+          obligación.
         </p>
       </section>
 

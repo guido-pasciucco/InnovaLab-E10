@@ -43,8 +43,8 @@ test("publicar, ofertar, cerrar, elegir y generar la orden de compra", async ({
 
   // Act 1: publish (RN-01 to RN-07).
   await authedPage.goto("/licitaciones/nueva");
-  await authedPage.getByLabel("Duración de cada ronda").selectOption("6");
-  await authedPage.getByLabel("Cantidad de rondas").selectOption("2");
+  await authedPage.getByLabel("Duración de cada ronda").fill("6");
+  await authedPage.getByLabel("Cantidad de rondas").fill("2");
   await authedPage.getByLabel("% de baja por ronda").fill("10");
   await authedPage.getByRole("checkbox", { name: /Harina 000/ }).check();
   await authedPage.getByLabel("Cantidad (kg)").fill("10");

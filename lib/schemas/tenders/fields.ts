@@ -5,9 +5,13 @@ import { z } from "zod";
 // lib/db/tenders/validation.ts (the server gate). Pure and client-safe.
 // Every rule declares its message in Spanish.
 
-// RN-02: "la duración de cada ronda (6, 12 o 24 hs; 6 hs por defecto) y la
-// cantidad de rondas (de 2 a 5; 4 por defecto)".
-export const ROUND_HOURS_OPTIONS = [6, 12, 24] as const;
+// RN-02 (#307): hours per round and round count are free inputs. The bounds
+// are provisional until the team picks the product limits. 1 h is the floor
+// so the no-offer notice and the close can be tried without waiting; 24 h
+// keeps every tender already published (6, 12 or 24) inside the check.
+// Round count stays 2–5, the range already in force.
+export const MIN_ROUND_HOURS = 1;
+export const MAX_ROUND_HOURS = 24;
 export const DEFAULT_ROUND_HOURS = 6;
 export const MIN_ROUND_COUNT = 2;
 export const MAX_ROUND_COUNT = 5;
@@ -20,18 +24,22 @@ export const MAX_SPECS_LENGTH = 500;
 // Form inputs arrive as strings; numbers are accepted too.
 const integerInput = z.union([z.string().trim(), z.number()]).transform((value) => Number(value));
 
-export const roundHoursField = integerInput.pipe(
-  z.union(ROUND_HOURS_OPTIONS.map((hours) => z.literal(hours)) as [z.ZodLiteral<6>, z.ZodLiteral<12>, z.ZodLiteral<24>], {
-    error: "Elegí una duración de ronda de 6, 12 o 24 horas.",
-  }),
+function boundedInteger(min: number, max: number, message: string) {
+  return integerInput.pipe(
+    z.number({ error: message }).int({ error: message }).min(min, { error: message }).max(max, { error: message }),
+  );
+}
+
+export const roundHoursField = boundedInteger(
+  MIN_ROUND_HOURS,
+  MAX_ROUND_HOURS,
+  `Escribí entre ${MIN_ROUND_HOURS} y ${MAX_ROUND_HOURS} horas.`,
 );
 
-export const roundCountField = integerInput.pipe(
-  z
-    .number({ error: `Elegí entre ${MIN_ROUND_COUNT} y ${MAX_ROUND_COUNT} rondas.` })
-    .int({ error: `Elegí entre ${MIN_ROUND_COUNT} y ${MAX_ROUND_COUNT} rondas.` })
-    .min(MIN_ROUND_COUNT, { error: `Elegí entre ${MIN_ROUND_COUNT} y ${MAX_ROUND_COUNT} rondas.` })
-    .max(MAX_ROUND_COUNT, { error: `Elegí entre ${MIN_ROUND_COUNT} y ${MAX_ROUND_COUNT} rondas.` }),
+export const roundCountField = boundedInteger(
+  MIN_ROUND_COUNT,
+  MAX_ROUND_COUNT,
+  `Escribí entre ${MIN_ROUND_COUNT} y ${MAX_ROUND_COUNT} rondas.`,
 );
 
 // Decimal strings, never floats. Accepts a comma as decimal separator.
