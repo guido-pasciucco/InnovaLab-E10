@@ -92,7 +92,7 @@ export default async function TendersPage() {
         icon={PackageIcon}
         stats={[
           { value: "1 a 20 insumos", label: "por licitación, con cantidades y especificaciones" },
-          { value: "6, 12 o 24 hs", label: "de duración por ronda, 6 hs por defecto" },
+          { value: "1 a 24 hs", label: "de duración por ronda, 6 hs por defecto" },
           { value: "2 a 5 rondas", label: "con un precio objetivo nuevo en cada una" },
         ]}
       />

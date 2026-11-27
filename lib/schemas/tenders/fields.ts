@@ -5,11 +5,10 @@ import { z } from "zod";
 // lib/db/tenders/validation.ts (the server gate). Pure and client-safe.
 // Every rule declares its message in Spanish.
 
-// RN-02 (#307): hours per round and round count are free inputs. The bounds
-// are provisional until the team picks the product limits. 1 h is the floor
-// so the no-offer notice and the close can be tried without waiting; 24 h
-// keeps every tender already published (6, 12 or 24) inside the check.
-// Round count stays 2–5, the range already in force.
+// RN-02 (#307): hours per round and round count are free inputs.
+// 1–24 h (6 by default) lets the no-offer notice and the close be tried
+// with a one-hour round, and keeps every tender already published
+// (6, 12 or 24) valid. Round count stays 2–5 (4 by default).
 export const MIN_ROUND_HOURS = 1;
 export const MAX_ROUND_HOURS = 24;
 export const DEFAULT_ROUND_HOURS = 6;

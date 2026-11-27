@@ -56,8 +56,10 @@ async function failure(promise: Promise<unknown>): Promise<AppError> {
   return error as AppError;
 }
 
-// Flour and sugar, 6-hour rounds × 4 (closes at +24 h), two suppliers.
-async function publishedTender() {
+// Flour and sugar, two suppliers. Defaults to 6-hour rounds × 4 (closes at +24 h).
+async function publishedTender(rounds: { roundHours?: number; roundCount?: number } = {}) {
+  const roundHours = rounds.roundHours ?? 6;
+  const roundCount = rounds.roundCount ?? 4;
   const owner = await createUser();
   track(owner);
   const flour = await createSupply(owner.id, "Harina 000", db);
@@ -67,8 +69,8 @@ async function publishedTender() {
   const { id } = await publishTenderService(
     owner.id,
     {
-      roundHours: 6,
-      roundCount: 4,
+      roundHours,
+      roundCount,
       decrementPercent: "10",
       items: [
         { supplyId: flour.id, quantity: "50", startingPrice: "800.00" },
@@ -140,6 +142,31 @@ describe("closing (RN-12, RN-13, RN-19)", () => {
     const t = await publishedTender();
     const closed = await getTenderDetailService(t.owner.id, t.tenderId, db, at(24));
     expect(closed.isVoid).toBe(true);
+  });
+});
+
+describe("one-hour rounds (#307)", () => {
+  it("warns about items without offers after the first hour and closes when the rounds end", async () => {
+    const t = await publishedTender({ roundHours: 1, roundCount: 2 });
+
+    const open = await getTenderDetailService(t.owner.id, t.tenderId, db, start);
+    expect(open.phase).toBe("active");
+    expect(open.noOfferWarning).toBeNull();
+    expect(open.endsAt.toISOString()).toBe(at(2).toISOString());
+
+    const afterFirstHour = await getTenderDetailService(t.owner.id, t.tenderId, db, at(1));
+    expect(afterFirstHour.phase).toBe("active");
+    expect(afterFirstHour.noOfferWarning).toEqual({ itemIds: [t.flourId, t.sugarId] });
+    expect(await listTenderNoticesService(t.owner.id, db, at(1))).toEqual([
+      { kind: "no_offers", tenderId: t.tenderId, number: 1, items: ["Harina 000", "Azúcar"] },
+    ]);
+
+    const closed = await getTenderDetailService(t.owner.id, t.tenderId, db, at(2));
+    expect(closed.phase).toBe("closed");
+    expect(closed.isVoid).toBe(true);
+    expect(await listTenderNoticesService(t.owner.id, db, at(2))).toEqual([
+      { kind: "closed", tenderId: t.tenderId, number: 1, isVoid: true },
+    ]);
   });
 });
 
