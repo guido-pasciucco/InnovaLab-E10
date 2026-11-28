@@ -29,7 +29,7 @@ import { getPricingService } from "./pricing";
 import { getProductPresentationsService } from "./presentations";
 import { listSuppliesService } from "./supplies";
 
-// Monthly calculation closures (#322, D5-D8, D27, D46). Closing is a manual,
+// Monthly calculation closures (#322, D5-D8, D27, D50). Closing is a manual,
 // append-only snapshot of everything the user sees plus the figures the live
 // services return at that instant. Reading the history NEVER calls those
 // services: it returns the stored snapshot, so catalog edits cannot rewrite the

@@ -42,7 +42,7 @@ El acto manual de guardar una foto del mes actual. Congela insumos, recetas, cap
 
 **`versión`**
 Cada foto guardada para el mismo mes. Volver a cerrar crea la versión siguiente; las anteriores nunca se editan ni se borran y la diferencia entre dos seguidas es la auditoría.
-*Así corregir no sobrescribe el pasado (D46).*
+*Así corregir no sobrescribe el pasado (D50).*
 
 **`snapshot`**
 El contenido de un cierre: las entradas que vio el usuario y los resultados tal cual los devolvieron los servicios en ese momento. El histórico lo muestra sin recalcularlo.

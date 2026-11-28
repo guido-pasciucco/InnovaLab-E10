@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useActionState, useEffect, useRef, type FormEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -116,9 +118,11 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
 
   const nameField = register("name");
 
-  // The preview derives the minimum unit from the catalog, like the server.
-  const totalUnits = calculateMinimumUnits(purchaseQuantity, purchaseUnit);
-  const unitPrice = calculateMinimumUnitPrice(purchasePrice, purchaseQuantity, purchaseUnit);
+  // The schema normalizes a comma on submit. The preview reads the raw field,
+  // so the same single-comma replacement happens here before the cost formulas.
+  const previewQuantity = purchaseQuantity.trim().replace(",", ".");
+  const totalUnits = calculateMinimumUnits(previewQuantity, purchaseUnit);
+  const unitPrice = calculateMinimumUnitPrice(purchasePrice, previewQuantity, purchaseUnit);
   const unitLabel = getSupplyUnit(purchaseUnit)?.minimumUnit ?? "unidad mínima";
   const showPreview =
     purchasePrice.trim() !== "" &&
@@ -183,7 +187,7 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
           help={
             <HelpTooltip
               label="Cantidad comprada"
-              text="Ingresá el total comprado en la unidad elegida (kg, metros, ml, etc.). Si compraste 25 kg, cargá 25."
+              text="Ingresá el total comprado en la unidad elegida (kg, metros, ml, etc.). Si compraste 25 kg, cargá 25. Podés escribir decimales con coma."
             />
           }
           {...register("purchaseQuantity")}
@@ -215,7 +219,7 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
           <p>
             Total:{" "}
             <span className="font-semibold text-fg">
-              {quantityFormat.format(Number(purchaseQuantity))} {purchaseUnit} ={" "}
+              {quantityFormat.format(Number(previewQuantity))} {purchaseUnit} ={" "}
               {quantityFormat.format(Number(totalUnits))} {unitLabel}
             </span>
           </p>
@@ -232,14 +236,14 @@ export function SuppliesForm({ kind, supply, onCancel, onSaved }: SuppliesFormPr
         <PrimaryButton type="submit" disabled={isPending}>
           {isPending ? "Guardando…" : "Guardar"}
         </PrimaryButton>
-        <button
+        <Button variant="ghost" size="md"
           type="button"
           onClick={onCancel}
           disabled={isPending}
-          className="min-h-11 flex-1 rounded-[14px] border border-border-control bg-surface px-4 py-2 text-base font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11! flex-1! rounded-[14px]! border! border-border-control! bg-surface! px-4! py-2! text-base! font-semibold! text-fg! hover:bg-surface-tint! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50!"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
 
       {state?.ok && (

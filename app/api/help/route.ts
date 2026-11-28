@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isChatDatosEnabled } from "@/lib/chat-datos/config";
 import { createBedrockHelpModel } from "@/lib/help/bedrock";
 import { readHelpConfig } from "@/lib/help/config";
 import { readHelpContext } from "@/lib/help/corpus";
@@ -35,6 +36,7 @@ export const POST = handleRouteErrors(async (request: Request) => {
       // The context depends on the question, so the body is read once here.
       readHelpContext(raw),
       abortSignal,
+      { chatDatosEnabled: isChatDatosEnabled() },
     );
   } catch (error) {
   await lease.release();

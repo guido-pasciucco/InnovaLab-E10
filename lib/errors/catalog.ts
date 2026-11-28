@@ -162,7 +162,7 @@ export const ERROR_CATALOG = {
     logLevel: "silent",
   },
   CALC_CLOSURE_PERIOD_CLOSED: {
-    // Only the current month in Argentina accepts new versions (D27/D46).
+    // Only the current month in Argentina accepts new versions (D27/D50).
     status: 409,
     message: "Ese mes ya está cerrado; solo se puede cerrar el mes actual",
     logLevel: "silent",

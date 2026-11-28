@@ -13,10 +13,11 @@ export function streamHelpReply(
   model: HelpModel,
   corpus: string,
   abortSignal?: AbortSignal,
+  options: { chatDatosEnabled?: boolean } = {},
 ) {
   const { messages } = helpRequestSchema.parse(raw);
   return model.stream({
-    system: buildHelpSystemPrompt(corpus),
+    system: buildHelpSystemPrompt(corpus, options),
     messages,
     abortSignal,
     maxOutputTokens: HELP_MAX_OUTPUT_TOKENS,

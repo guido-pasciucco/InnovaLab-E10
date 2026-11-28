@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import {
@@ -39,7 +41,7 @@ const linkClass =
   "inline-flex min-h-11 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
 const secondaryButtonClass =
-  "min-h-9 rounded-[10px] border border-border-control bg-surface px-3 text-xs font-semibold text-fg hover:bg-surface-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50";
+  "min-h-9! rounded-[10px]! border! border-border-control! bg-surface! px-3! text-xs! font-semibold! text-fg! hover:bg-surface-tint! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50!";
 
 const inputClass =
   "min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-3 py-2 text-sm text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-invalid:border-danger disabled:cursor-not-allowed disabled:bg-surface-disabled disabled:text-fg-disabled";
@@ -198,9 +200,9 @@ function MarkupRowForm({
           {isPending ? "…" : "Guardar"}
         </PrimaryButton>
         {row.markupSource === "product" && (
-          <button type="button" onClick={clear} disabled={busy} className={secondaryButtonClass}>
+          <Button variant="ghost" size="sm" type="button" onClick={clear} disabled={busy} className={secondaryButtonClass}>
             {isClearing ? "…" : "Usar el del negocio"}
-          </button>
+          </Button>
         )}
       </div>
       <span className="text-xs text-fg-muted">

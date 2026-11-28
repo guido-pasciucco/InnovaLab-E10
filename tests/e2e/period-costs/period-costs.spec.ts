@@ -135,6 +135,22 @@ test("the search filters expenses by concept without changing the total", async 
   await periodCosts.expectSubtotal("$175.000");
 });
 
+test("the own-work reminder stays visible and opens the new expense modal", async ({
+  authedPage,
+}) => {
+  const periodCosts = new PeriodCostsPage(authedPage);
+  await periodCosts.goto();
+
+  await expect(periodCosts.ownWorkReminder).toBeVisible();
+  await expect(periodCosts.ownWorkReminder).toContainText("¿Cargaste tu trabajo del mes?");
+  await periodCosts.ownWorkReminder.getByRole("button", { name: "Cargar mi sueldo" }).click();
+
+  await expect(periodCosts.dialog).toBeVisible();
+  await expect(
+    periodCosts.dialog.getByRole("heading", { name: "Nuevo gasto del período" }),
+  ).toBeVisible();
+});
+
 test("the left sidebar keeps Gastos del período as the active destination", async ({
   authedPage,
 }) => {

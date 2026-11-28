@@ -68,9 +68,12 @@ export const purchasePriceField = z
 // How much was bought, in the purchase unit ("25" for 25 kg). Same staged
 // pipeline as the amount: one actionable message per invalid input. The engine
 // divides by this value, so zero and negatives share one message.
+// A single comma is the decimal separator ("1,5" → "1.5"), as in tender
+// decimals. A leading, trailing, or repeated comma still fails the number check.
 export const purchaseQuantityField = z
   .string({ error: "La cantidad debe ser un número." })
   .trim()
+  .transform((value) => value.replace(",", "."))
   .pipe(z.string().min(1, { error: "La cantidad es obligatoria." }))
   .pipe(
     z.string().regex(amountShape, {

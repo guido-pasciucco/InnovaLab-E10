@@ -8,7 +8,7 @@ import { closeCalculationService } from "@/lib/services/calculation-closures";
 
 // Closing is manual and explicit: the client sends no data at all, not even a
 // period. The service resolves the business from the session and only accepts
-// the current Argentina month (D27/D46).
+// the current Argentina month (D27/D50).
 export const closeCalculation = handleActionErrors(async () => {
   const user = await requireUser();
   const closure = await closeCalculationService(user.id);

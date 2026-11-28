@@ -9,6 +9,7 @@ import type {
   ProductPresentationsView,
 } from "@/lib/schemas/presentations/presentations";
 import { VariableCostsSummary } from "@/components/products/variable-costs-summary";
+import { Button } from "@/components/ui/button";
 import { CatalogModal } from "@/components/ui/catalog-modal";
 import { describeCostState } from "./cost-state";
 import { PresentationForm } from "./presentation-form";
@@ -123,14 +124,14 @@ export function PresentationsManager({ view, packaging }: PresentationsManagerPr
           <h2 className="text-lg font-semibold text-fg">
             Presentaciones ({presentations.length})
           </h2>
-          <button
+          <Button variant="primary" size="md"
             type="button"
             onClick={() => openForm(null)}
             disabled={isDeleting}
-            className="min-h-11 shrink-0 rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11! shrink-0! rounded-[14px]! bg-action-primary! px-5! py-2! text-sm! font-semibold! text-on-action-primary! hover:bg-action-primary-hover! active:bg-action-primary-pressed! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50!"
           >
             + Nueva
-          </button>
+          </Button>
         </div>
 
         {presentations.length === 0 ? (
@@ -167,24 +168,24 @@ export function PresentationsManager({ view, packaging }: PresentationsManagerPr
                     <td className="px-3 py-3 text-fg-muted">{packagingSummary(presentation)}</td>
                     <td className="px-3 py-3 whitespace-nowrap text-right">
                       <div className="inline-flex gap-2">
-                        <button
-                          type="button"
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => openForm(presentation)}
                           disabled={isDeleting}
                           aria-label={`Editar ${presentation.name}`}
-                          className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
                         >
                           Editar
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
                           onClick={() => handleDelete(presentation)}
                           disabled={isDeleting}
                           aria-label={`Quitar ${presentation.name}`}
-                          className="min-h-9 rounded-[10px] border border-border-control px-2 py-1 text-sm font-semibold text-danger hover:bg-danger/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
                         >
                           Quitar
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>

@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useMemo, useState, useTransition } from "react";
 
 import { removePeriodCostLine } from "@/app/(business)/period-costs/actions";
@@ -131,14 +133,31 @@ export function PeriodCostsCatalog({
           <h2 className="text-lg font-semibold text-fg">
             Gastos de {formatPeriodLabel(period)} ({filtered.length})
           </h2>
-          <button
+          <Button variant="primary" size="md"
             type="button"
             onClick={handleNew}
             disabled={isDeleting}
-            className="min-h-11 shrink-0 rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover active:bg-action-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11! shrink-0! rounded-[14px]! bg-action-primary! px-5! py-2! text-sm! font-semibold! text-on-action-primary! hover:bg-action-primary-hover! active:bg-action-primary-pressed! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50!"
           >
             + Nuevo
-          </button>
+          </Button>
+        </div>
+
+        <div
+          role="note"
+          className="flex flex-col gap-3 rounded-[16px] border border-border-tonal bg-surface-tint px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-sm text-fg">
+            ¿Cargaste tu trabajo del mes? Tu sueldo también es un gasto del período: sumalo como un gasto más para que el cálculo te dé el número real.
+          </p>
+          <Button variant="outline" size="md"
+            type="button"
+            onClick={handleNew}
+            disabled={isDeleting}
+            className="min-h-11! w-full! shrink-0! rounded-[14px]! border! border-border-control! bg-surface! px-4! py-2! text-sm! font-semibold! text-fg! hover:bg-canvas! focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-focus! disabled:cursor-not-allowed! disabled:opacity-50! sm:w-auto!"
+          >
+            Cargar mi sueldo
+          </Button>
         </div>
 
         {lines.length > 0 && (

@@ -18,7 +18,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
       { href: "/period-costs", label: "Gastos del período", icon: Wallet },
       { href: "/total-costs", label: "Costo total", icon: Calculator },
       { href: "/precios", label: "Precios", icon: Tags },
-      { href: "/equilibrio", label: "Equilibrio", icon: Scale },
+      { href: "/equilibrio", label: "Punto de Equilibrio", icon: Scale },
       { href: "/historico", label: "Datos históricos", icon: Clock },
     ],
   },

@@ -31,12 +31,31 @@ describe("readHelpConfig", () => {
 });
 
 describe("isHelpPreviewEnabled", () => {
-  it("turns on only with HELP_PREVIEW=true", () => {
-    expect(isHelpPreviewEnabled({ HELP_PREVIEW: "true" })).toBe(true);
+  const localPreview = {
+    NODE_ENV: "development",
+    HELP_PREVIEW: "true",
+    SITE_URL: "http://localhost:3000",
+  };
+
+  it("turns on for an explicit local development origin", () => {
+    expect(isHelpPreviewEnabled(localPreview)).toBe(true);
+    expect(isHelpPreviewEnabled({ ...localPreview, SITE_URL: "http://127.0.0.1:3000" })).toBe(true);
+    expect(isHelpPreviewEnabled({ ...localPreview, SITE_URL: "http://[::1]:3000" })).toBe(true);
   });
 
-  it("stays off when the flag is missing or not exactly true", () => {
-    expect(isHelpPreviewEnabled({})).toBe(false);
-    expect(isHelpPreviewEnabled({ HELP_PREVIEW: "1" })).toBe(false);
+  it("stays off outside development", () => {
+    expect(isHelpPreviewEnabled({ ...localPreview, NODE_ENV: "production" })).toBe(false);
+    expect(isHelpPreviewEnabled({ ...localPreview, NODE_ENV: "test" })).toBe(false);
+  });
+
+  it("stays off for remote or non-http origins", () => {
+    expect(isHelpPreviewEnabled({ ...localPreview, SITE_URL: "https://numora.example" })).toBe(false);
+    expect(isHelpPreviewEnabled({ ...localPreview, SITE_URL: "https://localhost:3000" })).toBe(false);
+  });
+
+  it("stays off when the local configuration is incomplete or malformed", () => {
+    expect(isHelpPreviewEnabled({ ...localPreview, HELP_PREVIEW: "1" })).toBe(false);
+    expect(isHelpPreviewEnabled({ ...localPreview, SITE_URL: "" })).toBe(false);
+    expect(isHelpPreviewEnabled({ ...localPreview, SITE_URL: "not-a-url" })).toBe(false);
   });
 });

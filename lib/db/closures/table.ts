@@ -4,7 +4,7 @@ import type { ClosureSnapshot } from "@/lib/types/closure";
 
 import { businesses } from "../business/table";
 
-// Monthly calculation closures (#322, D5-D8 and D46). Append-only: a month can
+// Monthly calculation closures (#322, D5-D8 and D50). Append-only: a month can
 // have several versions, and a version is never edited or deleted. The only
 // deletion path is the cascade when the business (and with it the account) is
 // deleted. No update or delete service is exposed for this table.
