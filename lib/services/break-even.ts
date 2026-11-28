@@ -52,6 +52,7 @@ export const getBreakEvenService: GetBreakEven = async (userId, deps) => {
   for (const row of pricing.rows) {
     if (row.capacity === null || row.capacity === 0) {
       excluded.push({
+        rowId: row.rowId,
         productId: row.productId,
         name: row.name,
         reason: "NO_CAPACITY",
@@ -61,6 +62,7 @@ export const getBreakEvenService: GetBreakEven = async (userId, deps) => {
     }
     if (row.variableUnit === null) {
       excluded.push({
+        rowId: row.rowId,
         productId: row.productId,
         name: row.name,
         reason: "NO_VARIABLE_COST",
@@ -68,7 +70,12 @@ export const getBreakEvenService: GetBreakEven = async (userId, deps) => {
       continue;
     }
     if (row.price === null) {
-      excluded.push({ productId: row.productId, name: row.name, reason: "NO_PRICE" });
+      excluded.push({
+        rowId: row.rowId,
+        productId: row.productId,
+        name: row.name,
+        reason: "NO_PRICE",
+      });
     }
   }
 

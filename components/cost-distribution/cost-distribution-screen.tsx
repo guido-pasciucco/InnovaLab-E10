@@ -185,7 +185,7 @@ export function CostDistributionScreen({
                 </thead>
                 <tbody>
                   {rows.map((row) => (
-                    <ProductRow key={row.id} row={row} />
+                    <ProductRow key={row.rowId} row={row} />
                   ))}
                 </tbody>
               </table>

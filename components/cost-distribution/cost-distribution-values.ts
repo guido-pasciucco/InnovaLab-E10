@@ -43,7 +43,9 @@ export type DistributionBanner = {
 };
 
 export type DistributionRowView = {
-  id: string;
+  // Unique per sale row: a product with presentations produces one row per
+  // presentation, all sharing the same productId.
+  rowId: string;
   name: string;
   capacity: string;
   share: string;
@@ -142,7 +144,7 @@ function unavailableNote(row: CostDistributionRow): string | null {
 
 function toRowView(row: CostDistributionRow): DistributionRowView {
   return {
-    id: row.productId,
+    rowId: row.rowId,
     name: row.name,
     capacity: formatCapacity(row.capacity),
     share: formatShare(row.share),

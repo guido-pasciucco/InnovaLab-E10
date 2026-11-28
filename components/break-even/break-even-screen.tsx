@@ -50,7 +50,7 @@ export function BreakEvenScreen({ view, chart }: { view: BreakEvenView; chart?: 
         {view.banner && (
           <section
             aria-labelledby="break-even-status"
-            className="flex flex-col gap-3 rounded-[16px] bg-warning-subtle p-4 text-sm sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 rounded-2xl bg-warning-subtle p-4 text-sm sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
               <h2 id="break-even-status" className="font-semibold text-fg">
@@ -89,7 +89,7 @@ export function BreakEvenScreen({ view, chart }: { view: BreakEvenView; chart?: 
         {chart}
 
         {view.hasNegativeContribution && (
-          <p className="rounded-[16px] bg-warning-subtle p-4 text-sm text-fg">
+          <p className="rounded-2xl bg-warning-subtle p-4 text-sm text-fg">
             Al menos un producto tiene contribución cero o negativa. El cálculo usa la mezcla completa;
             revisá los productos señalados.
           </p>
@@ -156,7 +156,7 @@ export function BreakEvenScreen({ view, chart }: { view: BreakEvenView; chart?: 
             <h2 id="excluded-products" className="text-lg font-semibold text-fg">Productos a revisar</h2>
             <ul className="mt-3 space-y-2">
               {view.exclusions.map((product) => (
-                <li key={product.productId} className="text-sm text-fg-muted">
+                <li key={product.rowId} className="text-sm text-fg-muted">
                   <strong className="text-fg">{product.name}:</strong> {product.message}{" "}
                   <Link href={product.href} className="font-semibold text-link underline underline-offset-2">
                     {product.action}
