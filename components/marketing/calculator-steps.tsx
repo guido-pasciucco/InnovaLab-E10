@@ -14,54 +14,42 @@ import {
 import { container, eyebrow, sectionLead, sectionTitle } from "@/components/home/styles";
 
 type Step = {
-  number: string;
   title: string;
   description: string;
   icon: ComponentType<IconProps>;
   featured?: boolean;
 };
 
-// The order matches the private menu: Insumos, Productos, Gastos del período,
-// Costo total, Precios y Equilibrio. Nothing here promises work in progress.
+// The order matches the private menu, using the public wording of each step.
 const steps: readonly Step[] = [
   {
-    number: "01",
     title: "Insumos y packaging",
     description: "Lo que comprás, con su precio y su unidad de compra.",
     icon: PackageIcon,
   },
   {
-    number: "02",
     title: "Productos",
-    description:
-      "La receta, el rendimiento y las presentaciones en que vendés (unidad, caja x6), con cuántas hacés por mes.",
+    description: "La receta, las presentaciones y las cantidades que querés fabricar.",
     icon: GridIcon,
   },
   {
-    number: "03",
-    title: "Gastos del período",
-    description:
-      "Lo que pagás cada mes vendas o no: alquiler, servicios, tu propio sueldo. Se carga una sola vez.",
+    title: "Costos fijos",
+    description: "Lo que pagás cada mes vendas o no.",
     icon: WalletIcon,
   },
   {
-    number: "04",
     title: "Costo total",
-    description: "Los gastos del mes se reparten según cuánto hacés de cada producto.",
+    description: "Lo que verdaderamente cuesta fabricar tu producto.",
     icon: LayersIcon,
   },
   {
-    number: "05",
     title: "Precios",
-    description:
-      "Un recargo sobre el costo, por defecto o por producto, que da el precio sugerido, la ganancia y el margen real.",
+    description: "Elegí vos tu porcentaje de ganancia.",
     icon: TrendingUpIcon,
   },
   {
-    number: "06",
-    title: "Equilibrio",
-    description:
-      "Cuántas unidades de cada producto vender en el mes para cubrir los gastos, con su gráfico.",
+    title: "Punto de Equilibrio",
+    description: "En base a lo que producís, cuánto deberías vender para no perder dinero.",
     icon: TargetIcon,
     featured: true,
   },
@@ -89,21 +77,14 @@ export function CalculatorSteps({ ctaHref }: { ctaHref: string }) {
         <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {steps.map((step) => (
             <li
-              key={step.number}
+              key={step.title}
               className={`flex h-full flex-col rounded-2xl border p-5 ${
                 step.featured
                   ? "border-brand-tile bg-brand-tile text-on-action-primary shadow-xl shadow-brand-tile/20"
                   : "border-border-default bg-surface-tint"
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <span
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold ${
-                    step.featured ? "bg-surface/10 text-on-brand-accent" : "bg-action-tonal text-link"
-                  }`}
-                >
-                  {step.number}
-                </span>
+              <div className="flex items-start justify-end">
                 <step.icon
                   className={`h-5 w-5 ${step.featured ? "text-on-brand-accent" : "text-link"}`}
                 />

@@ -13,7 +13,7 @@ type PageHeroProps = {
   ctaLabel: string;
   anchorLabel: string;
   anchorHref: string;
-  stats: readonly { value: string; label: string }[];
+  stats: readonly { value: string; label?: string }[];
   icon: ComponentType<IconProps>;
 };
 
@@ -77,7 +77,7 @@ export function PageHero({
             {stats.map((stat) => (
               <div key={stat.value} className="border-b border-border-default pb-4 last:border-0 last:pb-0">
                 <dt className="text-sm font-semibold text-fg">{stat.value}</dt>
-                <dd className="mt-1 text-xs leading-5 text-fg-muted">{stat.label}</dd>
+                {stat.label ? <dd className="mt-1 text-xs leading-5 text-fg-muted">{stat.label}</dd> : null}
               </div>
             ))}
           </dl>
