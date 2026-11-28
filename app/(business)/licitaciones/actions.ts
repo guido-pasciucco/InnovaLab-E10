@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireUser } from "@/lib/auth/require-user";
 import { handleActionErrors } from "@/lib/errors/handle-action-errors";
-import type { PublishTenderFormValues, TenderDraftFormValues } from "@/lib/schemas/tenders/publish";
+import type { PublishTenderPayload, SaveTenderDraftPayload } from "@/lib/schemas/tenders/publish";
 import {
   awardItemService,
   issuePurchaseOrderService,
@@ -23,7 +23,7 @@ import {
 // once and passes the raw input to the service, which validates it.
 
 export const publishTender = handleActionErrors(
-  async (_previous: unknown, payload: PublishTenderFormValues) => {
+  async (_previous: unknown, payload: PublishTenderPayload) => {
     const user = await requireUser();
     const { id } = await publishTenderService(user.id, payload);
     revalidatePath("/licitaciones");
@@ -32,17 +32,20 @@ export const publishTender = handleActionErrors(
 );
 
 // Saves the half-filled publish form, even without suppliers, to publish it
-// later. The payload has the publish form's shape plus the unticked suppliers.
-export const saveTenderDraft = handleActionErrors(async (_previous: unknown, payload: TenderDraftFormValues) => {
+// later. With a draftId it updates that draft; without one it creates the next
+// one. The payload has the form's shape plus the unticked suppliers.
+export const saveTenderDraft = handleActionErrors(async (_previous: unknown, payload: SaveTenderDraftPayload) => {
   const user = await requireUser();
-  await saveTenderDraftService(user.id, payload);
+  const saved = await saveTenderDraftService(user.id, payload, payload.draftId ?? null);
   revalidatePath("/licitaciones");
-  return { savedAt: new Date().toISOString() };
+  // Reopen the saved draft: from then on, every action targets that id.
+  redirect(`/licitaciones/nueva?borrador=${saved.id}&guardado=1`);
 });
 
-export const discardTenderDraft = handleActionErrors(async () => {
+export const discardTenderDraft = handleActionErrors(async (_previous: unknown, data: FormData) => {
   const user = await requireUser();
-  await discardTenderDraftService(user.id);
+  const draftId = String(data.get("draftId") ?? "");
+  await discardTenderDraftService(user.id, draftId);
   revalidatePath("/licitaciones");
   redirect("/licitaciones");
 });

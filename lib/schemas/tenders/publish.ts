@@ -46,6 +46,12 @@ export type TenderDraftFormValues = {
   excludedSupplierIds: string[];
 };
 
+// The draft loaded into the form (id + correlative number) and the payloads
+// sent to the actions: `draftId` is null when the form started from scratch.
+export type TenderDraftFormState = TenderDraftFormValues & { id: string; number: number };
+export type SaveTenderDraftPayload = TenderDraftFormValues & { draftId: string | null };
+export type PublishTenderPayload = PublishTenderFormValues & { draftId: string | null };
+
 // Issue path → "items.0.quantity", the key the form uses for each input.
 export function publishFormErrors(values: unknown): Record<string, string> {
   const result = publishTenderFormSchema.safeParse(values);

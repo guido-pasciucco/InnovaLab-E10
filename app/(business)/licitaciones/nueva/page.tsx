@@ -7,10 +7,17 @@ import { getTenderFormDataService } from "@/lib/services/tenders";
 
 const linkClass = "font-semibold text-brand-green-700 underline";
 
-// Publish a tender (RN-01 to RN-05), or save it as a draft to publish later.
-export default async function NewTenderPage() {
+// Publish a tender (RN-01 to RN-05), or continue one of the saved drafts
+// chosen from the tender list (N-31).
+export default async function NewTenderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ borrador?: string | string[]; guardado?: string | string[] }>;
+}) {
   const user = await requireUser();
-  const data = await getTenderFormDataService(user.id);
+  const { borrador, guardado } = await searchParams;
+  const draftId = typeof borrador === "string" ? borrador : null;
+  const data = await getTenderFormDataService(user.id, draftId);
   const links = [{ href: "/licitaciones", label: "Volver a licitaciones" }];
 
   if (data.supplies.length === 0) {
@@ -54,6 +61,7 @@ export default async function NewTenderPage() {
         supplies={data.supplies}
         suppliers={data.suppliers}
         draft={data.draft}
+        saved={guardado === "1"}
         publishBlocked={publishBlocked}
       />
     </PageShell>

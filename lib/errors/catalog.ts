@@ -268,6 +268,12 @@ export const ERROR_CATALOG = {
     message: "No encontramos esa licitación.",
     logLevel: "silent",
   },
+  TENDER_DRAFT_NOT_FOUND: {
+    // Missing, foreign or non-uuid draft id: all look the same.
+    status: 404,
+    message: "No encontramos ese borrador.",
+    logLevel: "silent",
+  },
   TENDER_ACTIVE_EXISTS: {
     // RN-03: this version handles one active tender at a time.
     status: 409,

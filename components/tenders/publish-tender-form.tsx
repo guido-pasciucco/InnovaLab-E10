@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 
 import Link from "next/link";
-import { startTransition, useActionState, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { startTransition, useActionState, useState, type FormEvent, type ReactNode } from "react";
 
 import { discardTenderDraft, publishTender, saveTenderDraft } from "@/app/(business)/licitaciones/actions";
 import { FormBanner } from "@/components/ui/page-shell";
@@ -17,8 +17,9 @@ import {
 } from "@/lib/schemas/tenders/fields";
 import {
   publishFormErrors,
-  type PublishTenderFormValues,
-  type TenderDraftFormValues,
+  type PublishTenderPayload,
+  type SaveTenderDraftPayload,
+  type TenderDraftFormState,
 } from "@/lib/schemas/tenders/publish";
 import { formatCuit } from "@/lib/schemas/suppliers/cuit";
 import { formatMoney } from "./format";
@@ -50,17 +51,19 @@ function integerFieldMessage(field: typeof roundHoursField, value: string): stri
 // Publish form (RN-02, RN-05). Supplies are picked from the catalog with the
 // starting price prefilled from it; every linked supplier starts selected and
 // the emprendedor unticks the ones not to invite. The form can be saved as a
-// draft at any time (also without suppliers) and reopens from it.
-// `publishBlocked` explains why it cannot be published yet, if so.
+// draft at any time (also without suppliers) and reopens from the one chosen
+// in the tender list. `publishBlocked` explains why it cannot be published yet.
 export function PublishTenderForm({
   supplies,
   suppliers,
   draft,
+  saved,
   publishBlocked,
 }: {
   supplies: FormSupply[];
   suppliers: FormSupplier[];
-  draft: TenderDraftFormValues | null;
+  draft: TenderDraftFormState | null;
+  saved: boolean;
   publishBlocked: ReactNode;
 }) {
   const [state, dispatch, pending] = useActionState(publishTender, undefined);
@@ -114,12 +117,13 @@ export function PublishTenderForm({
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     // Items follow the catalog order, so item errors map to the visible rows.
-    const payload: PublishTenderFormValues = {
+    const payload: PublishTenderPayload = {
       roundHours,
       roundCount,
       decrementPercent,
       items: selectedSupplies.map((supply) => ({ supplyId: supply.id, ...drafts[supply.id] })),
       supplierIds: invited,
+      draftId: draft?.id ?? null,
     };
     const found = publishFormErrors(payload);
     setErrors(found);
@@ -128,31 +132,20 @@ export function PublishTenderForm({
   }
 
   function onRoundFieldChange(key: "roundHours" | "roundCount", value: string) {
+    const message = integerFieldMessage(key === "roundHours" ? roundHoursField : roundCountField, value);
     if (key === "roundHours") setRoundHours(value);
     else setRoundCount(value);
+    setErrors((current) => ({ ...current, [key]: message ?? "" }));
   }
 
-  useEffect(() => {
-    const hoursMessage = integerFieldMessage(roundHoursField, roundHours);
-    const countMessage = integerFieldMessage(roundCountField, roundCount);
-    setErrors((current) => {
-      if (current.roundHours === hoursMessage && current.roundCount === countMessage) return current;
-      const next = { ...current };
-      if (hoursMessage) next.roundHours = hoursMessage;
-      else delete next.roundHours;
-      if (countMessage) next.roundCount = countMessage;
-      else delete next.roundCount;
-      return next;
-    });
-  }, [roundHours, roundCount]);
-
   function onSaveDraft() {
-    const payload: TenderDraftFormValues = {
+    const payload: SaveTenderDraftPayload = {
       roundHours,
       roundCount,
       decrementPercent,
       items: selectedSupplies.map((supply) => ({ supplyId: supply.id, ...drafts[supply.id] })),
       excludedSupplierIds: suppliers.map((s) => s.userId).filter((id) => !invited.includes(id)),
+      draftId: draft?.id ?? null,
     };
     setErrors((current) => {
       const next: Record<string, string> = {};
@@ -167,7 +160,7 @@ export function PublishTenderForm({
     (state && !state.ok ? state.message : null) ??
     (draftState && !draftState.ok ? draftState.message : null) ??
     (discardState && !discardState.ok ? discardState.message : null);
-  const draftSaved = draftState?.ok ? "Borrador guardado. Podés seguir cuando quieras desde Licitaciones." : null;
+  const draftSaved = saved ? "Borrador guardado. Podés seguir cuando quieras desde Licitaciones." : null;
   const hours = Number(roundHours);
   const rounds = Number(roundCount);
   const totalHours =
@@ -181,7 +174,7 @@ export function PublishTenderForm({
         </h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="flex flex-col gap-1 text-base font-semibold text-fg">
-            Duración de cada ronda (hs)
+            Duración de licitación
             <input
               className={inputClass}
               inputMode="numeric"
@@ -344,6 +337,14 @@ export function PublishTenderForm({
           Una vez publicada, la licitación no se puede modificar: solo cancelar antes del cierre.
         </p>
       )}
+      {draft && (
+        <p className="text-sm text-fg-muted">
+          Estás editando el borrador N° {draft.number}.{" "}
+          <Link href="/licitaciones/nueva" className="font-semibold text-brand-green-700 underline">
+            Empezar otro borrador
+          </Link>
+        </p>
+      )}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <PrimaryButton type="submit" disabled={pending || Boolean(publishBlocked)}>
           {pending ? "Publicando…" : "Publicar licitación"}
@@ -359,7 +360,11 @@ export function PublishTenderForm({
         {draft && (
           <Button variant="ghost" size="md"
             type="button"
-            onClick={() => startTransition(() => discard())}
+            onClick={() => {
+              const data = new FormData();
+              data.set("draftId", draft.id);
+              startTransition(() => discard(data));
+            }}
             disabled={discarding}
             className={secondaryButtonClass}
           >

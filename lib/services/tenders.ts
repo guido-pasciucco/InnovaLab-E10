@@ -87,6 +87,7 @@ async function findActiveTender(userId: VerifiedUserId, db: Db | Tx, now: Date) 
 // active tender if there is one (RN-03).
 export async function getTenderFormDataService(
   userId: VerifiedUserId,
+  draftId: string | null = null,
   db: Db = getDrizzleClient(),
   now: Date = new Date(),
 ): Promise<TenderFormData> {
@@ -100,7 +101,7 @@ export async function getTenderFormDataService(
     findActiveTender(userId, db, now),
   ]);
 
-  const draft = await loadTenderDraft(userId, new Set(catalog.map((supply) => supply.id)), db);
+  const draft = await loadTenderDraft(userId, draftId, new Set(catalog.map((supply) => supply.id)), db);
 
   return {
     draft,
@@ -190,8 +191,9 @@ export async function publishTenderService(
       data.supplierIds.map((supplierUserId) => ({ tenderId: tender.id, supplierUserId, createdAt: now })),
     );
 
-    // The draft became this tender.
-    await discardTenderDraftService(userId, tx);
+    // Only the draft being continued became this tender; any other draft
+    // stays available (N-31).
+    if (data.draftId) await discardTenderDraftService(userId, data.draftId, tx);
 
     return tender;
   });

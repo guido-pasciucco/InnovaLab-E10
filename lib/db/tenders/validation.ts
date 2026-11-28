@@ -23,6 +23,9 @@ import {
 // the input.
 
 const uuid = z.uuid({ error: "Elegí un valor de la lista." });
+// The draft being continued, when the form came from one. Its ownership is
+// checked in the service, not here.
+const draftId = uuid.nullable().optional();
 
 export const publishTenderItemInputSchema = z.object({
   supplyId: uuid,
@@ -46,6 +49,7 @@ export const publishTenderInputSchema = z.object({
     .array(uuid, { error: tenderSuppliersMessage })
     .min(1, { error: tenderSuppliersMessage })
     .transform((ids) => [...new Set(ids)]),
+  draftId,
 });
 
 export type PublishTenderInput = z.infer<typeof publishTenderInputSchema>;
@@ -77,6 +81,7 @@ export const tenderDraftInputSchema = z.object({
     .array(uuid)
     .max(500)
     .transform((ids) => [...new Set(ids)]),
+  draftId,
 });
 
 export type TenderDraftInput = z.infer<typeof tenderDraftInputSchema>;

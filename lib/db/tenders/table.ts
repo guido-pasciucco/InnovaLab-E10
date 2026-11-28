@@ -216,11 +216,12 @@ export const purchaseOrderLines = pgTable(
   (table) => [index("purchase_order_lines_order_idx").on(table.orderId)],
 );
 
-// Unpublished tender form of an emprendedor: one per emprendedor, saved
-// before publishing (for example, before any supplier is registered). The
-// content is the half-filled form, validated loosely on save and fully on
-// publish, so it is stored as one JSON document. Supplies deleted from the
-// catalog are dropped when the draft is loaded.
+// Unpublished tender forms of an emprendedor: several at once (N-31), saved
+// before publishing (for example, before any supplier is registered). Each one
+// has a correlative number to tell them apart in the tender list. The content
+// is the half-filled form, validated loosely on save and fully on publish, so
+// it is stored as one JSON document. Supplies deleted from the catalog are
+// dropped when the draft is loaded or listed.
 export type TenderDraftContent = {
   roundHours: string;
   roundCount: string;
@@ -231,13 +232,23 @@ export type TenderDraftContent = {
   excludedSupplierIds: string[];
 };
 
-export const tenderDrafts = pgTable("tender_drafts", {
-  ownerUserId: uuid("owner_user_id")
-    .primaryKey()
-    .references(() => profiles.id, { onDelete: "cascade" }),
-  content: jsonb("content").$type<TenderDraftContent>().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const tenderDrafts = pgTable(
+  "tender_drafts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ownerUserId: uuid("owner_user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    // Correlative per emprendedor, like tender numbers (N-20).
+    number: integer("number").notNull(),
+    content: jsonb("content").$type<TenderDraftContent>().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("tender_drafts_owner_number_uq").on(table.ownerUserId, table.number),
+    index("tender_drafts_owner_idx").on(table.ownerUserId),
+  ],
+);
 
 export type Tender = typeof tenders.$inferSelect;
 export type TenderOffer = typeof tenderOffers.$inferSelect;

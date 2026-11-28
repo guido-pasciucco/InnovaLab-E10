@@ -19,7 +19,7 @@ Documento de planificación, no de reglas vigentes. Las reglas que hoy rigen est
 | 24 nov 2026 | H-21 | Mantener la vigencia de 7 días del enlace | Sin efecto desde el 24 nov por H-23: se eliminan los enlaces de invitación |
 | 24 nov 2026 | H-04 | Mantener el tope de 20 insumos por licitación | Ninguno: RN-01 y N-17 quedan vigentes |
 | 24 nov 2026 | H-06 | Mantener cualquier insumo del catálogo, packaging incluido | Ninguno: RN-01 y N-16 quedan vigentes |
-| 24 nov 2026 | H-09 | Permitir varios borradores y continuar el que se elija | Pendiente de bajar a reglas y modelo: reemplaza N-31/D-12, cambia `tender_drafts`, la lista de Licitaciones y la publicación |
+| 24 nov 2026 | H-09 | Permitir varios borradores y continuar el que se elija | Bajado a reglas, modelo e interfaz en #308 (D50): reemplaza N-31/D-12, cambia `tender_drafts`, la lista de Licitaciones y la publicación |
 | 24 nov 2026 | H-10 | Diferido: registrar como idea a futuro | Ninguno por ahora: N-12 sigue vigente |
 | 24 nov 2026 | H-22 | Diferido: nota completa a Ideas a futuro | Ninguno: ES-01 y N-12 siguen vigentes |
 | 24 nov 2026 | H-07 | Dar por cubierta: el proveedor no ve el precio de catálogo | Ninguno: RN-07 y N-21 quedan vigentes; queda como verificación de QA |
@@ -133,7 +133,7 @@ Cada entrada conserva la **cita literal** de la anotación, con su ortografía o
   > deveria poder guardar varios borradores, y que pueda continuar con el que quiera
 - **Contexto:** "Para retomarlo, entrá a Licitaciones y tocá Seguir con el borrador. Hay un solo borrador a la vez. Al publicar, el borrador desaparece."
 - **Regla vigente:** N-31 y D-12 (un borrador por emprendedor en `tender_drafts`).
-- **Estado:** decidido el 24 nov 2026 — se permiten varios borradores y se elige cuál continuar. Reemplaza N-31/D-12; pendiente de bajar a reglas, modelo e interfaz.
+- **Estado:** decidido el 24 nov 2026 — se permiten varios borradores y se elige cuál continuar. Reemplaza N-31/D-12; bajado a reglas, modelo e interfaz en #308 (D50).
 
 ### H-10 · Programar el inicio
 
