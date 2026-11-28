@@ -18,7 +18,7 @@ Funcionalidad complementaria de la Calculadora de Costos: el emprendedor publica
 | Término | Significado |
 | --- | --- |
 | Precio de partida | Techo inicial que publica el emprendedor. Ninguna oferta puede superarlo. |
-| Ronda | Intervalo (6, 12 o 24 hs; 6 hs por defecto) en el que rige un precio objetivo. |
+| Ronda | Intervalo de 1 a 24 hs (6 hs por defecto) en el que rige un precio objetivo. |
 | Precio objetivo | Referencia de la ronda: precio objetivo anterior × (1 − % de baja). No es obligatorio alcanzarlo. |
 | En carrera | Proveedores que pueden ofertar en la ronda. En la primera versión son todos los invitados, hasta el cierre. |
 
@@ -42,7 +42,7 @@ Antes de la primera licitación, el proveedor queda registrado con el emprendedo
 
 1. El emprendedor elige entre 1 y 20 insumos del Maestro de Insumos (RN-01, N-17), ajusta cantidades y especificaciones y publica, o guarda un borrador (N-31).
 2. La aplicación sugiere el precio de partida de cada insumo desde el catálogo; es obligatorio y se puede cambiar (RN-02, ES-02).
-3. El emprendedor fija una sola vez el % de baja, la duración de cada ronda (6, 12 o 24 hs) y la cantidad de rondas (2 a 5). La duración total es el producto de ambos valores (RN-09, ES-01, ES-03).
+3. El emprendedor fija una sola vez el % de baja, la duración de cada ronda (de 1 a 24 hs; 6 hs por defecto) y la cantidad de rondas (de 2 a 5; 4 por defecto). La duración total es el producto de ambos valores (RN-09, ES-01, ES-03).
 4. Aparecen todos los proveedores registrados, preseleccionados y con sus rubros a la vista; el emprendedor destilda a quienes no quiere invitar (RN-05, ES-07).
 5. La licitación recibe un número correlativo por emprendedor (N-20) y arranca al publicarse (N-12). Publicada, no se modifica: solo puede cancelarse antes del cierre (RN-03).
 
@@ -77,7 +77,7 @@ El precio acordado puede reemplazar al del insumo en el Maestro de Insumos y ali
 | ID | Regla |
 | --- | --- |
 | <a id="RN-01"></a>RN-01 | Solo se licitan insumos del Maestro de Insumos. Las cantidades se sugieren a partir de recetas y producción planificada si existen; si no, se cargan a mano. |
-| <a id="RN-02"></a>RN-02 | Por insumo (o canasta) se publican cantidad, especificaciones, precio de partida, duración de cada ronda (6, 12 o 24 hs; 6 hs por defecto) y cantidad de rondas (2 a 5; 4 por defecto). La duración total es rondas × duración de ronda. El precio de partida es obligatorio: se sugiere el precio actual del insumo y se puede dejar o cambiar. La canasta solo agrupa insumos: precio de partida, objetivo y ofertas van siempre por insumo. Cada licitación tiene número correlativo. |
+| <a id="RN-02"></a>RN-02 | Por insumo (o canasta) se publican cantidad, especificaciones, precio de partida, duración de cada ronda (de 1 a 24 hs; 6 hs por defecto) y cantidad de rondas (de 2 a 5; 4 por defecto). La duración total es rondas × duración de ronda. El precio de partida es obligatorio: se sugiere el precio actual del insumo y se puede dejar o cambiar. La canasta solo agrupa insumos: precio de partida, objetivo y ofertas van siempre por insumo. Cada licitación tiene número correlativo. |
 | <a id="RN-03"></a>RN-03 | Publicada, la licitación no se modifica: solo puede cancelarse antes del cierre. Un insumo no puede estar en dos licitaciones activas a la vez (en esta versión solo hay una licitación activa por vez). |
 | <a id="RN-04"></a>RN-04 | Los precios ofertados son finales, puestos en destino (impuestos y flete incluidos) y por unidad de medida: la misma base de la Calculadora de Costos. |
 
@@ -97,7 +97,7 @@ El precio acordado puede reemplazar al del insumo en el Maestro de Insumos y ali
 
 | ID | Regla |
 | --- | --- |
-| <a id="RN-09"></a>RN-09 | En cada ronda (6, 12 o 24 hs, según lo publicado) rige un nuevo precio objetivo. El % de baja se define una sola vez, al publicar, y la aplicación avanza las rondas y calcula el objetivo sin intervención. El objetivo es referencia, no obligación. |
+| <a id="RN-09"></a>RN-09 | En cada ronda (de 1 a 24 hs, según lo publicado) rige un nuevo precio objetivo. El % de baja se define una sola vez, al publicar, y la aplicación avanza las rondas y calcula el objetivo sin intervención. El objetivo es referencia, no obligación. |
 | <a id="RN-10"></a>RN-10 | En cada ronda el proveedor puede mejorar con precio menor al suyo anterior (llegue o no al objetivo) o ratificar. Nunca oferta por encima de su último precio; la primera oferta no supera el precio de partida. Sin respuesta, ratifica. |
 | <a id="RN-11"></a>RN-11 | En la primera versión todos los proveedores invitados siguen en carrera hasta el cierre: el emprendedor no puede excluir a ninguno durante la licitación. |
 | <a id="RN-12"></a>RN-12 | La licitación cierra sola al vencer la duración y no se aceptan ofertas posteriores. Los horarios los fija el reloj del servidor (hora de Buenos Aires). |
@@ -152,7 +152,7 @@ Las 13 especificaciones están decididas; la sección "Abiertas" del documento d
 | --- | --- | --- | --- | --- |
 | <a id="ES-01"></a>ES-01 | Rondas en la primera versión | Rondas automáticas: el % de baja se fija una vez al publicar y la aplicación avanza sola. Sin rondas el proveedor no ve su posición (RN-06) y no bajaría su oferta; con rondas manuales el emprendedor tendría que entrar cada 6 hs. | 20 nov 2026 | RN-09 |
 | <a id="ES-02"></a>ES-02 | Precio de partida | Obligatorio, con sugerencia del precio actual del insumo. Las rondas necesitan un punto de partida y todo insumo licitado está en el Maestro (RN-01). | 20 nov 2026 | RN-02 |
-| <a id="ES-03"></a>ES-03 | Duración | Ronda de 6/12/24 h (6 por defecto) y 2 a 5 rondas (4 por defecto); total = producto, sin rondas cortadas. Mínimo 2 porque con una no hay rondas; máximo 5 porque con 10 % de baja el quinto objetivo ya es el 66 % del precio de partida. | 20 nov 2026 | Ronda, RN-02, RN-09 |
+| <a id="ES-03"></a>ES-03 | Duración | Ronda de 1 a 24 h (6 por defecto) y 2 a 5 rondas (4 por defecto); total = producto, sin rondas cortadas. El mínimo de 1 h permite probar el aviso sin ofertas y el cierre sin esperar. El mínimo de 2 rondas es porque con una no hay rondas; el máximo de 5, porque con 10 % de baja el quinto objetivo ya es el 66 % del precio de partida. | 26 nov 2026 | Ronda, RN-02, RN-09 |
 | <a id="ES-04"></a>ES-04 | Aviso cuando nadie oferta | Al terminar la primera ronda, aviso una vez; dejar seguir o cancelar; cerrar sin ofertas deja la licitación desierta. | 21 nov 2026 | Agrega RN-18 y RN-19 |
 | <a id="ES-05"></a>ES-05 | Canasta o ítem | La canasta solo agrupa; precio por insumo y el proveedor puede cotizar solo algunos. Un precio total rompería el cuadro, el reparto y CC-02. | 21 nov 2026 | RN-02; agrega RN-20 |
 | <a id="ES-06"></a>ES-06 | Qué habilita la negociación | El emprendedor ve datos y ofertas desde el inicio (RN-08); al negociar, la aplicación avisa al proveedor, le pasa el contacto y lo registra (RN-17). | 21 nov 2026 | Agrega RN-21 |

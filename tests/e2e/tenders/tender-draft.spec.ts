@@ -19,7 +19,8 @@ test("sin proveedores se cargan los insumos, se guarda el borrador y se retoma",
     authedPage.getByText("Para publicar necesitás al menos un proveedor registrado con vos."),
   ).toBeVisible();
 
-  await authedPage.getByLabel("Cantidad de rondas").selectOption("4");
+  await authedPage.getByLabel("Duración de cada ronda").fill("1");
+  await authedPage.getByLabel("Cantidad de rondas").fill("3");
   await authedPage.getByLabel("% de baja por ronda").fill("5");
   await authedPage.getByRole("checkbox", { name: /Harina 000/ }).check();
   await authedPage.getByLabel("Cantidad (kg)").fill("40");
@@ -31,7 +32,8 @@ test("sin proveedores se cargan los insumos, se guarda el borrador y se retoma",
   await authedPage.goto("/licitaciones");
   await authedPage.getByRole("link", { name: "Seguir con el borrador" }).click();
   await expect(authedPage).toHaveURL("/licitaciones/nueva");
-  await expect(authedPage.getByLabel("Cantidad de rondas")).toHaveValue("4");
+  await expect(authedPage.getByLabel("Duración de cada ronda")).toHaveValue("1");
+  await expect(authedPage.getByLabel("Cantidad de rondas")).toHaveValue("3");
   await expect(authedPage.getByLabel("% de baja por ronda")).toHaveValue("5");
   await expect(authedPage.getByRole("checkbox", { name: /Harina 000/ })).toBeChecked();
   await expect(authedPage.getByLabel("Cantidad (kg)")).toHaveValue("40");

@@ -1,0 +1,2 @@
+ALTER TABLE "tenders" DROP CONSTRAINT "tenders_round_hours_valid";--> statement-breakpoint
+ALTER TABLE "tenders" ADD CONSTRAINT "tenders_round_hours_valid" CHECK ("tenders"."round_hours" between 1 and 24);
