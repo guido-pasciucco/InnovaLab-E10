@@ -57,7 +57,7 @@ describe("toCostDistributionView", () => {
     expect(view.totalExpenses).toBe("$ 330.000,00");
     expect(view.banner).toBeNull();
     expect(view.rows[0]).toEqual({
-      id: "p1",
+      rowId: "p1",
       name: "Pan",
       capacity: "180 u./mes",
       share: "90 %",

@@ -1,6 +1,6 @@
 {
   "id": "9849318c-7707-43fb-a63e-698f7c7fa7c8",
-  "prevId": "362a04c5-6693-4ebe-8fda-db551e4aed1e",
+  "prevId": "2900dd95-dd97-404c-b9fd-78a8f70c3716",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2152,6 +2152,105 @@
           "value": "\"tenders\".\"ends_at\" > \"tenders\".\"starts_at\""
         }
       },
+      "isRLSEnabled": false
+    },
+    "public.calc_closures": {
+      "name": "calc_closures",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "business_id": {
+          "name": "business_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period": {
+          "name": "period",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "closed_at": {
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot_schema_version": {
+          "name": "snapshot_schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "calc_closures_business_period_version_uq": {
+          "name": "calc_closures_business_period_version_uq",
+          "columns": [
+            {
+              "expression": "business_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "period",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "calc_closures_business_id_businesses_id_fk": {
+          "name": "calc_closures_business_id_businesses_id_fk",
+          "tableFrom": "calc_closures",
+          "tableTo": "businesses",
+          "columnsFrom": [
+            "business_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     }
   },

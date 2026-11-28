@@ -38,6 +38,9 @@ export type BreakEvenStatus =
 export type BreakEvenExclusionReason = "NO_CAPACITY" | "NO_VARIABLE_COST" | "NO_PRICE";
 
 export type BreakEvenExcludedProduct = {
+  // Unique per sale row: a product with presentations can be excluded once
+  // per presentation, all sharing the same productId.
+  rowId: string;
   productId: string;
   name: string;
   reason: BreakEvenExclusionReason;

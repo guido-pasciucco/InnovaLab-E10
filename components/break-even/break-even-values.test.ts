@@ -92,9 +92,9 @@ describe("toBreakEvenView", () => {
         rows: [row({ hasNegativeContribution: true })],
         hasNegativeContribution: true,
         excluded: [
-          { productId: "b", name: "Producto B", reason: "NO_CAPACITY" },
-          { productId: "c", name: "Producto C", reason: "NO_VARIABLE_COST" },
-          { productId: "d", name: "Producto D", reason: "NO_PRICE" },
+          { rowId: "b", productId: "b", name: "Producto B", reason: "NO_CAPACITY" },
+          { rowId: "c", productId: "c", name: "Producto C", reason: "NO_VARIABLE_COST" },
+          { rowId: "d", productId: "d", name: "Producto D", reason: "NO_PRICE" },
         ],
       }),
     );

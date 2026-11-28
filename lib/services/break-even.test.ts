@@ -140,7 +140,7 @@ describe("getBreakEvenService", () => {
 
     expect(result.status).toBe("ready");
     expect(result.excluded).toEqual([
-      { productId: "C", name: "C", reason: "NO_CAPACITY", editHref: "/products" },
+      { rowId: "C", productId: "C", name: "C", reason: "NO_CAPACITY", editHref: "/products" },
     ]);
     expect(result.rows.map((r) => r.breakEvenUnitsWhole)).toEqual(["167", "84"]);
     expect(result.totals).toMatchObject({ breakEvenSales: "325000.00" });
@@ -155,7 +155,7 @@ describe("getBreakEvenService", () => {
     );
 
     expect(result).toMatchObject({ status: "incomplete", rows: [], totals: null });
-    expect(result.excluded).toEqual([{ productId: "C", name: "C", reason: "NO_PRICE" }]);
+    expect(result.excluded).toEqual([{ rowId: "C", productId: "C", name: "C", reason: "NO_PRICE" }]);
   });
 
   it("rounds a quota just above an integer from unrounded inputs", async () => {
@@ -208,7 +208,7 @@ describe("getBreakEvenService", () => {
     expect(result.status).toBe("ready");
     expect(result.rows).toHaveLength(1);
     expect(result.excluded).toEqual([
-      { productId: "product-2", name: "Cuaderno", reason: "NO_CAPACITY", editHref: "/products" },
+      { rowId: "product-2", productId: "product-2", name: "Cuaderno", reason: "NO_CAPACITY", editHref: "/products" },
     ]);
   });
 

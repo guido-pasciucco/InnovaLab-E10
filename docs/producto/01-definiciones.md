@@ -32,6 +32,22 @@ Una forma de vender un producto: nombre ("Caja x6"), unidades base que contiene,
 Una vez que el usuario costea un producto: una "hoja de presupuesto" con fecha. Un producto puede tener muchos.
 *Se separa del producto para poder tener historial y alternativas sin pisar datos.*
 
+**`calc_closures`**
+Los **cierres** del cálculo: una foto append-only del estado del mes y de los resultados que devolvieron los servicios al cerrar. Cada fila es una versión; `period` es `AAAA-MM` y `version` empieza en 1.
+*"Cierres del cálculo": se distingue del cálculo en vivo, que se recalcula en cada lectura.*
+
+**`cierre` (closure)**
+El acto manual de guardar una foto del mes actual. Congela insumos, recetas, capacidades, gastos, recargos y resultados; no bloquea la edición del catálogo.
+*Es un punto del histórico, no un paso obligatorio del recorrido.*
+
+**`versión`**
+Cada foto guardada para el mismo mes. Volver a cerrar crea la versión siguiente; las anteriores nunca se editan ni se borran y la diferencia entre dos seguidas es la auditoría.
+*Así corregir no sobrescribe el pasado (D50).*
+
+**`snapshot`**
+El contenido de un cierre: las entradas que vio el usuario y los resultados tal cual los devolvieron los servicios en ese momento. El histórico lo muestra sin recalcularlo.
+*"Foto": deja constancia de lo que se vio, no de lo que el catálogo diría hoy.*
+
 **`costing_setup`**
 Las condiciones de un cálculo: unidad, volumen, moneda y período (paso 1, H1).
 *Setup = configuración inicial; costing = costeo.*

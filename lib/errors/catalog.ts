@@ -155,6 +155,36 @@ export const ERROR_CATALOG = {
     message: "The scenario price must be greater than 0",
     logLevel: "silent",
   },
+  CALC_CLOSURE_NOT_FOUND: {
+    // Missing or foreign period/version: both look the same to the caller.
+    status: 404,
+    message: "No encontramos ese cierre",
+    logLevel: "silent",
+  },
+  CALC_CLOSURE_INVALID_PERIOD: {
+    // A malformed month is bad input, not a missing closure.
+    status: 422,
+    message: "El mes debe tener el formato AAAA-MM",
+    logLevel: "silent",
+  },
+  CALC_CLOSURE_FORMAT_UNSUPPORTED: {
+    // Stored photo from another schema version or with an unreadable shape.
+    status: 422,
+    message: "Esta foto se guardó con otro formato y no se puede mostrar",
+    logLevel: "warn",
+  },
+  CALC_CLOSURE_PERIOD_CLOSED: {
+    // Only the current month in Argentina accepts new versions (D27/D50).
+    status: 409,
+    message: "Ese mes ya está cerrado; solo se puede cerrar el mes actual",
+    logLevel: "silent",
+  },
+  CALC_CLOSURE_VERSION_CONFLICT: {
+    // Two closings raced for the same version of the same month.
+    status: 409,
+    message: "Otro cierre acabá de guardar; volvé a intentarlo",
+    logLevel: "warn",
+  },
   PRODUCT_NOT_FOUND: {
     // Missing, foreign or soft-deleted product id: all look the same.
     status: 404,

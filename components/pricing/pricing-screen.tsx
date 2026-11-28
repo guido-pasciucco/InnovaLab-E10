@@ -26,16 +26,15 @@ import {
   type MarkupFormInput,
   type MarkupFormValues,
 } from "@/lib/schemas/pricing/pricing";
+import { PricingTable } from "./pricing-table";
 import {
   formatMarkup,
   formatMarkupInput,
-  NOT_AVAILABLE,
   type PricingRowView,
   type PricingView,
 } from "./pricing-values";
 
 const FIELD_NAMES = ["markupPercent"] as const;
-const NOT_AVAILABLE_CLASS = "text-fg-muted";
 
 const linkClass =
   "inline-flex min-h-11 items-center justify-center rounded-[14px] px-5 py-2 text-sm font-semibold text-brand-green-700 hover:bg-brand-green-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
@@ -47,16 +46,6 @@ const inputClass =
   "min-h-11 w-full rounded-[10px] border border-border-control bg-surface px-3 py-2 text-sm text-fg placeholder:text-placeholder focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-invalid:border-danger disabled:cursor-not-allowed disabled:bg-surface-disabled disabled:text-fg-disabled";
 
 type SavedState = ServiceResult<PricingView> | undefined;
-
-function Figure({ value, emphasis = false }: { value: string; emphasis?: boolean }) {
-  const missing = value === NOT_AVAILABLE;
-
-  return (
-    <span className={missing ? NOT_AVAILABLE_CLASS : emphasis ? "font-bold text-fg" : "text-fg"}>
-      {value}
-    </span>
-  );
-}
 
 function DefaultMarkupForm({
   value,
@@ -310,72 +299,13 @@ export function PricingScreen({ initialView }: { initialView: PricingView }) {
               </Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <caption className="sr-only">
-                  Costo total, recargo, precio sugerido, ganancia y margen real por producto
-                </caption>
-                <thead>
-                  <tr className="border-b border-border-control">
-                    <th scope="col" className="px-2 py-3 font-semibold text-fg-muted">
-                      Producto
-                    </th>
-                    <th scope="col" className="px-2 py-3 text-right font-semibold text-fg-muted">
-                      Costo total (por unidad)
-                    </th>
-                    <th scope="col" className="px-2 py-3 font-semibold text-fg-muted">
-                      Recargo
-                    </th>
-                    <th scope="col" className="px-2 py-3 text-right font-semibold text-fg-muted">
-                      Precio sugerido
-                    </th>
-                    <th scope="col" className="px-2 py-3 text-right font-semibold text-fg-muted">
-                      Ganancia (por unidad)
-                    </th>
-                    <th scope="col" className="px-2 py-3 text-right font-semibold text-fg-muted">
-                      Margen real
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {view.rows.map((row) => (
-                    <tr key={row.id} className="border-b border-border-control align-top last:border-0">
-                      <th scope="row" className="min-w-40 px-2 py-3 text-left font-semibold text-fg">
-                        {row.name}
-                        {row.note && (
-                          <span className="mt-1 block text-xs font-normal text-warning">
-                            {row.note}{" "}
-                            {row.noteHref && (
-                              <Link href={row.noteHref} className="font-semibold underline underline-offset-2">
-                                Cargar capacidad
-                              </Link>
-                            )}
-                          </span>
-                        )}
-                        <span className="mt-1 block text-xs font-normal text-fg-muted">
-                          Recargo vigente: {row.markupDisplay} · {row.markupSourceLabel}
-                        </span>
-                      </th>
-                      <td className="px-2 py-3 text-right whitespace-nowrap">
-                        <Figure value={row.unitCost} />
-                      </td>
-                      <td className="px-2 py-3">
-                        <MarkupRowForm row={row} defaultMarkup={view.defaultMarkupPercent} onSaved={handleSaved} />
-                      </td>
-                      <td className="px-2 py-3 text-right whitespace-nowrap">
-                        <Figure value={row.suggestedPrice} emphasis />
-                      </td>
-                      <td className="px-2 py-3 text-right whitespace-nowrap">
-                        <Figure value={row.profit} />
-                      </td>
-                      <td className="px-2 py-3 text-right whitespace-nowrap">
-                        <Figure value={row.realMargin} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <PricingTable
+              view={view}
+              caption="Costo total, recargo, precio sugerido, ganancia y margen real por producto"
+              renderMarkup={(row) => (
+                <MarkupRowForm row={row} defaultMarkup={view.defaultMarkupPercent} onSaved={handleSaved} />
+              )}
+            />
           )}
 
           <p className="text-xs text-fg-muted">
