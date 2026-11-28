@@ -21,10 +21,9 @@ test("a new user resends the confirmation email and sees the cooldown", async ({
   const resendButton = page.getByRole("button", { name: /^(Reenviar correo|Enviando…)/ });
   await expect(resendButton).toBeVisible();
 
-  // GoTrue rejects a resend that lands in the same second as the signup email.
-  await page.waitForTimeout(1500);
-
-  // Act
+  // Act. GoTrue rejects a second confirmation email inside max_frequency
+  // (supabase/config.toml, 1s) with over_email_send_rate_limit.
+  await page.waitForTimeout(1100);
   await resendButton.click();
 
   // Assert

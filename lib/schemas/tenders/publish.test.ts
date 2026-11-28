@@ -4,14 +4,19 @@ import { decrementPercentField, roundCountField, roundHoursField, startingPriceF
 import { publishFormErrors } from "./publish";
 
 describe("tender field rules (RN-02, RN-09)", () => {
-  it("accepts only 6, 12 or 24 hour rounds and 2 to 5 rounds", () => {
-    expect(roundHoursField.parse("12")).toBe(12);
-    expect(roundHoursField.safeParse("8").error?.issues[0]?.message).toBe(
-      "Elegí una duración de ronda de 6, 12 o 24 horas.",
-    );
+  it("accepts any whole number of hours from 1 to 24 and 2 to 5 rounds", () => {
+    expect(roundHoursField.parse("1")).toBe(1);
+    expect(roundHoursField.parse("8")).toBe(8);
+    expect(roundHoursField.parse("24")).toBe(24);
+    expect(roundHoursField.safeParse("0").error?.issues[0]?.message).toBe("Escribí entre 1 y 24 horas.");
+    expect(roundHoursField.safeParse("25").error?.issues[0]?.message).toBe("Escribí entre 1 y 24 horas.");
+    expect(roundHoursField.safeParse("1.5").error?.issues[0]?.message).toBe("Escribí entre 1 y 24 horas.");
+    expect(roundHoursField.safeParse("").error?.issues[0]?.message).toBe("Escribí entre 1 y 24 horas.");
+    expect(roundHoursField.safeParse("dos").error?.issues[0]?.message).toBe("Escribí entre 1 y 24 horas.");
     expect(roundCountField.parse("5")).toBe(5);
-    expect(roundCountField.safeParse("1").success).toBe(false);
-    expect(roundCountField.safeParse("6").success).toBe(false);
+    expect(roundCountField.safeParse("dos").error?.issues[0]?.message).toBe("Escribí entre 2 y 5 rondas.");
+    expect(roundCountField.safeParse("1").error?.issues[0]?.message).toBe("Escribí entre 2 y 5 rondas.");
+    expect(roundCountField.safeParse("6").error?.issues[0]?.message).toBe("Escribí entre 2 y 5 rondas.");
   });
 
   it("takes the % de baja with a decimal comma, above 0 and up to 50", () => {

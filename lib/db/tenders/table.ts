@@ -12,6 +12,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { MAX_ROUND_COUNT, MAX_ROUND_HOURS, MIN_ROUND_COUNT, MIN_ROUND_HOURS } from "@/lib/schemas/tenders/fields";
+
 import { profiles } from "../profile/table";
 import { suppliers } from "../suppliers/table";
 import { supplies } from "../supplies/table";
@@ -52,8 +54,14 @@ export const tenders = pgTable(
   },
   (table) => [
     unique("tenders_owner_number_uq").on(table.ownerUserId, table.number),
-    check("tenders_round_hours_valid", sql`${table.roundHours} in (6, 12, 24)`),
-    check("tenders_round_count_valid", sql`${table.roundCount} between 2 and 5`),
+    check(
+      "tenders_round_hours_valid",
+      sql`${table.roundHours} between ${sql.raw(String(MIN_ROUND_HOURS))} and ${sql.raw(String(MAX_ROUND_HOURS))}`,
+    ),
+    check(
+      "tenders_round_count_valid",
+      sql`${table.roundCount} between ${sql.raw(String(MIN_ROUND_COUNT))} and ${sql.raw(String(MAX_ROUND_COUNT))}`,
+    ),
     check(
       "tenders_decrement_percent_valid",
       sql`${table.decrementPercent} > 0 and ${table.decrementPercent} <= 50`,

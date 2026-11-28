@@ -17,13 +17,14 @@ test("se guardan varios borradores y se continúa y descarta el elegido", async 
     await expect(authedPage.getByRole("cell", { name, exact: true })).toBeVisible();
   }
 
-  // First draft: Harina, 4 rounds and 5%.
+  // First draft: Harina, 1 h per round, 3 rounds and 5%.
   await authedPage.goto("/licitaciones/nueva");
   await expect(authedPage.getByRole("button", { name: "Publicar licitación" })).toBeDisabled();
   await expect(
     authedPage.getByText("Para publicar necesitás al menos un proveedor registrado con vos."),
   ).toBeVisible();
-  await authedPage.getByLabel("Cantidad de rondas").selectOption("4");
+  await authedPage.getByLabel("Duración de licitación").fill("1");
+  await authedPage.getByLabel("Cantidad de rondas").fill("3");
   await authedPage.getByLabel("% de baja por ronda").fill("5");
   await authedPage.getByRole("checkbox", { name: /Harina 000/ }).check();
   await authedPage.getByLabel("Cantidad (kg)").fill("40");
@@ -31,9 +32,10 @@ test("se guardan varios borradores y se continúa y descarta el elegido", async 
   await authedPage.getByRole("button", { name: "Guardar borrador" }).click();
   await expect(authedPage.getByText("Borrador guardado.", { exact: false })).toBeVisible();
 
-  // Second draft: a fresh form with Azúcar, 3 rounds and 8%.
+  // Second draft: a fresh form with Azúcar, 2 h per round, 4 rounds and 8%.
   await authedPage.goto("/licitaciones/nueva");
-  await authedPage.getByLabel("Cantidad de rondas").selectOption("3");
+  await authedPage.getByLabel("Duración de licitación").fill("2");
+  await authedPage.getByLabel("Cantidad de rondas").fill("4");
   await authedPage.getByLabel("% de baja por ronda").fill("8");
   await authedPage.getByRole("checkbox", { name: /Azúcar/ }).check();
   await authedPage.getByLabel("Cantidad (kg)").fill("15");
@@ -48,7 +50,8 @@ test("se guardan varios borradores y se continúa y descarta el elegido", async 
   const secondDraft = authedPage.getByRole("link", { name: "Continuar borrador N° 2" });
   await secondDraft.click();
   await expect(authedPage).toHaveURL(/\/licitaciones\/nueva\?borrador=/);
-  await expect(authedPage.getByLabel("Cantidad de rondas")).toHaveValue("3");
+  await expect(authedPage.getByLabel("Duración de licitación")).toHaveValue("2");
+  await expect(authedPage.getByLabel("Cantidad de rondas")).toHaveValue("4");
   await expect(authedPage.getByLabel("% de baja por ronda")).toHaveValue("8");
   await expect(authedPage.getByRole("checkbox", { name: /Azúcar/ })).toBeChecked();
   await expect(authedPage.getByRole("checkbox", { name: /Harina 000/ })).not.toBeChecked();
@@ -69,7 +72,8 @@ test("se guardan varios borradores y se continúa y descarta el elegido", async 
   await expect(authedPage).toHaveURL("/licitaciones");
   await expect(authedPage.getByRole("link", { name: "Continuar borrador N° 2" })).toHaveCount(0);
   await authedPage.getByRole("link", { name: "Continuar borrador N° 1" }).click();
-  await expect(authedPage.getByLabel("Cantidad de rondas")).toHaveValue("4");
+  await expect(authedPage.getByLabel("Duración de licitación")).toHaveValue("1");
+  await expect(authedPage.getByLabel("Cantidad de rondas")).toHaveValue("3");
   await expect(authedPage.getByLabel("% de baja por ronda")).toHaveValue("5");
   await expect(authedPage.getByRole("checkbox", { name: /Harina 000/ })).toBeChecked();
   await expect(authedPage.getByLabel("Cantidad (kg)")).toHaveValue("40");

@@ -171,12 +171,14 @@ describe("publishTenderService", () => {
     );
   });
 
-  it("rejects a missing starting price, a round length outside 6/12/24 and a round count outside 2–5", async () => {
+  it("rejects a missing starting price, a round length outside 1–24 and a round count outside 2–5", async () => {
     const s = await scenario();
 
     for (const overrides of [
       { items: [{ supplyId: s.flour.id, quantity: "1", startingPrice: "" }] },
-      { roundHours: "8" },
+      { roundHours: "0" },
+      { roundHours: "25" },
+      { roundCount: "1" },
       { roundCount: "6" },
       { supplierIds: [] },
     ]) {
