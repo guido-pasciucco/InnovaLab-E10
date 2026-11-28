@@ -1,24 +1,28 @@
 import { expect, test } from "../fixtures";
 
-// Tender drafts: an emprendedor without suppliers loads the supplies to
-// publish, saves the draft, and finds it again from the tender list.
-test("sin proveedores se cargan los insumos, se guarda el borrador y se retoma", async ({ authedPage }) => {
-  // Arrange: one catalog supply and no supplier.
-  await authedPage.goto("/supplies");
-  await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
-  await authedPage.getByLabel("Nombre del insumo").fill("Harina 000");
-  await authedPage.getByRole("textbox", { name: "Precio de compra" }).fill("18750");
-  await authedPage.getByRole("combobox", { name: "Unidad de medida" }).selectOption("kg");
-  await authedPage.getByRole("button", { name: "Guardar", exact: true }).click();
-  await expect(authedPage.getByRole("cell", { name: "Harina 000", exact: true })).toBeVisible();
+// Tender drafts (N-31): several can be saved, each is listed with its own
+// number and the emprendedor chooses which one to continue and discard.
+test("se guardan varios borradores y se continúa y descarta el elegido", async ({ authedPage }) => {
+  // Arrange: two catalog supplies and no supplier.
+  for (const [name, price] of [
+    ["Harina 000", "18750"],
+    ["Azúcar", "1000"],
+  ]) {
+    await authedPage.goto("/supplies");
+    await authedPage.getByRole("button", { name: "+ Nuevo" }).click();
+    await authedPage.getByLabel("Nombre del insumo").fill(name);
+    await authedPage.getByRole("textbox", { name: "Precio de compra" }).fill(price);
+    await authedPage.getByRole("combobox", { name: "Unidad de medida" }).selectOption("kg");
+    await authedPage.getByRole("button", { name: "Guardar", exact: true }).click();
+    await expect(authedPage.getByRole("cell", { name, exact: true })).toBeVisible();
+  }
 
-  // Act: the form is available; publishing waits for a supplier.
+  // First draft: Harina, 4 rounds and 5%.
   await authedPage.goto("/licitaciones/nueva");
   await expect(authedPage.getByRole("button", { name: "Publicar licitación" })).toBeDisabled();
   await expect(
     authedPage.getByText("Para publicar necesitás al menos un proveedor registrado con vos."),
   ).toBeVisible();
-
   await authedPage.getByLabel("Cantidad de rondas").selectOption("4");
   await authedPage.getByLabel("% de baja por ronda").fill("5");
   await authedPage.getByRole("checkbox", { name: /Harina 000/ }).check();
@@ -27,18 +31,46 @@ test("sin proveedores se cargan los insumos, se guarda el borrador y se retoma",
   await authedPage.getByRole("button", { name: "Guardar borrador" }).click();
   await expect(authedPage.getByText("Borrador guardado.", { exact: false })).toBeVisible();
 
-  // Assert: the list offers to continue, and the form reopens with the values.
+  // Second draft: a fresh form with Azúcar, 3 rounds and 8%.
+  await authedPage.goto("/licitaciones/nueva");
+  await authedPage.getByLabel("Cantidad de rondas").selectOption("3");
+  await authedPage.getByLabel("% de baja por ronda").fill("8");
+  await authedPage.getByRole("checkbox", { name: /Azúcar/ }).check();
+  await authedPage.getByLabel("Cantidad (kg)").fill("15");
+  await authedPage.getByLabel("Precio de partida por kg").fill("900");
+  await authedPage.getByRole("button", { name: "Guardar borrador" }).click();
+  await expect(authedPage.getByText("Borrador guardado.", { exact: false })).toBeVisible();
+
+  // Assert: both drafts are listed and each link opens its own values.
   await authedPage.goto("/licitaciones");
-  await authedPage.getByRole("link", { name: "Seguir con el borrador" }).click();
-  await expect(authedPage).toHaveURL("/licitaciones/nueva");
+  await expect(authedPage.getByRole("heading", { name: "Borradores" })).toBeVisible();
+  await expect(authedPage.getByRole("link", { name: "Continuar borrador N° 1" })).toBeVisible();
+  const secondDraft = authedPage.getByRole("link", { name: "Continuar borrador N° 2" });
+  await secondDraft.click();
+  await expect(authedPage).toHaveURL(/\/licitaciones\/nueva\?borrador=/);
+  await expect(authedPage.getByLabel("Cantidad de rondas")).toHaveValue("3");
+  await expect(authedPage.getByLabel("% de baja por ronda")).toHaveValue("8");
+  await expect(authedPage.getByRole("checkbox", { name: /Azúcar/ })).toBeChecked();
+  await expect(authedPage.getByRole("checkbox", { name: /Harina 000/ })).not.toBeChecked();
+  await expect(authedPage.getByLabel("Cantidad (kg)")).toHaveValue("15");
+  await expect(authedPage.getByLabel("Precio de partida por kg")).toHaveValue("900");
+
+  // Saving again updates this draft; it does not create a third one.
+  await authedPage.getByLabel("Cantidad (kg)").fill("20");
+  await authedPage.getByRole("button", { name: "Guardar borrador" }).click();
+  await expect(authedPage.getByText("Borrador guardado.", { exact: false })).toBeVisible();
+  await authedPage.goto("/licitaciones");
+  await expect(authedPage.getByRole("link", { name: /Continuar borrador N°/ })).toHaveCount(2);
+
+  // Discarding only removes the chosen draft, and the other one survives.
+  await secondDraft.click();
+  await expect(authedPage.getByLabel("Cantidad (kg)")).toHaveValue("20");
+  await authedPage.getByRole("button", { name: "Descartar borrador" }).click();
+  await expect(authedPage).toHaveURL("/licitaciones");
+  await expect(authedPage.getByRole("link", { name: "Continuar borrador N° 2" })).toHaveCount(0);
+  await authedPage.getByRole("link", { name: "Continuar borrador N° 1" }).click();
   await expect(authedPage.getByLabel("Cantidad de rondas")).toHaveValue("4");
   await expect(authedPage.getByLabel("% de baja por ronda")).toHaveValue("5");
   await expect(authedPage.getByRole("checkbox", { name: /Harina 000/ })).toBeChecked();
   await expect(authedPage.getByLabel("Cantidad (kg)")).toHaveValue("40");
-  await expect(authedPage.getByLabel("Precio de partida por kg")).toHaveValue("700");
-
-  // Discarding goes back to the list, without the draft.
-  await authedPage.getByRole("button", { name: "Descartar borrador" }).click();
-  await expect(authedPage).toHaveURL("/licitaciones");
-  await expect(authedPage.getByRole("link", { name: "Nueva licitación" })).toBeVisible();
 });

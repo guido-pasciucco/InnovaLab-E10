@@ -18,8 +18,9 @@ import {
 } from "@/lib/schemas/tenders/fields";
 import {
   publishFormErrors,
-  type PublishTenderFormValues,
-  type TenderDraftFormValues,
+  type PublishTenderPayload,
+  type SaveTenderDraftPayload,
+  type TenderDraftFormState,
 } from "@/lib/schemas/tenders/publish";
 import { formatCuit } from "@/lib/schemas/suppliers/cuit";
 import { formatMoney } from "./format";
@@ -46,17 +47,19 @@ const secondaryButtonClass =
 // Publish form (RN-02, RN-05). Supplies are picked from the catalog with the
 // starting price prefilled from it; every linked supplier starts selected and
 // the emprendedor unticks the ones not to invite. The form can be saved as a
-// draft at any time (also without suppliers) and reopens from it.
-// `publishBlocked` explains why it cannot be published yet, if so.
+// draft at any time (also without suppliers) and reopens from the one chosen
+// in the tender list. `publishBlocked` explains why it cannot be published yet.
 export function PublishTenderForm({
   supplies,
   suppliers,
   draft,
+  saved,
   publishBlocked,
 }: {
   supplies: FormSupply[];
   suppliers: FormSupplier[];
-  draft: TenderDraftFormValues | null;
+  draft: TenderDraftFormState | null;
+  saved: boolean;
   publishBlocked: ReactNode;
 }) {
   const [state, dispatch, pending] = useActionState(publishTender, undefined);
@@ -110,12 +113,13 @@ export function PublishTenderForm({
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     // Items follow the catalog order, so item errors map to the visible rows.
-    const payload: PublishTenderFormValues = {
+    const payload: PublishTenderPayload = {
       roundHours,
       roundCount,
       decrementPercent,
       items: selectedSupplies.map((supply) => ({ supplyId: supply.id, ...drafts[supply.id] })),
       supplierIds: invited,
+      draftId: draft?.id ?? null,
     };
     const found = publishFormErrors(payload);
     setErrors(found);
@@ -124,12 +128,13 @@ export function PublishTenderForm({
   }
 
   function onSaveDraft() {
-    const payload: TenderDraftFormValues = {
+    const payload: SaveTenderDraftPayload = {
       roundHours,
       roundCount,
       decrementPercent,
       items: selectedSupplies.map((supply) => ({ supplyId: supply.id, ...drafts[supply.id] })),
       excludedSupplierIds: suppliers.map((s) => s.userId).filter((id) => !invited.includes(id)),
+      draftId: draft?.id ?? null,
     };
     setErrors({});
     startTransition(() => saveDraft(payload));
@@ -139,7 +144,7 @@ export function PublishTenderForm({
     (state && !state.ok ? state.message : null) ??
     (draftState && !draftState.ok ? draftState.message : null) ??
     (discardState && !discardState.ok ? discardState.message : null);
-  const draftSaved = draftState?.ok ? "Borrador guardado. Podés seguir cuando quieras desde Licitaciones." : null;
+  const draftSaved = saved ? "Borrador guardado. Podés seguir cuando quieras desde Licitaciones." : null;
   const totalHours = Number(roundHours) * Number(roundCount);
 
   return (
@@ -310,6 +315,14 @@ export function PublishTenderForm({
           Una vez publicada, la licitación no se puede modificar: solo cancelar antes del cierre.
         </p>
       )}
+      {draft && (
+        <p className="text-sm text-fg-muted">
+          Estás editando el borrador N° {draft.number}.{" "}
+          <Link href="/licitaciones/nueva" className="font-semibold text-brand-green-700 underline">
+            Empezar otro borrador
+          </Link>
+        </p>
+      )}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <PrimaryButton type="submit" disabled={pending || Boolean(publishBlocked)}>
           {pending ? "Publicando…" : "Publicar licitación"}
@@ -325,7 +338,11 @@ export function PublishTenderForm({
         {draft && (
           <Button variant="ghost" size="md"
             type="button"
-            onClick={() => startTransition(() => discard())}
+            onClick={() => {
+              const data = new FormData();
+              data.set("draftId", draft.id);
+              startTransition(() => discard(data));
+            }}
             disabled={discarding}
             className={secondaryButtonClass}
           >

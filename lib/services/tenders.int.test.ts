@@ -94,7 +94,7 @@ describe("getTenderFormDataService", () => {
   it("suggests each supply's catalog price per purchase unit and lists the linked suppliers (RN-02, RN-05)", async () => {
     const s = await scenario();
 
-    const data = await getTenderFormDataService(s.owner.id, db);
+    const data = await getTenderFormDataService(s.owner.id, null, db);
 
     expect(data.supplies.find((x) => x.id === s.flour.id)).toMatchObject({
       name: "Harina 000",

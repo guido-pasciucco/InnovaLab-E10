@@ -40,7 +40,7 @@ Antes de la primera licitación, el proveedor queda registrado con el emprendedo
 
 ![Diagrama BPMN: compra de insumos por licitación abierta](../duda/assets/licitaciones/proceso-compra-insumos.png)
 
-1. El emprendedor elige entre 1 y 20 insumos del Maestro de Insumos (RN-01, N-17), ajusta cantidades y especificaciones y publica, o guarda un borrador (N-31).
+1. El emprendedor elige entre 1 y 20 insumos del Maestro de Insumos (RN-01, N-17), ajusta cantidades y especificaciones y publica, o guarda un borrador. Puede tener varios a la vez y desde Licitaciones elige cuál continuar (N-31).
 2. La aplicación sugiere el precio de partida de cada insumo desde el catálogo; es obligatorio y se puede cambiar (RN-02, ES-02).
 3. El emprendedor fija una sola vez el % de baja, la duración de cada ronda (6, 12 o 24 hs) y la cantidad de rondas (2 a 5). La duración total es el producto de ambos valores (RN-09, ES-01, ES-03).
 4. Aparecen todos los proveedores registrados, preseleccionados y con sus rubros a la vista; el emprendedor destilda a quienes no quiere invitar (RN-05, ES-07).
@@ -202,7 +202,7 @@ Tomadas el 21 de noviembre de 2026. Las que cambian lo que ve o puede hacer una 
 | <a id="N-28"></a>N-28 | Una orden por proveedor elegido, con subtotales redondeados a centavos y total que siempre cierra. Definitiva al generarse; botón de imprimir o guardar como PDF. |
 | <a id="N-29"></a>N-29 | Nota fija e idéntica, sin precios ni resultados; la ven todos los invitados sin insumo elegido, incluidos los que no ofertaron. Se muestra una sola vez y no se retira. |
 | <a id="N-30"></a>N-30 | Historial completo para el emprendedor y solo lo propio para el proveedor, con fecha y hora (RN-17). |
-| <a id="N-31"></a>N-31 | Borrador por emprendedor que se reemplaza al guardar de nuevo: se puede preparar la licitación sin proveedores, Publicar queda deshabilitado hasta que los haya y se guardan los proveedores destildados. Publicar borra el borrador en la misma transacción. Alternativa descartada: varios borradores. |
+| <a id="N-31"></a>N-31 | Varios borradores por emprendedor, numerados en forma correlativa (Borrador N° 1, N° 2…). Se puede preparar la licitación sin proveedores, Publicar queda deshabilitado hasta que los haya y se guardan los proveedores destildados. Guardar sobre un borrador abierto lo actualiza; abrir el formulario sin borrador y guardar crea el siguiente. Licitaciones lista cada borrador con su número y enlace para continuar el que se elija. Publicar o descartar afecta solo al borrador elegido, en la misma transacción de publicación. |
 
 ### 5.2 Base de datos
 
@@ -219,7 +219,7 @@ Tomadas el 21 de noviembre de 2026. Las que cambian lo que ve o puede hacer una 
 | D-09 | `tender_offers` guarda una fila por oferta y nunca se modifica (RN-17); cada envío bloquea la invitación para evitar saltos de precio. La oferta vigente es la de menor precio, y ante empate la de ronda más reciente: comparar precios evita invertir horas en envíos simultáneos. Límite conocido: una oferta en el instante de la cancelación puede quedar un momento después; no cambia nada porque no hay cuadro ni compra. Alternativa diferida: trigger en la base que prohíba modificar o borrar ofertas. |
 | D-10 | Los avisos no se guardan: se calculan al abrir el panel desde el estado de las licitaciones (RN-24). Nada que sincronizar ni envíos externos. |
 | D-11 | `tender_awards` guarda cada elección sin modificarla; la vigente es la más reciente (RN-17). `purchase_orders` y `purchase_order_lines` copian ítems y precios; generar bloquea perfil y licitación. |
-| D-12 | El borrador es un documento `jsonb` en `tender_drafts`, una fila por emprendedor: está a medio cargar y las columnas tipadas obligarían a permitir nulos en todo o a validar como al publicar. Alternativa descartada: reutilizar `tenders` con estado "borrador", que rompería sus restricciones. |
+| D-12 | Cada borrador es un documento `jsonb` en `tender_drafts`, con `id` propio, `owner_user_id` y un `number` correlativo por emprendedor (único por dueño): está a medio cargar y las columnas tipadas obligarían a permitir nulos en todo o a validar como al publicar. Alternativa descartada: reutilizar `tenders` con estado "borrador", que rompería sus restricciones. Cambia con #308/D50: antes había una sola fila por emprendedor, con el usuario como clave primaria. |
 
 ### 5.3 Estructura de código
 
@@ -264,9 +264,9 @@ Los textos entre comillas son los que debe mostrar la aplicación. El detalle co
 | QA-14 | Emprendedor sin insumos abre nueva licitación | "Solo se licitan insumos de tu catálogo." |
 | QA-14b | Con insumo, sin proveedores | Formulario visible; Publicar deshabilitado con aviso para guardar borrador. |
 | QA-14c | Guardar borrador incompleto | "Borrador guardado. Podés seguir cuando quieras desde Licitaciones." |
-| QA-14d | Volver a Licitaciones | Botón "Seguir con el borrador", con lo guardado aunque esté incompleto. |
-| QA-14e | Registrar proveedor y publicar | Proveedor tildado, publicación permitida y borrador borrado. |
-| QA-14f | Descartar borrador | Vuelve a `/licitaciones`, sin borrador. |
+| QA-14d | Volver a Licitaciones | Sección "Borradores" con "Continuar borrador N° 1", con lo guardado aunque esté incompleto. |
+| QA-14e | Guardar otro borrador y registrar proveedor | Dos borradores en la lista; al publicar desde el segundo, solo ese se borra y el N° 1 sigue. |
+| QA-14f | Descartar un borrador | Vuelve a `/licitaciones`, sin ese borrador; los demás siguen. |
 | QA-14g | Borrar insumo del catálogo | Al abrir el borrador solo queda el insumo existente. |
 | QA-15 | Tildar insumo con 25 kg a $ 18.750 | Sugiere $ 750 por kg y avisa que los proveedores lo ven. |
 | QA-16 | 6 hs, 2 rondas, 10 %, partida 1000 | "$ 1.000,00 → $ 900,00" y duración de 12 horas. |

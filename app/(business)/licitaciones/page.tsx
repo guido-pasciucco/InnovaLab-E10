@@ -5,16 +5,17 @@ import { PhaseBadge, roundLabel } from "@/components/tenders/phase-badge";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
 import { TenderNotices } from "@/components/tenders/notices";
-import { hasTenderDraftService } from "@/lib/services/tender-drafts";
+import { listTenderDraftsService } from "@/lib/services/tender-drafts";
 import { listTenderNoticesService, listTendersService } from "@/lib/services/tenders";
 
-// The emprendedor's tenders, newest first. Data filtered by the session user.
+// The emprendedor's tenders, newest first. Each draft has its own link so the
+// emprendedor chooses which one to continue (N-31). Data filtered by session.
 export default async function TendersPage() {
   const user = await requireUser();
-  const [tenders, notices, hasDraft] = await Promise.all([
+  const [tenders, notices, drafts] = await Promise.all([
     listTendersService(user.id),
     listTenderNoticesService(user.id),
-    hasTenderDraftService(user.id),
+    listTenderDraftsService(user.id),
   ]);
 
   return (
@@ -28,11 +29,38 @@ export default async function TendersPage() {
           href="/licitaciones/nueva"
           className="inline-flex min-h-11 items-center justify-center rounded-[14px] bg-action-primary px-5 py-2 text-sm font-semibold text-on-action-primary hover:bg-action-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
-          {hasDraft ? "Seguir con el borrador" : "Nueva licitación"}
+          Nueva licitación
         </Link>
       }
     >
       <TenderNotices notices={notices} />
+      {drafts.length > 0 && (
+        <section className="space-y-3" aria-labelledby="borradores">
+          <h2 id="borradores" className="text-lg font-bold text-fg">
+            Borradores
+          </h2>
+          <Card>
+            <ul className="divide-y divide-border-default">
+              {drafts.map((draft) => (
+                <li key={draft.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <Link
+                      href={`/licitaciones/nueva?borrador=${draft.id}`}
+                      className="text-base font-semibold text-brand-green-700 underline"
+                    >
+                      Continuar borrador N° {draft.number}
+                    </Link>
+                    <p className="text-sm text-fg-muted">
+                      {draft.itemCount} {draft.itemCount === 1 ? "insumo" : "insumos"} · guardado el{" "}
+                      {formatDateTime(draft.updatedAt)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
+      )}
       <Card>
         {tenders.length === 0 ? (
           <p className="text-sm text-fg-muted">Todavía no publicaste licitaciones.</p>
