@@ -1,6 +1,8 @@
+import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { getDrizzleClient, type Db } from "@/lib/db/client";
+import { calcClosures } from "@/lib/db/closures/table";
 
 import { createUser, deleteUser, type CreatedUser } from "../../tests/support/factories/user";
 import { loadTestEnv } from "../../tests/support/test-env";
@@ -11,6 +13,7 @@ import {
   getLatestClosureService,
   listCalculationClosuresService,
 } from "./calculation-closures";
+import { createPresentationService } from "./presentations";
 import { getPricingService, saveDefaultMarkupPercentService } from "./pricing";
 import { createProductService, deleteProductService } from "./products";
 import { createSupplyService, updateSupplyService } from "./supplies";
@@ -134,8 +137,8 @@ describe("monthly calculation closures", () => {
     expect((await getPricingService(user.id, { period: PERIOD }, db)).rows[0]?.price).toBe("600.00");
 
     const frozen = await getCalculationClosureService(user.id, PERIOD, {}, db);
-    expect(frozen.closure.id).toBe(first.id);
-    expect(frozen.closure.snapshot.results.pricing.rows[0]?.price).toBe("450.00");
+    expect(frozen.version).toBe(first.version);
+    expect(frozen.snapshot.results.pricing.rows[0]?.price).toBe("450.00");
 
     const second = await closeCalculationService(user.id, { now: NOVEMBER }, db);
     expect(second.version).toBe(2);
@@ -160,7 +163,7 @@ describe("monthly calculation closures", () => {
     expect(detail.changes.every((change) => change.changedAt === NOVEMBER.toISOString())).toBe(true);
 
     const firstVersion = await getCalculationClosureService(user.id, PERIOD, { version: 1 }, db);
-    expect(firstVersion.closure.id).toBe(first.id);
+    expect(firstVersion.version).toBe(first.version);
     expect(firstVersion.changes).toEqual([]);
   });
 
@@ -172,8 +175,8 @@ describe("monthly calculation closures", () => {
     expect(await deleteProductService(user.id, product.id, db)).toBe(true);
 
     const history = await getCalculationClosureService(user.id, PERIOD, {}, db);
-    expect(history.closure.snapshot.inputs.products[0]?.name).toBe("Alfajor");
-    expect(history.closure.snapshot.results.pricing.rows[0]?.price).toBe("450.00");
+    expect(history.snapshot.inputs.products[0]?.name).toBe("Alfajor");
+    expect(history.snapshot.results.pricing.rows[0]?.price).toBe("450.00");
   });
 
   it("lists closed months newest first with figures taken from the photo", async () => {
@@ -219,4 +222,108 @@ describe("monthly calculation closures", () => {
       getCalculationClosureService(other.id, PERIOD, {}, db),
     ).rejects.toMatchObject({ code: "CALC_CLOSURE_NOT_FOUND" });
   });
+
+  it("allocates distinct versions when two closes race", async () => {
+    const user = await makeUser();
+    await makeCatalog(user);
+
+    const results = await Promise.allSettled([
+      closeCalculationService(user.id, { now: NOVEMBER }, db),
+      closeCalculationService(user.id, { now: NOVEMBER }, db),
+    ]);
+    const saved = results.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
+
+    expect(saved.length).toBeGreaterThanOrEqual(1);
+    expect(new Set(saved.map((closure) => closure.version)).size).toBe(saved.length);
+    const rows = await db
+      .select({ version: calcClosures.version })
+      .from(calcClosures)
+      .where(eq(calcClosures.businessId, saved[0]!.businessId));
+    expect(new Set(rows.map((row) => row.version)).size).toBe(rows.length);
+  });
+
+  it("rejects a duplicate version with the unique index", async () => {
+    const user = await makeUser();
+    await makeCatalog(user);
+    const first = await closeCalculationService(user.id, { now: NOVEMBER }, db);
+
+    await expect(
+      db.insert(calcClosures).values({
+        businessId: first.businessId,
+        period: first.period,
+        version: first.version,
+        closedAt: first.closedAt,
+        snapshot: first.snapshot,
+        snapshotSchemaVersion: first.snapshotSchemaVersion,
+      }),
+    ).rejects.toMatchObject({ code: "23505" });
+  });
+
+  it("reports a malformed period as invalid input on both read and write", async () => {
+    const user = await makeUser();
+    await makeCatalog(user);
+
+    await expect(
+      closeCalculationService(user.id, { period: "noviembre", now: NOVEMBER }, db),
+    ).rejects.toMatchObject({ code: "CALC_CLOSURE_INVALID_PERIOD" });
+    await expect(
+      getCalculationClosureService(user.id, "noviembre", {}, db),
+    ).rejects.toMatchObject({ code: "CALC_CLOSURE_INVALID_PERIOD" });
+  });
+
+  it("reports an unreadable stored photo instead of crashing the history view", async () => {
+    const user = await makeUser();
+    await makeCatalog(user);
+    const first = await closeCalculationService(user.id, { now: NOVEMBER }, db);
+
+    await db
+      .update(calcClosures)
+      .set({ snapshot: {} as typeof first.snapshot })
+      .where(eq(calcClosures.id, first.id));
+
+    await expect(
+      getCalculationClosureService(user.id, PERIOD, {}, db),
+    ).rejects.toMatchObject({ code: "CALC_CLOSURE_FORMAT_UNSUPPORTED" });
+    expect(await listCalculationClosuresService(user.id, db)).toEqual([]);
+  });
+
+  it("orders closed months newest first", async () => {
+    const user = await makeUser();
+    await makeCatalog(user);
+    await closeCalculationService(user.id, { now: NOVEMBER }, db);
+    await closeCalculationService(user.id, { now: DECEMBER }, db);
+
+    expect((await listCalculationClosuresService(user.id, db)).map((month) => month.period)).toEqual([
+      "2026-12",
+      "2026-11",
+    ]);
+  });
+
+
+  it("freezes presentations and their packaging into the photo", async () => {
+    const user = await makeUser();
+    const { supply, product } = await makeCatalog(user);
+    await createPresentationService(
+      user.id,
+      product.id,
+      {
+        name: "Caja x6",
+        unitsPerPresentation: "6",
+        monthlyCapacity: 25,
+        packaging: [{ supplyId: supply.id, quantity: "6", unit: "kg" }],
+      },
+      db,
+    );
+
+    const closure = await closeCalculationService(user.id, { now: NOVEMBER }, db);
+    const presentations = closure.snapshot.inputs.products[0]?.presentations;
+
+    expect(presentations).toEqual([
+      expect.objectContaining({ name: "Caja x6", unitsPerPresentation: "6", ownMarkupPercent: null }),
+    ]);
+    expect(presentations?.[0]?.packaging).toEqual([
+      expect.objectContaining({ supplyName: "Harina", quantity: "6", unit: "kg" }),
+    ]);
+  });
+
 });

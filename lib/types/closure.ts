@@ -37,6 +37,8 @@ export type ClosurePresentation = {
   id: string;
   name: string;
   unitsPerPresentation: string;
+  // Optional so photos saved before per-presentation markup was stored stay readable.
+  ownMarkupPercent?: string | null;
   packaging: ClosurePackagingItem[];
 };
 
@@ -76,10 +78,16 @@ export type ClosureSnapshot = {
 };
 
 // A line of the audit section: what changed between two consecutive versions
-// of the same month. `changedAt` is the date of the newer closure.
+// of the same month. `key` is the stable field id (also the React key) and
+// `kind` tells the view how to render the values without guessing from `label`.
+// `changedAt` is the date of the newer closure.
+export type ClosureChangeKind = "money" | "percent" | "count" | "text";
+
 export type ClosureChange = {
+  key: string;
   label: string;
   before: string;
   after: string;
+  kind: ClosureChangeKind;
   changedAt: string;
 };

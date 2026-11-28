@@ -98,3 +98,32 @@ test("closing, changing flour and closing again keeps two versions and their aud
   });
   await expect(frozenPrices.getByRole("row", { name: /Alfajor/ })).toContainText("$ 450,00");
 });
+
+test("the first version explains the audit and history exposes no edit controls", async ({
+  authedPage,
+}) => {
+  await arrangeCatalog(authedPage);
+  await authedPage.goto("/equilibrio");
+  await closeMonth(authedPage);
+  await authedPage.goto("/historico");
+  await authedPage.getByRole("link", { name: /noviembre de \d{4}/ }).click();
+
+  await expect(authedPage.getByText(/Esta es la primera versión del mes/)).toBeVisible();
+  const frozenPrices = authedPage.getByRole("table", {
+    name: "Costo total, recargo, precio sugerido, ganancia y margen real guardados en la foto",
+  });
+  await expect(frozenPrices.getByRole("button")).toHaveCount(0);
+  await expect(frozenPrices.getByRole("link", { name: "Cargar capacidad" })).toHaveCount(0);
+});
+
+test("the close dialog closes without saving when cancelled", async ({ authedPage }) => {
+  await arrangeCatalog(authedPage);
+  await authedPage.goto("/equilibrio");
+
+  await authedPage.getByRole("button", { name: /Cerrar el cálculo de/ }).click();
+  const dialog = authedPage.getByRole("dialog", { name: "Cerrar cálculo" });
+  await dialog.getByRole("button", { name: "Cancelar" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(authedPage.getByText(/Último cierre:/)).toHaveCount(0);
+});

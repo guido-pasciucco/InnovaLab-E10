@@ -5,7 +5,7 @@ import { BreakEvenScreen } from "@/components/break-even/break-even-screen";
 import { toBreakEvenView } from "@/components/break-even/break-even-values";
 import { CostDistributionScreen } from "@/components/cost-distribution/cost-distribution-screen";
 import { toCostDistributionView } from "@/components/cost-distribution/cost-distribution-values";
-import { formatPeriod as formatMarkupPeriod, toPricingView } from "@/components/pricing/pricing-values";
+import { formatPeriod, toPricingView } from "@/components/pricing/pricing-values";
 import { PricingReadOnlyScreen } from "@/components/pricing/pricing-readonly-screen";
 import { formatDateTime } from "@/components/tenders/format";
 import { Card, PageShell } from "@/components/ui/page-shell";
@@ -23,15 +23,10 @@ const versionLinkClass =
 const activeVersionLinkClass =
   "inline-flex min-h-11 items-center justify-center rounded-[14px] bg-action-primary px-4 py-2 text-sm font-semibold text-on-action-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
-function formatPeriodLabel(period: string): string {
-  return formatMarkupPeriod(period);
-}
-
-// The audit stores the exact strings the services produced. The view writes
-// money as money and leaves counts, units and percentages as they were.
-function formatChangeValue(label: string, value: string): string {
-  if (!/^-?\d+(\.\d+)?$/.test(value)) return value;
-  if (/unidades|capacidad|rendimiento|margen|recargo|mezcla/.test(label)) return value;
+// The audit carries the value kind from the module that produced it, so the
+// view never has to guess currency from a human-readable label.
+function formatChangeValue(change: CalculationClosureDetail["changes"][number], value: string): string {
+  if (change.kind !== "money" || !/^-?\d+(\.\d+)?$/.test(value)) return value;
   return formatARS(value);
 }
 
@@ -39,11 +34,12 @@ async function readDetail(
   userId: Parameters<typeof getCalculationClosureService>[0],
   period: string,
   version: number | undefined,
-): Promise<CalculationClosureDetail> {
+): Promise<CalculationClosureDetail | null> {
   try {
     return await getCalculationClosureService(userId, period, { version });
   } catch (error) {
     if (error instanceof AppError && error.code === "CALC_CLOSURE_NOT_FOUND") notFound();
+    if (error instanceof AppError && error.code === "CALC_CLOSURE_FORMAT_UNSUPPORTED") return null;
     throw error;
   }
 }
@@ -62,14 +58,32 @@ export default async function ClosureDetailPage({
   const requestedVersion = query.version ? Number(query.version) : undefined;
   const version = requestedVersion !== undefined && Number.isInteger(requestedVersion) ? requestedVersion : undefined;
   const detail = await readDetail(user.id, period, version);
-  const snapshot = detail.closure.snapshot;
-  const periodLabel = formatPeriodLabel(period);
+
+  if (detail === null) {
+    return (
+      <PageShell
+        eyebrow="Datos históricos"
+        title={formatPeriod(period)}
+        description="Esta foto se guardó con otro formato y no se puede mostrar."
+        links={[{ href: "/historico", label: "Todos los meses" }]}
+      >
+        <Card title="Foto no disponible">
+          <p className="text-sm text-fg-muted">
+            Probá con otra versión del mes o volvé a cerrar el cálculo desde Equilibrio.
+          </p>
+        </Card>
+      </PageShell>
+    );
+  }
+
+  const snapshot = detail.snapshot;
+  const periodLabel = formatPeriod(period);
 
   return (
     <PageShell
       eyebrow="Datos históricos"
       title={periodLabel}
-      description={`Foto guardada el ${formatDateTime(detail.closure.closedAt)} · versión ${detail.closure.version}. Los datos son los de ese cierre, no los del catálogo actual.`}
+      description={`Foto guardada el ${formatDateTime(detail.closedAt)} · versión ${detail.version}. Los datos son los de ese cierre, no los del catálogo actual.`}
       links={[
         { href: "/historico", label: "Todos los meses" },
         { href: "/equilibrio", label: "Equilibrio en vivo" },
@@ -81,9 +95,9 @@ export default async function ClosureDetailPage({
             <Link
               key={item.version}
               href={`/historico/${period}?version=${item.version}`}
-              aria-current={item.version === detail.closure.version ? "page" : undefined}
+              aria-current={item.version === detail.version ? "page" : undefined}
               className={
-                item.version === detail.closure.version ? activeVersionLinkClass : versionLinkClass
+                item.version === detail.version ? activeVersionLinkClass : versionLinkClass
               }
             >
               Versión {item.version} · {formatDateTime(item.closedAt)}
@@ -91,7 +105,7 @@ export default async function ClosureDetailPage({
           ))}
         </nav>
         <p className="mt-4 text-sm text-fg-muted">
-          Esquema de la foto: {detail.closure.snapshotSchemaVersion}. Archivo de {periodLabel}:{" "}
+          Esquema de la foto: {detail.schemaVersion}. Archivo de {periodLabel}:{" "}
           {snapshot.inputs.supplies.length} insumos, {snapshot.inputs.products.length} productos y{" "}
           {snapshot.inputs.periodCostLines.length} gastos del período.
         </p>
@@ -120,13 +134,13 @@ export default async function ClosureDetailPage({
               </thead>
               <tbody>
                 {detail.changes.map((change) => (
-                  <tr key={change.label} className="border-b border-border-control align-top last:border-0">
+                  <tr key={change.key} className="border-b border-border-control align-top last:border-0">
                     <th scope="row" className="px-2 py-3 font-semibold text-fg">{change.label}</th>
                     <td className="px-2 py-3 text-fg-muted">
-                      {formatChangeValue(change.label, change.before)}
+                      {formatChangeValue(change, change.before)}
                     </td>
                     <td className="px-2 py-3 text-fg">
-                      {formatChangeValue(change.label, change.after)}
+                      {formatChangeValue(change, change.after)}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-fg-muted">
                       {formatDateTime(change.changedAt)}

@@ -156,10 +156,22 @@ export const ERROR_CATALOG = {
     logLevel: "silent",
   },
   CALC_CLOSURE_NOT_FOUND: {
-    // Missing, foreign or non-uuid period/version: all look the same.
+    // Missing or foreign period/version: both look the same to the caller.
     status: 404,
     message: "No encontramos ese cierre",
     logLevel: "silent",
+  },
+  CALC_CLOSURE_INVALID_PERIOD: {
+    // A malformed month is bad input, not a missing closure.
+    status: 422,
+    message: "El mes debe tener el formato AAAA-MM",
+    logLevel: "silent",
+  },
+  CALC_CLOSURE_FORMAT_UNSUPPORTED: {
+    // Stored photo from another schema version or with an unreadable shape.
+    status: 422,
+    message: "Esta foto se guardó con otro formato y no se puede mostrar",
+    logLevel: "warn",
   },
   CALC_CLOSURE_PERIOD_CLOSED: {
     // Only the current month in Argentina accepts new versions (D27/D50).

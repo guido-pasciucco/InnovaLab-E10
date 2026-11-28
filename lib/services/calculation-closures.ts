@@ -7,6 +7,7 @@ import { diffClosureSnapshots } from "@/lib/calc/diffClosureSnapshots";
 import { businesses } from "@/lib/db/business/table";
 import { getDrizzleClient, type Db } from "@/lib/db/client";
 import { calcClosures, type CalcClosure } from "@/lib/db/closures/table";
+import { calcClosureRowSchema, closureSnapshotSchema } from "@/lib/db/closures/validation";
 import type { ListPeriodCostsOptions } from "@/lib/db/costs/validation";
 import { AppError } from "@/lib/errors/app-error";
 import type {
@@ -42,6 +43,9 @@ export type CloseCalculationOptions = {
   // month: a closed month never accepts another version.
   period?: string;
   now?: Date;
+  // When set, a second close within this window returns the version that was
+  // just saved. The Server Action enables it to absorb double submits.
+  duplicateWindowMs?: number;
 };
 
 export type ClosureVersion = {
@@ -57,15 +61,39 @@ export type CalculationClosureMonth = {
   breakEvenSales: string | null;
 };
 
+// A view type, not the Drizzle row: persistence columns never reach the UI.
 export type CalculationClosureDetail = {
-  closure: CalcClosure;
+  period: string;
+  version: number;
+  closedAt: string;
+  schemaVersion: number;
+  snapshot: ClosureSnapshot;
   versions: ClosureVersion[];
   changes: ClosureChange[];
 };
 
 function parsePeriod(period: string): string {
-  if (!PERIOD_PATTERN.test(period)) throw new AppError("CALC_CLOSURE_NOT_FOUND");
+  if (!PERIOD_PATTERN.test(period)) throw new AppError("CALC_CLOSURE_INVALID_PERIOD");
   return period;
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "23505"
+  );
+}
+
+// Photos survive schema changes and may be written by a different build. The
+// read boundary validates the row and the jsonb shape before anything
+// dereferences it; a bad photo becomes a domain error, not a TypeError.
+function readStoredSnapshot(row: CalcClosure): ClosureSnapshot | null {
+  if (!calcClosureRowSchema.safeParse(row).success) return null;
+  if (row.snapshotSchemaVersion !== CLOSURE_SNAPSHOT_SCHEMA_VERSION) return null;
+  if (!closureSnapshotSchema.safeParse(row.snapshot).success) return null;
+  return row.snapshot;
 }
 
 async function findBusinessId(userId: VerifiedUserId, db: Db): Promise<string | null> {
@@ -73,6 +101,7 @@ async function findBusinessId(userId: VerifiedUserId, db: Db): Promise<string | 
     .select({ id: businesses.id })
     .from(businesses)
     .where(eq(businesses.ownerUserId, userId))
+    .orderBy(asc(businesses.createdAt), asc(businesses.id))
     .limit(1);
   return business?.id ?? null;
 }
@@ -83,6 +112,11 @@ async function buildInputs(
   pricing: Pricing,
   db: Db,
 ): Promise<ClosureInputs> {
+  const ownMarkupByRow = new Map(pricing.rows.map((row) => [row.rowId, row.ownMarkupPercent]));
+  const ownMarkupByProduct = new Map(
+    pricing.rows.filter((row) => !row.presentationId).map((row) => [row.productId, row.ownMarkupPercent]),
+  );
+
   const [supplies, products, periodCosts] = await Promise.all([
     listSuppliesService(userId, db),
     listProductsService(userId, db),
@@ -104,6 +138,7 @@ async function buildInputs(
       id: item.id,
       name: item.name,
       unitsPerPresentation: item.unitsPerPresentation,
+      ownMarkupPercent: ownMarkupByRow.get(item.id) ?? null,
       packaging: item.packaging.map((line) => ({
         supplyId: line.supplyId,
         supplyName: line.supplyName,
@@ -123,17 +158,9 @@ async function buildInputs(
       })),
       yieldQuantity: product.yieldQuantity,
       monthlyCapacity: product.monthlyCapacity,
-      ownMarkupPercent: null, // filled below from the pricing snapshot
+      ownMarkupPercent: ownMarkupByProduct.get(product.id) ?? null,
       presentations,
     });
-  }
-
-  // Pricing already resolves the effective markup for every row. Keeping that
-  // value in the photo makes the snapshot self-contained even if the business
-  // default or the product override changes later.
-  const ownMarkups = new Map(pricing.rows.map((row) => [row.productId, row.ownMarkupPercent]));
-  for (const product of productInputs) {
-    product.ownMarkupPercent = ownMarkups.get(product.id) ?? null;
   }
 
   return {
@@ -185,38 +212,53 @@ export async function closeCalculationService(
   const period = parsePeriod(opts.period ?? currentPeriod);
   if (period !== currentPeriod) throw new AppError("CALC_CLOSURE_PERIOD_CLOSED");
 
-  // The read services take a full Db (they may open their own transactions), so
-  // they run before the short write transaction that allocates the version.
-  const business = await db.transaction((tx) => getOrCreateDefaultBusiness(tx, userId));
-  const businessId = business.id;
-  const snapshot = await buildSnapshot(userId, period, db);
+  // The whole photo is read inside the same repeatable-read transaction that
+  // allocates the version, so inputs and results come from one DB instant.
+  // The lock is taken first to serialize closes before the first read.
+  return db.transaction(
+    async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`calc-closure:${userId}:${period}`}, 0))`,
+      );
+      const business = await getOrCreateDefaultBusiness(tx, userId);
+      const businessId = business.id;
+      // A transaction exposes the same query API as the client; only the pool
+      // handle ($client) is absent and none of the readers below uses it.
+      const snapshot = await buildSnapshot(userId, period, tx as unknown as Db);
 
-  return db.transaction(async (tx) => {
-    // Serializes version allocation for this month while allowing other months
-    // and businesses to close in parallel.
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`calc-closure:${businessId}:${period}`}, 0))`,
-    );
+      const [latest] = await tx
+        .select()
+        .from(calcClosures)
+        .where(and(eq(calcClosures.businessId, businessId), eq(calcClosures.period, period)))
+        .orderBy(desc(calcClosures.version))
+        .limit(1);
 
-    const [latest] = await tx
-      .select({ value: sql<number>`coalesce(max(${calcClosures.version}), 0)::int` })
-      .from(calcClosures)
-      .where(and(eq(calcClosures.businessId, businessId), eq(calcClosures.period, period)));
+      const elapsed = latest ? now.getTime() - latest.closedAt.getTime() : Infinity;
+      const window = opts.duplicateWindowMs ?? 0;
+      if (window > 0 && latest && elapsed >= 0 && elapsed < window) return latest;
 
-    const [closure] = await tx
-      .insert(calcClosures)
-      .values({
-        businessId,
-        period,
-        version: (latest?.value ?? 0) + 1,
-        closedAt: now,
-        snapshot,
-        snapshotSchemaVersion: CLOSURE_SNAPSHOT_SCHEMA_VERSION,
-      })
-      .returning();
-
-    return closure;
-  });
+      try {
+        const [closure] = await tx
+          .insert(calcClosures)
+          .values({
+            businessId,
+            period,
+            version: (latest?.version ?? 0) + 1,
+            closedAt: now,
+            snapshot,
+            snapshotSchemaVersion: CLOSURE_SNAPSHOT_SCHEMA_VERSION,
+          })
+          .returning();
+        return closure;
+      } catch (error) {
+        if (isUniqueViolation(error)) {
+          throw new AppError("CALC_CLOSURE_VERSION_CONFLICT", undefined, { cause: error });
+        }
+        throw error;
+      }
+    },
+    { isolationLevel: "repeatable read", accessMode: "read write" },
+  );
 }
 
 /** Closed months of this user's business, newest first. Read-only. */
@@ -233,10 +275,12 @@ export async function listCalculationClosuresService(
     .where(eq(calcClosures.businessId, businessId))
     .orderBy(desc(calcClosures.period), asc(calcClosures.version));
 
-  const byPeriod = new Map<string, CalcClosure[]>();
+  const byPeriod = new Map<string, { row: CalcClosure; snapshot: ClosureSnapshot }[]>();
   for (const row of rows) {
+    const snapshot = readStoredSnapshot(row);
+    if (snapshot === null) continue;
     const group = byPeriod.get(row.period) ?? [];
-    group.push(row);
+    group.push({ row, snapshot });
     byPeriod.set(row.period, group);
   }
 
@@ -244,7 +288,7 @@ export async function listCalculationClosuresService(
     const latest = versions[versions.length - 1]!;
     return {
       period,
-      lastClosedAt: latest.closedAt.toISOString(),
+      lastClosedAt: latest.row.closedAt.toISOString(),
       versionCount: versions.length,
       totalExpenses: latest.snapshot.results.costDistribution.totalExpenses,
       breakEvenSales: latest.snapshot.results.breakEven.totals?.breakEvenSales ?? null,
@@ -276,8 +320,9 @@ export async function getLatestClosureService(
  * One month's photo with its version list and the audit against the previous
  * version. Everything comes from the stored snapshots: no live calculation.
  *
- * @throws AppError CALC_CLOSURE_NOT_FOUND for a missing, foreign or invalid
- * period/version (all three look the same to the caller).
+ * @throws AppError CALC_CLOSURE_NOT_FOUND for a missing or foreign period/version,
+ * CALC_CLOSURE_INVALID_PERIOD for a malformed month, CALC_CLOSURE_FORMAT_UNSUPPORTED
+ * when a stored photo cannot be read.
  */
 export async function getCalculationClosureService(
   userId: VerifiedUserId,
@@ -302,17 +347,22 @@ export async function getCalculationClosureService(
       : rows.find((row) => row.version === opts.version);
   if (!closure) throw new AppError("CALC_CLOSURE_NOT_FOUND");
 
+  const snapshot = readStoredSnapshot(closure);
+  if (snapshot === null) throw new AppError("CALC_CLOSURE_FORMAT_UNSUPPORTED");
+
   const previous = rows.find((row) => row.version === closure.version - 1);
-  const changes = previous
-    ? diffClosureSnapshots(
-        previous.snapshot,
-        closure.snapshot,
-        closure.closedAt.toISOString(),
-      )
-    : [];
+  const previousSnapshot = previous ? readStoredSnapshot(previous) : null;
+  const changes =
+    previous && previousSnapshot
+      ? diffClosureSnapshots(previousSnapshot, snapshot, closure.closedAt.toISOString())
+      : [];
 
   return {
-    closure,
+    period: closure.period,
+    version: closure.version,
+    closedAt: closure.closedAt.toISOString(),
+    schemaVersion: closure.snapshotSchemaVersion,
+    snapshot,
     versions: rows.map((row) => ({
       version: row.version,
       closedAt: row.closedAt.toISOString(),

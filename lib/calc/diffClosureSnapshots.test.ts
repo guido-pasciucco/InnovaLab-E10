@@ -115,9 +115,124 @@ function snapshot(overrides: {
   };
 }
 
+// After #321 a product with presentations produces one result row per
+// presentation. All rows keep the same productId; only rowId is unique.
+function withPresentations(prices: [string, string], variableUnits: [string, string]): ClosureSnapshot {
+  const base = snapshot();
+  const costRow = base.results.costDistribution.rows[0];
+  const priceRow = base.results.pricing.rows[0];
+
+  return {
+    ...base,
+    results: {
+      ...base.results,
+      costDistribution: {
+        ...base.results.costDistribution,
+        rows: [
+          { ...costRow, rowId: "caja", presentationId: "caja", name: "Alfajor · Caja x6", variableUnit: variableUnits[0] },
+          { ...costRow, rowId: "bolsa", presentationId: "bolsa", name: "Alfajor · Bolsa x1", variableUnit: variableUnits[1] },
+        ],
+      },
+      pricing: {
+        ...base.results.pricing,
+        rows: [
+          { ...priceRow, rowId: "caja", presentationId: "caja", name: "Alfajor · Caja x6", price: prices[0] },
+          { ...priceRow, rowId: "bolsa", presentationId: "bolsa", name: "Alfajor · Bolsa x1", price: prices[1] },
+        ],
+      },
+    },
+  };
+}
+
+function withPresentationMarkups(markups: [string | null, string | null]): ClosureSnapshot {
+  const base = snapshot();
+
+  return {
+    ...base,
+    inputs: {
+      ...base.inputs,
+      products: base.inputs.products.map((product) => ({
+        ...product,
+        presentations: [
+          { id: "caja", name: "Caja x6", unitsPerPresentation: "6", ownMarkupPercent: markups[0], packaging: [] },
+          { id: "bolsa", name: "Bolsa x1", unitsPerPresentation: "1", ownMarkupPercent: markups[1], packaging: [] },
+        ],
+      })),
+    },
+  };
+}
+
 const WHEN = "2026-11-24T18:40:00.000Z";
 
 describe("diffClosureSnapshots", () => {
+  it("audits the markup of each presentation separately", () => {
+    const changes = diffClosureSnapshots(
+      withPresentationMarkups(["30.00", "40.00"]),
+      withPresentationMarkups(["35.00", "40.00"]),
+      WHEN,
+    );
+
+    expect(changes).toEqual([
+      {
+        key: "product:alfajor:presentation:caja:markup",
+        label: "Alfajor · Caja x6 · recargo propio",
+        before: "30.00",
+        after: "35.00",
+        kind: "percent",
+        changedAt: WHEN,
+      },
+    ]);
+  });
+
+  it("tags presentation quantities as counts instead of money", () => {
+    const before = withPresentationMarkups(["30.00", "40.00"]);
+    const after = withPresentationMarkups(["30.00", "40.00"]);
+    after.inputs.products[0]!.presentations[0]!.unitsPerPresentation = "12";
+
+    const changes = diffClosureSnapshots(before, after, WHEN);
+
+    expect(changes).toEqual([
+      {
+        key: "product:alfajor:presentation:caja:units",
+        label: "Alfajor · Caja x6 · unidades por presentación",
+        before: "6",
+        after: "12",
+        kind: "count",
+        changedAt: WHEN,
+      },
+    ]);
+  });
+
+  it("audits every presentation row even when they share a productId", () => {
+    const changes = diffClosureSnapshots(
+      withPresentations(["100.00", "200.00"], ["100.00", "200.00"]),
+      withPresentations(["150.00", "200.00"], ["110.00", "200.00"]),
+      WHEN,
+    );
+
+    expect(changes).toEqual(
+      expect.arrayContaining([
+        {
+          key: "result:pricing:caja:price",
+          label: "Alfajor · Caja x6 · precio",
+          before: "100.00",
+          after: "150.00",
+          kind: "money",
+          changedAt: WHEN,
+        },
+        {
+          key: "result:cost:caja:variableUnit",
+          label: "Alfajor · Caja x6 · costo variable",
+          before: "100.00",
+          after: "110.00",
+          kind: "money",
+          changedAt: WHEN,
+        },
+      ]),
+    );
+    expect(changes.some((change) => change.label.startsWith("Alfajor · Bolsa x1 ·"))).toBe(false);
+  });
+
   it("uses ids as keys so an unrelated rename does not reshuffle the table", () => {
     expect(flattenClosureSnapshot(snapshot()).has("supply:harina:price")).toBe(true);
   });
@@ -131,12 +246,28 @@ describe("diffClosureSnapshots", () => {
 
     expect(changes).toEqual(
       expect.arrayContaining([
-        { label: "Harina · precio", before: "1000.00", after: "2000.00", changedAt: WHEN },
-        { label: "Alfajor · precio", before: "450.00", after: "600.00", changedAt: WHEN },
         {
+          key: "supply:harina:price",
+          label: "Harina · precio",
+          before: "1000.00",
+          after: "2000.00",
+          kind: "money",
+          changedAt: WHEN,
+        },
+        {
+          key: "result:pricing:alfajor:price",
+          label: "Alfajor · precio",
+          before: "450.00",
+          after: "600.00",
+          kind: "money",
+          changedAt: WHEN,
+        },
+        {
+          key: "result:breakEvenSales",
           label: "Ventas de equilibrio",
           before: "38571.43",
           after: "45000.00",
+          kind: "money",
           changedAt: WHEN,
         },
       ]),
@@ -153,8 +284,22 @@ describe("diffClosureSnapshots", () => {
 
     expect(changes).toEqual(
       expect.arrayContaining([
-        { label: "Harina · precio", before: "1000.00", after: "—", changedAt: WHEN },
-        { label: "Azúcar · precio", before: "—", after: "1000.00", changedAt: WHEN },
+        {
+          key: "supply:harina:price",
+          label: "Harina · precio",
+          before: "1000.00",
+          after: "—",
+          kind: "money",
+          changedAt: WHEN,
+        },
+        {
+          key: "supply:azucar:price",
+          label: "Azúcar · precio",
+          before: "—",
+          after: "1000.00",
+          kind: "money",
+          changedAt: WHEN,
+        },
       ]),
     );
     expect(changes.some((change) => change.label === "Recargo por defecto del negocio")).toBe(false);
